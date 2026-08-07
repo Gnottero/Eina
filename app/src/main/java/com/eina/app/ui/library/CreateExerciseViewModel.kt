@@ -27,6 +27,7 @@ data class CreateExerciseUiState(
     val secondaryCategories: Set<MuscleGroupCategory> = emptySet(),
     val equipment: String = "",
     val mediaUri: String? = null,
+    val mediaError: String? = null,
     val saved: Boolean = false
 ) {
     val canSave: Boolean get() = name.isNotBlank() && primaryCategories.isNotEmpty()
@@ -55,7 +56,20 @@ class CreateExerciseViewModel(
 
     fun onMediaPicked(uri: Uri) = viewModelScope.launch {
         val copied = copyMediaToInternalStorage(uri)
-        _uiState.update { it.copy(mediaUri = copied) }
+        _uiState.update {
+            if (copied == null) {
+                // La copia puo' fallire su file remoti (Drive offline) o revocati: senza un
+                // messaggio l'utente vedeva solo l'anteprima non comparire.
+                it.copy(mediaError = "Immagine non copiata: riprova o scegline un'altra.")
+            } else {
+                it.copy(mediaUri = copied, mediaError = null)
+            }
+        }
+    }
+
+    /** Nessuna app risponde alla richiesta di immagini: device senza galleria o picker disabilitato. */
+    fun onMediaPickerUnavailable() = _uiState.update {
+        it.copy(mediaError = "Nessuna app per scegliere immagini su questo telefono.")
     }
 
     private suspend fun copyMediaToInternalStorage(uri: Uri): String? = withContext(Dispatchers.IO) {

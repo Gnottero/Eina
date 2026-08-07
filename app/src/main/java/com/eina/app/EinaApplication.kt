@@ -22,7 +22,9 @@ class EinaApplication : Application() {
         }
 
         applicationScope.launch {
-            get<ExerciseSeeder>().seedIfEmpty()
+            // Il seed gira fuori dal main thread al primo avvio: se l'asset manca o e' malformato
+            // l'app resta usabile con la libreria vuota invece di crashare in partenza.
+            runCatching { get<ExerciseSeeder>().seedIfEmpty() }
         }
     }
 }

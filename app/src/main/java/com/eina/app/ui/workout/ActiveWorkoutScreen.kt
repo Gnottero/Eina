@@ -1,5 +1,6 @@
 package com.eina.app.ui.workout
 
+import android.widget.Toast
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -378,7 +379,17 @@ private fun SessionHeader(
                     IslandIconButton(
                         icon = Icons.Outlined.MusicNote,
                         contentDescription = "Riproduci playlist",
-                        onClick = { launchPlaylist(context, playlistUri, playlistType) },
+                        onClick = {
+                            // Senza app musicale ne' browser non succede nulla: lo si dice,
+                            // invece di lasciare il tasto muto.
+                            if (!launchPlaylist(context, playlistUri, playlistType)) {
+                                Toast.makeText(
+                                    context,
+                                    "Nessuna app per aprire la playlist.",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        },
                         containerColor = island.sunken,
                         size = 40.dp
                     )

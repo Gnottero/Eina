@@ -1,5 +1,6 @@
 package com.eina.app.ui.library
 
+import android.content.ActivityNotFoundException
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -29,6 +30,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.eina.app.data.db.WeightType
+import com.eina.app.ui.components.DestructiveRed
 import com.eina.app.ui.components.IslandButton
 import com.eina.app.ui.components.IslandCard
 import com.eina.app.ui.components.IslandChip
@@ -132,9 +134,22 @@ fun CreateExerciseScreen(
             IslandSecondaryButton(
                 text = "Scegli dalla galleria",
                 icon = Icons.Outlined.Image,
-                onClick = { mediaPicker.launch("image/*") },
+                onClick = {
+                    try {
+                        mediaPicker.launch("image/*")
+                    } catch (e: ActivityNotFoundException) {
+                        viewModel.onMediaPickerUnavailable()
+                    }
+                },
                 modifier = Modifier.fillMaxWidth()
             )
+            uiState.mediaError?.let { error ->
+                Text(
+                    error,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = DestructiveRed
+                )
+            }
         }
 
         IslandButton(

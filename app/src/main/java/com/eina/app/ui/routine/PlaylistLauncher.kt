@@ -24,7 +24,7 @@ private const val PLAYBACK_KEY_DELAY_MS = 1500L
  * il resto si manda il tasto multimediale PLAY (non PLAY_PAUSE, che metterebbe in pausa una
  * riproduzione gia' in corso) all'app che nel frattempo ha preso la sessione audio.
  */
-fun launchPlaylist(context: Context, uri: String, type: PlaylistType) {
+fun launchPlaylist(context: Context, uri: String, type: PlaylistType): Boolean {
     val intent = when (type) {
         PlaylistType.SPOTIFY -> {
             val playlistId = spotifyPlaylistIdRegex.find(uri)?.groupValues?.get(1)
@@ -44,10 +44,16 @@ fun launchPlaylist(context: Context, uri: String, type: PlaylistType) {
     try {
         context.startActivity(intent)
     } catch (e: ActivityNotFoundException) {
-        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(uri)))
+        try {
+            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(uri)))
+        } catch (e: ActivityNotFoundException) {
+            // Ne' l'app musicale ne' un browser: si segnala al chiamante invece di crashare.
+            return false
+        }
     }
 
     requestPlaybackStart(context)
+    return true
 }
 
 /** Manda il tasto multimediale PLAY all'app che detiene la sessione audio. */

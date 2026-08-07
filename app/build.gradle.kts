@@ -21,8 +21,12 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            // DECISIONE: la release usa la firma di debug. Non esiste ancora un keystore di
+            // distribuzione e senza firma l'APK non e' installabile per provare R8 sul device.
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
 
