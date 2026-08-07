@@ -307,11 +307,14 @@ stati vuoti (dati reali in Fase 6).
 **Fase 6 — Dashboard e progressi** *(fatta)*
 DoD: dashboard storico allenamenti; grafici volume/PR; heatmap stile GitHub; schermata peso corporeo che alimenta `bodyweightSnapshotKg` ai nuovi set.
 
-**Fase 7 — Condivisione stile Strava**
+**Fase 7 — Condivisione stile Strava** *(fatta)*
 DoD: immagine riepilogo sessione generata e condivisibile via `Intent.ACTION_SEND`.
 
-**Fase 8 — Impostazioni, tema, donazioni**
-DoD: toggle tema manuale; voce "Offrimi un caffè" apre l'URL Buy Me a Coffee in Custom Tabs.
+**Fase 8 — Impostazioni, tema, donazioni** *(fatta)*
+DoD: voce "Offrimi un caffè" apre l'URL Buy Me a Coffee in Custom Tabs (fallback
+ACTION_VIEW; **URL ancora segnaposto**, vedi TODO in `ui/settings/DonationLauncher.kt`);
+sezione Info con versione, nota privacy e licenze. Il toggle tema non serve più:
+dalla Fase 10 l'app è light-only.
 
 **Fase 10 — UX allenamento + palette viola** *(fatta)*
 DoD: salvataggio routine riporta ad "Allena" (la routine e' un template: le sue serie non
@@ -360,15 +363,21 @@ di dettaglio e rendevano la Dashboard irraggiungibile); condivisione come sticke
 Instagram (`com.instagram.share.ADD_TO_STORY`) con fallback al chooser di sistema; Impostazioni
 con "Cancella storico allenamenti" a conferma.
 
-**Fase 9 — Rifinitura**
-DoD: ProGuard/R8 attivo, avvio a freddo ottimizzato, coerenza visiva su tutte le schermate, edge case gestiti (permessi galleria, app playlist assente).
+**Fase 9 — Rifinitura** *(fatta)*
+DoD: R8 + shrinkResources attivi sulla release (20,5 MB → 2,2 MB), regole in
+`app/proguard-rules.pro`; release firmata con la chiave di debug finché non esiste un
+keystore di distribuzione; avvio a freddo 592 ms (`am start -W`); edge case gestiti
+(galleria assente e copia file fallita mostrate in `CreateExerciseScreen`,
+`launchPlaylist` ritorna `false` senza app né browser e l'allenamento mostra un toast,
+seed fallito non abbatte l'avvio).
 
 ---
 
 ## Asset da preparare TU prima di lanciare Claude Code (per non farlo bloccare a metà)
 
 - [x] Nome definitivo e package name → **Eina**, `com.<org>.eina`
-- [ ] URL Buy Me a Coffee
+- [ ] URL Buy Me a Coffee → in codice c'è il segnaposto `https://buymeacoffee.com/eina`
+  (`DONATION_URL` in `ui/settings/DonationLauncher.kt`): sostituiscilo con quello vero.
 - [x] Dataset esercizi arricchito → **pronto**: `seed/eina_exercises_seed.json` (873 esercizi convertiti da free-exercise-db con `weightType`/`description`/`loggingInstructions`). Copialo in `app/src/main/assets/seed/exercises.json`. **274 esercizi hanno `needsReview: true`** (classificazione `weightType` incerta, o categoria "stretching" ambigua per un tracker di forza) — filtra su questo campo per una revisione manuale mirata, non serve rivederli tutti. Le `description` sono in inglese (lingua originale del dataset): per la v1 puoi tenerle così, una traduzione IT è un'iterazione successiva non bloccante.
 - [x] Icona app → **fatta**: marchio Eina (tessera arancio + tre barre bianche) come adaptive icon in `res/drawable/ic_launcher_foreground.xml`, stesso segno disegnato in `ui/share/ShareCard.kt`
 - [ ] **Decisione sulle immagini esercizio**: ogni esercizio ha in media 2 frame JPG da ~38KB l'uno → bundlare tutte le immagini di libreria (~1700 file) costerebbe ~65-70MB di APK, in conflitto col principio "leggera". Opzioni da decidere prima della Fase 3: (a) bundlare solo la prima immagine per esercizio (~33MB), (b) bundlare un sottoinsieme curato (es. i 150-200 esercizi più comuni) e usare Play Asset Delivery per il resto, (c) ricomprimere/ridimensionare le immagini prima del bundling. Lo script di conversione salva comunque tutti i path in `mediaFrames` per ogni esercizio, così qualunque opzione si scelga i dati sono già pronti.
