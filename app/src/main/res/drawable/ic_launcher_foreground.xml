@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- TODO: placeholder — sostituire con icona definitiva -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M34,44 L34,64 L44,64 L44,58 L64,58 L64,64 L74,64 L74,44 L64,44 L64,50 L44,50 L44,44 Z" />
+</vector>
