@@ -37,6 +37,8 @@ android {
 
     buildFeatures {
         compose = true
+        // Serve alla schermata Info per mostrare la versione installata.
+        buildConfig = true
     }
 
     packaging {

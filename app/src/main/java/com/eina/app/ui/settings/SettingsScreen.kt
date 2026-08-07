@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Coffee
 import androidx.compose.material.icons.outlined.DeleteSweep
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
@@ -21,7 +22,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.eina.app.BuildConfig
 import com.eina.app.ui.components.DestructiveRed
 import com.eina.app.ui.components.IslandCard
 import com.eina.app.ui.components.IslandScreen
@@ -40,6 +43,7 @@ fun SettingsScreen(
     viewModel: SettingsViewModel = koinViewModel()
 ) {
     val island = EinaTheme.island
+    val context = LocalContext.current
     var confirmClear by remember { mutableStateOf(false) }
     val haptics by viewModel.hapticsEnabled.collectAsState()
     val sound by viewModel.timerSoundEnabled.collectAsState()
@@ -83,6 +87,23 @@ fun SettingsScreen(
             )
         }
 
+        SectionHeader(title = "Sostieni Eina")
+
+        IslandCard(modifier = Modifier.fillMaxWidth()) {
+            Text("Offrimi un caffe'", style = MaterialTheme.typography.titleSmall)
+            Text(
+                "Eina resta gratuita e senza account: la donazione e' volontaria e non sblocca nulla.",
+                style = MaterialTheme.typography.bodySmall,
+                color = island.textSecondary
+            )
+            IslandSecondaryButton(
+                text = "Offrimi un caffe'",
+                icon = Icons.Outlined.Coffee,
+                onClick = { launchDonationPage(context) },
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+
         SectionHeader(title = "Dati")
 
         IslandCard(modifier = Modifier.fillMaxWidth()) {
@@ -99,6 +120,18 @@ fun SettingsScreen(
                 contentColor = DestructiveRed,
                 modifier = Modifier.fillMaxWidth()
             )
+        }
+
+        SectionHeader(title = "Info")
+
+        IslandCard(modifier = Modifier.fillMaxWidth()) {
+            InfoRow("Versione", BuildConfig.VERSION_NAME)
+            InfoRow("Privacy", "Nessun account, nessun server, nessun dato che lascia il telefono.")
+            InfoRow(
+                "Libreria esercizi",
+                "Dati da free-exercise-db (Unlicense), adattati per Eina."
+            )
+            InfoRow("Icone", "Material Symbols (Apache License 2.0).")
         }
     }
 
@@ -123,6 +156,15 @@ fun SettingsScreen(
                 }
             }
         )
+    }
+}
+
+@Composable
+private fun InfoRow(label: String, value: String) {
+    val island = EinaTheme.island
+    Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Text(label, style = MaterialTheme.typography.titleSmall)
+        Text(value, style = MaterialTheme.typography.bodySmall, color = island.textSecondary)
     }
 }
 
