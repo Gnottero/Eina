@@ -42,9 +42,10 @@ Corner radius bottoni:   12dp
 Spacing scale:           4 / 8 / 12 / 16 / 24 / 32 dp
 Font:                    Inter (Regular / Medium / SemiBold / Bold)
 
-Light — background:      #F7F7F8   surface/card: #FFFFFF
-Dark  — background:      #1C1C1E   surface/card: #2C2C2E
-Accento primario:        #FF6A3D   (arancio energico, CTA e stati attivi)
+App SOLO in light mode (deciso in Fase 10): niente schema scuro, niente isSystemInDarkTheme.
+Background:              #F6F5FB   surface/card: #FFFFFF
+Accento primario:        #7A5AF8   (viola, CTA e stati attivi)
+Accento scuro / soft:    #5B3FD6 / #EDE8FF
 
 Colori per categoria muscolare (badge + body diagram):
   Petto/Push:    #FF6B6B
@@ -73,10 +74,8 @@ Gutter laterale schermo:  24dp   (Spacing.xl)
 Spazio fra isole:         12dp   (Spacing.md)
 Ombra isola:              8-18dp, alpha 0.10-0.12 light / 0.6 dark (Modifier.islandShadow)
 
-Superficie incassata (campi, chip inattive, tracce grafico):
-  Light #ECEDF0   Dark #232325
-Testo secondario:
-  Light #8A8A8E   Dark #98989E
+Superficie incassata (campi, chip inattive, tracce grafico): #EFEDF7
+Testo secondario: #7C7A93   Bordo tenue: #E7E4F3
 ```
 
 Regole:
@@ -313,6 +312,14 @@ DoD: immagine riepilogo sessione generata e condivisibile via `Intent.ACTION_SEN
 
 **Fase 8 — Impostazioni, tema, donazioni**
 DoD: toggle tema manuale; voce "Offrimi un caffè" apre l'URL Buy Me a Coffee in Custom Tabs.
+
+**Fase 10 — UX allenamento + palette viola** *(fatta)*
+DoD: salvataggio routine riporta ad "Allena" (la routine e' un template: le sue serie non
+partono compilate ne' segnate come svolte, i target restano segnaposto grigi); sessione in
+stile Hevy con header durata/volume/serie + barra di progresso, card esercizio compatta con
+menu unico e tabella serie/precedente/kg/rip/check; recupero modificabile durante
+l'allenamento; palette light-only bianco+viola; fine timer con suono e vibrazione; schermata
+Impostazioni con toggle per suono, vibrazione timer e feedback aptico.
 
 **Fase 9 — Rifinitura**
 DoD: ProGuard/R8 attivo, avvio a freddo ottimizzato, coerenza visiva su tutte le schermate, edge case gestiti (permessi galleria, app playlist assente).
