@@ -2,26 +2,20 @@ package com.eina.app.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val LightBackground = Color(0xFFF7F7F8)
+// Palette definitiva: app solo in light mode, bianco + viola.
+// I neutri hanno una punta di viola cosi' le isole bianche staccano dal background senza bordi.
+val LightBackground = Color(0xFFF6F5FB)
 val LightSurface = Color(0xFFFFFFFF)
-val DarkBackground = Color(0xFF1C1C1E)
-val DarkSurface = Color(0xFF2C2C2E)
 
-val AccentPrimary = Color(0xFFFF6A3D)
+/** Accento primario: viola. CTA, stati attivi, valori in evidenza. */
+val AccentPrimary = Color(0xFF7A5AF8)
+val AccentPrimaryDark = Color(0xFF5B3FD6)
+val AccentPrimarySoft = Color(0xFFEDE8FF)
 
-// --- Stile "island": superfici incassate, testo secondario e bordi appena percettibili.
-// DECISIONE: non introduce nuovi colori d'accento, solo neutri derivati dai token di CLAUDE.md,
-// cosi' le isole bianche restano leggibili sul background chiaro senza cambiare palette.
-val LightSurfaceSunken = Color(0xFFECEDF0)
-val LightTextSecondary = Color(0xFF8A8A8E)
-val LightOutlineSubtle = Color(0xFFE6E6EA)
-
-val DarkSurfaceSunken = Color(0xFF232325)
-val DarkTextSecondary = Color(0xFF98989E)
-val DarkOutlineSubtle = Color(0xFF3A3A3C)
-
-val LightOnBackground = Color(0xFF1C1C1E)
-val DarkOnBackground = Color(0xFFF7F7F8)
+val LightSurfaceSunken = Color(0xFFEFEDF7)
+val LightTextSecondary = Color(0xFF7C7A93)
+val LightOutlineSubtle = Color(0xFFE7E4F3)
+val LightOnBackground = Color(0xFF1B1830)
 
 object MuscleGroupColors {
     val ChestPush = Color(0xFFFF6B6B)

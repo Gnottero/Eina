@@ -1,8 +1,6 @@
 package com.eina.app.ui.theme
 
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -11,9 +9,15 @@ import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 
+// DECISIONE: l'app e' solo in light mode (bianco + viola). Niente schema scuro e niente
+// aggancio a isSystemInDarkTheme: il tema scuro dell'OS non deve cambiare la palette.
 private val LightColors = lightColorScheme(
     primary = AccentPrimary,
     onPrimary = Color.White,
+    primaryContainer = AccentPrimarySoft,
+    onPrimaryContainer = AccentPrimaryDark,
+    secondary = AccentPrimaryDark,
+    onSecondary = Color.White,
     background = LightBackground,
     surface = LightSurface,
     surfaceVariant = LightSurfaceSunken,
@@ -22,19 +26,6 @@ private val LightColors = lightColorScheme(
     outlineVariant = LightOutlineSubtle,
     onBackground = LightOnBackground,
     onSurface = LightOnBackground
-)
-
-private val DarkColors = darkColorScheme(
-    primary = AccentPrimary,
-    onPrimary = Color.White,
-    background = DarkBackground,
-    surface = DarkSurface,
-    surfaceVariant = DarkSurfaceSunken,
-    onSurfaceVariant = DarkTextSecondary,
-    outline = DarkOutlineSubtle,
-    outlineVariant = DarkOutlineSubtle,
-    onBackground = DarkOnBackground,
-    onSurface = DarkOnBackground
 )
 
 /**
@@ -54,16 +45,8 @@ private val LightIslandColors = EinaIslandColors(
     sunken = LightSurfaceSunken,
     textSecondary = LightTextSecondary,
     outlineSubtle = LightOutlineSubtle,
-    shadow = Color(0xFF1C1C1E),
+    shadow = Color(0xFF2B2050),
     isDark = false
-)
-
-private val DarkIslandColors = EinaIslandColors(
-    sunken = DarkSurfaceSunken,
-    textSecondary = DarkTextSecondary,
-    outlineSubtle = DarkOutlineSubtle,
-    shadow = Color(0xFF000000),
-    isDark = true
 )
 
 val LocalEinaIslandColors = staticCompositionLocalOf { LightIslandColors }
@@ -75,15 +58,10 @@ object EinaTheme {
 }
 
 @Composable
-fun EinaTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    content: @Composable () -> Unit
-) {
-    val colorScheme = if (darkTheme) DarkColors else LightColors
-    val islandColors = if (darkTheme) DarkIslandColors else LightIslandColors
-    CompositionLocalProvider(LocalEinaIslandColors provides islandColors) {
+fun EinaTheme(content: @Composable () -> Unit) {
+    CompositionLocalProvider(LocalEinaIslandColors provides LightIslandColors) {
         MaterialTheme(
-            colorScheme = colorScheme,
+            colorScheme = LightColors,
             typography = EinaTypography,
             shapes = EinaShapes,
             content = content
