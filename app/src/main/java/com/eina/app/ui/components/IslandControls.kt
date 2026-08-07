@@ -27,6 +27,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.eina.app.ui.theme.EinaTheme
 import com.eina.app.ui.theme.PillShape
@@ -55,13 +56,20 @@ fun IslandButton(
             disabledContainerColor = EinaTheme.island.sunken,
             disabledContentColor = EinaTheme.island.textSecondary
         ),
-        contentPadding = PaddingValues(horizontal = Spacing.xl, vertical = Spacing.md)
+        contentPadding = PaddingValues(horizontal = Spacing.lg, vertical = Spacing.md)
     ) {
         if (icon != null) {
             Icon(icon, contentDescription = null, modifier = Modifier.size(18.dp))
             Box(Modifier.size(Spacing.sm))
         }
-        Text(text, style = MaterialTheme.typography.titleMedium)
+        // Niente a capo: nei bottoni affiancati (weight 1f) l'etichetta verrebbe spezzata.
+        Text(
+            text = text,
+            style = MaterialTheme.typography.titleMedium,
+            maxLines = 1,
+            softWrap = false,
+            overflow = TextOverflow.Ellipsis
+        )
     }
 }
 
@@ -155,18 +163,21 @@ fun IslandTextField(
 fun IslandNumberField(
     value: String,
     onValueChange: (String) -> Unit,
-    label: String,
+    label: String?,
     modifier: Modifier = Modifier,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default
 ) {
     val island = EinaTheme.island
     Column(modifier = modifier) {
-        Text(
-            text = label.uppercase(),
-            style = MaterialTheme.typography.labelSmall,
-            color = island.textSecondary,
-            modifier = Modifier.padding(start = Spacing.sm, bottom = 2.dp)
-        )
+        // Etichetta opzionale: in una pila di righe identiche si stampa solo sulla prima.
+        if (label != null) {
+            Text(
+                text = label.uppercase(),
+                style = MaterialTheme.typography.labelSmall,
+                color = island.textSecondary,
+                modifier = Modifier.padding(start = Spacing.sm, bottom = 2.dp)
+            )
+        }
         androidx.compose.foundation.text.BasicTextField(
             value = value,
             onValueChange = onValueChange,

@@ -25,7 +25,7 @@ import com.eina.app.ui.theme.Spacing
 
 /** Spazio da lasciare in fondo al contenuto perche' la nav flottante non copra l'ultima isola. */
 @Composable
-fun islandBottomSpace(extra: Dp = Spacing.lg): Dp =
+fun islandBottomSpace(extra: Dp = Spacing.xl): Dp =
     IslandNavBarHeight + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + extra
 
 /**

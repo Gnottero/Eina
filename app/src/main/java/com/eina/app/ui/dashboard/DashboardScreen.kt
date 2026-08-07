@@ -52,7 +52,7 @@ fun DashboardScreen(
             horizontalArrangement = Arrangement.spacedBy(Spacing.md)
         ) {
             StatTile(
-                label = "Questa settimana",
+                label = "Settimana",
                 value = "–",
                 unit = "sessioni",
                 icon = Icons.Outlined.CalendarMonth,

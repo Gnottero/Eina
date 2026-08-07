@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -40,7 +41,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.eina.app.data.db.ExerciseEntity
 import com.eina.app.ui.components.BottomTimerBar
-import com.eina.app.ui.components.EinaBadge
 import com.eina.app.ui.components.IslandButton
 import com.eina.app.ui.components.IslandCard
 import com.eina.app.ui.components.IslandEmptyState
@@ -51,6 +51,7 @@ import com.eina.app.ui.components.ScreenHeader
 import com.eina.app.ui.theme.AccentPrimary
 import com.eina.app.ui.theme.EinaTheme
 import com.eina.app.ui.theme.IslandShape
+import com.eina.app.ui.theme.PillShape
 import com.eina.app.ui.theme.Spacing
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -76,7 +77,7 @@ fun ActiveWorkoutScreen(
         ) {
             ScreenHeader(
                 title = "Allenamento",
-                subtitle = "${state.exercises.size} esercizi in sessione",
+                subtitle = if (state.exercises.size == 1) "1 esercizio in sessione" else "${state.exercises.size} esercizi in sessione",
                 trailing = {
                     IslandButton(
                         text = "Termina",
@@ -222,9 +223,10 @@ private fun ExerciseCard(
             )
         }
 
-        exercise.sets.forEach { set ->
+        exercise.sets.forEachIndexed { index, set ->
             SetRow(
                 set = set,
+                showLabels = index == 0,
                 onValuesChange = { reps, weight -> onSetValuesChange(set.id, reps, weight) },
                 onComplete = { onCompleteSet(set.id) },
                 onRemove = { onRemoveSet(set.id) }
@@ -243,6 +245,7 @@ private fun ExerciseCard(
 @Composable
 private fun SetRow(
     set: SessionSetUi,
+    showLabels: Boolean,
     onValuesChange: (Int?, Double?) -> Unit,
     onComplete: () -> Unit,
     onRemove: () -> Unit
@@ -250,44 +253,63 @@ private fun SetRow(
     val island = EinaTheme.island
     val completed = set.completedAt != null
 
+    // Il testo digitato vive nella UI, non nel modello: passando ogni tasto per Double
+    // "52." diventerebbe "52.0" e il decimale successivo sarebbe impossibile da scrivere.
+    var weightText by remember(set.id) { mutableStateOf(set.weight?.toString() ?: "") }
+    var repsText by remember(set.id) { mutableStateOf(set.actualReps?.toString() ?: "") }
+
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.Bottom,
         horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
     ) {
-        Column(
-            modifier = Modifier.size(width = 28.dp, height = 48.dp),
-            verticalArrangement = Arrangement.Bottom
+        // Indice della serie, sostituito dal badge PR quando scatta il record: un badge in piu'
+        // in fondo alla riga stringerebbe i campi numerici fino a tagliare il valore.
+        Box(
+            modifier = Modifier
+                .width(38.dp)
+                .padding(bottom = Spacing.md),
+            contentAlignment = Alignment.CenterStart
         ) {
-            Text(
-                "#${set.setIndex + 1}",
-                style = MaterialTheme.typography.labelLarge,
-                color = island.textSecondary,
-                modifier = Modifier.padding(bottom = Spacing.md)
-            )
+            if (set.isPR) {
+                Text(
+                    text = "PR",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = androidx.compose.ui.graphics.Color.White,
+                    modifier = Modifier
+                        .background(AccentPrimary, PillShape)
+                        .padding(horizontal = 7.dp, vertical = 3.dp)
+                )
+            } else {
+                Text(
+                    "#${set.setIndex + 1}",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = island.textSecondary
+                )
+            }
         }
 
         IslandNumberField(
-            value = set.weight?.toString() ?: "",
-            onValueChange = { text -> onValuesChange(set.actualReps, text.toDoubleOrNull()) },
-            label = "Kg",
+            value = weightText,
+            onValueChange = { text ->
+                weightText = text
+                onValuesChange(repsText.toIntOrNull(), text.toDoubleOrNull())
+            },
+            label = if (showLabels) "Kg" else null,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
             modifier = Modifier.weight(1f)
         )
 
         IslandNumberField(
-            value = set.actualReps?.toString() ?: "",
-            onValueChange = { text -> onValuesChange(text.toIntOrNull(), set.weight) },
-            label = "Rip",
+            value = repsText,
+            onValueChange = { text ->
+                repsText = text
+                onValuesChange(text.toIntOrNull(), weightText.toDoubleOrNull())
+            },
+            label = if (showLabels) "Rip" else null,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             modifier = Modifier.weight(1f)
         )
-
-        if (set.isPR) {
-            Box(modifier = Modifier.padding(bottom = Spacing.md)) {
-                EinaBadge(text = "PR", color = AccentPrimary, filled = true)
-            }
-        }
 
         IslandIconButton(
             icon = Icons.Outlined.Check,

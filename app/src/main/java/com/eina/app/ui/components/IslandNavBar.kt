@@ -29,7 +29,9 @@ import com.eina.app.ui.theme.PillShape
 import com.eina.app.ui.theme.Spacing
 
 /** Altezza riservata alla nav flottante: le schermate la usano come padding di coda del contenuto. */
-val IslandNavBarHeight = 76.dp
+// Misurata sul layout reale: 12dp di margine verticale + 8dp di padding interno + 46dp di voce,
+// per lato. Sottostimarla fa finire l'ultima isola sotto la nav.
+val IslandNavBarHeight = 92.dp
 
 data class IslandNavItem(
     val label: String,
