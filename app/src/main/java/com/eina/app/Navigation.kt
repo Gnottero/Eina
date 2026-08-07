@@ -23,6 +23,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.eina.app.ui.dashboard.DashboardScreen
+import com.eina.app.ui.library.ExerciseDetailScreen
 import com.eina.app.ui.library.LibraryScreen
 import com.eina.app.ui.progress.ProgressScreen
 import com.eina.app.ui.workout.ActiveWorkoutScreen
@@ -95,7 +96,18 @@ fun EinaNavHost() {
                     }
                 )
             }
-            composable(EinaDestination.Library.route) { LibraryScreen() }
+            composable(EinaDestination.Library.route) {
+                LibraryScreen(onExerciseClick = { exerciseId ->
+                    navController.navigate("library/exercise/$exerciseId")
+                })
+            }
+            composable(
+                route = "library/exercise/{exerciseId}",
+                arguments = listOf(navArgument("exerciseId") { type = NavType.LongType })
+            ) { backStackEntry ->
+                val exerciseId = backStackEntry.arguments?.getLong("exerciseId") ?: return@composable
+                ExerciseDetailScreen(exerciseId = exerciseId)
+            }
             composable(EinaDestination.Progress.route) { ProgressScreen() }
         }
     }

@@ -3,6 +3,9 @@ package com.eina.app.di
 import androidx.room.Room
 import com.eina.app.data.db.EinaDatabase
 import com.eina.app.data.repository.WorkoutRepository
+import com.eina.app.data.seed.ExerciseSeeder
+import com.eina.app.ui.library.ExerciseDetailViewModel
+import com.eina.app.ui.library.LibraryViewModel
 import com.eina.app.ui.workout.ActiveWorkoutViewModel
 import com.eina.app.ui.workout.WorkoutViewModel
 import org.koin.androidx.viewmodel.dsl.viewModel
@@ -31,6 +34,10 @@ val appModule = module {
         )
     }
 
+    single { ExerciseSeeder(get(), get()) }
+
     viewModel { WorkoutViewModel(get()) }
     viewModel { (sessionId: Long) -> ActiveWorkoutViewModel(get(), sessionId) }
+    viewModel { LibraryViewModel(get()) }
+    viewModel { (exerciseId: Long) -> ExerciseDetailViewModel(get(), exerciseId) }
 }
