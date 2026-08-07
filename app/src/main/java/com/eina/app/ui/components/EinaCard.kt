@@ -1,32 +1,26 @@
 package com.eina.app.ui.components
 
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
-import com.eina.app.ui.theme.CardCornerRadius
 import com.eina.app.ui.theme.Spacing
 
+/**
+ * Card standard dell'app. Alias sottile di [IslandCard]: mantiene il nome usato dalle schermate
+ * esistenti, ma eredita superficie flottante, angoli morbidi e ombra dello stile island.
+ */
 @Composable
 fun EinaCard(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(Spacing.lg),
-    content: @Composable () -> Unit
+    onClick: (() -> Unit)? = null,
+    content: @Composable ColumnScope.() -> Unit
 ) {
-    Card(
+    IslandCard(
         modifier = modifier,
-        shape = RoundedCornerShape(CardCornerRadius),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-    ) {
-        Column(modifier = Modifier.padding(contentPadding)) {
-            content()
-        }
-    }
+        contentPadding = contentPadding,
+        onClick = onClick,
+        content = content
+    )
 }

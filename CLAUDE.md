@@ -58,6 +58,41 @@ Colori per categoria muscolare (badge + body diagram):
 Icone: Phosphor Icons o Material Symbols (outline). Mai SF Symbols.
 ```
 
+### Stile "island" (adottato dopo la Fase 5 — vale per tutte le schermate, nuove e vecchie)
+
+La UI e' costruita su contenitori flottanti ("isole") su background pieno: niente barre ancorate
+ai bordi, niente divider, niente elevation Material di default. La separazione la fa l'ombra
+morbida, non il bordo.
+
+```
+Corner radius isola:      28dp   (IslandShape)
+Corner radius tile:       24dp   (TileShape)
+Corner radius card:       20dp   (CardShape, legacy)
+Pill:                     50%    (PillShape — bottoni, chip, nav)
+Gutter laterale schermo:  24dp   (Spacing.xl)
+Spazio fra isole:         12dp   (Spacing.md)
+Ombra isola:              8-18dp, alpha 0.10-0.12 light / 0.6 dark (Modifier.islandShadow)
+
+Superficie incassata (campi, chip inattive, tracce grafico):
+  Light #ECEDF0   Dark #232325
+Testo secondario:
+  Light #8A8A8E   Dark #98989E
+```
+
+Regole:
+- Ogni schermata usa `IslandScreen` (scroll) o `IslandListScreen` (liste lunghe) — danno background,
+  inset di sistema e spazio di coda per la nav flottante.
+- Intestazione: `ScreenHeader` (titolo grande + sottotitolo, back tondo a sinistra, azione tonda a destra).
+  Niente `TopAppBar`.
+- Navigazione: `IslandNavBar`, pill flottante che non tocca i bordi; la voce attiva si espande con
+  etichetta. Visibile solo sui 4 tab principali.
+- Timer di recupero: isola flottante sopra il contenuto (`BottomTimerBar`), con barra di avanzamento.
+- Controlli: `IslandButton` / `IslandSecondaryButton` / `IslandChip` / `IslandTextField` /
+  `IslandNumberField`. Non usare Button, FilterChip, OutlinedTextField Material di default.
+- Metriche: `StatTile` (bento, icona + etichetta + numero grande) e `MiniBarChart` (Canvas puro).
+- Stati vuoti: `IslandEmptyState`, mai numeri finti come segnaposto.
+- FAB Material: sostituito da `IslandIconButton` nell'header.
+
 ---
 
 ## Struttura pacchetti
@@ -264,6 +299,11 @@ DoD: form crea esercizio con GIF da galleria salvata in storage interno; l'eserc
 
 **Fase 5 — Routine + playlist**
 DoD: editor routine con set/reps/peso/recupero target; bottone "Riproduci" avvia il deep link come da sezione sopra.
+
+**Fase 5b — Restyle UI/UX "island"** *(fatta)*
+DoD: design system island in `ui/theme` + `ui/components`; tutte le schermate delle Fasi 0-5
+riscritte sui nuovi componenti; nav flottante a pill; Dashboard e Progressi con layout bento e
+stati vuoti (dati reali in Fase 6).
 
 **Fase 6 — Dashboard e progressi**
 DoD: dashboard storico allenamenti; grafici volume/PR; heatmap stile GitHub; schermata peso corporeo che alimenta `bodyweightSnapshotKg` ai nuovi set.

@@ -1,24 +1,20 @@
 package com.eina.app.ui.routine
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.PlayArrow
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -29,9 +25,20 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.dp
 import com.eina.app.data.db.PlaylistType
 import com.eina.app.data.db.RoutineExerciseEntity
-import com.eina.app.ui.components.EinaCard
+import com.eina.app.ui.components.IslandButton
+import com.eina.app.ui.components.IslandCard
+import com.eina.app.ui.components.IslandEmptyState
+import com.eina.app.ui.components.IslandIconButton
+import com.eina.app.ui.components.IslandNumberField
+import com.eina.app.ui.components.IslandScreen
+import com.eina.app.ui.components.IslandSecondaryButton
+import com.eina.app.ui.components.IslandTextField
+import com.eina.app.ui.components.ScreenHeader
+import com.eina.app.ui.components.SectionHeader
+import com.eina.app.ui.theme.EinaTheme
 import com.eina.app.ui.theme.Spacing
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -42,6 +49,7 @@ fun RoutineEditorScreen(
     onPickExercise: () -> Unit,
     pickedExerciseId: Long? = null,
     onExercisePickedConsumed: () -> Unit = {},
+    onBack: (() -> Unit)? = null,
     viewModel: RoutineEditorViewModel = koinViewModel(parameters = { parametersOf(routineId) })
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -56,70 +64,88 @@ fun RoutineEditorScreen(
         }
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .verticalScroll(rememberScrollState())
-            .padding(Spacing.lg),
+    IslandScreen(
+        header = {
+            ScreenHeader(
+                title = if (routineId == 0L) "Nuova routine" else "Routine",
+                subtitle = uiState.name.takeIf { it.isNotBlank() },
+                onBack = onBack
+            )
+        },
         verticalArrangement = Arrangement.spacedBy(Spacing.md)
     ) {
-        Text("Routine", style = MaterialTheme.typography.headlineSmall)
-
-        OutlinedTextField(
-            value = uiState.name,
-            onValueChange = viewModel::onNameChange,
-            label = { Text("Nome routine") },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        OutlinedTextField(
-            value = uiState.notes,
-            onValueChange = viewModel::onNotesChange,
-            label = { Text("Note (opzionale)") },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        PlaylistTypeDropdown(selected = uiState.linkedPlaylistType, onSelected = viewModel::onPlaylistTypeChange)
-
-        OutlinedTextField(
-            value = uiState.linkedPlaylistUri,
-            onValueChange = viewModel::onPlaylistUriChange,
-            label = { Text("Link playlist (opzionale)") },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        if (uiState.linkedPlaylistType != null && uiState.linkedPlaylistUri.isNotBlank()) {
-            OutlinedButton(onClick = {
-                launchPlaylist(context, uiState.linkedPlaylistUri, uiState.linkedPlaylistType!!)
-            }) {
-                Text("Riproduci")
-            }
-        }
-
-        Button(onClick = viewModel::save, modifier = Modifier.fillMaxWidth()) {
-            Text("Salva routine")
-        }
-
-        HorizontalDivider()
-
-        Text("Esercizi", style = MaterialTheme.typography.titleMedium)
-
-        routineExercises.forEach { routineExercise ->
-            RoutineExerciseRow(
-                routineExercise = routineExercise,
-                exerciseName = exerciseNames[routineExercise.exerciseId] ?: "...",
-                onUpdate = { sets, reps, weight, rest ->
-                    viewModel.updateTargets(routineExercise, sets, reps, weight, rest)
-                },
-                onRemove = { viewModel.removeExercise(routineExercise) }
+        IslandCard(modifier = Modifier.fillMaxWidth()) {
+            IslandTextField(
+                value = uiState.name,
+                onValueChange = viewModel::onNameChange,
+                label = "Nome routine",
+                modifier = Modifier.fillMaxWidth()
+            )
+            IslandTextField(
+                value = uiState.notes,
+                onValueChange = viewModel::onNotesChange,
+                label = "Note (opzionale)",
+                singleLine = false,
+                modifier = Modifier.fillMaxWidth()
             )
         }
 
-        OutlinedButton(onClick = onPickExercise, modifier = Modifier.fillMaxWidth()) {
-            Text("Aggiungi esercizio")
+        IslandCard(modifier = Modifier.fillMaxWidth()) {
+            Text("Playlist", style = MaterialTheme.typography.titleMedium)
+            PlaylistTypeDropdown(
+                selected = uiState.linkedPlaylistType,
+                onSelected = viewModel::onPlaylistTypeChange
+            )
+            IslandTextField(
+                value = uiState.linkedPlaylistUri,
+                onValueChange = viewModel::onPlaylistUriChange,
+                label = "Link playlist (opzionale)",
+                modifier = Modifier.fillMaxWidth()
+            )
+            if (uiState.linkedPlaylistType != null && uiState.linkedPlaylistUri.isNotBlank()) {
+                IslandSecondaryButton(
+                    text = "Riproduci",
+                    icon = Icons.Outlined.PlayArrow,
+                    onClick = {
+                        launchPlaylist(context, uiState.linkedPlaylistUri, uiState.linkedPlaylistType!!)
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
         }
+
+        SectionHeader(title = "Esercizi")
+
+        if (routineExercises.isEmpty()) {
+            IslandEmptyState(
+                title = "Nessun esercizio",
+                description = "Aggiungi esercizi e imposta serie, ripetizioni, peso e recupero target."
+            )
+        } else {
+            routineExercises.forEach { routineExercise ->
+                RoutineExerciseRow(
+                    routineExercise = routineExercise,
+                    exerciseName = exerciseNames[routineExercise.exerciseId] ?: "...",
+                    onUpdate = { sets, reps, weight, rest ->
+                        viewModel.updateTargets(routineExercise, sets, reps, weight, rest)
+                    },
+                    onRemove = { viewModel.removeExercise(routineExercise) }
+                )
+            }
+        }
+
+        IslandSecondaryButton(
+            text = "Aggiungi esercizio",
+            icon = Icons.Outlined.Add,
+            onClick = onPickExercise,
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        IslandButton(
+            text = "Salva routine",
+            onClick = viewModel::save,
+            modifier = Modifier.fillMaxWidth()
+        )
     }
 }
 
@@ -144,47 +170,54 @@ private fun RoutineExerciseRow(
         )
     }
 
-    EinaCard(modifier = Modifier.fillMaxWidth()) {
-        Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(exerciseName, style = MaterialTheme.typography.titleSmall)
-                TextButton(onClick = onRemove) { Text("Rimuovi") }
-            }
-            Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
-                OutlinedTextField(
-                    value = sets,
-                    onValueChange = { sets = it; commit() },
-                    label = { Text("Serie") },
-                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.weight(1f)
-                )
-                OutlinedTextField(
-                    value = reps,
-                    onValueChange = { reps = it; commit() },
-                    label = { Text("Reps") },
-                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.weight(1f)
-                )
-            }
-            Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
-                OutlinedTextField(
-                    value = weight,
-                    onValueChange = { weight = it; commit() },
-                    label = { Text("Peso kg") },
-                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    modifier = Modifier.weight(1f)
-                )
-                OutlinedTextField(
-                    value = rest,
-                    onValueChange = { rest = it; commit() },
-                    label = { Text("Recupero s") },
-                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.weight(1f)
-                )
-            }
+    IslandCard(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
+            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+        ) {
+            Text(
+                exerciseName,
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.weight(1f)
+            )
+            IslandIconButton(
+                icon = Icons.Outlined.Delete,
+                contentDescription = "Rimuovi esercizio",
+                onClick = onRemove,
+                containerColor = EinaTheme.island.sunken,
+                size = 38.dp
+            )
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+            IslandNumberField(
+                value = sets,
+                onValueChange = { sets = it; commit() },
+                label = "Serie",
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                modifier = Modifier.weight(1f)
+            )
+            IslandNumberField(
+                value = reps,
+                onValueChange = { reps = it; commit() },
+                label = "Reps",
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                modifier = Modifier.weight(1f)
+            )
+            IslandNumberField(
+                value = weight,
+                onValueChange = { weight = it; commit() },
+                label = "Kg",
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                modifier = Modifier.weight(1f)
+            )
+            IslandNumberField(
+                value = rest,
+                onValueChange = { rest = it; commit() },
+                label = "Rec s",
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                modifier = Modifier.weight(1f)
+            )
         }
     }
 }
@@ -199,11 +232,11 @@ private fun PlaylistTypeDropdown(selected: PlaylistType?, onSelected: (PlaylistT
         null -> "Nessuna playlist"
     }
     ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = it }) {
-        OutlinedTextField(
+        IslandTextField(
             value = label,
             onValueChange = {},
             readOnly = true,
-            label = { Text("Playlist") },
+            label = "Servizio",
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
             modifier = Modifier
                 .fillMaxWidth()

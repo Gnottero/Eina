@@ -11,10 +11,23 @@ import androidx.compose.ui.unit.sp
 val EinaFontFamily = FontFamily.Default
 
 val EinaTypography = Typography(
+    displaySmall = TextStyle(
+        fontFamily = EinaFontFamily,
+        fontWeight = FontWeight.Bold,
+        fontSize = 34.sp,
+        letterSpacing = (-0.5).sp
+    ),
     headlineMedium = TextStyle(
         fontFamily = EinaFontFamily,
         fontWeight = FontWeight.Bold,
-        fontSize = 28.sp
+        fontSize = 28.sp,
+        letterSpacing = (-0.4).sp
+    ),
+    headlineSmall = TextStyle(
+        fontFamily = EinaFontFamily,
+        fontWeight = FontWeight.Bold,
+        fontSize = 24.sp,
+        letterSpacing = (-0.3).sp
     ),
     titleLarge = TextStyle(
         fontFamily = EinaFontFamily,
@@ -23,8 +36,13 @@ val EinaTypography = Typography(
     ),
     titleMedium = TextStyle(
         fontFamily = EinaFontFamily,
-        fontWeight = FontWeight.Medium,
+        fontWeight = FontWeight.SemiBold,
         fontSize = 16.sp
+    ),
+    titleSmall = TextStyle(
+        fontFamily = EinaFontFamily,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 14.sp
     ),
     bodyLarge = TextStyle(
         fontFamily = EinaFontFamily,
@@ -36,9 +54,26 @@ val EinaTypography = Typography(
         fontWeight = FontWeight.Normal,
         fontSize = 14.sp
     ),
+    bodySmall = TextStyle(
+        fontFamily = EinaFontFamily,
+        fontWeight = FontWeight.Normal,
+        fontSize = 13.sp
+    ),
     labelLarge = TextStyle(
         fontFamily = EinaFontFamily,
         fontWeight = FontWeight.SemiBold,
         fontSize = 14.sp
+    ),
+    labelMedium = TextStyle(
+        fontFamily = EinaFontFamily,
+        fontWeight = FontWeight.Medium,
+        fontSize = 12.sp,
+        letterSpacing = 0.2.sp
+    ),
+    labelSmall = TextStyle(
+        fontFamily = EinaFontFamily,
+        fontWeight = FontWeight.Medium,
+        fontSize = 11.sp,
+        letterSpacing = 0.3.sp
     )
 )

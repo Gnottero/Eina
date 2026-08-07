@@ -1,17 +1,22 @@
 package com.eina.app
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.DateRange
-import androidx.compose.material.icons.outlined.FavoriteBorder
+import androidx.compose.material.icons.outlined.BarChart
 import androidx.compose.material.icons.outlined.FitnessCenter
 import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material3.Icon
-import androidx.compose.material3.NavigationBar
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.Scaffold
+import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavDestination.Companion.hierarchy
@@ -22,6 +27,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.eina.app.ui.components.IslandNavBar
+import com.eina.app.ui.components.IslandNavItem
 import com.eina.app.ui.dashboard.DashboardScreen
 import com.eina.app.ui.library.CreateExerciseScreen
 import com.eina.app.ui.library.ExerciseDetailScreen
@@ -30,8 +37,6 @@ import com.eina.app.ui.progress.ProgressScreen
 import com.eina.app.ui.routine.RoutineEditorScreen
 import com.eina.app.ui.workout.ActiveWorkoutScreen
 import com.eina.app.ui.workout.WorkoutScreen
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 
 sealed class EinaDestination(val route: String, val labelRes: Int) {
     data object Dashboard : EinaDestination("dashboard", R.string.nav_dashboard)
@@ -50,39 +55,25 @@ private val bottomNavDestinations = listOf(
 @Composable
 fun EinaNavHost() {
     val navController = rememberNavController()
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentDestination = navBackStackEntry?.destination
 
-    Scaffold(
-        bottomBar = {
-            NavigationBar {
-                val navBackStackEntry by navController.currentBackStackEntryAsState()
-                val currentDestination = navBackStackEntry?.destination
+    // La nav flottante resta solo sui 4 tab principali: nelle schermate di dettaglio
+    // il contenuto usa tutta l'altezza (vedi allenamento in corso, con il suo timer).
+    val showNavBar = bottomNavDestinations.any { destination ->
+        currentDestination?.hierarchy?.any { it.route == destination.route } == true
+    }
 
-                bottomNavDestinations.forEach { destination ->
-                    val selected = currentDestination?.hierarchy?.any { it.route == destination.route } == true
-                    NavigationBarItem(
-                        selected = selected,
-                        onClick = {
-                            navController.navigate(destination.route) {
-                                popUpTo(navController.graph.findStartDestination().id) {
-                                    saveState = true
-                                }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        },
-                        icon = { Icon(iconFor(destination), contentDescription = stringResource(destination.labelRes)) },
-                        label = { androidx.compose.material3.Text(stringResource(destination.labelRes)) }
-                    )
-                }
-            }
-        }
-    ) { innerPadding ->
+    Box(modifier = Modifier.fillMaxSize()) {
         NavHost(
             navController = navController,
-            startDestination = EinaDestination.Dashboard.route,
-            modifier = Modifier.padding(innerPadding)
+            startDestination = EinaDestination.Dashboard.route
         ) {
-            composable(EinaDestination.Dashboard.route) { DashboardScreen() }
+            composable(EinaDestination.Dashboard.route) {
+                DashboardScreen(
+                    onStartWorkoutClick = { navController.navigate(EinaDestination.Workout.route) }
+                )
+            }
             composable(EinaDestination.Workout.route) {
                 WorkoutScreen(
                     onSessionStarted = { sessionId ->
@@ -110,17 +101,20 @@ fun EinaNavHost() {
                     onExercisePickedConsumed = { backStackEntry.savedStateHandle["pickedExerciseId"] = null },
                     onPickExercise = {
                         navController.navigate("routines/edit/$routineId/pick-exercise")
-                    }
+                    },
+                    onBack = { navController.popBackStack() }
                 )
             }
             composable("routines/edit/{routineId}/pick-exercise") {
                 LibraryScreen(
+                    title = "Scegli esercizio",
                     onExerciseClick = { exerciseId ->
                         navController.previousBackStackEntry
                             ?.savedStateHandle
                             ?.set("pickedExerciseId", exerciseId)
                         navController.popBackStack()
-                    }
+                    },
+                    onBack = { navController.popBackStack() }
                 )
             }
             composable(
@@ -146,16 +140,50 @@ fun EinaNavHost() {
                 )
             }
             composable("library/create") {
-                CreateExerciseScreen(onSaved = { navController.popBackStack() })
+                CreateExerciseScreen(
+                    onSaved = { navController.popBackStack() },
+                    onBack = { navController.popBackStack() }
+                )
             }
             composable(
                 route = "library/exercise/{exerciseId}",
                 arguments = listOf(navArgument("exerciseId") { type = NavType.LongType })
             ) { backStackEntry ->
                 val exerciseId = backStackEntry.arguments?.getLong("exerciseId") ?: return@composable
-                ExerciseDetailScreen(exerciseId = exerciseId)
+                ExerciseDetailScreen(
+                    exerciseId = exerciseId,
+                    onBack = { navController.popBackStack() }
+                )
             }
             composable(EinaDestination.Progress.route) { ProgressScreen() }
+        }
+
+        AnimatedVisibility(
+            visible = showNavBar,
+            enter = fadeIn() + slideInVertically { it },
+            exit = fadeOut() + slideOutVertically { it },
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .navigationBarsPadding()
+        ) {
+            IslandNavBar(
+                items = bottomNavDestinations.map { destination ->
+                    IslandNavItem(
+                        label = stringResource(destination.labelRes),
+                        icon = iconFor(destination),
+                        selected = currentDestination?.hierarchy?.any { it.route == destination.route } == true,
+                        onClick = {
+                            navController.navigate(destination.route) {
+                                popUpTo(navController.graph.findStartDestination().id) {
+                                    saveState = true
+                                }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        }
+                    )
+                }
+            )
         }
     }
 }
@@ -163,6 +191,6 @@ fun EinaNavHost() {
 private fun iconFor(destination: EinaDestination) = when (destination) {
     EinaDestination.Dashboard -> Icons.Outlined.Home
     EinaDestination.Workout -> Icons.Outlined.FitnessCenter
-    EinaDestination.Library -> Icons.Outlined.FavoriteBorder
-    EinaDestination.Progress -> Icons.Outlined.DateRange
+    EinaDestination.Library -> Icons.AutoMirrored.Outlined.MenuBook
+    EinaDestination.Progress -> Icons.Outlined.BarChart
 }
