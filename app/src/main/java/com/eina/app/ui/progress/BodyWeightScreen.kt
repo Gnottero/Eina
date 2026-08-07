@@ -31,6 +31,7 @@ import com.eina.app.ui.components.SectionHeader
 import com.eina.app.ui.components.formatDayMonth
 import com.eina.app.ui.components.formatDecimal
 import com.eina.app.ui.components.formatRelativeDay
+import com.eina.app.ui.components.sanitizeWeightInput
 import com.eina.app.ui.theme.EinaTheme
 import com.eina.app.ui.theme.Spacing
 import org.koin.androidx.compose.koinViewModel
@@ -71,7 +72,7 @@ fun BodyWeightScreen(
             ) {
                 IslandNumberField(
                     value = input,
-                    onValueChange = { new -> input = new.filter { it.isDigit() || it == '.' || it == ',' } },
+                    onValueChange = { new -> input = sanitizeWeightInput(input, new) },
                     label = "kg",
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     modifier = Modifier.weight(1f)

@@ -32,6 +32,7 @@ fun RoutineListScreen(
     onStartSession: (Long) -> Unit,
     onEditRoutine: (Long) -> Unit,
     modifier: Modifier = Modifier,
+    startBlocked: Boolean = false,
     viewModel: RoutineListViewModel = koinViewModel()
 ) {
     val routines by viewModel.routines.collectAsState()
@@ -53,7 +54,8 @@ fun RoutineListScreen(
                     // Avviare una routine crea una NUOVA sessione: passare direttamente routine.id
                     // apriva la sessione con quell'id, cioe' un allenamento vecchio gia' svolto.
                     onStart = { viewModel.startSession(routine.id, onStartSession) },
-                    onEdit = { onEditRoutine(routine.id) }
+                    onEdit = { onEditRoutine(routine.id) },
+                    startEnabled = !startBlocked
                 )
             }
         }
@@ -61,7 +63,12 @@ fun RoutineListScreen(
 }
 
 @Composable
-private fun RoutineRow(routine: RoutineEntity, onStart: () -> Unit, onEdit: () -> Unit) {
+private fun RoutineRow(
+    routine: RoutineEntity,
+    onStart: () -> Unit,
+    onEdit: () -> Unit,
+    startEnabled: Boolean
+) {
     val island = EinaTheme.island
     IslandCard(modifier = Modifier.fillMaxWidth()) {
         Text(
@@ -76,6 +83,7 @@ private fun RoutineRow(routine: RoutineEntity, onStart: () -> Unit, onEdit: () -
                 text = "Avvia",
                 icon = Icons.Outlined.PlayArrow,
                 onClick = onStart,
+                enabled = startEnabled,
                 modifier = Modifier.weight(1f)
             )
             IslandSecondaryButton(

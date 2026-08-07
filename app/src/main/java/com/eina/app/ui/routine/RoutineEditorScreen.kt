@@ -38,6 +38,7 @@ import com.eina.app.ui.components.IslandSecondaryButton
 import com.eina.app.ui.components.IslandTextField
 import com.eina.app.ui.components.ScreenHeader
 import com.eina.app.ui.components.SectionHeader
+import com.eina.app.ui.components.sanitizeWeightInput
 import com.eina.app.ui.theme.EinaTheme
 import com.eina.app.ui.theme.Spacing
 import org.koin.androidx.compose.koinViewModel
@@ -207,7 +208,7 @@ private fun RoutineExerciseRow(
             )
             IslandNumberField(
                 value = weight,
-                onValueChange = { weight = it; commit() },
+                onValueChange = { weight = sanitizeWeightInput(weight, it); commit() },
                 label = "Kg",
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 modifier = Modifier.weight(1f)

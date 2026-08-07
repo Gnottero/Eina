@@ -34,8 +34,17 @@ class WorkoutRepository(
 
     suspend fun deleteExercise(exercise: ExerciseEntity) = exerciseDao.delete(exercise)
 
-    suspend fun startSession(): Long =
-        workoutSessionDao.insert(WorkoutSessionEntity(startTime = System.currentTimeMillis()))
+    /** Sessione ancora aperta, se esiste: alimenta il banner "Riprendi" e blocca nuovi avvii. */
+    fun observeActiveSession(): Flow<WorkoutSessionEntity?> = workoutSessionDao.observeActive()
+
+    /**
+     * Avvia un allenamento libero. Se ce n'e' gia' uno in corso non ne crea un secondo:
+     * ritorna quello aperto, cosi' il chiamante ci rientra invece di duplicarlo.
+     */
+    suspend fun startSession(): Long {
+        workoutSessionDao.getActive()?.let { return it.id }
+        return workoutSessionDao.insert(WorkoutSessionEntity(startTime = System.currentTimeMillis()))
+    }
 
     /**
      * Crea sessione legata alla routine e prepara esercizi/set vuoti.
@@ -43,6 +52,7 @@ class WorkoutRepository(
      * scritti in `weight`/`actualReps`, cosi' una serie appena creata non risulta gia' svolta.
      */
     suspend fun startSessionFromRoutine(routineId: Long): Long {
+        workoutSessionDao.getActive()?.let { return it.id }
         val sessionId = workoutSessionDao.insert(
             WorkoutSessionEntity(routineId = routineId, startTime = System.currentTimeMillis())
         )

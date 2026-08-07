@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.eina.app.data.db.BodyMetricEntity
 import com.eina.app.data.repository.StatsRepository
+import com.eina.app.ui.components.MAX_WEIGHT_KG
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
@@ -35,7 +36,7 @@ class BodyWeightViewModel(private val repository: StatsRepository) : ViewModel()
 
     fun addMeasurement(input: String) {
         val kg = input.replace(',', '.').toDoubleOrNull() ?: return
-        if (kg <= 0.0) return
+        if (kg <= 0.0 || kg > MAX_WEIGHT_KG) return
         viewModelScope.launch { repository.addBodyMetric(kg) }
     }
 

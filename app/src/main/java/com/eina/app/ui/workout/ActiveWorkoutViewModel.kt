@@ -8,6 +8,7 @@ import com.eina.app.data.db.SetEntryEntity
 import com.eina.app.data.db.WorkoutExerciseEntity
 import com.eina.app.data.repository.WorkoutRepository
 import com.eina.app.domain.volumeForSet
+import com.eina.app.ui.components.MAX_WEIGHT_KG
 import com.eina.app.ui.feedback.WorkoutFeedback
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -211,7 +212,7 @@ class ActiveWorkoutViewModel(
     fun updateSetValues(workoutExerciseId: Long, setId: Long, actualReps: Int?, weight: Double?) {
         val exercise = _uiState.value.exercises.find { it.workoutExerciseId == workoutExerciseId } ?: return
         val set = exercise.sets.find { it.id == setId } ?: return
-        val updated = set.copy(actualReps = actualReps, weight = weight)
+        val updated = set.copy(actualReps = actualReps, weight = weight?.coerceIn(0.0, MAX_WEIGHT_KG))
         _uiState.update { state ->
             state.copy(
                 exercises = state.exercises.map { ex ->
@@ -231,10 +232,11 @@ class ActiveWorkoutViewModel(
             val exercise = _uiState.value.exercises.find { it.workoutExerciseId == workoutExerciseId } ?: return@launch
             val set = exercise.sets.find { it.id == setId } ?: return@launch
             // Chiudere una serie lasciata vuota registrerebbe 0 kg e 0 ripetizioni: si adottano i
-            // valori mostrati come segnaposto (target di routine o ultima volta).
+            // valori mostrati come segnaposto. Prima l'ultima volta (e' quello che l'utente ha
+            // davvero fatto), poi il target di routine come ripiego.
             val filled = set.copy(
-                actualReps = set.actualReps ?: set.targetReps ?: set.previous?.actualReps,
-                weight = set.weight ?: set.targetWeight ?: set.previous?.weight
+                actualReps = set.actualReps ?: set.previous?.actualReps ?: set.targetReps,
+                weight = set.weight ?: set.previous?.weight ?: set.targetWeight
             )
             val completed = repository.completeSet(filled.toEntity(workoutExerciseId), exercise.exerciseId, exercise.weightType)
             refreshSets(workoutExerciseId)

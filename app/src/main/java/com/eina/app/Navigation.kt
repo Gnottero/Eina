@@ -137,6 +137,8 @@ fun EinaNavHost() {
                 val sessionId = backStackEntry.arguments?.getLong("sessionId") ?: return@composable
                 ActiveWorkoutScreen(
                     sessionId = sessionId,
+                    // Uscire non chiude la sessione: resta aperta e si rientra da "Allena".
+                    onExit = { navController.popBackStack() },
                     onFinished = {
                         // A fine allenamento si atterra sul riepilogo, da cui si puo' condividere l'immagine.
                         navController.popBackStack(EinaDestination.Workout.route, inclusive = false)

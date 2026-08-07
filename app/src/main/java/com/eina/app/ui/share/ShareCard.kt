@@ -2,7 +2,6 @@ package com.eina.app.ui.share
 
 import android.graphics.Bitmap
 import android.graphics.Canvas
-import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.RectF
 import android.graphics.Typeface
@@ -28,6 +27,7 @@ data class ShareCardExercise(
 data class ShareCardData(
     val title: String,
     val subtitle: String,
+    val durationLabel: String,
     val volumeKg: Double,
     val setCount: Int,
     val totalReps: Int,
@@ -40,10 +40,9 @@ fun shareCardDataOf(
     exercises: List<ShareCardExercise>
 ): ShareCardData = ShareCardData(
     title = formatFullDate(summary.startTime),
-    subtitle = buildString {
-        append(formatTime(summary.startTime))
-        summary.durationMinutes?.let { append(" · ${formatDuration(it)}") }
-    },
+    subtitle = formatTime(summary.startTime),
+    // Senza endTime la durata non e' ricostruibile: si stampa un trattino invece di un finto zero.
+    durationLabel = summary.durationMinutes?.let { formatDuration(it) } ?: "—",
     volumeKg = summary.volumeKg,
     setCount = summary.setCount,
     totalReps = summary.totalReps,
@@ -64,22 +63,20 @@ fun bestSetLabel(weightType: WeightType, reps: Int?, weight: Double?): String =
 // --- Disegno ---------------------------------------------------------------
 // DECISIONE: la card e' disegnata con android.graphics invece di catturare una view Compose:
 // dimensione fissa e indipendente dallo schermo, dal tema attivo e dal ciclo di vita della UI.
+// La card e' sempre chiara, anche se un giorno l'app avesse un tema scuro: un'immagine
+// condivisa finisce su sfondi altrui e il bianco e' l'unico che regge ovunque.
 
 private const val CARD_WIDTH = 1080
-private const val PADDING = 76f
+private const val PADDING = 88f
 
-private const val EXERCISES_TOP = 736f
-private const val ROW_HEIGHT = 92f
-private const val FOOTER_GAP = 96f
+private const val BG = 0xFFFFFFFF.toInt()
+private const val ACCENT = 0xFF7A5AF8.toInt()
+private const val TEXT = 0xFF16151F.toInt()
+private const val TEXT_SECONDARY = 0xFF7C7A93.toInt()
+private const val HAIRLINE = 0xFFE7E4F3.toInt()
 
-private const val BG = 0xFF1C1C1E.toInt()
-private const val SURFACE = 0xFF2C2C2E.toInt()
-private const val ACCENT = 0xFFFF6A3D.toInt()
-private const val TEXT = 0xFFF7F7F8.toInt()
-private const val TEXT_SECONDARY = 0xFF98989E.toInt()
-
-// 5 righe da 92px partono a y=736 e chiudono a 1196: sotto restano la riga "+ altri N" e il piede.
 private const val MAX_EXERCISE_ROWS = 5
+private const val EXERCISE_ROW_HEIGHT = 62f
 
 private fun textPaint(size: Float, color: Int, bold: Boolean = false, spacing: Float = 0f) =
     TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -88,6 +85,8 @@ private fun textPaint(size: Float, color: Int, bold: Boolean = false, spacing: F
         letterSpacing = spacing
         typeface = Typeface.create(Typeface.SANS_SERIF, if (bold) Typeface.BOLD else Typeface.NORMAL)
     }
+
+private fun fill(color: Int) = Paint(Paint.ANTI_ALIAS_FLAG).apply { this.color = color }
 
 private fun Canvas.drawEllipsized(text: String, x: Float, y: Float, maxWidth: Float, paint: TextPaint) {
     val clipped = TextUtils.ellipsize(text, paint, maxWidth, TextUtils.TruncateAt.END)
@@ -107,15 +106,42 @@ private fun fitted(text: String, maxWidth: Float, paint: TextPaint, minSize: Flo
 }
 
 /**
- * Immagine verticale larga 1080 pronta per lo share. L'altezza si adatta al numero di esercizi
- * (fra 4:5 e quasi quadrata) cosi' una sessione da un esercizio non lascia meta' card vuota.
+ * Marchio stilizzato dell'app: tessera viola con tre barre bianche di lunghezza decrescente.
+ * Si legge come una "E" e come un grafico che sale, e non usa asset esterni.
+ */
+private fun Canvas.drawLogoMark(left: Float, top: Float, size: Float) {
+    drawRoundRect(RectF(left, top, left + size, top + size), size * 0.3f, size * 0.3f, fill(ACCENT))
+
+    val barHeight = size * 0.11f
+    val barLeft = left + size * 0.24f
+    val widths = listOf(size * 0.52f, size * 0.36f, size * 0.52f)
+    var barTop = top + size * 0.26f
+    widths.forEach { width ->
+        drawRoundRect(
+            RectF(barLeft, barTop, barLeft + width, barTop + barHeight),
+            barHeight / 2f,
+            barHeight / 2f,
+            fill(BG)
+        )
+        barTop += barHeight + size * 0.075f
+    }
+}
+
+/**
+ * Immagine verticale larga 1080 pronta per lo share: intestazione col marchio, data, tre
+ * metriche essenziali (durata, volume, serie) e l'elenco degli esercizi. L'altezza si adatta
+ * al numero di righe, cosi' una sessione da un esercizio non lascia mezza card vuota.
  */
 fun renderShareCard(data: ShareCardData): Bitmap {
     val rowCount = minOf(data.exercises.size, MAX_EXERCISE_ROWS)
     val hiddenCount = data.exercises.size - rowCount
-    val contentEnd = EXERCISES_TOP + rowCount * ROW_HEIGHT - 12f + if (hiddenCount > 0) 46f else 0f
-    val footerBaseline = contentEnd + FOOTER_GAP
-    val cardHeight = (footerBaseline + 68f).toInt().coerceIn(CARD_WIDTH, 1350)
+
+    val exercisesTop = 690f
+    var contentEnd = exercisesTop + rowCount * EXERCISE_ROW_HEIGHT
+    if (hiddenCount > 0) contentEnd += 48f
+    if (data.prCount > 0) contentEnd += 76f
+
+    val cardHeight = (contentEnd + 150f).toInt().coerceAtLeast(900)
 
     val bitmap = Bitmap.createBitmap(CARD_WIDTH, cardHeight, Bitmap.Config.ARGB_8888)
     val canvas = Canvas(bitmap)
@@ -124,98 +150,83 @@ fun renderShareCard(data: ShareCardData): Bitmap {
     val contentWidth = CARD_WIDTH - PADDING * 2
     val right = CARD_WIDTH - PADDING
 
-    // Wordmark + conteggio PR
-    canvas.drawText("EINA", PADDING, PADDING + 40f, textPaint(40f, ACCENT, bold = true, spacing = 0.18f))
-    if (data.prCount > 0) {
-        val label = if (data.prCount == 1) "1 RECORD" else "${data.prCount} RECORD"
-        val paint = textPaint(28f, Color.WHITE, bold = true, spacing = 0.1f)
-        val pillWidth = paint.measureText(label) + 48f
-        val pill = RectF(right - pillWidth, PADDING - 4f, right, PADDING + 56f)
-        canvas.drawRoundRect(pill, pill.height() / 2f, pill.height() / 2f, Paint(Paint.ANTI_ALIAS_FLAG).apply { color = ACCENT })
-        canvas.drawText(label, pill.left + 24f, pill.centerY() + 10f, paint)
-    }
-
-    // Titolo + sottotitolo
-    val titlePaint = fitted(data.title, contentWidth, textPaint(72f, TEXT, bold = true), minSize = 44f)
-    canvas.drawText(data.title, PADDING, 280f, titlePaint)
-    canvas.drawText(data.subtitle, PADDING, 336f, textPaint(34f, TEXT_SECONDARY))
-
-    // Tile metriche
-    val tileTop = 400f
-    val tileHeight = 200f
-    val gap = 24f
-    val tileWidth = (contentWidth - gap * 2) / 3f
-    val tiles = listOf(
-        Triple("VOLUME", formatVolume(data.volumeKg), "kg"),
-        Triple("SERIE", data.setCount.toString(), null),
-        Triple("RIPETIZIONI", data.totalReps.toString(), null)
+    // Intestazione: marchio + wordmark
+    val logoSize = 96f
+    canvas.drawLogoMark(PADDING, PADDING, logoSize)
+    canvas.drawText(
+        "Eina",
+        PADDING + logoSize + 28f,
+        PADDING + logoSize / 2f + 18f,
+        textPaint(50f, TEXT, bold = true)
     )
-    tiles.forEachIndexed { index, (label, value, unit) ->
-        val left = PADDING + (tileWidth + gap) * index
-        val rect = RectF(left, tileTop, left + tileWidth, tileTop + tileHeight)
-        canvas.drawRoundRect(rect, 44f, 44f, Paint(Paint.ANTI_ALIAS_FLAG).apply { color = SURFACE })
-        canvas.drawText(label, rect.left + 32f, rect.top + 62f, textPaint(24f, TEXT_SECONDARY, spacing = 0.1f))
-        val valuePaint = fitted(value, tileWidth - 64f, textPaint(64f, if (index == 0) ACCENT else TEXT, bold = true), minSize = 36f)
-        canvas.drawText(value, rect.left + 32f, rect.top + 148f, valuePaint)
-        if (unit != null) {
-            val offset = valuePaint.measureText(value)
-            canvas.drawText(unit, rect.left + 32f + offset + 10f, rect.top + 148f, textPaint(28f, TEXT_SECONDARY))
-        }
+
+    // Data e ora
+    val titlePaint = fitted(data.title, contentWidth, textPaint(66f, TEXT, bold = true), minSize = 40f)
+    canvas.drawText(data.title, PADDING, 312f, titlePaint)
+    canvas.drawText(data.subtitle, PADDING, 366f, textPaint(32f, TEXT_SECONDARY))
+
+    canvas.drawRect(PADDING, 424f, right, 425f, fill(HAIRLINE))
+
+    // Tre metriche essenziali, senza riquadri: contano i numeri, non i contenitori.
+    val metrics = listOf(
+        "DURATA" to data.durationLabel,
+        "VOLUME" to "${formatVolume(data.volumeKg)} kg",
+        "SERIE" to data.setCount.toString()
+    )
+    val columnWidth = contentWidth / 3f
+    metrics.forEachIndexed { index, (label, value) ->
+        val left = PADDING + columnWidth * index
+        canvas.drawText(label, left, 500f, textPaint(24f, TEXT_SECONDARY, spacing = 0.14f))
+        val valuePaint = fitted(value, columnWidth - 24f, textPaint(60f, TEXT, bold = true), minSize = 34f)
+        canvas.drawText(value, left, 570f, valuePaint)
     }
 
-    // Elenco esercizi
-    canvas.drawText("ESERCIZI", PADDING, EXERCISES_TOP - 40f, textPaint(26f, TEXT_SECONDARY, spacing = 0.12f))
-    var y = EXERCISES_TOP
+    canvas.drawRect(PADDING, 618f, right, 619f, fill(HAIRLINE))
 
-    val shown = data.exercises.take(MAX_EXERCISE_ROWS)
-    val rowHeight = ROW_HEIGHT
-    shown.forEach { exercise ->
-        val rect = RectF(PADDING, y, right, y + rowHeight - 12f)
-        canvas.drawRoundRect(rect, 32f, 32f, Paint(Paint.ANTI_ALIAS_FLAG).apply { color = SURFACE })
-
-        val detail = buildString {
-            append("${exercise.setCount} serie")
-            exercise.bestSetLabel?.let { append(" · $it") }
-        }
-        val detailPaint = textPaint(28f, TEXT_SECONDARY)
-        val prWidth = if (exercise.hasPr) 78f else 0f
+    // Esercizi: nome a sinistra, serie migliore a destra, pallino viola sui PR.
+    var y = exercisesTop
+    data.exercises.take(MAX_EXERCISE_ROWS).forEach { exercise ->
+        val namePaint = textPaint(34f, TEXT, bold = false)
+        val detailPaint = textPaint(30f, TEXT_SECONDARY)
+        val detail = exercise.bestSetLabel ?: "${exercise.setCount} serie"
         val detailWidth = detailPaint.measureText(detail)
-        val namePaint = textPaint(34f, TEXT, bold = true)
-        val baseline = rect.centerY() + 12f
 
+        var nameLeft = PADDING
+        if (exercise.hasPr) {
+            canvas.drawCircle(PADDING + 9f, y - 11f, 9f, fill(ACCENT))
+            nameLeft += 32f
+        }
         canvas.drawEllipsized(
             text = exercise.name,
-            x = rect.left + 32f,
-            y = baseline,
-            maxWidth = rect.width() - 96f - detailWidth - prWidth,
+            x = nameLeft,
+            y = y,
+            maxWidth = contentWidth - (nameLeft - PADDING) - detailWidth - 32f,
             paint = namePaint
         )
-        canvas.drawRightAligned(detail, rect.right - 32f - prWidth, baseline, detailPaint)
-        if (exercise.hasPr) {
-            val prPaint = textPaint(24f, Color.WHITE, bold = true, spacing = 0.08f)
-            val pill = RectF(rect.right - 88f, rect.centerY() - 22f, rect.right - 24f, rect.centerY() + 22f)
-            canvas.drawRoundRect(pill, 22f, 22f, Paint(Paint.ANTI_ALIAS_FLAG).apply { color = ACCENT })
-            canvas.drawText("PR", pill.centerX() - prPaint.measureText("PR") / 2f, pill.centerY() + 8f, prPaint)
-        }
-        y += rowHeight
+        canvas.drawRightAligned(detail, right, y, detailPaint)
+        y += EXERCISE_ROW_HEIGHT
     }
 
     if (hiddenCount > 0) {
-        canvas.drawText(
-            "+ altri $hiddenCount esercizi",
-            PADDING + 32f,
-            y + 34f,
-            textPaint(28f, TEXT_SECONDARY)
-        )
+        canvas.drawText("+ altri $hiddenCount esercizi", PADDING, y, textPaint(30f, TEXT_SECONDARY))
+        y += 48f
     }
 
-    // Piede: ancorato al fondo reale della card, non all'ultima riga.
-    val footerPaint = textPaint(28f, TEXT_SECONDARY)
+    if (data.prCount > 0) {
+        val label = if (data.prCount == 1) "1 record personale" else "${data.prCount} record personali"
+        val paint = textPaint(28f, ACCENT, bold = true, spacing = 0.04f)
+        val pill = RectF(PADDING, y - 4f, PADDING + paint.measureText(label) + 56f, y + 56f)
+        canvas.drawRoundRect(pill, pill.height() / 2f, pill.height() / 2f, fill(0xFFEDE8FF.toInt()))
+        canvas.drawText(label, pill.left + 28f, pill.centerY() + 10f, paint)
+    }
+
+    // Piede ancorato al fondo reale della card, non all'ultima riga.
+    val footerPaint = textPaint(26f, TEXT_SECONDARY)
     val footer = "Registrato con Eina"
     canvas.drawText(
         footer,
         (CARD_WIDTH - footerPaint.measureText(footer)) / 2f,
-        cardHeight - PADDING,
+        cardHeight - 60f,
         footerPaint
     )
 

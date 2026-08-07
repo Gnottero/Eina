@@ -19,6 +19,7 @@ import com.eina.app.ui.components.IslandCard
 import com.eina.app.ui.components.IslandScreen
 import com.eina.app.ui.components.ScreenHeader
 import com.eina.app.ui.components.SectionHeader
+import com.eina.app.ui.feedback.LocalHapticTap
 import com.eina.app.ui.theme.EinaTheme
 import com.eina.app.ui.theme.Spacing
 import org.koin.androidx.compose.koinViewModel
@@ -64,7 +65,7 @@ fun SettingsScreen(
         IslandCard(modifier = Modifier.fillMaxWidth()) {
             SettingSwitch(
                 title = "Vibrazione sui comandi",
-                description = "Micro-vibrazione quando completi una serie.",
+                description = "Micro-vibrazione a ogni tocco: bottoni, chip, menu e check delle serie.",
                 checked = haptics,
                 onCheckedChange = viewModel::setHaptics
             )
@@ -80,6 +81,7 @@ private fun SettingSwitch(
     onCheckedChange: (Boolean) -> Unit
 ) {
     val island = EinaTheme.island
+    val hapticTap = LocalHapticTap.current
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
@@ -91,7 +93,9 @@ private fun SettingSwitch(
         }
         Switch(
             checked = checked,
-            onCheckedChange = onCheckedChange,
+            // Il tap sullo switch dell'aptica vibra anche quando lo si sta spegnendo: e' l'ultimo
+            // feedback prima che il canale si chiuda, e conferma che il comando e' passato.
+            onCheckedChange = { hapticTap(); onCheckedChange(it) },
             colors = SwitchDefaults.colors(
                 checkedThumbColor = Color.White,
                 checkedTrackColor = MaterialTheme.colorScheme.primary,

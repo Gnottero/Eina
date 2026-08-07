@@ -9,6 +9,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -29,6 +31,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.FitnessCenter
+import androidx.compose.material.icons.outlined.KeyboardArrowDown
 import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.outlined.Timer
 import androidx.compose.material3.AlertDialog
@@ -61,6 +64,7 @@ import com.eina.app.ui.components.IslandEmptyState
 import com.eina.app.ui.components.IslandIconButton
 import com.eina.app.ui.components.IslandSecondaryButton
 import com.eina.app.ui.components.IslandSurface
+import com.eina.app.ui.components.sanitizeWeightInput
 import com.eina.app.ui.feedback.LocalHapticTap
 import com.eina.app.ui.theme.EinaTheme
 import com.eina.app.ui.theme.IslandShape
@@ -74,11 +78,13 @@ import org.koin.core.parameter.parametersOf
 fun ActiveWorkoutScreen(
     sessionId: Long,
     onFinished: () -> Unit,
+    onExit: () -> Unit = {},
     viewModel: ActiveWorkoutViewModel = koinViewModel(parameters = { parametersOf(sessionId) })
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     var showPicker by remember { mutableStateOf(false) }
     var restDialogFor by remember { mutableStateOf<SessionExerciseUi?>(null) }
+    var confirmFinish by remember { mutableStateOf(false) }
 
     Box(
         modifier = Modifier
@@ -94,7 +100,8 @@ fun ActiveWorkoutScreen(
                 elapsedSeconds = state.elapsedSeconds,
                 volumeKg = state.volumeKg,
                 progress = state.progress,
-                onFinish = { viewModel.finishWorkout(onFinished) },
+                onFinish = { confirmFinish = true },
+                onExit = onExit,
                 modifier = Modifier.padding(horizontal = Spacing.xl, vertical = Spacing.md)
             )
 
@@ -176,6 +183,26 @@ fun ActiveWorkoutScreen(
         )
     }
 
+    if (confirmFinish) {
+        // "Termina" e' l'unico modo di chiudere una sessione: si conferma perche' e' irreversibile.
+        AlertDialog(
+            onDismissRequest = { confirmFinish = false },
+            shape = IslandShape,
+            containerColor = MaterialTheme.colorScheme.surface,
+            title = { Text("Terminare l'allenamento?", style = MaterialTheme.typography.titleLarge) },
+            text = { Text("La sessione verra' chiusa e salvata nello storico.") },
+            confirmButton = {
+                HapticTextButton(text = "Termina", onClick = {
+                    confirmFinish = false
+                    viewModel.finishWorkout(onFinished)
+                })
+            },
+            dismissButton = {
+                HapticTextButton(text = "Continua", onClick = { confirmFinish = false })
+            }
+        )
+    }
+
     restDialogFor?.let { exercise ->
         RestDialog(
             currentSeconds = exercise.restSeconds,
@@ -198,6 +225,7 @@ private fun SessionHeader(
     volumeKg: Double,
     progress: Float,
     onFinish: () -> Unit,
+    onExit: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val island = EinaTheme.island
@@ -216,6 +244,29 @@ private fun SessionHeader(
                 .padding(Spacing.lg),
             verticalArrangement = Arrangement.spacedBy(Spacing.lg)
         ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(Spacing.md)
+            ) {
+                // Uscire mette l'allenamento in pausa "sociale": resta in corso, si rientra da Allena.
+                IslandIconButton(
+                    icon = Icons.Outlined.KeyboardArrowDown,
+                    contentDescription = "Esci senza terminare",
+                    onClick = onExit,
+                    containerColor = island.sunken,
+                    size = 40.dp
+                )
+                Text(
+                    text = "Allenamento in corso",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = island.textSecondary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(Spacing.md)
@@ -357,13 +408,13 @@ private fun ExerciseCard(
                 )
                 DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
                     if (canMoveUp) {
-                        DropdownMenuItem(text = { Text("Sposta su") }, onClick = { onMoveUp(); menuOpen = false })
+                        HapticMenuItem("Sposta su") { onMoveUp(); menuOpen = false }
                     }
                     if (canMoveDown) {
-                        DropdownMenuItem(text = { Text("Sposta giu'") }, onClick = { onMoveDown(); menuOpen = false })
+                        HapticMenuItem("Sposta giu'") { onMoveDown(); menuOpen = false }
                     }
-                    DropdownMenuItem(text = { Text("Tempo di recupero") }, onClick = { onEditRest(); menuOpen = false })
-                    DropdownMenuItem(text = { Text("Rimuovi esercizio") }, onClick = { onRemove(); menuOpen = false })
+                    HapticMenuItem("Tempo di recupero") { onEditRest(); menuOpen = false }
+                    HapticMenuItem("Rimuovi esercizio") { onRemove(); menuOpen = false }
                 }
             }
         }
@@ -493,7 +544,7 @@ private fun SetRow(
                 )
             }
             DropdownMenu(expanded = rowMenuOpen, onDismissRequest = { rowMenuOpen = false }) {
-                DropdownMenuItem(text = { Text("Elimina serie") }, onClick = { onRemove(); rowMenuOpen = false })
+                HapticMenuItem("Elimina serie") { onRemove(); rowMenuOpen = false }
             }
         }
 
@@ -506,12 +557,14 @@ private fun SetRow(
             modifier = Modifier.weight(1.1f)
         )
 
+        // Segnaposto: prima l'ultima volta, poi il target di routine. Sono gli stessi valori che
+        // vengono registrati se la serie viene chiusa senza digitare nulla (vedi completeSet).
         SetValueField(
             value = weightText,
-            placeholder = set.targetWeight?.let { formatNumber(it) } ?: set.previous?.weight?.let { formatNumber(it) },
-            onValueChange = { text ->
-                weightText = text
-                onValuesChange(repsText.toIntOrNull(), text.toDoubleOrNull())
+            placeholder = (set.previous?.weight ?: set.targetWeight)?.let { formatNumber(it) },
+            onValueChange = { typed ->
+                weightText = sanitizeWeightInput(weightText, typed)
+                onValuesChange(repsText.toIntOrNull(), weightText.toDoubleOrNull())
             },
             keyboardType = KeyboardType.Decimal,
             modifier = Modifier.weight(1f)
@@ -519,10 +572,10 @@ private fun SetRow(
 
         SetValueField(
             value = repsText,
-            placeholder = set.targetReps?.toString() ?: set.previous?.actualReps?.toString(),
-            onValueChange = { text ->
-                repsText = text
-                onValuesChange(text.toIntOrNull(), weightText.toDoubleOrNull())
+            placeholder = (set.previous?.actualReps ?: set.targetReps)?.toString(),
+            onValueChange = { typed ->
+                repsText = typed.filter { it.isDigit() }.take(4)
+                onValuesChange(repsText.toIntOrNull(), weightText.toDoubleOrNull())
             },
             keyboardType = KeyboardType.Number,
             modifier = Modifier.weight(1f)
@@ -605,6 +658,10 @@ private fun SetValueField(
     )
 }
 
+/** Tetto al recupero impostabile: coerente col clamp del ViewModel (setRestSeconds). */
+private const val MAX_REST_SECONDS = 600
+
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun RestDialog(
     currentSeconds: Int,
@@ -622,7 +679,12 @@ private fun RestDialog(
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(Spacing.md)) {
                 Text(formatDuration(seconds), style = MaterialTheme.typography.displaySmall, color = MaterialTheme.colorScheme.primary)
-                Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+                // Su una sola riga i preset non ci stanno (2:00 e 3:00 finivano fuori dal dialog):
+                // la FlowRow manda a capo quello che eccede invece di tagliarlo.
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
+                    verticalArrangement = Arrangement.spacedBy(Spacing.sm)
+                ) {
                     presets.forEach { preset ->
                         com.eina.app.ui.components.IslandChip(
                             text = formatDuration(preset),
@@ -633,13 +695,29 @@ private fun RestDialog(
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
                     IslandSecondaryButton(text = "-15s", onClick = { seconds = (seconds - 15).coerceAtLeast(0) }, modifier = Modifier.weight(1f))
-                    IslandSecondaryButton(text = "+15s", onClick = { seconds += 15 }, modifier = Modifier.weight(1f))
+                    IslandSecondaryButton(text = "+15s", onClick = { seconds = (seconds + 15).coerceAtMost(MAX_REST_SECONDS) }, modifier = Modifier.weight(1f))
                 }
             }
         },
-        confirmButton = { TextButton(onClick = { onConfirm(seconds) }) { Text("Applica") } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Annulla") } }
+        confirmButton = { HapticTextButton(text = "Applica", onClick = { onConfirm(seconds) }) },
+        dismissButton = { HapticTextButton(text = "Annulla", onClick = onDismiss) }
     )
+}
+
+/** Azione testuale dei dialog, con lo stesso micro-feedback aptico dei controlli island. */
+@Composable
+private fun HapticTextButton(text: String, onClick: () -> Unit) {
+    val hapticTap = LocalHapticTap.current
+    TextButton(onClick = { hapticTap(); onClick() }) {
+        Text(text, color = MaterialTheme.colorScheme.primary)
+    }
+}
+
+/** Voce di menu con feedback aptico: il DropdownMenuItem Material non ne ha. */
+@Composable
+private fun HapticMenuItem(text: String, onClick: () -> Unit) {
+    val hapticTap = LocalHapticTap.current
+    DropdownMenuItem(text = { Text(text) }, onClick = { hapticTap(); onClick() })
 }
 
 @Composable

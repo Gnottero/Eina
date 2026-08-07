@@ -211,7 +211,11 @@ fun ScreenHeader(
                 onClick = onBack
             )
         }
-        Column(modifier = Modifier.weight(1f)) {
+        // Titolo e sottotitolo respirano: attaccati, la data e l'orario si leggevano come una riga sola.
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(Spacing.xs)
+        ) {
             Text(text = title, style = MaterialTheme.typography.headlineMedium)
             if (subtitle != null) {
                 Text(

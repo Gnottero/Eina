@@ -321,6 +321,15 @@ menu unico e tabella serie/precedente/kg/rip/check; recupero modificabile durant
 l'allenamento; palette light-only bianco+viola; fine timer con suono e vibrazione; schermata
 Impostazioni con toggle per suono, vibrazione timer e feedback aptico.
 
+**Fase 11 — Sessione persistente e rifiniture** *(fatta)*
+DoD: un allenamento si chiude solo con "Termina" (con conferma); uscendo resta in corso e si
+rientra dal banner "Riprendi" in Allena, che blocca l'avvio di una seconda sessione; feedback
+aptico su tutti i controlli (bottoni, chip, menu, switch, nav), disattivabile da Impostazioni;
+peso limitato a 999 kg su serie, target di routine e peso corporeo; serie chiusa senza valori
+eredita quelli dell'ultima volta (poi il target); preset di recupero in FlowRow; card storico
+con durata/volume/serie in riquadri; immagine condivisibile light con marchio stilizzato,
+durata e soli dettagli essenziali.
+
 **Fase 9 — Rifinitura**
 DoD: ProGuard/R8 attivo, avvio a freddo ottimizzato, coerenza visiva su tutte le schermate, edge case gestiti (permessi galleria, app playlist assente).
 

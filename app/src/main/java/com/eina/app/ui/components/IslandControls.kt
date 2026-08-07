@@ -255,10 +255,11 @@ private fun RowScope.SegmentedItem(
     modifier: Modifier = Modifier
 ) {
     val island = EinaTheme.island
+    val hapticTap = LocalHapticTap.current
     val shape = androidx.compose.foundation.shape.RoundedCornerShape(18.dp)
     val base = modifier
         .clip(shape)
-        .clickable(onClick = onClick)
+        .clickable { hapticTap(); onClick() }
     Column(
         modifier = if (selected) {
             base
