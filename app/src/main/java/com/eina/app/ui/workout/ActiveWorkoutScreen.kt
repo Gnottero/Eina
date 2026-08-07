@@ -24,15 +24,19 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Check
+import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.FitnessCenter
 import androidx.compose.material.icons.outlined.KeyboardArrowDown
+import androidx.compose.material.icons.outlined.KeyboardArrowUp
 import androidx.compose.material.icons.outlined.MoreVert
+import androidx.compose.material.icons.outlined.Remove
+import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Timer
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
@@ -58,19 +62,25 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.eina.app.data.db.ExerciseEntity
 import com.eina.app.ui.components.BottomTimerBar
+import com.eina.app.ui.components.IslandBottomSheet
 import com.eina.app.ui.components.IslandButton
 import com.eina.app.ui.components.IslandCard
+import com.eina.app.ui.components.IslandChip
 import com.eina.app.ui.components.IslandEmptyState
 import com.eina.app.ui.components.IslandIconButton
 import com.eina.app.ui.components.IslandSecondaryButton
 import com.eina.app.ui.components.IslandSurface
+import com.eina.app.ui.components.IslandTextField
+import com.eina.app.ui.components.SheetActionRow
 import com.eina.app.ui.components.sanitizeWeightInput
 import com.eina.app.ui.feedback.LocalHapticTap
 import com.eina.app.ui.theme.EinaTheme
 import com.eina.app.ui.theme.IslandShape
+import com.eina.app.ui.theme.MuscleGroupCategory
 import com.eina.app.ui.theme.PillShape
 import com.eina.app.ui.theme.Spacing
 import com.eina.app.ui.theme.TileShape
+import com.eina.app.ui.theme.primaryCategoryFor
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
 
@@ -83,8 +93,14 @@ fun ActiveWorkoutScreen(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     var showPicker by remember { mutableStateOf(false) }
-    var restDialogFor by remember { mutableStateOf<SessionExerciseUi?>(null) }
+    var restSheetFor by remember { mutableStateOf<Long?>(null) }
+    var actionsSheetFor by remember { mutableStateOf<Long?>(null) }
     var confirmFinish by remember { mutableStateOf(false) }
+
+    // I fogli sono ancorati all'id, non alla copia dell'esercizio: cosi' restano aperti sui dati
+    // aggiornati anche se nel frattempo cambia una serie.
+    val restSheetExercise = state.exercises.find { it.workoutExerciseId == restSheetFor }
+    val actionsSheetExercise = state.exercises.find { it.workoutExerciseId == actionsSheetFor }
 
     Box(
         modifier = Modifier
@@ -124,15 +140,11 @@ fun ActiveWorkoutScreen(
                     }
                 }
 
-                itemsIndexed(state.exercises, key = { _, item -> item.workoutExerciseId }) { index, exercise ->
+                items(state.exercises, key = { it.workoutExerciseId }) { exercise ->
                     ExerciseCard(
                         exercise = exercise,
-                        canMoveUp = index > 0,
-                        canMoveDown = index < state.exercises.size - 1,
-                        onMoveUp = { viewModel.moveExercise(exercise.workoutExerciseId, -1) },
-                        onMoveDown = { viewModel.moveExercise(exercise.workoutExerciseId, 1) },
-                        onRemove = { viewModel.removeExercise(exercise.workoutExerciseId) },
-                        onEditRest = { restDialogFor = exercise },
+                        onOpenActions = { actionsSheetFor = exercise.workoutExerciseId },
+                        onEditRest = { restSheetFor = exercise.workoutExerciseId },
                         onAddSet = { viewModel.addSet(exercise.workoutExerciseId) },
                         onRemoveSet = { setId -> viewModel.removeSet(exercise.workoutExerciseId, setId) },
                         onSetValuesChange = { setId, reps, weight ->
@@ -173,13 +185,39 @@ fun ActiveWorkoutScreen(
     }
 
     if (showPicker) {
-        ExercisePickerDialog(
+        ExercisePickerSheet(
             exercises = state.availableExercises,
             onPick = {
                 viewModel.addExercise(it)
                 showPicker = false
             },
             onDismiss = { showPicker = false }
+        )
+    }
+
+    if (actionsSheetExercise != null) {
+        val index = state.exercises.indexOf(actionsSheetExercise)
+        ExerciseActionsSheet(
+            exercise = actionsSheetExercise,
+            canMoveUp = index > 0,
+            canMoveDown = index < state.exercises.size - 1,
+            onMoveUp = { viewModel.moveExercise(actionsSheetExercise.workoutExerciseId, -1); actionsSheetFor = null },
+            onMoveDown = { viewModel.moveExercise(actionsSheetExercise.workoutExerciseId, 1); actionsSheetFor = null },
+            onEditRest = {
+                restSheetFor = actionsSheetExercise.workoutExerciseId
+                actionsSheetFor = null
+            },
+            onAddSet = { viewModel.addSet(actionsSheetExercise.workoutExerciseId); actionsSheetFor = null },
+            onRemove = { viewModel.removeExercise(actionsSheetExercise.workoutExerciseId); actionsSheetFor = null },
+            onDismiss = { actionsSheetFor = null }
+        )
+    }
+
+    if (restSheetExercise != null) {
+        RestTimeSheet(
+            currentSeconds = restSheetExercise.restSeconds,
+            onChange = { seconds -> viewModel.setRestSeconds(restSheetExercise.workoutExerciseId, seconds) },
+            onDismiss = { restSheetFor = null }
         )
     }
 
@@ -203,16 +241,6 @@ fun ActiveWorkoutScreen(
         )
     }
 
-    restDialogFor?.let { exercise ->
-        RestDialog(
-            currentSeconds = exercise.restSeconds,
-            onConfirm = { seconds ->
-                viewModel.setRestSeconds(exercise.workoutExerciseId, seconds)
-                restDialogFor = null
-            },
-            onDismiss = { restDialogFor = null }
-        )
-    }
 }
 
 /**
@@ -366,11 +394,7 @@ private fun MetricTile(
 @Composable
 private fun ExerciseCard(
     exercise: SessionExerciseUi,
-    canMoveUp: Boolean,
-    canMoveDown: Boolean,
-    onMoveUp: () -> Unit,
-    onMoveDown: () -> Unit,
-    onRemove: () -> Unit,
+    onOpenActions: () -> Unit,
     onEditRest: () -> Unit,
     onAddSet: () -> Unit,
     onRemoveSet: (Long) -> Unit,
@@ -379,7 +403,6 @@ private fun ExerciseCard(
 ) {
     val island = EinaTheme.island
     val hapticTap = LocalHapticTap.current
-    var menuOpen by remember { mutableStateOf(false) }
 
     IslandCard(
         modifier = Modifier.fillMaxWidth(),
@@ -387,8 +410,8 @@ private fun ExerciseCard(
         contentPadding = PaddingValues(horizontal = Spacing.lg, vertical = Spacing.xl),
         verticalArrangement = Arrangement.spacedBy(Spacing.lg)
     ) {
-        // Titolo + un solo punto di accesso alle azioni: riordino ed eliminazione stanno nel menu,
-        // cosi' la riga resta pulita come in una scheda di allenamento cartacea.
+        // Titolo + un solo punto di accesso alle azioni: riordino ed eliminazione stanno nel
+        // foglio, cosi' la riga resta pulita come in una scheda di allenamento cartacea.
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
                 exercise.name,
@@ -398,25 +421,13 @@ private fun ExerciseCard(
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f)
             )
-            Box {
-                IslandIconButton(
-                    icon = Icons.Outlined.MoreVert,
-                    contentDescription = "Azioni esercizio",
-                    onClick = { menuOpen = true },
-                    containerColor = island.sunken,
-                    size = 40.dp
-                )
-                DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
-                    if (canMoveUp) {
-                        HapticMenuItem("Sposta su") { onMoveUp(); menuOpen = false }
-                    }
-                    if (canMoveDown) {
-                        HapticMenuItem("Sposta giu'") { onMoveDown(); menuOpen = false }
-                    }
-                    HapticMenuItem("Tempo di recupero") { onEditRest(); menuOpen = false }
-                    HapticMenuItem("Rimuovi esercizio") { onRemove(); menuOpen = false }
-                }
-            }
+            IslandIconButton(
+                icon = Icons.Outlined.MoreVert,
+                contentDescription = "Azioni esercizio",
+                onClick = onOpenActions,
+                containerColor = island.sunken,
+                size = 40.dp
+            )
         }
 
         // Chip recupero: modificabile durante l'allenamento, non solo in fase di routine.
@@ -557,11 +568,11 @@ private fun SetRow(
             modifier = Modifier.weight(1.1f)
         )
 
-        // Segnaposto: prima l'ultima volta, poi il target di routine. Sono gli stessi valori che
-        // vengono registrati se la serie viene chiusa senza digitare nulla (vedi completeSet).
+        // Segnaposto = valori proposti dal ViewModel, gli stessi che vengono registrati se la
+        // serie viene chiusa senza digitare nulla.
         SetValueField(
             value = weightText,
-            placeholder = (set.previous?.weight ?: set.targetWeight)?.let { formatNumber(it) },
+            placeholder = set.suggestedWeight?.let { formatNumber(it) },
             onValueChange = { typed ->
                 weightText = sanitizeWeightInput(weightText, typed)
                 onValuesChange(repsText.toIntOrNull(), weightText.toDoubleOrNull())
@@ -572,7 +583,7 @@ private fun SetRow(
 
         SetValueField(
             value = repsText,
-            placeholder = (set.previous?.actualReps ?: set.targetReps)?.toString(),
+            placeholder = set.suggestedReps?.toString(),
             onValueChange = { typed ->
                 repsText = typed.filter { it.isDigit() }.take(4)
                 onValuesChange(repsText.toIntOrNull(), weightText.toDoubleOrNull())
@@ -661,47 +672,120 @@ private fun SetValueField(
 /** Tetto al recupero impostabile: coerente col clamp del ViewModel (setRestSeconds). */
 private const val MAX_REST_SECONDS = 600
 
+/**
+ * Recupero: foglio con conto in grande, due tasti tondi per la regolazione fine e una griglia di
+ * durate. Ogni gesto si applica subito e la scelta di una durata chiude il foglio — non c'e' un
+ * "Applica" da ricordare, come nel dialog di prima.
+ */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun RestDialog(
+private fun RestTimeSheet(
     currentSeconds: Int,
-    onConfirm: (Int) -> Unit,
+    onChange: (Int) -> Unit,
     onDismiss: () -> Unit
 ) {
-    var seconds by remember { mutableStateOf(currentSeconds) }
-    val presets = listOf(30, 60, 90, 120, 180)
+    val island = EinaTheme.island
+    val presets = listOf(0, 30, 45, 60, 75, 90, 120, 150, 180, 240, 300)
 
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        shape = IslandShape,
-        containerColor = MaterialTheme.colorScheme.surface,
-        title = { Text("Tempo di recupero", style = MaterialTheme.typography.titleLarge) },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(Spacing.md)) {
-                Text(formatDuration(seconds), style = MaterialTheme.typography.displaySmall, color = MaterialTheme.colorScheme.primary)
-                // Su una sola riga i preset non ci stanno (2:00 e 3:00 finivano fuori dal dialog):
-                // la FlowRow manda a capo quello che eccede invece di tagliarlo.
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
-                    verticalArrangement = Arrangement.spacedBy(Spacing.sm)
-                ) {
-                    presets.forEach { preset ->
-                        com.eina.app.ui.components.IslandChip(
-                            text = formatDuration(preset),
-                            selected = seconds == preset,
-                            onClick = { seconds = preset }
-                        )
-                    }
-                }
-                Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
-                    IslandSecondaryButton(text = "-15s", onClick = { seconds = (seconds - 15).coerceAtLeast(0) }, modifier = Modifier.weight(1f))
-                    IslandSecondaryButton(text = "+15s", onClick = { seconds = (seconds + 15).coerceAtMost(MAX_REST_SECONDS) }, modifier = Modifier.weight(1f))
-                }
+    IslandBottomSheet(onDismiss = onDismiss, title = "Tempo di recupero") {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(Spacing.lg)
+        ) {
+            IslandIconButton(
+                icon = Icons.Outlined.Remove,
+                contentDescription = "-15 secondi",
+                onClick = { onChange((currentSeconds - 15).coerceAtLeast(0)) },
+                containerColor = island.sunken,
+                size = 52.dp
+            )
+            Text(
+                text = if (currentSeconds == 0) "Nessuno" else formatDuration(currentSeconds),
+                style = MaterialTheme.typography.displaySmall,
+                color = MaterialTheme.colorScheme.primary,
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+                modifier = Modifier.weight(1f)
+            )
+            IslandIconButton(
+                icon = Icons.Outlined.Add,
+                contentDescription = "+15 secondi",
+                onClick = { onChange((currentSeconds + 15).coerceAtMost(MAX_REST_SECONDS)) },
+                containerColor = island.sunken,
+                size = 52.dp
+            )
+        }
+
+        Text(
+            text = "Vale per tutte le serie non ancora svolte di questo esercizio.",
+            style = MaterialTheme.typography.bodySmall,
+            color = island.textSecondary,
+            modifier = Modifier.padding(vertical = Spacing.sm)
+        )
+
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
+            verticalArrangement = Arrangement.spacedBy(Spacing.sm)
+        ) {
+            presets.forEach { preset ->
+                IslandChip(
+                    text = if (preset == 0) "Nessuno" else formatDuration(preset),
+                    selected = currentSeconds == preset,
+                    onClick = { onChange(preset); onDismiss() }
+                )
             }
-        },
-        confirmButton = { HapticTextButton(text = "Applica", onClick = { onConfirm(seconds) }) },
-        dismissButton = { HapticTextButton(text = "Annulla", onClick = onDismiss) }
-    )
+        }
+    }
+}
+
+/** Azioni sull'esercizio in corso: righe grandi con icona, al posto del menu a tendina minuscolo. */
+@Composable
+private fun ExerciseActionsSheet(
+    exercise: SessionExerciseUi,
+    canMoveUp: Boolean,
+    canMoveDown: Boolean,
+    onMoveUp: () -> Unit,
+    onMoveDown: () -> Unit,
+    onEditRest: () -> Unit,
+    onAddSet: () -> Unit,
+    onRemove: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    IslandBottomSheet(onDismiss = onDismiss, title = exercise.name) {
+        SheetActionRow(
+            icon = Icons.Outlined.Timer,
+            label = "Tempo di recupero",
+            description = formatDuration(exercise.restSeconds),
+            onClick = onEditRest
+        )
+        SheetActionRow(
+            icon = Icons.Outlined.Add,
+            label = "Aggiungi serie",
+            onClick = onAddSet
+        )
+        if (canMoveUp) {
+            SheetActionRow(
+                icon = Icons.Outlined.KeyboardArrowUp,
+                label = "Sposta su",
+                onClick = onMoveUp
+            )
+        }
+        if (canMoveDown) {
+            SheetActionRow(
+                icon = Icons.Outlined.KeyboardArrowDown,
+                label = "Sposta giu'",
+                onClick = onMoveDown
+            )
+        }
+        SheetActionRow(
+            icon = Icons.Outlined.Delete,
+            label = "Rimuovi esercizio",
+            description = "Elimina anche le serie registrate qui",
+            destructive = true,
+            onClick = onRemove
+        )
+    }
 }
 
 /** Azione testuale dei dialog, con lo stesso micro-feedback aptico dei controlli island. */
@@ -720,43 +804,91 @@ private fun HapticMenuItem(text: String, onClick: () -> Unit) {
     DropdownMenuItem(text = { Text(text) }, onClick = { hapticTap(); onClick() })
 }
 
+/**
+ * Scelta dell'esercizio da aggiungere alla sessione: ricerca per nome e filtro per gruppo
+ * muscolare, come nella libreria. Con centinaia di esercizi in elenco, scorrere non basta.
+ */
 @Composable
-private fun ExercisePickerDialog(
+private fun ExercisePickerSheet(
     exercises: List<ExerciseEntity>,
     onPick: (ExerciseEntity) -> Unit,
     onDismiss: () -> Unit
 ) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        shape = IslandShape,
-        containerColor = MaterialTheme.colorScheme.surface,
-        title = { Text("Aggiungi esercizio", style = MaterialTheme.typography.titleLarge) },
-        text = {
-            if (exercises.isEmpty()) {
-                Text("Nessun esercizio in libreria.")
-            } else {
-                LazyColumn(
-                    modifier = Modifier.height(360.dp),
-                    verticalArrangement = Arrangement.spacedBy(Spacing.sm)
-                ) {
-                    items(exercises, key = { it.id }) { exercise ->
-                        IslandCard(
-                            modifier = Modifier.fillMaxWidth(),
-                            contentPadding = PaddingValues(Spacing.md),
-                            elevation = 0.dp,
-                            color = EinaTheme.island.sunken,
-                            onClick = { onPick(exercise) }
-                        ) {
-                            Text(exercise.name, style = MaterialTheme.typography.titleSmall)
-                        }
+    val island = EinaTheme.island
+    var query by remember { mutableStateOf("") }
+    var category by remember { mutableStateOf<MuscleGroupCategory?>(null) }
+
+    val filtered = remember(exercises, query, category) {
+        exercises.filter { exercise ->
+            val matchesQuery = query.isBlank() || exercise.name.contains(query, ignoreCase = true)
+            val matchesCategory = category == null ||
+                primaryCategoryFor(exercise.muscleGroupsPrimary) == category
+            matchesQuery && matchesCategory
+        }
+    }
+
+    IslandBottomSheet(onDismiss = onDismiss, title = "Aggiungi esercizio") {
+        IslandTextField(
+            value = query,
+            onValueChange = { query = it },
+            label = "Cerca esercizio",
+            leadingIcon = Icons.Outlined.Search,
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
+            contentPadding = PaddingValues(vertical = Spacing.sm)
+        ) {
+            items(MuscleGroupCategory.entries) { entry ->
+                IslandChip(
+                    text = entry.label,
+                    selected = category == entry,
+                    accentColor = entry.color,
+                    onClick = { category = if (category == entry) null else entry }
+                )
+            }
+        }
+
+        if (filtered.isEmpty()) {
+            Text(
+                text = if (exercises.isEmpty()) {
+                    "Nessun esercizio in libreria."
+                } else {
+                    "Nessun esercizio trovato. Cambia filtro o cerca un altro nome."
+                },
+                style = MaterialTheme.typography.bodyMedium,
+                color = island.textSecondary,
+                modifier = Modifier.padding(vertical = Spacing.lg)
+            )
+        } else {
+            LazyColumn(
+                modifier = Modifier.height(380.dp),
+                verticalArrangement = Arrangement.spacedBy(Spacing.sm)
+            ) {
+                items(filtered, key = { it.id }) { exercise ->
+                    val exerciseCategory = primaryCategoryFor(exercise.muscleGroupsPrimary)
+                    IslandCard(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentPadding = PaddingValues(Spacing.md),
+                        elevation = 0.dp,
+                        color = island.sunken,
+                        onClick = { onPick(exercise) }
+                    ) {
+                        Text(exercise.name, style = MaterialTheme.typography.titleSmall)
+                        Text(
+                            text = listOfNotNull(
+                                exerciseCategory.label,
+                                exercise.equipment?.takeIf { it.isNotBlank() }
+                            ).joinToString(" · "),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = island.textSecondary
+                        )
                     }
                 }
             }
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) { Text("Chiudi") }
         }
-    )
+    }
 }
 
 private fun formatDuration(totalSeconds: Int): String {

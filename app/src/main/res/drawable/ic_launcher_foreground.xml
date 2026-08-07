@@ -1,11 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  Marchio Eina: tre barre bianche di lunghezza decrescente-crescente, che si leggono come una "E".
+  Stesso segno disegnato nell'immagine di riepilogo condivisibile (ui/share/ShareCard.kt):
+  se cambia uno, va cambiato anche l'altro.
+-->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- TODO: placeholder — sostituire con icona definitiva -->
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M34,44 L34,64 L44,64 L44,58 L64,58 L64,64 L74,64 L74,44 L64,44 L64,50 L44,50 L44,44 Z" />
+        android:pathData="M31.86,28.08 H76.14 A5.94,5.94 0 0 1 76.14,39.96 H31.86 A5.94,5.94 0 0 1 31.86,28.08 Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M31.86,48.06 H58.86 A5.94,5.94 0 0 1 58.86,59.94 H31.86 A5.94,5.94 0 0 1 31.86,48.06 Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M31.86,68.04 H76.14 A5.94,5.94 0 0 1 76.14,79.92 H31.86 A5.94,5.94 0 0 1 31.86,68.04 Z" />
 </vector>

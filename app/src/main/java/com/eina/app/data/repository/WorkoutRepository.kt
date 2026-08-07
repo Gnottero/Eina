@@ -95,6 +95,10 @@ class WorkoutRepository(
     suspend fun getLastTimeSets(exerciseId: Long, currentSessionId: Long): List<SetEntryEntity> =
         setEntryDao.getLastTimeSets(exerciseId, currentSessionId)
 
+    /** Ultimi peso/ripetizioni registrati per l'esercizio, in qualunque sessione. */
+    suspend fun getLastRecordedValues(exerciseId: Long): Pair<Double?, Int?> =
+        setEntryDao.getLastRecordedWeight(exerciseId) to setEntryDao.getLastRecordedReps(exerciseId)
+
     suspend fun addExercise(sessionId: Long, exerciseId: Long, order: Int, defaultRestSeconds: Int = 90): Long {
         val workoutExerciseId = workoutExerciseDao.insert(
             WorkoutExerciseEntity(sessionId = sessionId, exerciseId = exerciseId, order = order)

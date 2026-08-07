@@ -38,33 +38,42 @@ class WorkoutFeedback(
     }
 
     /**
-     * Micro-feedback su ogni tocco dei controlli. EFFECT_TICK e' impercettibile su molti
-     * dispositivi: si usa un one-shot breve ad ampiezza piena, con attributi "touch" cosi'
-     * la vibrazione non viene soppressa quando la suoneria e' in silenzioso.
+     * Micro-feedback su ogni tocco dei controlli. EFFECT_TICK e DEFAULT_AMPLITUDE risultano
+     * impercettibili su molti dispositivi: si preferisce l'effetto di sistema EFFECT_HEAVY_CLICK,
+     * che i vibratori lineari rendono come un colpo secco, e si ripiega su un one-shot ad
+     * ampiezza massima dove i predefiniti non sono supportati.
      */
     fun haptic() {
         if (!settings.hapticsEnabled.value) return
         val vibrator = vibrator?.takeIf { it.hasVibrator() } ?: return
-        vibrator.vibrateCompat(VibrationEffect.createOneShot(35, VibrationEffect.DEFAULT_AMPLITUDE), alarm = false)
+        val effect = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            VibrationEffect.createPredefined(VibrationEffect.EFFECT_HEAVY_CLICK)
+        } else {
+            VibrationEffect.createOneShot(TAP_DURATION_MS, MAX_AMPLITUDE)
+        }
+        // Canale non attenuato anche per i tap: sui canali "feedback" diversi produttori
+        // abbassano (o azzerano) l'ampiezza in base alle impostazioni di sistema, e il toggle
+        // dell'app non produceva nulla di percepibile. L'effetto resta comunque brevissimo.
+        vibrator.vibrateCompat(effect)
     }
 
     private fun vibrateWaveform(pattern: LongArray) {
         val vibrator = vibrator?.takeIf { it.hasVibrator() } ?: return
-        vibrator.vibrateCompat(VibrationEffect.createWaveform(pattern, -1), alarm = true)
+        vibrator.vibrateCompat(VibrationEffect.createWaveform(pattern, -1))
     }
 
     /**
-     * Gli usage "touch" vengono azzerati dal sistema quando la vibrazione al tocco e' disattivata
-     * nelle impostazioni del telefono: il toggle dell'app non avrebbe alcun effetto percepibile.
-     * Si usa quindi HARDWARE_FEEDBACK per i tap e ALARM per la fine del recupero.
+     * Gli usage "touch" e "hardware feedback" vengono attenuati o azzerati dal sistema in base
+     * alle impostazioni del telefono: il toggle dell'app non produceva nulla di percepibile.
+     * Tutte le vibrazioni dell'app passano quindi dal canale non attenuato, restando pero'
+     * brevissime per i tap.
      */
-    private fun Vibrator.vibrateCompat(effect: VibrationEffect, alarm: Boolean) {
+    private fun Vibrator.vibrateCompat(effect: VibrationEffect) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            val usage = if (alarm) VibrationAttributes.USAGE_ALARM else VibrationAttributes.USAGE_HARDWARE_FEEDBACK
-            vibrate(effect, VibrationAttributes.createForUsage(usage))
+            vibrate(effect, VibrationAttributes.createForUsage(VibrationAttributes.USAGE_ALARM))
         } else {
             val attributes = AudioAttributes.Builder()
-                .setUsage(if (alarm) AudioAttributes.USAGE_ALARM else AudioAttributes.USAGE_ASSISTANCE_SONIFICATION)
+                .setUsage(AudioAttributes.USAGE_ALARM)
                 .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
                 .build()
             vibrate(effect, attributes)
@@ -84,5 +93,7 @@ class WorkoutFeedback(
     private companion object {
         const val TONE_VOLUME = 90
         const val TONE_DURATION_MS = 700
+        const val TAP_DURATION_MS = 30L
+        const val MAX_AMPLITUDE = 255
     }
 }

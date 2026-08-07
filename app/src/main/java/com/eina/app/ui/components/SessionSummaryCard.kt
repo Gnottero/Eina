@@ -1,33 +1,25 @@
 package com.eina.app.ui.components
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.eina.app.domain.SessionSummary
 import com.eina.app.ui.theme.EinaTheme
 import com.eina.app.ui.theme.Spacing
-import com.eina.app.ui.theme.TileShape
-
-/** Quanti esercizi si elencano per esteso prima di riassumere i restanti in "+ altri N". */
-private const val MAX_EXERCISE_LINES = 3
 
 /**
- * Card di riepilogo sessione. Le metriche stanno in tre riquadri incassati con numero grande:
- * a colpo d'occhio si legge quanto e' durato, quanto si e' sollevato e quante serie sono state
- * fatte, senza dover decifrare una riga di testo continua.
+ * Card di riepilogo sessione, in chiave minimale: giorno e ora in testa, una sola riga di
+ * metriche separate da punti e i nomi degli esercizi. Niente riquadri dentro la card — la
+ * gerarchia la fanno il corpo del testo e lo spazio, non altri contenitori.
  */
 @Composable
 fun SessionSummaryCard(
@@ -38,7 +30,7 @@ fun SessionSummaryCard(
     val island = EinaTheme.island
     IslandCard(
         modifier = modifier.fillMaxWidth(),
-        contentPadding = PaddingValues(Spacing.lg),
+        contentPadding = PaddingValues(horizontal = Spacing.lg, vertical = Spacing.lg),
         verticalArrangement = Arrangement.spacedBy(Spacing.md),
         onClick = onClick
     ) {
@@ -47,39 +39,35 @@ fun SessionSummaryCard(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
         ) {
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(2.dp)
-            ) {
-                Text(
-                    text = formatRelativeDay(summary.startTime),
-                    style = MaterialTheme.typography.titleMedium
-                )
-                Text(
-                    text = formatTime(summary.startTime),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = island.textSecondary
-                )
-            }
+            Text(
+                text = formatRelativeDay(summary.startTime),
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.weight(1f)
+            )
             if (summary.prCount > 0) {
                 EinaBadge(
                     text = if (summary.prCount == 1) "1 PR" else "${summary.prCount} PR",
                     color = MaterialTheme.colorScheme.primary
                 )
             }
+            Text(
+                text = formatTime(summary.startTime),
+                style = MaterialTheme.typography.bodySmall,
+                color = island.textSecondary
+            )
         }
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
-        ) {
-            MetricBox(label = "Durata", value = summary.durationMinutes?.let { formatDuration(it) } ?: "—")
-            MetricBox(label = "Volume", value = formatVolume(summary.volumeKg), unit = "kg")
-            MetricBox(label = "Serie", value = summary.setCount.toString())
-        }
+        Text(
+            text = listOfNotNull(
+                summary.durationMinutes?.let { formatDuration(it) },
+                "${formatVolume(summary.volumeKg)} kg",
+                if (summary.setCount == 1) "1 serie" else "${summary.setCount} serie"
+            ).joinToString(" · "),
+            style = MaterialTheme.typography.titleSmall
+        )
 
         if (summary.exerciseNames.isNotEmpty()) {
-            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 summary.exerciseNames.take(MAX_EXERCISE_LINES).forEach { name ->
                     Text(
                         text = name,
@@ -94,7 +82,7 @@ fun SessionSummaryCard(
                     Text(
                         text = "+ altri $hidden",
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.primary
+                        color = island.textSecondary
                     )
                 }
             }
@@ -102,38 +90,5 @@ fun SessionSummaryCard(
     }
 }
 
-@Composable
-private fun RowScope.MetricBox(label: String, value: String, unit: String? = null) {
-    val island = EinaTheme.island
-    Column(
-        modifier = Modifier
-            .weight(1f)
-            .clip(TileShape)
-            .background(island.sunken)
-            .padding(horizontal = Spacing.md, vertical = Spacing.sm),
-        verticalArrangement = Arrangement.spacedBy(2.dp)
-    ) {
-        Text(
-            text = label.uppercase(),
-            style = MaterialTheme.typography.labelSmall,
-            color = island.textSecondary,
-            maxLines = 1
-        )
-        Row(verticalAlignment = Alignment.Bottom) {
-            Text(
-                text = value,
-                style = MaterialTheme.typography.titleLarge,
-                maxLines = 1,
-                overflow = TextOverflow.Clip
-            )
-            if (unit != null) {
-                Text(
-                    text = " $unit",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = island.textSecondary,
-                    modifier = Modifier.padding(bottom = 3.dp)
-                )
-            }
-        }
-    }
-}
+/** Quanti esercizi si elencano per esteso prima di riassumere i restanti in "+ altri N". */
+private const val MAX_EXERCISE_LINES = 3

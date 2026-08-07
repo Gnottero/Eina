@@ -46,6 +46,32 @@ interface SetEntryDao {
     )
     suspend fun getLastTimeSets(exerciseId: Long, excludeSessionId: Long): List<SetEntryEntity>
 
+    // Ultimo peso e ultime ripetizioni effettivamente registrati per un esercizio, in qualunque
+    // sessione. Servono come ultimo segnaposto quando l'allenamento piu' recente con quell'esercizio
+    // non aveva il dato (es. serie chiusa senza peso): meglio proporre l'ultimo valore noto che
+    // lasciare il campo vuoto.
+    @Query(
+        """
+        SELECT se.weight FROM set_entries se
+        INNER JOIN workout_exercises we ON se.workoutExerciseId = we.id
+        WHERE we.exerciseId = :exerciseId AND se.completedAt IS NOT NULL AND se.weight IS NOT NULL
+        ORDER BY se.completedAt DESC
+        LIMIT 1
+        """
+    )
+    suspend fun getLastRecordedWeight(exerciseId: Long): Double?
+
+    @Query(
+        """
+        SELECT se.actualReps FROM set_entries se
+        INNER JOIN workout_exercises we ON se.workoutExerciseId = we.id
+        WHERE we.exerciseId = :exerciseId AND se.completedAt IS NOT NULL AND se.actualReps IS NOT NULL
+        ORDER BY se.completedAt DESC
+        LIMIT 1
+        """
+    )
+    suspend fun getLastRecordedReps(exerciseId: Long): Int?
+
     @Query("DELETE FROM set_entries WHERE id = :setId")
     suspend fun deleteById(setId: Long)
 

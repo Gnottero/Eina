@@ -330,6 +330,15 @@ eredita quelli dell'ultima volta (poi il target); preset di recupero in FlowRow;
 con durata/volume/serie in riquadri; immagine condivisibile light con marchio stilizzato,
 durata e soli dettagli essenziali.
 
+**Fase 12 — Rifiniture UX** *(fatta)*
+DoD: icona app = marchio della card condivisibile; card dello storico minimali (giorno, ora,
+metriche su una riga, esercizi); segnaposto di peso e ripetizioni sempre proposti (ultima volta,
+target di routine, ultimo valore registrato per quell'esercizio); azioni dell'esercizio in corso
+e delle routine in un foglio dal basso con righe grandi; tempo di recupero come foglio con
+stepper e griglia di durate che si applicano subito; picker esercizi con ricerca e filtro per
+gruppo muscolare; eliminazione routine con conferma; vibrazione dei tap su canale non attenuato
+(EFFECT_HEAVY_CLICK) perche' quella precedente era impercettibile.
+
 **Fase 9 — Rifinitura**
 DoD: ProGuard/R8 attivo, avvio a freddo ottimizzato, coerenza visiva su tutte le schermate, edge case gestiti (permessi galleria, app playlist assente).
 
@@ -340,7 +349,7 @@ DoD: ProGuard/R8 attivo, avvio a freddo ottimizzato, coerenza visiva su tutte le
 - [x] Nome definitivo e package name → **Eina**, `com.<org>.eina`
 - [ ] URL Buy Me a Coffee
 - [x] Dataset esercizi arricchito → **pronto**: `seed/eina_exercises_seed.json` (873 esercizi convertiti da free-exercise-db con `weightType`/`description`/`loggingInstructions`). Copialo in `app/src/main/assets/seed/exercises.json`. **274 esercizi hanno `needsReview: true`** (classificazione `weightType` incerta, o categoria "stretching" ambigua per un tracker di forza) — filtra su questo campo per una revisione manuale mirata, non serve rivederli tutti. Le `description` sono in inglese (lingua originale del dataset): per la v1 puoi tenerle così, una traduzione IT è un'iterazione successiva non bloccante.
-- [ ] Icona app anche solo placeholder in `res/mipmap`
+- [x] Icona app → **fatta**: marchio Eina (tessera viola + tre barre bianche) come adaptive icon in `res/drawable/ic_launcher_foreground.xml`, stesso segno disegnato in `ui/share/ShareCard.kt`
 - [ ] **Decisione sulle immagini esercizio**: ogni esercizio ha in media 2 frame JPG da ~38KB l'uno → bundlare tutte le immagini di libreria (~1700 file) costerebbe ~65-70MB di APK, in conflitto col principio "leggera". Opzioni da decidere prima della Fase 3: (a) bundlare solo la prima immagine per esercizio (~33MB), (b) bundlare un sottoinsieme curato (es. i 150-200 esercizi più comuni) e usare Play Asset Delivery per il resto, (c) ricomprimere/ridimensionare le immagini prima del bundling. Lo script di conversione salva comunque tutti i path in `mediaFrames` per ogni esercizio, così qualunque opzione si scelga i dati sono già pronti.
 
 ---

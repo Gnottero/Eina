@@ -70,8 +70,12 @@ class ActiveWorkoutViewModel(
 
     private suspend fun upsertExerciseUi(workoutExercise: WorkoutExerciseEntity, exercise: ExerciseEntity) {
         val lastTimeSets = repository.getLastTimeSets(exercise.id, sessionId)
-        val sets = repository.getSetsForWorkoutExercise(workoutExercise.id)
-            .map { it.toUi(exercise.id, lastTimeSets) }
+        val (lastWeight, lastReps) = repository.getLastRecordedValues(exercise.id)
+        val sets = withSuggestions(
+            repository.getSetsForWorkoutExercise(workoutExercise.id).map { it.toUi(exercise.id, lastTimeSets) },
+            lastWeight,
+            lastReps
+        )
         val exerciseUi = SessionExerciseUi(
             workoutExerciseId = workoutExercise.id,
             exerciseId = exercise.id,
@@ -82,7 +86,9 @@ class ActiveWorkoutViewModel(
                 ?: routineTargets[exercise.id]?.restSeconds
                 ?: DEFAULT_REST_SECONDS,
             sets = sets,
-            lastTimeSets = lastTimeSets
+            lastTimeSets = lastTimeSets,
+            lastRecordedWeight = lastWeight,
+            lastRecordedReps = lastReps
         )
         _uiState.update { state ->
             val others = state.exercises.filterNot { it.workoutExerciseId == workoutExercise.id }
@@ -93,8 +99,12 @@ class ActiveWorkoutViewModel(
 
     private suspend fun refreshSets(workoutExerciseId: Long) {
         val exercise = _uiState.value.exercises.find { it.workoutExerciseId == workoutExerciseId } ?: return
-        val sets = repository.getSetsForWorkoutExercise(workoutExerciseId)
-            .map { it.toUi(exercise.exerciseId, exercise.lastTimeSets) }
+        val sets = withSuggestions(
+            repository.getSetsForWorkoutExercise(workoutExerciseId)
+                .map { it.toUi(exercise.exerciseId, exercise.lastTimeSets) },
+            exercise.lastRecordedWeight,
+            exercise.lastRecordedReps
+        )
         _uiState.update { state ->
             state.copy(
                 exercises = state.exercises.map { ex ->
@@ -129,6 +139,28 @@ class ActiveWorkoutViewModel(
         targetWeight = routineTargets[exerciseId]?.targetWeight,
         previous = lastTimeSets.getOrNull(setIndex)
     )
+
+    /**
+     * Riempie i valori proposti serie per serie. Ordine di ripiego: la stessa serie dell'ultima
+     * volta, poi il target della routine, poi l'ultimo valore visto (nella sessione in corso o,
+     * come ultima spiaggia, nello storico dell'esercizio). Cosi' anche il peso compare come
+     * segnaposto quando l'allenamento precedente non lo aveva registrato, e non solo le ripetizioni.
+     */
+    private fun withSuggestions(
+        sets: List<SessionSetUi>,
+        fallbackWeight: Double?,
+        fallbackReps: Int?
+    ): List<SessionSetUi> {
+        var lastWeight: Double? = fallbackWeight
+        var lastReps: Int? = fallbackReps
+        return sets.map { set ->
+            val suggestedWeight = set.previous?.weight ?: set.targetWeight ?: lastWeight
+            val suggestedReps = set.previous?.actualReps ?: set.targetReps ?: lastReps
+            lastWeight = set.weight ?: suggestedWeight ?: lastWeight
+            lastReps = set.actualReps ?: suggestedReps ?: lastReps
+            set.copy(suggestedWeight = suggestedWeight, suggestedReps = suggestedReps)
+        }
+    }
 
     fun addExercise(exercise: ExerciseEntity) {
         viewModelScope.launch {
@@ -217,7 +249,15 @@ class ActiveWorkoutViewModel(
             state.copy(
                 exercises = state.exercises.map { ex ->
                     if (ex.workoutExerciseId != workoutExerciseId) ex
-                    else ex.copy(sets = ex.sets.map { if (it.id == setId) updated else it })
+                    // Le serie sotto ereditano quello che si sta scrivendo qui: i segnaposto
+                    // vanno ricalcolati a ogni tasto, non solo al refresh dal database.
+                    else ex.copy(
+                        sets = withSuggestions(
+                            ex.sets.map { if (it.id == setId) updated else it },
+                            ex.lastRecordedWeight,
+                            ex.lastRecordedReps
+                        )
+                    )
                 }
             )
         }
@@ -231,12 +271,11 @@ class ActiveWorkoutViewModel(
         viewModelScope.launch {
             val exercise = _uiState.value.exercises.find { it.workoutExerciseId == workoutExerciseId } ?: return@launch
             val set = exercise.sets.find { it.id == setId } ?: return@launch
-            // Chiudere una serie lasciata vuota registrerebbe 0 kg e 0 ripetizioni: si adottano i
-            // valori mostrati come segnaposto. Prima l'ultima volta (e' quello che l'utente ha
-            // davvero fatto), poi il target di routine come ripiego.
+            // Chiudere una serie lasciata vuota registrerebbe 0 kg e 0 ripetizioni: si registrano
+            // gli stessi valori mostrati in grigio nei campi.
             val filled = set.copy(
-                actualReps = set.actualReps ?: set.previous?.actualReps ?: set.targetReps,
-                weight = set.weight ?: set.previous?.weight ?: set.targetWeight
+                actualReps = set.actualReps ?: set.suggestedReps,
+                weight = set.weight ?: set.suggestedWeight
             )
             val completed = repository.completeSet(filled.toEntity(workoutExerciseId), exercise.exerciseId, exercise.weightType)
             refreshSets(workoutExerciseId)

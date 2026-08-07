@@ -18,7 +18,14 @@ data class SessionSetUi(
     /** Peso target della routine: solo segnaposto in UI, mai un valore registrato. */
     val targetWeight: Double? = null,
     /** Serie corrispondente dell'ultima volta, mostrata in colonna "Precedente". */
-    val previous: SetEntryEntity? = null
+    val previous: SetEntryEntity? = null,
+    /**
+     * Valori proposti per la serie: sono quelli stampati in grigio nei campi e quelli che
+     * vengono registrati se si chiude la serie senza digitare nulla. Vedi
+     * ActiveWorkoutViewModel.withSuggestions per la catena di ripiego.
+     */
+    val suggestedWeight: Double? = null,
+    val suggestedReps: Int? = null
 )
 
 data class SessionExerciseUi(
@@ -29,7 +36,10 @@ data class SessionExerciseUi(
     val order: Int,
     val restSeconds: Int = 90,
     val sets: List<SessionSetUi> = emptyList(),
-    val lastTimeSets: List<SetEntryEntity> = emptyList()
+    val lastTimeSets: List<SetEntryEntity> = emptyList(),
+    /** Ultimi valori registrati per questo esercizio, ovunque: ultimo anello dei segnaposto. */
+    val lastRecordedWeight: Double? = null,
+    val lastRecordedReps: Int? = null
 ) {
     val completedSets: Int get() = sets.count { it.completedAt != null }
 }
