@@ -1,7 +1,13 @@
 package com.eina.app.ui.history
 
+import android.Manifest
 import android.content.Context
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.StringRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -23,11 +29,11 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -42,6 +48,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import androidx.core.content.ContextCompat
 import com.eina.app.R
 import com.eina.app.data.db.CompletedSetRow
 import com.eina.app.data.db.WeightType
@@ -49,6 +56,7 @@ import com.eina.app.domain.totalVolume
 import com.eina.app.ui.components.EinaBadge
 import com.eina.app.ui.components.IslandButton
 import com.eina.app.ui.components.IslandCard
+import com.eina.app.ui.components.IslandChip
 import com.eina.app.ui.components.IslandEmptyState
 import com.eina.app.ui.components.IslandIconButton
 import com.eina.app.ui.components.IslandScreen
@@ -61,8 +69,14 @@ import com.eina.app.ui.components.formatDuration
 import com.eina.app.ui.components.formatFullDate
 import com.eina.app.ui.components.formatTime
 import com.eina.app.ui.components.formatVolume
+import com.eina.app.ui.share.ShareCardData
+import com.eina.app.ui.share.ShareCardStyle
+import com.eina.app.ui.share.copyImageToClipboard
 import com.eina.app.ui.share.isInstagramInstalled
+import com.eina.app.ui.share.needsLegacyStoragePermission
+import com.eina.app.ui.share.openInstagramStoryCamera
 import com.eina.app.ui.share.renderShareCard
+import com.eina.app.ui.share.saveImageToGallery
 import com.eina.app.ui.share.saveShareImage
 import com.eina.app.ui.share.shareCardDataOf
 import com.eina.app.ui.share.shareImage
@@ -72,7 +86,6 @@ import com.eina.app.ui.theme.IslandShape
 import com.eina.app.ui.theme.Spacing
 import com.eina.app.ui.theme.TileShape
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -87,30 +100,13 @@ fun SessionDetailScreen(
     val state by viewModel.uiState.collectAsState()
     val summary = state.summary
     val context = LocalContext.current
-    val scope = rememberCoroutineScope()
-    var shareBitmap by remember { mutableStateOf<Bitmap?>(null) }
+    var shareData by remember { mutableStateOf<ShareCardData?>(null) }
 
-    shareBitmap?.let { bitmap ->
-        SharePreviewDialog(
-            bitmap = bitmap,
-            onDismiss = { shareBitmap = null },
-            onShare = {
-                val uri = saveShareImage(context, bitmap, "eina-allenamento-$sessionId.png")
-                shareImage(context, uri, text = context.getString(R.string.session_share_text))
-                shareBitmap = null
-            },
-            // Sticker: la card resta un adesivo sopra la storia invece di diventarne lo sfondo.
-            onShareToStory = if (isInstagramInstalled(context)) {
-                {
-                    val uri = saveShareImage(context, bitmap, "eina-allenamento-$sessionId.png")
-                    if (!shareToInstagramStory(context, uri)) {
-                        shareImage(context, uri, text = context.getString(R.string.session_share_text))
-                    }
-                    shareBitmap = null
-                }
-            } else {
-                null
-            }
+    shareData?.let { data ->
+        ShareSheet(
+            data = data,
+            fileName = "eina-allenamento-$sessionId.png",
+            onDismiss = { shareData = null }
         )
     }
 
@@ -139,12 +135,7 @@ fun SessionDetailScreen(
                         IslandIconButton(
                             icon = Icons.Outlined.Share,
                             contentDescription = stringResource(R.string.session_share_cd),
-                            onClick = {
-                                scope.launch {
-                                    val data = shareCardDataOf(summary)
-                                    shareBitmap = withContext(Dispatchers.Default) { renderShareCard(context, data) }
-                                }
-                            }
+                            onClick = { shareData = shareCardDataOf(summary) }
                         )
                     }
                 }
@@ -337,32 +328,113 @@ private fun SetRow(number: Int, set: CompletedSetRow) {
     }
 }
 
+/**
+ * Foglio di condivisione in due modi.
+ *
+ * "Tessera" e' l'immagine autonoma di sempre. "Solo statistiche" e' l'overlay trasparente:
+ * si salva nel rullino (e in parallelo finisce negli appunti), poi si apre Instagram, si
+ * sceglie la propria foto di sfondo e lo si aggiunge come adesivo. E' il giro che fa Strava,
+ * e resta l'unico modo di comporre foto propria + statistiche: l'intent ADD_TO_STORY di
+ * Instagram accetta un adesivo ma impone lui lo sfondo.
+ */
 @Composable
-private fun SharePreviewDialog(
-    bitmap: Bitmap,
-    onDismiss: () -> Unit,
-    onShare: () -> Unit,
-    onShareToStory: (() -> Unit)? = null
+private fun ShareSheet(
+    data: ShareCardData,
+    fileName: String,
+    onDismiss: () -> Unit
 ) {
+    val island = EinaTheme.island
+    val context = LocalContext.current
+    var style by remember { mutableStateOf(ShareCardStyle.TRANSPARENT) }
+    var bitmap by remember { mutableStateOf<Bitmap?>(null) }
+
+    LaunchedEffect(style) {
+        bitmap = withContext(Dispatchers.Default) { renderShareCard(context, data, style) }
+    }
+
+    // Fino ad Android 9 scrivere nel rullino richiede un permesso esplicito; concesso,
+    // il salvataggio riparte da solo.
+    var pendingSave by remember { mutableStateOf(false) }
+    val storagePermission = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        val current = bitmap
+        if (granted && pendingSave && current != null) {
+            context.saveOverlay(current, fileName, openInstagram = true)
+            onDismiss()
+        } else if (!granted) {
+            context.toast(R.string.share_permission_needed)
+        }
+        pendingSave = false
+    }
+
+    fun saveAndOpen() {
+        val current = bitmap ?: return
+        if (needsLegacyStoragePermission() &&
+            ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE) !=
+            PackageManager.PERMISSION_GRANTED
+        ) {
+            pendingSave = true
+            storagePermission.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+            return
+        }
+        context.saveOverlay(current, fileName, openInstagram = true)
+        onDismiss()
+    }
+
     Dialog(onDismissRequest = onDismiss) {
         IslandCard(modifier = Modifier.fillMaxWidth()) {
-            Text(stringResource(R.string.session_preview), style = MaterialTheme.typography.titleMedium)
-            Image(
-                bitmap = bitmap.asImageBitmap(),
-                contentDescription = stringResource(R.string.session_preview_cd),
-                contentScale = ContentScale.Fit,
+            Text(stringResource(R.string.share_title), style = MaterialTheme.typography.titleMedium)
+
+            Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+                IslandChip(
+                    text = stringResource(R.string.share_style_transparent),
+                    selected = style == ShareCardStyle.TRANSPARENT,
+                    onClick = { style = ShareCardStyle.TRANSPARENT }
+                )
+                IslandChip(
+                    text = stringResource(R.string.share_style_card),
+                    selected = style == ShareCardStyle.CARD,
+                    onClick = { style = ShareCardStyle.CARD }
+                )
+            }
+
+            // Fondo scuro dietro l'anteprima: l'overlay e' testo bianco su nulla, su carta
+            // chiara non si vedrebbe affatto.
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(IslandShape)
-            )
-            if (onShareToStory != null) {
+                    .background(if (style == ShareCardStyle.TRANSPARENT) PreviewBackdrop else island.sunken),
+                contentAlignment = Alignment.Center
+            ) {
+                bitmap?.let {
+                    Image(
+                        bitmap = it.asImageBitmap(),
+                        contentDescription = stringResource(R.string.session_preview_cd),
+                        contentScale = ContentScale.Fit,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
+
+            if (style == ShareCardStyle.TRANSPARENT) {
+                Text(
+                    stringResource(R.string.share_transparent_hint),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = island.textSecondary
+                )
+            }
+
+            if (isInstagramInstalled(context)) {
                 IslandButton(
-                    text = "Storia Instagram",
-                    onClick = onShareToStory,
+                    text = stringResource(R.string.share_save_and_open),
+                    onClick = { saveAndOpen() },
                     icon = Icons.Outlined.AutoAwesome,
                     modifier = Modifier.fillMaxWidth()
                 )
             }
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(Spacing.md)
@@ -372,24 +444,47 @@ private fun SharePreviewDialog(
                     onClick = onDismiss,
                     modifier = Modifier.weight(1f)
                 )
-                if (onShareToStory != null) {
-                    IslandSecondaryButton(
-                        text = stringResource(R.string.action_more),
-                        onClick = onShare,
-                        icon = Icons.Outlined.Share,
-                        modifier = Modifier.weight(1f)
-                    )
-                } else {
-                    IslandButton(
-                        text = stringResource(R.string.action_share),
-                        onClick = onShare,
-                        icon = Icons.Outlined.Share,
-                        modifier = Modifier.weight(1f)
-                    )
-                }
+                IslandSecondaryButton(
+                    text = stringResource(R.string.action_more),
+                    onClick = {
+                        val current = bitmap ?: return@IslandSecondaryButton
+                        val uri = saveShareImage(context, current, fileName)
+                        shareImage(context, uri, text = context.getString(R.string.session_share_text))
+                        onDismiss()
+                    },
+                    icon = Icons.Outlined.Share,
+                    modifier = Modifier.weight(1f)
+                )
             }
         }
     }
+}
+
+/** Grigio scuro neutro: sta al posto della foto che l'utente mettera' sotto l'overlay. */
+private val PreviewBackdrop = Color(0xFF2B2B2B)
+
+/**
+ * Salva l'overlay nel rullino e lo mette anche negli appunti, cosi' funzionano entrambe le
+ * strade dentro Instagram: prenderlo dalla galleria come adesivo, oppure incollarlo.
+ */
+private fun Context.saveOverlay(bitmap: Bitmap, fileName: String, openInstagram: Boolean) {
+    val galleryUri = saveImageToGallery(this, bitmap, fileName)
+    if (galleryUri == null) {
+        toast(R.string.share_save_failed)
+        return
+    }
+    // La copia negli appunti passa dal FileProvider: l'Uri di MediaStore non e' leggibile
+    // da un'altra app senza un permesso esplicito.
+    val copied = copyImageToClipboard(this, saveShareImage(this, bitmap, fileName), getString(R.string.app_name))
+    toast(if (copied) R.string.share_copied else R.string.share_saved)
+
+    if (openInstagram && !openInstagramStoryCamera(this)) {
+        toast(R.string.share_instagram_missing)
+    }
+}
+
+private fun Context.toast(@StringRes message: Int) {
+    Toast.makeText(this, message, Toast.LENGTH_LONG).show()
 }
 
 private fun Context.setLabel(set: CompletedSetRow): String = when (set.weightType) {

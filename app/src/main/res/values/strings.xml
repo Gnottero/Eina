@@ -347,4 +347,16 @@
     <string name="share_card_volume">VOLUME</string>
     <string name="share_card_sets">SETS</string>
     <string name="share_card_pr" translatable="false">PR</string>
+    <string name="share_title">Share</string>
+    <string name="share_style_card">Card</string>
+    <string name="share_style_transparent">Stats only</string>
+    <string name="share_transparent_hint">1. Save the overlay. 2. Open Instagram Stories and pick your background photo. 3. Add the saved image as a sticker, or paste it if you copied it.</string>
+    <string name="share_save_and_open">Save and open Instagram</string>
+    <string name="share_save_to_gallery">Save to gallery</string>
+    <string name="share_copy">Copy</string>
+    <string name="share_saved">Saved to Pictures/Eina</string>
+    <string name="share_save_failed">Could not save the image</string>
+    <string name="share_copied">Image copied to the clipboard</string>
+    <string name="share_permission_needed">Allow access to your photos to save the overlay</string>
+    <string name="share_instagram_missing">Instagram is not installed</string>
 </resources>

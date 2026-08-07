@@ -330,4 +330,16 @@
     <string name="share_card_duration">DURATA</string>
     <string name="share_card_volume">VOLUME</string>
     <string name="share_card_sets">SERIE</string>
+    <string name="share_title">Condividi</string>
+    <string name="share_style_card">Tessera</string>
+    <string name="share_style_transparent">Solo statistiche</string>
+    <string name="share_transparent_hint">1. Salva l\'overlay. 2. Apri le storie di Instagram e scegli la tua foto di sfondo. 3. Aggiungi l\'immagine salvata come adesivo, o incollala se l\'hai copiata.</string>
+    <string name="share_save_and_open">Salva e apri Instagram</string>
+    <string name="share_save_to_gallery">Salva in galleria</string>
+    <string name="share_copy">Copia</string>
+    <string name="share_saved">Salvata in Immagini/Eina</string>
+    <string name="share_save_failed">Non sono riuscito a salvare l\'immagine</string>
+    <string name="share_copied">Immagine copiata negli appunti</string>
+    <string name="share_permission_needed">Serve l\'accesso alle foto per salvare l\'overlay</string>
+    <string name="share_instagram_missing">Instagram non è installato</string>
 </resources>
