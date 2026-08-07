@@ -2,11 +2,14 @@ package com.eina.app.di
 
 import androidx.room.Room
 import com.eina.app.data.db.EinaDatabase
+import com.eina.app.data.repository.RoutineRepository
 import com.eina.app.data.repository.WorkoutRepository
 import com.eina.app.data.seed.ExerciseSeeder
 import com.eina.app.ui.library.CreateExerciseViewModel
 import com.eina.app.ui.library.ExerciseDetailViewModel
 import com.eina.app.ui.library.LibraryViewModel
+import com.eina.app.ui.routine.RoutineEditorViewModel
+import com.eina.app.ui.routine.RoutineListViewModel
 import com.eina.app.ui.workout.ActiveWorkoutViewModel
 import com.eina.app.ui.workout.WorkoutViewModel
 import org.koin.android.ext.koin.androidContext
@@ -32,9 +35,12 @@ val appModule = module {
             workoutExerciseDao = get(),
             setEntryDao = get(),
             exerciseDao = get(),
-            bodyMetricDao = get()
+            bodyMetricDao = get(),
+            routineExerciseDao = get()
         )
     }
+
+    single { RoutineRepository(routineDao = get(), routineExerciseDao = get(), exerciseDao = get()) }
 
     single { ExerciseSeeder(get(), get()) }
 
@@ -43,4 +49,6 @@ val appModule = module {
     viewModel { LibraryViewModel(get()) }
     viewModel { (exerciseId: Long) -> ExerciseDetailViewModel(get(), exerciseId) }
     viewModel { CreateExerciseViewModel(get(), androidContext()) }
+    viewModel { RoutineListViewModel(get(), get()) }
+    viewModel { (routineId: Long) -> RoutineEditorViewModel(get(), routineId) }
 }

@@ -27,8 +27,11 @@ import com.eina.app.ui.library.CreateExerciseScreen
 import com.eina.app.ui.library.ExerciseDetailScreen
 import com.eina.app.ui.library.LibraryScreen
 import com.eina.app.ui.progress.ProgressScreen
+import com.eina.app.ui.routine.RoutineEditorScreen
 import com.eina.app.ui.workout.ActiveWorkoutScreen
 import com.eina.app.ui.workout.WorkoutScreen
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 
 sealed class EinaDestination(val route: String, val labelRes: Int) {
     data object Dashboard : EinaDestination("dashboard", R.string.nav_dashboard)
@@ -81,9 +84,44 @@ fun EinaNavHost() {
         ) {
             composable(EinaDestination.Dashboard.route) { DashboardScreen() }
             composable(EinaDestination.Workout.route) {
-                WorkoutScreen(onSessionStarted = { sessionId ->
-                    navController.navigate("workout/active/$sessionId")
-                })
+                WorkoutScreen(
+                    onSessionStarted = { sessionId ->
+                        navController.navigate("workout/active/$sessionId")
+                    },
+                    onCreateRoutineClick = {
+                        navController.navigate("routines/edit/0")
+                    },
+                    onEditRoutineClick = { routineId ->
+                        navController.navigate("routines/edit/$routineId")
+                    }
+                )
+            }
+            composable(
+                route = "routines/edit/{routineId}",
+                arguments = listOf(navArgument("routineId") { type = NavType.LongType })
+            ) { backStackEntry ->
+                val routineId = backStackEntry.arguments?.getLong("routineId") ?: 0L
+                val pickedExerciseId by backStackEntry.savedStateHandle
+                    .getStateFlow<Long?>("pickedExerciseId", null)
+                    .collectAsState()
+                RoutineEditorScreen(
+                    routineId = routineId,
+                    pickedExerciseId = pickedExerciseId,
+                    onExercisePickedConsumed = { backStackEntry.savedStateHandle["pickedExerciseId"] = null },
+                    onPickExercise = {
+                        navController.navigate("routines/edit/$routineId/pick-exercise")
+                    }
+                )
+            }
+            composable("routines/edit/{routineId}/pick-exercise") {
+                LibraryScreen(
+                    onExerciseClick = { exerciseId ->
+                        navController.previousBackStackEntry
+                            ?.savedStateHandle
+                            ?.set("pickedExerciseId", exerciseId)
+                        navController.popBackStack()
+                    }
+                )
             }
             composable(
                 route = "workout/active/{sessionId}",

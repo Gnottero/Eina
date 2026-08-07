@@ -3,6 +3,7 @@ package com.eina.app.data.repository
 import com.eina.app.data.db.BodyMetricDao
 import com.eina.app.data.db.ExerciseDao
 import com.eina.app.data.db.ExerciseEntity
+import com.eina.app.data.db.RoutineExerciseDao
 import com.eina.app.data.db.SetEntryDao
 import com.eina.app.data.db.SetEntryEntity
 import com.eina.app.data.db.WeightType
@@ -19,7 +20,8 @@ class WorkoutRepository(
     private val workoutExerciseDao: WorkoutExerciseDao,
     private val setEntryDao: SetEntryDao,
     private val exerciseDao: ExerciseDao,
-    private val bodyMetricDao: BodyMetricDao
+    private val bodyMetricDao: BodyMetricDao,
+    private val routineExerciseDao: RoutineExerciseDao
 ) {
     fun observeExercises(): Flow<List<ExerciseEntity>> = exerciseDao.getAll()
 
@@ -33,6 +35,31 @@ class WorkoutRepository(
 
     suspend fun startSession(): Long =
         workoutSessionDao.insert(WorkoutSessionEntity(startTime = System.currentTimeMillis()))
+
+    /** Crea sessione legata alla routine e precompila esercizi/set con i target definiti in RoutineExerciseEntity. */
+    suspend fun startSessionFromRoutine(routineId: Long): Long {
+        val sessionId = workoutSessionDao.insert(
+            WorkoutSessionEntity(routineId = routineId, startTime = System.currentTimeMillis())
+        )
+        val routineExercises = routineExerciseDao.getForRoutine(routineId).first().sortedBy { it.order }
+        routineExercises.forEachIndexed { index, routineExercise ->
+            val workoutExerciseId = workoutExerciseDao.insert(
+                WorkoutExerciseEntity(sessionId = sessionId, exerciseId = routineExercise.exerciseId, order = index)
+            )
+            repeat(routineExercise.targetSets) { setIndex ->
+                setEntryDao.insert(
+                    SetEntryEntity(
+                        workoutExerciseId = workoutExerciseId,
+                        setIndex = setIndex,
+                        targetReps = routineExercise.targetReps,
+                        weight = routineExercise.targetWeight,
+                        restSecondsPlanned = routineExercise.restSeconds
+                    )
+                )
+            }
+        }
+        return sessionId
+    }
 
     suspend fun finishSession(sessionId: Long) {
         val session = workoutSessionDao.getById(sessionId) ?: return
