@@ -3,9 +3,11 @@ package com.eina.app.ui.workout
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.eina.app.data.db.ExerciseEntity
+import com.eina.app.data.db.RoutineExerciseEntity
 import com.eina.app.data.db.SetEntryEntity
 import com.eina.app.data.db.WorkoutExerciseEntity
 import com.eina.app.data.repository.WorkoutRepository
+import com.eina.app.domain.volumeForSet
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,32 +29,55 @@ class ActiveWorkoutViewModel(
 
     private var timerJob: Job? = null
 
+    /** Target della routine di partenza, per exerciseId: alimentano i segnaposto dei campi. */
+    private var routineTargets: Map<Long, RoutineExerciseEntity> = emptyMap()
+
     init {
         repository.observeExercises()
             .onEach { list -> _uiState.update { it.copy(availableExercises = list) } }
             .launchIn(viewModelScope)
-        loadExistingExercises()
+        loadSession()
+        startElapsedTicker()
     }
 
-    private fun loadExistingExercises() {
+    private fun loadSession() {
         viewModelScope.launch {
-            val workoutExercises = repository.getSessionExercises(sessionId)
-            workoutExercises.forEach { we ->
+            val session = repository.getSession(sessionId)
+            if (session != null) {
+                _uiState.update { it.copy(startTime = session.startTime) }
+                session.routineId?.let { routineTargets = repository.getRoutineTargets(it) }
+            }
+            repository.getSessionExercises(sessionId).forEach { we ->
                 val exercise = repository.getExercise(we.exerciseId) ?: return@forEach
                 upsertExerciseUi(we, exercise)
             }
         }
     }
 
+    private fun startElapsedTicker() {
+        viewModelScope.launch {
+            while (isActive) {
+                val start = _uiState.value.startTime
+                val elapsed = ((System.currentTimeMillis() - start) / 1000).toInt().coerceAtLeast(0)
+                _uiState.update { it.copy(elapsedSeconds = elapsed) }
+                delay(1000)
+            }
+        }
+    }
+
     private suspend fun upsertExerciseUi(workoutExercise: WorkoutExerciseEntity, exercise: ExerciseEntity) {
-        val sets = repository.getSetsForWorkoutExercise(workoutExercise.id).map { it.toUi() }
         val lastTimeSets = repository.getLastTimeSets(exercise.id, sessionId)
+        val sets = repository.getSetsForWorkoutExercise(workoutExercise.id)
+            .map { it.toUi(exercise.id, lastTimeSets) }
         val exerciseUi = SessionExerciseUi(
             workoutExerciseId = workoutExercise.id,
             exerciseId = exercise.id,
             name = exercise.name,
             weightType = exercise.weightType,
             order = workoutExercise.order,
+            restSeconds = sets.firstOrNull()?.restSecondsPlanned
+                ?: routineTargets[exercise.id]?.restSeconds
+                ?: DEFAULT_REST_SECONDS,
             sets = sets,
             lastTimeSets = lastTimeSets
         )
@@ -60,10 +85,13 @@ class ActiveWorkoutViewModel(
             val others = state.exercises.filterNot { it.workoutExerciseId == workoutExercise.id }
             state.copy(exercises = (others + exerciseUi).sortedBy { it.order })
         }
+        recomputeVolume()
     }
 
     private suspend fun refreshSets(workoutExerciseId: Long) {
-        val sets = repository.getSetsForWorkoutExercise(workoutExerciseId).map { it.toUi() }
+        val exercise = _uiState.value.exercises.find { it.workoutExerciseId == workoutExerciseId } ?: return
+        val sets = repository.getSetsForWorkoutExercise(workoutExerciseId)
+            .map { it.toUi(exercise.exerciseId, exercise.lastTimeSets) }
         _uiState.update { state ->
             state.copy(
                 exercises = state.exercises.map { ex ->
@@ -71,12 +99,39 @@ class ActiveWorkoutViewModel(
                 }
             )
         }
+        recomputeVolume()
     }
+
+    private fun recomputeVolume() {
+        _uiState.update { state ->
+            val volume = state.exercises.sumOf { ex ->
+                ex.sets.filter { it.completedAt != null && !it.isWarmup }
+                    .sumOf { volumeForSet(ex.weightType, it.toEntity(ex.workoutExerciseId)) }
+            }
+            state.copy(volumeKg = volume)
+        }
+    }
+
+    private fun SetEntryEntity.toUi(exerciseId: Long, lastTimeSets: List<SetEntryEntity>) = SessionSetUi(
+        id = id,
+        setIndex = setIndex,
+        targetReps = targetReps ?: routineTargets[exerciseId]?.targetReps,
+        actualReps = actualReps,
+        weight = weight,
+        restSecondsPlanned = restSecondsPlanned,
+        isWarmup = isWarmup,
+        completedAt = completedAt,
+        isPR = isPR,
+        bodyweightSnapshotKg = bodyweightSnapshotKg,
+        targetWeight = routineTargets[exerciseId]?.targetWeight,
+        previous = lastTimeSets.getOrNull(setIndex)
+    )
 
     fun addExercise(exercise: ExerciseEntity) {
         viewModelScope.launch {
             val order = _uiState.value.exercises.size
-            val workoutExerciseId = repository.addExercise(sessionId, exercise.id, order)
+            val rest = routineTargets[exercise.id]?.restSeconds ?: DEFAULT_REST_SECONDS
+            val workoutExerciseId = repository.addExercise(sessionId, exercise.id, order, rest)
             val workoutExercise = WorkoutExerciseEntity(id = workoutExerciseId, sessionId = sessionId, exerciseId = exercise.id, order = order)
             upsertExerciseUi(workoutExercise, exercise)
         }
@@ -88,6 +143,7 @@ class ActiveWorkoutViewModel(
             val remaining = _uiState.value.exercises.filterNot { it.workoutExerciseId == workoutExerciseId }
             _uiState.update { it.copy(exercises = remaining) }
             persistExerciseOrder(remaining)
+            recomputeVolume()
         }
     }
 
@@ -116,9 +172,7 @@ class ActiveWorkoutViewModel(
     fun addSet(workoutExerciseId: Long) {
         viewModelScope.launch {
             val exercise = _uiState.value.exercises.find { it.workoutExerciseId == workoutExerciseId } ?: return@launch
-            val nextIndex = exercise.sets.size
-            val restSeconds = exercise.sets.lastOrNull()?.restSecondsPlanned ?: 90
-            repository.addSet(workoutExerciseId, nextIndex, restSeconds)
+            repository.addSet(workoutExerciseId, exercise.sets.size, exercise.restSeconds)
             refreshSets(workoutExerciseId)
         }
     }
@@ -127,6 +181,28 @@ class ActiveWorkoutViewModel(
         viewModelScope.launch {
             repository.removeSet(setId)
             refreshSets(workoutExerciseId)
+        }
+    }
+
+    /** Il recupero si imposta per esercizio e si propaga a tutte le sue serie non ancora svolte. */
+    fun setRestSeconds(workoutExerciseId: Long, seconds: Int) {
+        val exercise = _uiState.value.exercises.find { it.workoutExerciseId == workoutExerciseId } ?: return
+        val safeSeconds = seconds.coerceIn(0, 600)
+        _uiState.update { state ->
+            state.copy(
+                exercises = state.exercises.map { ex ->
+                    if (ex.workoutExerciseId != workoutExerciseId) ex
+                    else ex.copy(
+                        restSeconds = safeSeconds,
+                        sets = ex.sets.map { if (it.completedAt == null) it.copy(restSecondsPlanned = safeSeconds) else it }
+                    )
+                }
+            )
+        }
+        viewModelScope.launch {
+            exercise.sets.filter { it.completedAt == null }.forEach { set ->
+                repository.updateSet(set.copy(restSecondsPlanned = safeSeconds).toEntity(workoutExerciseId))
+            }
         }
     }
 
@@ -142,6 +218,7 @@ class ActiveWorkoutViewModel(
                 }
             )
         }
+        recomputeVolume()
         viewModelScope.launch {
             repository.updateSet(updated.toEntity(workoutExerciseId))
         }
@@ -157,6 +234,16 @@ class ActiveWorkoutViewModel(
         }
     }
 
+    /** Annulla il completamento: la serie torna modificabile e esce dal volume. */
+    fun uncompleteSet(workoutExerciseId: Long, setId: Long) {
+        viewModelScope.launch {
+            val exercise = _uiState.value.exercises.find { it.workoutExerciseId == workoutExerciseId } ?: return@launch
+            val set = exercise.sets.find { it.id == setId } ?: return@launch
+            repository.updateSet(set.copy(completedAt = null, isPR = false).toEntity(workoutExerciseId))
+            refreshSets(workoutExerciseId)
+        }
+    }
+
     private fun startRestTimer(totalSeconds: Int) {
         if (totalSeconds <= 0) return
         timerJob?.cancel()
@@ -168,12 +255,16 @@ class ActiveWorkoutViewModel(
                 val next = current.remainingSeconds - 1
                 if (next <= 0) {
                     _uiState.update { it.copy(timer = null) }
+                    onRestTimerFinished()
                     break
                 }
                 _uiState.update { it.copy(timer = current.copy(remainingSeconds = next)) }
             }
         }
     }
+
+    /** Sovrascritto dal wiring del feedback (suono + vibrazione) nella schermata. */
+    var onRestTimerFinished: () -> Unit = {}
 
     fun adjustTimer(deltaSeconds: Int) {
         val current = _uiState.value.timer ?: return
@@ -203,20 +294,11 @@ class ActiveWorkoutViewModel(
         timerJob?.cancel()
         super.onCleared()
     }
-}
 
-private fun SetEntryEntity.toUi() = SessionSetUi(
-    id = id,
-    setIndex = setIndex,
-    targetReps = targetReps,
-    actualReps = actualReps,
-    weight = weight,
-    restSecondsPlanned = restSecondsPlanned,
-    isWarmup = isWarmup,
-    completedAt = completedAt,
-    isPR = isPR,
-    bodyweightSnapshotKg = bodyweightSnapshotKg
-)
+    private companion object {
+        const val DEFAULT_REST_SECONDS = 90
+    }
+}
 
 private fun SessionSetUi.toEntity(workoutExerciseId: Long) = SetEntryEntity(
     id = id,

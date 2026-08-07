@@ -14,7 +14,11 @@ data class SessionSetUi(
     val isWarmup: Boolean = false,
     val completedAt: Long? = null,
     val isPR: Boolean = false,
-    val bodyweightSnapshotKg: Double? = null
+    val bodyweightSnapshotKg: Double? = null,
+    /** Peso target della routine: solo segnaposto in UI, mai un valore registrato. */
+    val targetWeight: Double? = null,
+    /** Serie corrispondente dell'ultima volta, mostrata in colonna "Precedente". */
+    val previous: SetEntryEntity? = null
 )
 
 data class SessionExerciseUi(
@@ -23,9 +27,12 @@ data class SessionExerciseUi(
     val name: String,
     val weightType: WeightType,
     val order: Int,
+    val restSeconds: Int = 90,
     val sets: List<SessionSetUi> = emptyList(),
     val lastTimeSets: List<SetEntryEntity> = emptyList()
-)
+) {
+    val completedSets: Int get() = sets.count { it.completedAt != null }
+}
 
 data class TimerUi(
     val totalSeconds: Int,
@@ -34,8 +41,16 @@ data class TimerUi(
 
 data class ActiveWorkoutUiState(
     val sessionId: Long,
+    val startTime: Long = System.currentTimeMillis(),
+    val elapsedSeconds: Int = 0,
     val exercises: List<SessionExerciseUi> = emptyList(),
     val availableExercises: List<ExerciseEntity> = emptyList(),
     val timer: TimerUi? = null,
-    val isFinished: Boolean = false
-)
+    val isFinished: Boolean = false,
+    /** Volume in kg delle sole serie completate, ricalcolato a ogni refresh. */
+    val volumeKg: Double = 0.0
+) {
+    val totalSets: Int get() = exercises.sumOf { it.sets.size }
+    val completedSets: Int get() = exercises.sumOf { it.completedSets }
+    val progress: Float get() = if (totalSets == 0) 0f else completedSets.toFloat() / totalSets
+}
