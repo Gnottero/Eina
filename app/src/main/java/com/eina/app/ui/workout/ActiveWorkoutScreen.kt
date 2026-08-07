@@ -1,6 +1,10 @@
 package com.eina.app.ui.workout
 
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -24,6 +28,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Check
+import androidx.compose.material.icons.outlined.FitnessCenter
 import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.outlined.Timer
 import androidx.compose.material3.AlertDialog
@@ -56,6 +61,7 @@ import com.eina.app.ui.components.IslandEmptyState
 import com.eina.app.ui.components.IslandIconButton
 import com.eina.app.ui.components.IslandSecondaryButton
 import com.eina.app.ui.components.IslandSurface
+import com.eina.app.ui.feedback.LocalHapticTap
 import com.eina.app.ui.theme.EinaTheme
 import com.eina.app.ui.theme.IslandShape
 import com.eina.app.ui.theme.PillShape
@@ -87,8 +93,6 @@ fun ActiveWorkoutScreen(
             SessionHeader(
                 elapsedSeconds = state.elapsedSeconds,
                 volumeKg = state.volumeKg,
-                completedSets = state.completedSets,
-                totalSets = state.totalSets,
                 progress = state.progress,
                 onFinish = { viewModel.finishWorkout(onFinished) },
                 modifier = Modifier.padding(horizontal = Spacing.xl, vertical = Spacing.md)
@@ -184,64 +188,127 @@ fun ActiveWorkoutScreen(
     }
 }
 
-/** Intestazione compatta: durata, volume, serie svolte e barra di avanzamento della sessione. */
+/**
+ * Intestazione di sessione: durata e volume come due metriche grandi, avanzamento affidato alla
+ * sola barra (il contatore numerico delle serie sarebbe ridondante) e chiusura dell'allenamento.
+ */
 @Composable
 private fun SessionHeader(
     elapsedSeconds: Int,
     volumeKg: Double,
-    completedSets: Int,
-    totalSets: Int,
     progress: Float,
     onFinish: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val island = EinaTheme.island
+    // La barra si muove verso il nuovo valore invece di saltarci: il progresso cambia a scatti
+    // di una serie alla volta e uno scatto secco su una barra sottile si legge male.
+    val animatedProgress by animateFloatAsState(
+        targetValue = progress.coerceIn(0f, 1f),
+        animationSpec = tween(durationMillis = 450, easing = FastOutSlowInEasing),
+        label = "sessionProgress"
+    )
 
     IslandSurface(modifier = modifier.fillMaxWidth(), shape = IslandShape, elevation = 10.dp) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(Spacing.lg),
-            verticalArrangement = Arrangement.spacedBy(Spacing.md)
+            verticalArrangement = Arrangement.spacedBy(Spacing.lg)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
+                horizontalArrangement = Arrangement.spacedBy(Spacing.md)
             ) {
-                HeaderMetric("Durata", formatDuration(elapsedSeconds), Modifier.weight(1f))
-                HeaderMetric("Volume", formatVolume(volumeKg), Modifier.weight(1f))
-                HeaderMetric("Serie", "$completedSets/$totalSets", Modifier.weight(1f))
-                IslandButton(text = "Termina", onClick = onFinish)
+                MetricTile(
+                    icon = Icons.Outlined.Timer,
+                    label = "Durata",
+                    value = formatDuration(elapsedSeconds),
+                    modifier = Modifier.weight(1f)
+                )
+                MetricTile(
+                    icon = Icons.Outlined.FitnessCenter,
+                    label = "Volume",
+                    value = formatVolumeValue(volumeKg),
+                    unit = "kg",
+                    modifier = Modifier.weight(1f)
+                )
             }
 
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(6.dp)
+                    .height(8.dp)
                     .clip(PillShape)
                     .background(island.sunken)
             ) {
                 Box(
                     modifier = Modifier
                         .fillMaxHeight()
-                        .fillMaxWidth(progress.coerceIn(0f, 1f))
+                        .fillMaxWidth(animatedProgress)
                         .clip(PillShape)
                         .background(MaterialTheme.colorScheme.primary)
                 )
             }
+
+            IslandButton(
+                text = "Termina allenamento",
+                onClick = onFinish,
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     }
 }
 
 @Composable
-private fun HeaderMetric(label: String, value: String, modifier: Modifier = Modifier) {
-    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(2.dp)) {
-        Text(
-            text = label.uppercase(),
-            style = MaterialTheme.typography.labelSmall,
-            color = EinaTheme.island.textSecondary
-        )
-        Text(text = value, style = MaterialTheme.typography.titleLarge, maxLines = 1)
+private fun MetricTile(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier,
+    unit: String? = null
+) {
+    val island = EinaTheme.island
+    Column(
+        modifier = modifier
+            .clip(TileShape)
+            .background(island.sunken)
+            .padding(horizontal = Spacing.lg, vertical = Spacing.md),
+        verticalArrangement = Arrangement.spacedBy(Spacing.xs)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(Spacing.xs)
+        ) {
+            Icon(
+                icon,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(15.dp)
+            )
+            Text(
+                text = label.uppercase(),
+                style = MaterialTheme.typography.labelSmall,
+                color = island.textSecondary,
+                maxLines = 1
+            )
+        }
+        Row(verticalAlignment = Alignment.Bottom) {
+            Text(
+                text = value,
+                style = MaterialTheme.typography.headlineSmall,
+                maxLines = 1,
+                overflow = TextOverflow.Clip
+            )
+            if (unit != null) {
+                Text(
+                    text = " $unit",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = island.textSecondary,
+                    modifier = Modifier.padding(bottom = 3.dp)
+                )
+            }
+        }
     }
 }
 
@@ -260,19 +327,21 @@ private fun ExerciseCard(
     onToggleSet: (Long, Boolean) -> Unit
 ) {
     val island = EinaTheme.island
+    val hapticTap = LocalHapticTap.current
     var menuOpen by remember { mutableStateOf(false) }
 
     IslandCard(
         modifier = Modifier.fillMaxWidth(),
         shape = IslandShape,
-        verticalArrangement = Arrangement.spacedBy(Spacing.sm)
+        contentPadding = PaddingValues(horizontal = Spacing.lg, vertical = Spacing.xl),
+        verticalArrangement = Arrangement.spacedBy(Spacing.lg)
     ) {
         // Titolo + un solo punto di accesso alle azioni: riordino ed eliminazione stanno nel menu,
         // cosi' la riga resta pulita come in una scheda di allenamento cartacea.
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
                 exercise.name,
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.primary,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
@@ -284,7 +353,7 @@ private fun ExerciseCard(
                     contentDescription = "Azioni esercizio",
                     onClick = { menuOpen = true },
                     containerColor = island.sunken,
-                    size = 34.dp
+                    size = 40.dp
                 )
                 DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
                     if (canMoveUp) {
@@ -306,8 +375,8 @@ private fun ExerciseCard(
             modifier = Modifier
                 .clip(PillShape)
                 .background(island.sunken)
-                .clickable(onClick = onEditRest)
-                .padding(horizontal = Spacing.md, vertical = Spacing.xs)
+                .clickable { hapticTap(); onEditRest() }
+                .padding(horizontal = Spacing.lg, vertical = Spacing.sm)
         ) {
             Icon(
                 Icons.Outlined.Timer,
@@ -322,15 +391,16 @@ private fun ExerciseCard(
             )
         }
 
-        SetTableHeader()
-
-        exercise.sets.forEach { set ->
-            SetRow(
-                set = set,
-                onValuesChange = { reps, weight -> onSetValuesChange(set.id, reps, weight) },
-                onToggle = { onToggleSet(set.id, set.completedAt != null) },
-                onRemove = { onRemoveSet(set.id) }
-            )
+        Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+            SetTableHeader()
+            exercise.sets.forEach { set ->
+                SetRow(
+                    set = set,
+                    onValuesChange = { reps, weight -> onSetValuesChange(set.id, reps, weight) },
+                    onToggle = { onToggleSet(set.id, set.completedAt != null) },
+                    onRemove = { onRemoveSet(set.id) }
+                )
+            }
         }
 
         Text(
@@ -342,32 +412,25 @@ private fun ExerciseCard(
                 .fillMaxWidth()
                 .clip(PillShape)
                 .background(island.sunken)
-                .clickable(onClick = onAddSet)
-                .padding(vertical = Spacing.sm)
+                .clickable { hapticTap(); onAddSet() }
+                .padding(vertical = Spacing.md)
         )
     }
 }
 
 @Composable
 private fun SetTableHeader() {
-    val island = EinaTheme.island
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
     ) {
-        TableLabel("Serie", Modifier.width(38.dp))
-        TableLabel("Precedente", Modifier.weight(1.2f))
+        TableLabel("Serie", Modifier.width(40.dp))
+        TableLabel("Prec.", Modifier.weight(1.1f))
         TableLabel("Kg", Modifier.weight(1f))
         TableLabel("Rip", Modifier.weight(1f))
-        Box(Modifier.size(36.dp))
+        Box(Modifier.size(42.dp))
     }
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(1.dp)
-            .background(island.outlineSubtle)
-    )
 }
 
 @Composable
@@ -390,6 +453,7 @@ private fun SetRow(
     onRemove: () -> Unit
 ) {
     val island = EinaTheme.island
+    val hapticTap = LocalHapticTap.current
     val completed = set.completedAt != null
     var rowMenuOpen by remember { mutableStateOf(false) }
 
@@ -403,11 +467,11 @@ private fun SetRow(
             .fillMaxWidth()
             .clip(TileShape)
             .background(if (completed) MaterialTheme.colorScheme.primary.copy(alpha = 0.10f) else Color.Transparent)
-            .padding(vertical = Spacing.xs),
+            .padding(vertical = Spacing.sm, horizontal = Spacing.xs),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
     ) {
-        Box(modifier = Modifier.width(38.dp), contentAlignment = Alignment.Center) {
+        Box(modifier = Modifier.width(40.dp), contentAlignment = Alignment.Center) {
             if (set.isPR) {
                 Text(
                     text = "PR",
@@ -420,11 +484,11 @@ private fun SetRow(
             } else {
                 Text(
                     "${set.setIndex + 1}",
-                    style = MaterialTheme.typography.titleSmall,
+                    style = MaterialTheme.typography.titleMedium,
                     color = island.textSecondary,
                     modifier = Modifier
                         .clip(PillShape)
-                        .clickable { rowMenuOpen = true }
+                        .clickable { hapticTap(); rowMenuOpen = true }
                         .padding(horizontal = Spacing.sm, vertical = 2.dp)
                 )
             }
@@ -435,11 +499,11 @@ private fun SetRow(
 
         Text(
             text = set.previous?.let { formatPrevious(it) } ?: "—",
-            style = MaterialTheme.typography.bodySmall,
+            style = MaterialTheme.typography.bodyMedium,
             color = island.textSecondary,
             textAlign = TextAlign.Center,
             maxLines = 1,
-            modifier = Modifier.weight(1.2f)
+            modifier = Modifier.weight(1.1f)
         )
 
         SetValueField(
@@ -464,14 +528,38 @@ private fun SetRow(
             modifier = Modifier.weight(1f)
         )
 
-        IslandIconButton(
-            icon = Icons.Outlined.Check,
-            contentDescription = if (completed) "Annulla serie" else "Completa serie",
-            onClick = onToggle,
-            containerColor = if (completed) MaterialTheme.colorScheme.primary else island.sunken,
-            contentColor = if (completed) Color.White else island.textSecondary,
-            size = 36.dp
-        )
+        SetCheckButton(completed = completed, onClick = onToggle)
+    }
+}
+
+/**
+ * Check della serie: cerchio vuoto finche' non e' svolta (un segno di spunta grigio si legge
+ * come "gia' fatta"), pill piena viola quando e' completata.
+ */
+@Composable
+private fun SetCheckButton(completed: Boolean, onClick: () -> Unit) {
+    val island = EinaTheme.island
+    val hapticTap = LocalHapticTap.current
+    Box(
+        modifier = Modifier
+            .size(42.dp)
+            .clip(PillShape)
+            .background(if (completed) MaterialTheme.colorScheme.primary else Color.Transparent)
+            .then(
+                if (completed) Modifier
+                else Modifier.border(1.5.dp, island.outlineSubtle, PillShape)
+            )
+            .clickable { hapticTap(); onClick() },
+        contentAlignment = Alignment.Center
+    ) {
+        if (completed) {
+            Icon(
+                Icons.Outlined.Check,
+                contentDescription = "Annulla serie",
+                tint = Color.White,
+                modifier = Modifier.size(20.dp)
+            )
+        }
     }
 }
 
@@ -493,7 +581,7 @@ private fun SetValueField(
         onValueChange = onValueChange,
         singleLine = true,
         keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
-        textStyle = MaterialTheme.typography.titleSmall.copy(
+        textStyle = MaterialTheme.typography.titleMedium.copy(
             color = MaterialTheme.colorScheme.onSurface,
             textAlign = TextAlign.Center
         ),
@@ -501,13 +589,13 @@ private fun SetValueField(
         modifier = modifier
             .clip(PillShape)
             .background(island.sunken)
-            .padding(vertical = Spacing.sm, horizontal = Spacing.xs),
+            .padding(vertical = Spacing.md, horizontal = Spacing.xs),
         decorationBox = { inner ->
             Box(contentAlignment = Alignment.Center) {
                 if (value.isEmpty()) {
                     Text(
                         text = placeholder ?: "–",
-                        style = MaterialTheme.typography.titleSmall,
+                        style = MaterialTheme.typography.titleMedium,
                         color = island.textSecondary
                     )
                 }
@@ -594,14 +682,16 @@ private fun ExercisePickerDialog(
 }
 
 private fun formatDuration(totalSeconds: Int): String {
-    val hours = totalSeconds / 3600
-    val minutes = (totalSeconds % 3600) / 60
-    val seconds = totalSeconds % 60
-    return if (hours > 0) "%d:%02d:%02d".format(hours, minutes, seconds) else "%d:%02d".format(minutes, seconds)
+    val safe = totalSeconds.coerceAtLeast(0)
+    val hours = safe / 3600
+    val minutes = (safe % 3600) / 60
+    val seconds = safe % 60
+    return if (hours > 0) "%d:%02d:%02d".format(hours, minutes, seconds) else "%02d:%02d".format(minutes, seconds)
 }
 
-private fun formatVolume(kg: Double): String =
-    if (kg >= 1000) "%.1ft".format(kg / 1000) else "%.0f kg".format(kg)
+/** Volume come intero con separatore delle migliaia: l'unita' la stampa la tile a parte. */
+private fun formatVolumeValue(kg: Double): String =
+    "%,d".format(kg.toLong()).replace(',', '.')
 
 private fun formatNumber(value: Double): String =
     if (value % 1.0 == 0.0) value.toInt().toString() else value.toString()
@@ -609,5 +699,5 @@ private fun formatNumber(value: Double): String =
 private fun formatPrevious(set: com.eina.app.data.db.SetEntryEntity): String {
     val weight = set.weight?.let { "${formatNumber(it)}kg" }
     val reps = set.actualReps?.let { "$it" }
-    return listOfNotNull(weight, reps).joinToString(" × ").ifBlank { "—" }
+    return listOfNotNull(weight, reps).joinToString("×").ifBlank { "—" }
 }

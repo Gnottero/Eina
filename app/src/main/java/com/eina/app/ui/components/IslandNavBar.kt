@@ -24,6 +24,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import com.eina.app.ui.feedback.LocalHapticTap
 import com.eina.app.ui.theme.EinaTheme
 import com.eina.app.ui.theme.PillShape
 import com.eina.app.ui.theme.Spacing
@@ -83,6 +84,7 @@ private fun IslandNavBarItem(item: IslandNavItem) {
         label = "navItemPadding"
     )
     val interactionSource = remember { MutableInteractionSource() }
+    val hapticTap = LocalHapticTap.current
 
     Row(
         modifier = Modifier
@@ -91,7 +93,7 @@ private fun IslandNavBarItem(item: IslandNavItem) {
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,
-                onClick = item.onClick
+                onClick = { hapticTap(); item.onClick() }
             )
             .padding(horizontal = horizontalPadding, vertical = Spacing.md),
         horizontalArrangement = Arrangement.Center,

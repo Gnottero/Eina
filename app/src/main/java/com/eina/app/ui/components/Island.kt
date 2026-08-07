@@ -33,6 +33,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.eina.app.ui.feedback.LocalHapticTap
 import com.eina.app.ui.theme.EinaTheme
 import com.eina.app.ui.theme.IslandShape
 import com.eina.app.ui.theme.PillShape
@@ -74,13 +75,16 @@ fun IslandSurface(
     content: @Composable BoxScope.() -> Unit
 ) {
     val island = EinaTheme.island
+    val hapticTap = LocalHapticTap.current
     Box(
         modifier = modifier
             .islandShadow(elevation, shape)
             .clip(shape)
             .background(color)
             .then(if (outlined) Modifier.border(1.dp, island.outlineSubtle, shape) else Modifier)
-            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier),
+            .then(
+                if (onClick != null) Modifier.clickable { hapticTap(); onClick() } else Modifier
+            ),
         content = content
     )
 }
@@ -241,13 +245,14 @@ fun SectionHeader(
             modifier = Modifier.weight(1f)
         )
         if (actionLabel != null && onAction != null) {
+            val hapticTap = LocalHapticTap.current
             Text(
                 text = actionLabel,
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier
                     .clip(PillShape)
-                    .clickable(onClick = onAction)
+                    .clickable { hapticTap(); onAction() }
                     .padding(horizontal = Spacing.sm, vertical = Spacing.xs)
             )
         }

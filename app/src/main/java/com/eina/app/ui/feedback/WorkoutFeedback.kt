@@ -1,11 +1,13 @@
 package com.eina.app.ui.feedback
 
 import android.content.Context
+import android.media.AudioAttributes
 import android.media.AudioManager
 import android.media.ToneGenerator
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
+import android.os.VibrationAttributes
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
@@ -35,20 +37,38 @@ class WorkoutFeedback(
         if (settings.timerVibrationEnabled.value) vibrateWaveform(longArrayOf(0, 220, 130, 220))
     }
 
-    /** Micro-feedback su azioni frequenti (serie completata, timer saltato). */
+    /**
+     * Micro-feedback su ogni tocco dei controlli. EFFECT_TICK e' impercettibile su molti
+     * dispositivi: si usa un one-shot breve ad ampiezza piena, con attributi "touch" cosi'
+     * la vibrazione non viene soppressa quando la suoneria e' in silenzioso.
+     */
     fun haptic() {
         if (!settings.hapticsEnabled.value) return
         val vibrator = vibrator?.takeIf { it.hasVibrator() } ?: return
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            vibrator.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_TICK))
-        } else {
-            vibrator.vibrate(VibrationEffect.createOneShot(20, VibrationEffect.DEFAULT_AMPLITUDE))
-        }
+        vibrator.vibrateCompat(VibrationEffect.createOneShot(35, VibrationEffect.DEFAULT_AMPLITUDE), alarm = false)
     }
 
     private fun vibrateWaveform(pattern: LongArray) {
         val vibrator = vibrator?.takeIf { it.hasVibrator() } ?: return
-        vibrator.vibrate(VibrationEffect.createWaveform(pattern, -1))
+        vibrator.vibrateCompat(VibrationEffect.createWaveform(pattern, -1), alarm = true)
+    }
+
+    /**
+     * Gli usage "touch" vengono azzerati dal sistema quando la vibrazione al tocco e' disattivata
+     * nelle impostazioni del telefono: il toggle dell'app non avrebbe alcun effetto percepibile.
+     * Si usa quindi HARDWARE_FEEDBACK per i tap e ALARM per la fine del recupero.
+     */
+    private fun Vibrator.vibrateCompat(effect: VibrationEffect, alarm: Boolean) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val usage = if (alarm) VibrationAttributes.USAGE_ALARM else VibrationAttributes.USAGE_HARDWARE_FEEDBACK
+            vibrate(effect, VibrationAttributes.createForUsage(usage))
+        } else {
+            val attributes = AudioAttributes.Builder()
+                .setUsage(if (alarm) AudioAttributes.USAGE_ALARM else AudioAttributes.USAGE_ASSISTANCE_SONIFICATION)
+                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                .build()
+            vibrate(effect, attributes)
+        }
     }
 
     // ToneGenerator non ha bisogno di asset audio: usa i toni di sistema e si rilascia da solo

@@ -230,7 +230,13 @@ class ActiveWorkoutViewModel(
         viewModelScope.launch {
             val exercise = _uiState.value.exercises.find { it.workoutExerciseId == workoutExerciseId } ?: return@launch
             val set = exercise.sets.find { it.id == setId } ?: return@launch
-            val completed = repository.completeSet(set.toEntity(workoutExerciseId), exercise.exerciseId, exercise.weightType)
+            // Chiudere una serie lasciata vuota registrerebbe 0 kg e 0 ripetizioni: si adottano i
+            // valori mostrati come segnaposto (target di routine o ultima volta).
+            val filled = set.copy(
+                actualReps = set.actualReps ?: set.targetReps ?: set.previous?.actualReps,
+                weight = set.weight ?: set.targetWeight ?: set.previous?.weight
+            )
+            val completed = repository.completeSet(filled.toEntity(workoutExerciseId), exercise.exerciseId, exercise.weightType)
             refreshSets(workoutExerciseId)
             feedback.haptic()
             if (!completed.isWarmup) startRestTimer(completed.restSecondsPlanned)

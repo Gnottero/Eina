@@ -29,6 +29,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.eina.app.ui.feedback.LocalHapticTap
 import com.eina.app.ui.theme.EinaTheme
 import com.eina.app.ui.theme.PillShape
 import com.eina.app.ui.theme.Spacing
@@ -44,8 +45,9 @@ fun IslandButton(
     containerColor: Color = MaterialTheme.colorScheme.primary,
     contentColor: Color = Color.White
 ) {
+    val hapticTap = LocalHapticTap.current
     Button(
-        onClick = onClick,
+        onClick = { hapticTap(); onClick() },
         enabled = enabled,
         shape = PillShape,
         modifier = modifier.defaultMinSize(minHeight = 52.dp),
@@ -104,6 +106,7 @@ fun IslandChip(
     accentColor: Color = MaterialTheme.colorScheme.primary
 ) {
     val island = EinaTheme.island
+    val hapticTap = LocalHapticTap.current
     Text(
         text = text,
         style = MaterialTheme.typography.labelLarge,
@@ -111,7 +114,7 @@ fun IslandChip(
         modifier = modifier
             .clip(PillShape)
             .background(if (selected) accentColor.copy(alpha = 0.14f) else island.sunken)
-            .clickable(onClick = onClick)
+            .clickable { hapticTap(); onClick() }
             .padding(horizontal = Spacing.lg, vertical = Spacing.sm)
     )
 }

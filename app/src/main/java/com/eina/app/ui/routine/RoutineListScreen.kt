@@ -50,7 +50,9 @@ fun RoutineListScreen(
             routines.forEach { routine ->
                 RoutineRow(
                     routine = routine,
-                    onStart = { onStartSession(routine.id) },
+                    // Avviare una routine crea una NUOVA sessione: passare direttamente routine.id
+                    // apriva la sessione con quell'id, cioe' un allenamento vecchio gia' svolto.
+                    onStart = { viewModel.startSession(routine.id, onStartSession) },
                     onEdit = { onEditRoutine(routine.id) }
                 )
             }

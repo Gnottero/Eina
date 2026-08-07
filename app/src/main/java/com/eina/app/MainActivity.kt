@@ -10,8 +10,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import com.eina.app.ui.feedback.LocalHapticTap
+import com.eina.app.ui.feedback.WorkoutFeedback
 import com.eina.app.ui.theme.EinaTheme
+import org.koin.compose.koinInject
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -30,12 +35,17 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 private fun EinaApp() {
+    val feedback: WorkoutFeedback = koinInject()
+    val hapticTap = remember(feedback) { { feedback.haptic() } }
+
     EinaTheme {
-        Surface(
-            modifier = Modifier.fillMaxSize(),
-            color = MaterialTheme.colorScheme.background
-        ) {
-            EinaNavHost()
+        CompositionLocalProvider(LocalHapticTap provides hapticTap) {
+            Surface(
+                modifier = Modifier.fillMaxSize(),
+                color = MaterialTheme.colorScheme.background
+            ) {
+                EinaNavHost()
+            }
         }
     }
 }
