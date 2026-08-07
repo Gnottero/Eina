@@ -25,7 +25,7 @@ data class ProgressUiState(
     val volumeByDay: Map<LocalDate, Double> = emptyMap(),
     val personalRecords: List<PrRecord> = emptyList(),
     val latestBodyweightKg: Double? = null,
-    val streakDays: Int = 0,
+    val streakWeeks: Int = 0,
     val totalVolumeKg: Double = 0.0,
     val totalSessions: Int = 0
 )
@@ -55,7 +55,7 @@ class ProgressViewModel(repository: StatsRepository) : ViewModel() {
             volumeByDay = volumePerDay,
             personalRecords = personalRecords(rows),
             latestBodyweightKg = bodyMetrics.firstOrNull()?.bodyweightKg,
-            streakDays = currentStreak(trainingDays(rows), today),
+            streakWeeks = currentStreak(trainingDays(rows), today),
             totalVolumeKg = volumePerDay.values.sum(),
             totalSessions = rows.map { it.sessionId }.distinct().size
         )

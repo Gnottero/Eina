@@ -48,16 +48,32 @@ fun SessionSummaryCard(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
         ) {
-            Text(
-                text = formatRelativeDay(summary.startTime),
-                style = MaterialTheme.typography.titleMedium
-            )
-            Text(
-                text = formatTime(summary.startTime),
-                style = MaterialTheme.typography.bodyMedium,
-                color = island.textSecondary,
-                modifier = Modifier.weight(1f)
-            )
+            Column(modifier = Modifier.weight(1f)) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
+                ) {
+                    Text(
+                        text = formatRelativeDay(summary.startTime),
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    Text(
+                        text = formatTime(summary.startTime),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = island.textSecondary
+                    )
+                }
+                // Allenamento libero: nessuna riga, non un segnaposto vuoto.
+                summary.routineName?.let { routine ->
+                    Text(
+                        text = routine,
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.primary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
             if (summary.prCount > 0) {
                 EinaBadge(
                     text = if (summary.prCount == 1) "1 PR" else "${summary.prCount} PR",

@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.History
@@ -33,6 +34,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -109,6 +111,7 @@ fun SessionDetailScreen(
                         if (justFinished) append("${formatDayMonth(session.startTime)} · ")
                         append(formatTime(session.startTime))
                         session.durationMinutes?.let { append(" · ${formatDuration(it)}") }
+                        session.routineName?.let { append(" · $it") }
                     }
                 },
                 onBack = onBack,
@@ -119,7 +122,7 @@ fun SessionDetailScreen(
                             contentDescription = "Condividi allenamento",
                             onClick = {
                                 scope.launch {
-                                    val data = shareCardDataOf(summary, state.streakDays)
+                                    val data = shareCardDataOf(summary)
                                     shareBitmap = withContext(Dispatchers.Default) { renderShareCard(context, data) }
                                 }
                             }
@@ -139,9 +142,9 @@ fun SessionDetailScreen(
             return@IslandScreen
         }
 
-        // A fine allenamento la striscia viene prima di tutto: e' il numero che fa tornare domani.
+        // A fine allenamento lo streak viene prima di tutto: e' il numero che fa tornare.
         if (justFinished) {
-            StreakCard(days = state.streakDays)
+            StreakCard(weeks = state.streakWeeks)
         }
 
         Row(
@@ -168,9 +171,9 @@ fun SessionDetailScreen(
     }
 }
 
-/** Striscia di giorni consecutivi, in evidenza a fine allenamento. */
+/** Streak di settimane consecutive con almeno un allenamento, in evidenza a fine allenamento. */
 @Composable
-private fun StreakCard(days: Int) {
+private fun StreakCard(weeks: Int) {
     IslandCard(
         modifier = Modifier.fillMaxWidth(),
         color = MaterialTheme.colorScheme.primary,
@@ -197,15 +200,15 @@ private fun StreakCard(days: Int) {
             }
             Column(verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
                 Text(
-                    text = if (days == 1) "1 giorno di fila" else "$days giorni di fila",
+                    text = if (weeks == 1) "1 settimana di fila" else "$weeks settimane di fila",
                     style = MaterialTheme.typography.titleLarge,
                     color = Color.White
                 )
                 Text(
-                    text = if (days <= 1) {
-                        "La striscia parte da qui: allenati domani per allungarla."
+                    text = if (weeks <= 1) {
+                        "Lo streak parte da qui: allenati anche la prossima settimana."
                     } else {
-                        "Striscia in corso. Torna domani per non perderla."
+                        "Streak in corso. Torna la prossima settimana per non perderlo."
                     },
                     style = MaterialTheme.typography.bodyMedium,
                     color = Color.White.copy(alpha = 0.85f)
@@ -292,11 +295,14 @@ private fun SetRow(number: Int, set: CompletedSetRow) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(Spacing.md)
     ) {
+        // Stesso stile e stessa linea di base del valore: con labelMedium dentro una size fissa
+        // il numero risultava piccolo e disallineato rispetto a "kg × rip".
         Text(
             text = number.toString(),
-            style = MaterialTheme.typography.labelMedium,
+            style = MaterialTheme.typography.bodyLarge,
             color = island.textSecondary,
-            modifier = Modifier.size(width = 20.dp, height = 20.dp)
+            textAlign = TextAlign.Center,
+            modifier = Modifier.width(24.dp)
         )
         Text(
             text = setLabel(set),

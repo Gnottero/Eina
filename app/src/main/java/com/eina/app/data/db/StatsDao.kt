@@ -18,6 +18,8 @@ data class CompletedSetRow(
     // due volte nello stesso allenamento resta cosi' due blocchi distinti, non uno solo.
     val workoutExerciseId: Long = 0,
     val exerciseOrder: Int = 0,
+    // Nome della routine da cui e' partita la sessione: null per un allenamento libero.
+    val routineName: String? = null,
     val exerciseId: Long,
     val exerciseName: String,
     val weightType: WeightType,
@@ -36,6 +38,7 @@ interface StatsDao {
         """
         SELECT ws.id AS sessionId, ws.startTime AS sessionStart, ws.endTime AS sessionEnd,
                we.id AS workoutExerciseId, we.`order` AS exerciseOrder,
+               r.name AS routineName,
                e.id AS exerciseId, e.name AS exerciseName, e.weightType AS weightType,
                se.setIndex AS setIndex, se.actualReps AS actualReps, se.weight AS weight,
                se.bodyweightSnapshotKg AS bodyweightSnapshotKg, se.isWarmup AS isWarmup,
@@ -44,6 +47,7 @@ interface StatsDao {
         INNER JOIN workout_exercises we ON se.workoutExerciseId = we.id
         INNER JOIN workout_sessions ws ON we.sessionId = ws.id
         INNER JOIN exercises e ON we.exerciseId = e.id
+        LEFT JOIN routines r ON ws.routineId = r.id
         WHERE se.completedAt IS NOT NULL
         ORDER BY ws.startTime DESC, we.`order` ASC, se.setIndex ASC
         """
@@ -54,6 +58,7 @@ interface StatsDao {
         """
         SELECT ws.id AS sessionId, ws.startTime AS sessionStart, ws.endTime AS sessionEnd,
                we.id AS workoutExerciseId, we.`order` AS exerciseOrder,
+               r.name AS routineName,
                e.id AS exerciseId, e.name AS exerciseName, e.weightType AS weightType,
                se.setIndex AS setIndex, se.actualReps AS actualReps, se.weight AS weight,
                se.bodyweightSnapshotKg AS bodyweightSnapshotKg, se.isWarmup AS isWarmup,
@@ -62,6 +67,7 @@ interface StatsDao {
         INNER JOIN workout_exercises we ON se.workoutExerciseId = we.id
         INNER JOIN workout_sessions ws ON we.sessionId = ws.id
         INNER JOIN exercises e ON we.exerciseId = e.id
+        LEFT JOIN routines r ON ws.routineId = r.id
         WHERE se.completedAt IS NOT NULL AND ws.id = :sessionId
         ORDER BY we.`order` ASC, se.setIndex ASC
         """

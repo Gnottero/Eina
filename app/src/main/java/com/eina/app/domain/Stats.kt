@@ -12,6 +12,8 @@ data class SessionSummary(
     val sessionId: Long,
     val startTime: Long,
     val endTime: Long?,
+    /** Nome della routine seguita, se la sessione non era un allenamento libero. */
+    val routineName: String? = null,
     val exerciseNames: List<String>,
     val setCount: Int,
     val totalReps: Int,
@@ -62,6 +64,7 @@ fun summarizeSessions(rows: List<CompletedSetRow>): List<SessionSummary> =
                 sessionId = sessionId,
                 startTime = sessionRows.first().sessionStart,
                 endTime = sessionRows.first().sessionEnd,
+                routineName = sessionRows.first().routineName,
                 // Un esercizio ripetuto nella stessa sessione compare due volte: sono due blocchi
                 // di lavoro distinti, non un duplicato da collassare.
                 exerciseNames = sessionRows
@@ -102,23 +105,31 @@ fun trainingDays(
 ): Set<LocalDate> = rows.map { epochMillisToLocalDate(it.sessionStart, zone) }.toSet()
 
 /**
- * Streak = giorni consecutivi di allenamento che arrivano fino a oggi (o a ieri, cosi' la
- * striscia non si azzera prima che la giornata sia finita).
+ * Streak = settimane consecutive con almeno un allenamento, fino alla settimana in corso (o a
+ * quella scorsa, cosi' lo streak non si azzera prima che la settimana sia finita).
+ * DECISIONE: unita' settimanale invece che giornaliera — allenarsi ogni giorno non e' l'obiettivo,
+ * la costanza si misura sulla settimana.
  */
 fun currentStreak(days: Set<LocalDate>, today: LocalDate = LocalDate.now()): Int {
     if (days.isEmpty()) return 0
+    val weeks = days.map { startOfWeek(it) }.toSet()
+    val thisWeek = startOfWeek(today)
     var cursor = when {
-        days.contains(today) -> today
-        days.contains(today.minusDays(1)) -> today.minusDays(1)
+        weeks.contains(thisWeek) -> thisWeek
+        weeks.contains(thisWeek.minusWeeks(1)) -> thisWeek.minusWeeks(1)
         else -> return 0
     }
     var streak = 0
-    while (days.contains(cursor)) {
+    while (weeks.contains(cursor)) {
         streak++
-        cursor = cursor.minusDays(1)
+        cursor = cursor.minusWeeks(1)
     }
     return streak
 }
+
+/** Lunedi' della settimana a cui appartiene la data. */
+private fun startOfWeek(date: LocalDate): LocalDate =
+    date.minusDays((date.dayOfWeek.value - 1).toLong())
 
 /**
  * Ultimo PR per esercizio, dal piu' recente. Le set marcate isPR sono gia' state validate da

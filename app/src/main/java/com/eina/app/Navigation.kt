@@ -149,7 +149,7 @@ fun EinaNavHost() {
                         navController.navigate("library/exercise/$exerciseId")
                     },
                     onFinished = {
-                        // A fine allenamento si atterra sul riepilogo, con la striscia in evidenza
+                        // A fine allenamento si atterra sul riepilogo, con lo streak in evidenza
                         // e l'immagine da condividere a portata di header.
                         navController.popBackStack(EinaDestination.Workout.route, inclusive = false)
                         navController.navigate("history/session/$sessionId?justFinished=true")

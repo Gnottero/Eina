@@ -104,20 +104,28 @@ class StatsTest {
     }
 
     @Test
-    fun `currentStreak conta i giorni consecutivi fino a oggi`() {
-        val days = setOf(today, today.minusDays(1), today.minusDays(2), today.minusDays(5))
+    fun `currentStreak conta le settimane consecutive fino a questa`() {
+        // today = martedi' 10/3/2026: una sola sessione per settimana basta a tenere lo streak.
+        val days = setOf(today, today.minusWeeks(1), today.minusWeeks(2), today.minusWeeks(6))
         assertEquals(3, currentStreak(days, today))
     }
 
     @Test
-    fun `currentStreak parte da ieri se oggi non c e ancora allenamento`() {
-        val days = setOf(today.minusDays(1), today.minusDays(2))
+    fun `piu allenamenti nella stessa settimana valgono una settimana sola`() {
+        // today = martedi': lunedi' 9 e martedi' 10 stanno nella stessa settimana.
+        val days = setOf(today, today.minusDays(1))
+        assertEquals(1, currentStreak(days, today))
+    }
+
+    @Test
+    fun `currentStreak parte dalla settimana scorsa se questa e ancora vuota`() {
+        val days = setOf(today.minusWeeks(1), today.minusWeeks(2))
         assertEquals(2, currentStreak(days, today))
     }
 
     @Test
-    fun `currentStreak azzerato se l ultimo allenamento e piu vecchio di ieri`() {
-        assertEquals(0, currentStreak(setOf(today.minusDays(2)), today))
+    fun `currentStreak azzerato se l ultimo allenamento e piu vecchio della settimana scorsa`() {
+        assertEquals(0, currentStreak(setOf(today.minusWeeks(2)), today))
         assertEquals(0, currentStreak(emptySet(), today))
     }
 

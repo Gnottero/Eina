@@ -139,8 +139,8 @@ fun ProgressScreen(
             )
             StatTile(
                 label = "Streak",
-                value = state.streakDays.toString(),
-                unit = if (state.streakDays == 1) "giorno" else "giorni",
+                value = state.streakWeeks.toString(),
+                unit = if (state.streakWeeks == 1) "settimana" else "settimane",
                 icon = Icons.Outlined.Whatshot,
                 modifier = Modifier.weight(1f)
             )

@@ -36,7 +36,7 @@ data class SessionExerciseDetail(
 data class SessionDetailUiState(
     val summary: SessionSummary? = null,
     val exercises: List<SessionExerciseDetail> = emptyList(),
-    val streakDays: Int = 0
+    val streakWeeks: Int = 0
 )
 
 class SessionDetailViewModel(
@@ -45,7 +45,7 @@ class SessionDetailViewModel(
 ) : ViewModel() {
     val uiState: StateFlow<SessionDetailUiState> = combine(
         repository.observeSessionSets(sessionId),
-        // La striscia si calcola su tutto lo storico: e' il numero che si mostra a fine allenamento.
+        // Lo streak si calcola su tutto lo storico: e' il numero che si mostra a fine allenamento.
         repository.observeCompletedSets()
     ) { rows, allRows ->
         SessionDetailUiState(
@@ -61,7 +61,7 @@ class SessionDetailViewModel(
                         sets = exerciseRows.sortedBy { it.setIndex }
                     )
                 },
-            streakDays = currentStreak(trainingDays(allRows))
+            streakWeeks = currentStreak(trainingDays(allRows))
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SessionDetailUiState())
 }

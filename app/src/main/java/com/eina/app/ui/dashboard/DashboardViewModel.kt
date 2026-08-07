@@ -19,7 +19,7 @@ data class DashboardUiState(
     val weekSessions: Int = 0,
     val weekVolumeKg: Double = 0.0,
     val weekVolumeByDay: List<Float> = List(7) { 0f },
-    val streakDays: Int = 0,
+    val streakWeeks: Int = 0,
     val lastSession: SessionSummary? = null,
     val recentSessions: List<SessionSummary> = emptyList()
 )
@@ -42,7 +42,7 @@ class DashboardViewModel(repository: StatsRepository) : ViewModel() {
                 weekVolumeByDay = (0..6).map { offset ->
                     (volumePerDay[startOfWeek.plusDays(offset.toLong())] ?: 0.0).toFloat()
                 },
-                streakDays = currentStreak(trainingDays(rows), today),
+                streakWeeks = currentStreak(trainingDays(rows), today),
                 lastSession = sessions.firstOrNull(),
                 recentSessions = sessions.take(5)
             )
