@@ -130,7 +130,9 @@ fun EinaNavHost() {
                 ActiveWorkoutScreen(
                     sessionId = sessionId,
                     onFinished = {
+                        // A fine allenamento si atterra sul riepilogo, da cui si puo' condividere l'immagine.
                         navController.popBackStack(EinaDestination.Workout.route, inclusive = false)
+                        navController.navigate("history/session/$sessionId")
                     }
                 )
             }
