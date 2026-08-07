@@ -193,7 +193,7 @@ private fun RoutineRow(
             },
             dismissButton = {
                 TextButton(onClick = { confirmDelete = false }) {
-                    Text("Annulla", color = MaterialTheme.colorScheme.primary)
+                    Text("Annulla", color = island.textSecondary)
                 }
             }
         )

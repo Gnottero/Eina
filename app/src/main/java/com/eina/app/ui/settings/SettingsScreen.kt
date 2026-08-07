@@ -116,8 +116,10 @@ fun SettingsScreen(
                 }
             },
             dismissButton = {
+                // Neutro, non accentato: con la palette arancio "Annulla" primario si confondeva
+                // col rosso di "Cancella" e le due azioni sembravano la stessa cosa.
                 TextButton(onClick = { confirmClear = false }) {
-                    Text("Annulla", color = MaterialTheme.colorScheme.primary)
+                    Text("Annulla", color = island.textSecondary)
                 }
             }
         )
