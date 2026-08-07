@@ -48,6 +48,7 @@ import com.eina.app.ui.components.IslandScreen
 import com.eina.app.ui.components.IslandSecondaryButton
 import com.eina.app.ui.components.ScreenHeader
 import com.eina.app.ui.components.StatTile
+import com.eina.app.ui.components.formatDayMonth
 import com.eina.app.ui.components.formatDecimal
 import com.eina.app.ui.components.formatDuration
 import com.eina.app.ui.components.formatFullDate
@@ -95,14 +96,17 @@ fun SessionDetailScreen(
     IslandScreen(
         header = {
             ScreenHeader(
+                // Titolo corto: "Allenamento completato" andava a capo e finiva sotto il tasto indietro.
                 title = if (justFinished) {
-                    "Allenamento completato"
+                    "Completato"
                 } else {
                     summary?.let { formatFullDate(it.startTime) } ?: "Allenamento"
                 },
                 subtitle = summary?.let { session ->
                     buildString {
-                        if (justFinished) append("${formatFullDate(session.startTime)} · ")
+                        // Data breve a fine allenamento: con la forma estesa il sottotitolo
+                        // andava a capo e la durata finiva da sola sulla seconda riga.
+                        if (justFinished) append("${formatDayMonth(session.startTime)} · ")
                         append(formatTime(session.startTime))
                         session.durationMinutes?.let { append(" · ${formatDuration(it)}") }
                     }

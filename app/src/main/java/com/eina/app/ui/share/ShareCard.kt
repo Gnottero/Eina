@@ -52,7 +52,7 @@ private const val CARD_WIDTH = 1080
 private const val MARGIN = 32f
 private const val CARD_RADIUS = 56f
 private const val PADDING = 64f
-private const val CARD_HEIGHT = 476f
+private const val CARD_HEIGHT = 452f
 
 private const val CARD_BG = 0xFFFFFFFF.toInt()
 private const val ACCENT = 0xFF7A5AF8.toInt()
@@ -166,13 +166,14 @@ fun renderShareCard(context: Context, data: ShareCardData): Bitmap {
     }
 
     // Coda: esercizi a sinistra, pillola di merito a destra (PR se ci sono, altrimenti striscia).
-    val footerCenterY = cardTop + 386f
+    val footerCenterY = cardTop + 374f
     val exercises = if (data.exerciseCount == 1) "1 esercizio" else "${data.exerciseCount} esercizi"
     canvas.drawText(exercises, left, footerCenterY + 10f, textPaint(30f, TEXT_SECONDARY))
 
     val highlight = when {
         data.prCount > 0 ->
             if (data.prCount == 1) "1 nuovo record" else "${data.prCount} nuovi record"
+        data.streakDays == 1 -> "1 giorno di fila"
         data.streakDays > 1 -> "${data.streakDays} giorni di fila"
         else -> null
     }
