@@ -28,7 +28,7 @@ interface SetEntryDao {
     )
     suspend fun getHistoricalSets(exerciseId: Long): List<SetEntryEntity>
 
-    // "Ultima volta": set della piu' recente WorkoutSession (per startTime) che contiene l'esercizio.
+    // "Ultima volta": set della piu' recente WorkoutSession (per startTime, escludendo la sessione corrente) che contiene l'esercizio.
     @Query(
         """
         SELECT se.* FROM set_entries se
@@ -37,12 +37,18 @@ interface SetEntryDao {
         AND we.sessionId = (
             SELECT we2.sessionId FROM workout_exercises we2
             INNER JOIN workout_sessions ws2 ON we2.sessionId = ws2.id
-            WHERE we2.exerciseId = :exerciseId
+            WHERE we2.exerciseId = :exerciseId AND we2.sessionId != :excludeSessionId
             ORDER BY ws2.startTime DESC
             LIMIT 1
         )
         ORDER BY se.setIndex ASC
         """
     )
-    fun getLastTimeSets(exerciseId: Long): Flow<List<SetEntryEntity>>
+    suspend fun getLastTimeSets(exerciseId: Long, excludeSessionId: Long): List<SetEntryEntity>
+
+    @Query("DELETE FROM set_entries WHERE id = :setId")
+    suspend fun deleteById(setId: Long)
+
+    @Query("SELECT * FROM set_entries WHERE id = :setId")
+    suspend fun getById(setId: Long): SetEntryEntity?
 }

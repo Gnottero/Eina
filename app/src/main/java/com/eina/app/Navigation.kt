@@ -16,13 +16,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.eina.app.ui.dashboard.DashboardScreen
 import com.eina.app.ui.library.LibraryScreen
 import com.eina.app.ui.progress.ProgressScreen
+import com.eina.app.ui.workout.ActiveWorkoutScreen
 import com.eina.app.ui.workout.WorkoutScreen
 
 sealed class EinaDestination(val route: String, val labelRes: Int) {
@@ -75,7 +78,23 @@ fun EinaNavHost() {
             modifier = Modifier.padding(innerPadding)
         ) {
             composable(EinaDestination.Dashboard.route) { DashboardScreen() }
-            composable(EinaDestination.Workout.route) { WorkoutScreen() }
+            composable(EinaDestination.Workout.route) {
+                WorkoutScreen(onSessionStarted = { sessionId ->
+                    navController.navigate("workout/active/$sessionId")
+                })
+            }
+            composable(
+                route = "workout/active/{sessionId}",
+                arguments = listOf(navArgument("sessionId") { type = NavType.LongType })
+            ) { backStackEntry ->
+                val sessionId = backStackEntry.arguments?.getLong("sessionId") ?: return@composable
+                ActiveWorkoutScreen(
+                    sessionId = sessionId,
+                    onFinished = {
+                        navController.popBackStack(EinaDestination.Workout.route, inclusive = false)
+                    }
+                )
+            }
             composable(EinaDestination.Library.route) { LibraryScreen() }
             composable(EinaDestination.Progress.route) { ProgressScreen() }
         }
