@@ -43,9 +43,9 @@ Spacing scale:           4 / 8 / 12 / 16 / 24 / 32 dp
 Font:                    Inter (Regular / Medium / SemiBold / Bold)
 
 App SOLO in light mode (deciso in Fase 10): niente schema scuro, niente isSystemInDarkTheme.
-Background:              #F6F5FB   surface/card: #FFFFFF
-Accento primario:        #7A5AF8   (viola, CTA e stati attivi)
-Accento scuro / soft:    #5B3FD6 / #EDE8FF
+Background:              #FBF6F2   surface/card: #FFFFFF
+Accento primario:        #F97348   (arancio tramonto, CTA e stati attivi)
+Accento scuro / soft:    #D4501F / #FFEADF
 
 Colori per categoria muscolare (badge + body diagram):
   Petto/Push:    #FF6B6B
@@ -74,8 +74,8 @@ Gutter laterale schermo:  24dp   (Spacing.xl)
 Spazio fra isole:         12dp   (Spacing.md)
 Ombra isola:              8-18dp, alpha 0.10-0.12 light / 0.6 dark (Modifier.islandShadow)
 
-Superficie incassata (campi, chip inattive, tracce grafico): #EFEDF7
-Testo secondario: #7C7A93   Bordo tenue: #E7E4F3
+Superficie incassata (campi, chip inattive, tracce grafico): #F5EDE7
+Testo secondario: #8A7D75   Bordo tenue: #F0E5DD
 ```
 
 Regole:
@@ -351,6 +351,15 @@ modificabile senza toccare il template) — DB alla versione 2 con `MIGRATION_1_
 `res/drawable/ic_eina_logo.xml`, usato da ShareCard e da `EinaLogo` in Compose; il nome
 dell'esercizio in sessione apre la sua scheda; banner "Riprendi" con durata che scorre dal vivo.
 
+**Fase 15 — Palette arancio e rifiniture di navigazione** *(fatta)*
+DoD: palette accento su arancio tramonto (#F97348) ovunque, logo e icona compresi; card dello
+storico col nome della routine come titolo e data/ora a destra; tocco sulla card routine in
+"Allena" apre la routine (il tondo la avvia); "Nuova" tolto da "Allena" e "Storico" ridotto a
+bottone tondo con icona; tab della nav senza saveState/restoreState (ripristinavano le schermate
+di dettaglio e rendevano la Dashboard irraggiungibile); condivisione come sticker di storia
+Instagram (`com.instagram.share.ADD_TO_STORY`) con fallback al chooser di sistema; Impostazioni
+con "Cancella storico allenamenti" a conferma.
+
 **Fase 9 — Rifinitura**
 DoD: ProGuard/R8 attivo, avvio a freddo ottimizzato, coerenza visiva su tutte le schermate, edge case gestiti (permessi galleria, app playlist assente).
 
@@ -361,7 +370,7 @@ DoD: ProGuard/R8 attivo, avvio a freddo ottimizzato, coerenza visiva su tutte le
 - [x] Nome definitivo e package name → **Eina**, `com.<org>.eina`
 - [ ] URL Buy Me a Coffee
 - [x] Dataset esercizi arricchito → **pronto**: `seed/eina_exercises_seed.json` (873 esercizi convertiti da free-exercise-db con `weightType`/`description`/`loggingInstructions`). Copialo in `app/src/main/assets/seed/exercises.json`. **274 esercizi hanno `needsReview: true`** (classificazione `weightType` incerta, o categoria "stretching" ambigua per un tracker di forza) — filtra su questo campo per una revisione manuale mirata, non serve rivederli tutti. Le `description` sono in inglese (lingua originale del dataset): per la v1 puoi tenerle così, una traduzione IT è un'iterazione successiva non bloccante.
-- [x] Icona app → **fatta**: marchio Eina (tessera viola + tre barre bianche) come adaptive icon in `res/drawable/ic_launcher_foreground.xml`, stesso segno disegnato in `ui/share/ShareCard.kt`
+- [x] Icona app → **fatta**: marchio Eina (tessera arancio + tre barre bianche) come adaptive icon in `res/drawable/ic_launcher_foreground.xml`, stesso segno disegnato in `ui/share/ShareCard.kt`
 - [ ] **Decisione sulle immagini esercizio**: ogni esercizio ha in media 2 frame JPG da ~38KB l'uno → bundlare tutte le immagini di libreria (~1700 file) costerebbe ~65-70MB di APK, in conflitto col principio "leggera". Opzioni da decidere prima della Fase 3: (a) bundlare solo la prima immagine per esercizio (~33MB), (b) bundlare un sottoinsieme curato (es. i 150-200 esercizi più comuni) e usare Play Asset Delivery per il resto, (c) ricomprimere/ridimensionare le immagini prima del bundling. Lo script di conversione salva comunque tutti i path in `mediaFrames` per ogni esercizio, così qualunque opzione si scelga i dati sono già pronti.
 
 ---

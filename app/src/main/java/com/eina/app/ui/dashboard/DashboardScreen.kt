@@ -107,7 +107,8 @@ fun DashboardScreen(
 
         SectionHeader(
             title = "Ultimi allenamenti",
-            actionLabel = if (state.recentSessions.isNotEmpty()) "Storico" else null,
+            actionLabel = "Storico",
+            actionIcon = Icons.Outlined.History.takeIf { state.recentSessions.isNotEmpty() },
             onAction = onHistoryClick.takeIf { state.recentSessions.isNotEmpty() }
         )
 

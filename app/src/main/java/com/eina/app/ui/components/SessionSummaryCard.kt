@@ -48,32 +48,22 @@ fun SessionSummaryCard(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
         ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
-                ) {
-                    Text(
-                        text = formatRelativeDay(summary.startTime),
-                        style = MaterialTheme.typography.titleMedium
-                    )
-                    Text(
-                        text = formatTime(summary.startTime),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = island.textSecondary
-                    )
-                }
-                // Allenamento libero: nessuna riga, non un segnaposto vuoto.
-                summary.routineName?.let { routine ->
-                    Text(
-                        text = routine,
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.primary,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
-            }
+            // Il titolo e' il nome della routine: dice cosa si e' fatto. Senza routine
+            // (allenamento libero) lo si scrive esplicitamente, non si lascia il vuoto.
+            Text(
+                text = summary.routineName ?: "Allenamento libero",
+                style = MaterialTheme.typography.titleMedium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f)
+            )
+            // Quando: sul lato destro, in secondo piano rispetto al nome.
+            Text(
+                text = "${formatRelativeDay(summary.startTime)} · ${formatTime(summary.startTime)}",
+                style = MaterialTheme.typography.bodyMedium,
+                color = island.textSecondary,
+                maxLines = 1
+            )
             if (summary.prCount > 0) {
                 EinaBadge(
                     text = if (summary.prCount == 1) "1 PR" else "${summary.prCount} PR",

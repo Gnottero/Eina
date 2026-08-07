@@ -98,6 +98,11 @@ class WorkoutRepository(
         workoutSessionDao.deleteById(sessionId)
     }
 
+    /** Cancella tutto lo storico, sessione in corso compresa. Irreversibile: si conferma prima. */
+    suspend fun deleteAllSessions() {
+        workoutSessionDao.deleteAll()
+    }
+
     suspend fun getSession(sessionId: Long): WorkoutSessionEntity? = workoutSessionDao.getById(sessionId)
 
     /** Routine di partenza della sessione: serve il link playlist durante l'allenamento. */

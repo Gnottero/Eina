@@ -75,5 +75,5 @@ val appModule = module {
     viewModel { BodyWeightViewModel(get()) }
     viewModel { HistoryViewModel(get()) }
     viewModel { (sessionId: Long) -> SessionDetailViewModel(get(), sessionId) }
-    viewModel { SettingsViewModel(get()) }
+    viewModel { SettingsViewModel(get(), get()) }
 }

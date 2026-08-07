@@ -47,10 +47,10 @@ private const val PADDING = 48f
 private const val CARD_SIZE = CANVAS_SIZE - MARGIN * 2
 
 private const val CARD_BG = 0xFFFFFFFF.toInt()
-private const val ACCENT = 0xFF7A5AF8.toInt()
-private const val TEXT = 0xFF16151F.toInt()
-private const val TEXT_SECONDARY = 0xFF7C7A93.toInt()
-private const val HAIRLINE = 0xFFE7E4F3.toInt()
+private const val ACCENT = 0xFFF97348.toInt()
+private const val TEXT = 0xFF1F1510.toInt()
+private const val TEXT_SECONDARY = 0xFF8A7D75.toInt()
+private const val HAIRLINE = 0xFFF0E5DD.toInt()
 
 private fun textPaint(size: Float, color: Int, bold: Boolean = false, spacing: Float = 0f) =
     TextPaint(Paint.ANTI_ALIAS_FLAG).apply {

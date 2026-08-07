@@ -6,6 +6,11 @@
     <queries>
         <package android:name="com.spotify.music" />
         <package android:name="com.google.android.apps.youtube.music" />
+        <!-- Serve per la condivisione della card come sticker di storia. -->
+        <package android:name="com.instagram.android" />
+        <intent>
+            <action android:name="com.instagram.share.ADD_TO_STORY" />
+        </intent>
         <intent>
             <action android:name="android.intent.action.VIEW" />
             <data android:scheme="spotify" />

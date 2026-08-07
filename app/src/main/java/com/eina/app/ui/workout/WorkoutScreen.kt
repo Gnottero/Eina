@@ -106,11 +106,8 @@ fun WorkoutScreen(
             }
         }
 
-        SectionHeader(
-            title = "Le tue routine",
-            actionLabel = "Nuova",
-            onAction = onCreateRoutineClick
-        )
+        // Nessuna azione qui: la creazione routine sta solo nel "+" dell'header, un punto solo.
+        SectionHeader(title = "Le tue routine")
 
         RoutineListScreen(
             onStartSession = onSessionStarted,

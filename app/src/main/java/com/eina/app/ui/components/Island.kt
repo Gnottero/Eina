@@ -244,12 +244,17 @@ fun ScreenHeader(
     }
 }
 
-/** Titoletto di sezione fra due gruppi di isole, con azione testuale opzionale. */
+/**
+ * Titoletto di sezione fra due gruppi di isole, con azione opzionale: se si passa `actionIcon`
+ * l'azione e' un bottone tondo (piu' compatto e meno rumoroso di un'etichetta), altrimenti
+ * si usa `actionLabel` come testo. `actionLabel` resta comunque la descrizione accessibile.
+ */
 @Composable
 fun SectionHeader(
     title: String,
     modifier: Modifier = Modifier,
     actionLabel: String? = null,
+    actionIcon: ImageVector? = null,
     onAction: (() -> Unit)? = null
 ) {
     Row(
@@ -263,7 +268,14 @@ fun SectionHeader(
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.weight(1f)
         )
-        if (actionLabel != null && onAction != null) {
+        if (actionIcon != null && onAction != null) {
+            IslandIconButton(
+                icon = actionIcon,
+                contentDescription = actionLabel,
+                onClick = onAction,
+                size = 36.dp
+            )
+        } else if (actionLabel != null && onAction != null) {
             val hapticTap = LocalHapticTap.current
             Text(
                 text = actionLabel,

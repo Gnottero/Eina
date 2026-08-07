@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Marchio Eina completo: tessera viola con tre barre bianche, che si leggono come una "E".
+  Marchio Eina completo: tessera arancio con tre barre bianche, che si leggono come una "E".
   Unica sorgente del logo: l'icona adattiva (ic_launcher_foreground) ne riusa le stesse barre e
   l'immagine condivisibile (ui/share/ShareCard.kt) disegna proprio questo drawable.
 -->
@@ -10,7 +10,7 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
     <path
-        android:fillColor="#7A5AF8"
+        android:fillColor="#F97348"
         android:pathData="M32.4,0 H75.6 A32.4,32.4 0 0 1 108,32.4 V75.6 A32.4,32.4 0 0 1 75.6,108 H32.4 A32.4,32.4 0 0 1 0,75.6 V32.4 A32.4,32.4 0 0 1 32.4,0 Z" />
     <path
         android:fillColor="#FFFFFF"

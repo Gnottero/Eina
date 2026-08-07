@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.LocalFireDepartment
 import androidx.compose.material.icons.outlined.Share
@@ -56,7 +57,9 @@ import com.eina.app.ui.components.formatDuration
 import com.eina.app.ui.components.formatFullDate
 import com.eina.app.ui.components.formatTime
 import com.eina.app.ui.components.formatVolume
+import com.eina.app.ui.share.isInstagramInstalled
 import com.eina.app.ui.share.renderShareCard
+import com.eina.app.ui.share.shareToInstagramStory
 import com.eina.app.ui.share.saveShareImage
 import com.eina.app.ui.share.shareCardDataOf
 import com.eina.app.ui.share.shareImage
@@ -91,6 +94,18 @@ fun SessionDetailScreen(
                 val uri = saveShareImage(context, bitmap, "eina-allenamento-$sessionId.png")
                 shareImage(context, uri, text = "Allenamento registrato con Eina")
                 shareBitmap = null
+            },
+            // Sticker: la card resta un adesivo sopra la storia invece di diventarne lo sfondo.
+            onShareToStory = if (isInstagramInstalled(context)) {
+                {
+                    val uri = saveShareImage(context, bitmap, "eina-allenamento-$sessionId.png")
+                    if (!shareToInstagramStory(context, uri)) {
+                        shareImage(context, uri, text = "Allenamento registrato con Eina")
+                    }
+                    shareBitmap = null
+                }
+            } else {
+                null
             }
         )
     }
@@ -322,7 +337,8 @@ private fun SetRow(number: Int, set: CompletedSetRow) {
 private fun SharePreviewDialog(
     bitmap: Bitmap,
     onDismiss: () -> Unit,
-    onShare: () -> Unit
+    onShare: () -> Unit,
+    onShareToStory: (() -> Unit)? = null
 ) {
     Dialog(onDismissRequest = onDismiss) {
         IslandCard(modifier = Modifier.fillMaxWidth()) {
@@ -335,6 +351,14 @@ private fun SharePreviewDialog(
                     .fillMaxWidth()
                     .clip(IslandShape)
             )
+            if (onShareToStory != null) {
+                IslandButton(
+                    text = "Storia Instagram",
+                    onClick = onShareToStory,
+                    icon = Icons.Outlined.AutoAwesome,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(Spacing.md)
@@ -344,12 +368,21 @@ private fun SharePreviewDialog(
                     onClick = onDismiss,
                     modifier = Modifier.weight(1f)
                 )
-                IslandButton(
-                    text = "Condividi",
-                    onClick = onShare,
-                    icon = Icons.Outlined.Share,
-                    modifier = Modifier.weight(1f)
-                )
+                if (onShareToStory != null) {
+                    IslandSecondaryButton(
+                        text = "Altro",
+                        onClick = onShare,
+                        icon = Icons.Outlined.Share,
+                        modifier = Modifier.weight(1f)
+                    )
+                } else {
+                    IslandButton(
+                        text = "Condividi",
+                        onClick = onShare,
+                        icon = Icons.Outlined.Share,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
             }
         }
     }

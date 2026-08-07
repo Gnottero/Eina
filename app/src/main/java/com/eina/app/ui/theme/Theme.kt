@@ -45,7 +45,7 @@ private val LightIslandColors = EinaIslandColors(
     sunken = LightSurfaceSunken,
     textSecondary = LightTextSecondary,
     outlineSubtle = LightOutlineSubtle,
-    shadow = Color(0xFF2B2050),
+    shadow = Color(0xFF4A2A18),
     isDark = false
 )
 

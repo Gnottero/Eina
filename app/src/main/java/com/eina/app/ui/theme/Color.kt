@@ -2,20 +2,20 @@ package com.eina.app.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Palette definitiva: app solo in light mode, bianco + viola.
-// I neutri hanno una punta di viola cosi' le isole bianche staccano dal background senza bordi.
-val LightBackground = Color(0xFFF6F5FB)
+// Palette definitiva: app solo in light mode, bianco + arancio tramonto.
+// I neutri hanno una punta di caldo cosi' le isole bianche staccano dal background senza bordi.
+val LightBackground = Color(0xFFFBF6F2)
 val LightSurface = Color(0xFFFFFFFF)
 
-/** Accento primario: viola. CTA, stati attivi, valori in evidenza. */
-val AccentPrimary = Color(0xFF7A5AF8)
-val AccentPrimaryDark = Color(0xFF5B3FD6)
-val AccentPrimarySoft = Color(0xFFEDE8FF)
+/** Accento primario: arancio tramonto. CTA, stati attivi, valori in evidenza. */
+val AccentPrimary = Color(0xFFF97348)
+val AccentPrimaryDark = Color(0xFFD4501F)
+val AccentPrimarySoft = Color(0xFFFFEADF)
 
-val LightSurfaceSunken = Color(0xFFEFEDF7)
-val LightTextSecondary = Color(0xFF7C7A93)
-val LightOutlineSubtle = Color(0xFFE7E4F3)
-val LightOnBackground = Color(0xFF1B1830)
+val LightSurfaceSunken = Color(0xFFF5EDE7)
+val LightTextSecondary = Color(0xFF8A7D75)
+val LightOutlineSubtle = Color(0xFFF0E5DD)
+val LightOnBackground = Color(0xFF2A1B14)
 
 object MuscleGroupColors {
     val ChestPush = Color(0xFFFF6B6B)

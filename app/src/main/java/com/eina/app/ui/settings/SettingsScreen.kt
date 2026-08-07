@@ -4,23 +4,33 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.DeleteSweep
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.eina.app.ui.components.DestructiveRed
 import com.eina.app.ui.components.IslandCard
 import com.eina.app.ui.components.IslandScreen
+import com.eina.app.ui.components.IslandSecondaryButton
 import com.eina.app.ui.components.ScreenHeader
 import com.eina.app.ui.components.SectionHeader
 import com.eina.app.ui.feedback.LocalHapticTap
 import com.eina.app.ui.theme.EinaTheme
+import com.eina.app.ui.theme.IslandShape
 import com.eina.app.ui.theme.Spacing
 import org.koin.androidx.compose.koinViewModel
 
@@ -29,6 +39,8 @@ fun SettingsScreen(
     onBack: () -> Unit,
     viewModel: SettingsViewModel = koinViewModel()
 ) {
+    val island = EinaTheme.island
+    var confirmClear by remember { mutableStateOf(false) }
     val haptics by viewModel.hapticsEnabled.collectAsState()
     val sound by viewModel.timerSoundEnabled.collectAsState()
     val vibration by viewModel.timerVibrationEnabled.collectAsState()
@@ -70,6 +82,45 @@ fun SettingsScreen(
                 onCheckedChange = viewModel::setHaptics
             )
         }
+
+        SectionHeader(title = "Dati")
+
+        IslandCard(modifier = Modifier.fillMaxWidth()) {
+            Text("Cancella lo storico", style = MaterialTheme.typography.titleSmall)
+            Text(
+                "Elimina tutti gli allenamenti registrati, serie comprese. Routine, esercizi e peso corporeo restano.",
+                style = MaterialTheme.typography.bodySmall,
+                color = island.textSecondary
+            )
+            IslandSecondaryButton(
+                text = "Cancella storico allenamenti",
+                icon = Icons.Outlined.DeleteSweep,
+                onClick = { confirmClear = true },
+                contentColor = DestructiveRed,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+    }
+
+    if (confirmClear) {
+        // Operazione irreversibile: si conferma prima di toccare il database.
+        AlertDialog(
+            onDismissRequest = { confirmClear = false },
+            shape = IslandShape,
+            containerColor = MaterialTheme.colorScheme.surface,
+            title = { Text("Cancellare tutto lo storico?", style = MaterialTheme.typography.titleLarge) },
+            text = { Text("Tutti gli allenamenti registrati verranno eliminati. L'operazione non e' annullabile.") },
+            confirmButton = {
+                TextButton(onClick = { confirmClear = false; viewModel.clearHistory() }) {
+                    Text("Cancella", color = DestructiveRed)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmClear = false }) {
+                    Text("Annulla", color = MaterialTheme.colorScheme.primary)
+                }
+            }
+        )
     }
 }
 

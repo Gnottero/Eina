@@ -231,12 +231,14 @@ fun EinaNavHost() {
                         icon = iconFor(destination),
                         selected = currentDestination?.hierarchy?.any { it.route == destination.route } == true,
                         onClick = {
+                            // Niente saveState/restoreState: salvavano anche le schermate di
+                            // dettaglio aperte dal tab (Impostazioni, Storico) e al ritorno
+                            // ripristinavano quelle in cima, per cui il tab sembrava irraggiungibile.
                             navController.navigate(destination.route) {
                                 popUpTo(navController.graph.findStartDestination().id) {
-                                    saveState = true
+                                    inclusive = destination == EinaDestination.Dashboard
                                 }
                                 launchSingleTop = true
-                                restoreState = true
                             }
                         }
                     )

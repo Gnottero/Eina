@@ -100,6 +100,8 @@ private fun RoutineRow(
         modifier = Modifier.fillMaxWidth(),
         contentPadding = PaddingValues(horizontal = Spacing.lg, vertical = Spacing.lg),
         verticalArrangement = Arrangement.spacedBy(Spacing.sm),
+        // Tocco sulla card: apre la routine (solo il tondo a destra la avvia).
+        onClick = onEdit,
         onLongClick = { actionsOpen = true }
     ) {
         Row(
