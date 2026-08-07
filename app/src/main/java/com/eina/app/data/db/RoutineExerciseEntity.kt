@@ -21,5 +21,7 @@ data class RoutineExerciseEntity(
     val targetSets: Int,
     val targetReps: Int,
     val targetWeight: Double? = null,
-    val restSeconds: Int
+    val restSeconds: Int,
+    /** Nota libera sull'esercizio nella routine: viene copiata nella sessione all'avvio. */
+    val notes: String? = null
 )

@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.EditNote
-import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.automirrored.outlined.ListAlt
 import androidx.compose.material.icons.outlined.PlayArrow
 import androidx.compose.material3.AlertDialog
@@ -20,18 +19,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import com.eina.app.data.db.RoutineEntity
 import com.eina.app.ui.components.DestructiveRed
 import com.eina.app.ui.components.IslandBottomSheet
 import com.eina.app.ui.components.IslandButton
 import com.eina.app.ui.components.IslandCard
 import com.eina.app.ui.components.IslandEmptyState
-import com.eina.app.ui.components.IslandIconButton
-import com.eina.app.ui.components.IslandSecondaryButton
 import com.eina.app.ui.components.SheetActionRow
 import com.eina.app.ui.theme.EinaTheme
 import com.eina.app.ui.theme.IslandShape
@@ -91,23 +86,19 @@ private fun RoutineRow(
     var actionsOpen by remember { mutableStateOf(false) }
     var confirmDelete by remember { mutableStateOf(false) }
 
-    IslandCard(modifier = Modifier.fillMaxWidth()) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                text = name,
-                style = MaterialTheme.typography.titleMedium,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.weight(1f)
-            )
-            IslandIconButton(
-                icon = Icons.Outlined.MoreVert,
-                contentDescription = "Azioni routine",
-                onClick = { actionsOpen = true },
-                containerColor = island.sunken,
-                size = 40.dp
-            )
-        }
+    // Una routine ha una sola azione ovvia: avviarla. Modifica ed eliminazione stanno nel foglio
+    // che si apre col tocco lungo, cosi' la card resta un bottone grande e basta.
+    IslandCard(
+        modifier = Modifier.fillMaxWidth(),
+        onLongClick = { actionsOpen = true }
+    ) {
+        Text(
+            text = name,
+            style = MaterialTheme.typography.titleMedium,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.fillMaxWidth()
+        )
         routine.notes?.takeIf { it.isNotBlank() }?.let {
             Text(it, style = MaterialTheme.typography.bodyMedium, color = island.textSecondary)
         }
@@ -117,13 +108,7 @@ private fun RoutineRow(
                 icon = Icons.Outlined.PlayArrow,
                 onClick = onStart,
                 enabled = startEnabled,
-                modifier = Modifier.weight(1f)
-            )
-            IslandSecondaryButton(
-                text = "Modifica",
-                icon = Icons.Outlined.EditNote,
-                onClick = onEdit,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.fillMaxWidth()
             )
         }
     }

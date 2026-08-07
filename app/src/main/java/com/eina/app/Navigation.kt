@@ -139,6 +139,15 @@ fun EinaNavHost() {
                     sessionId = sessionId,
                     // Uscire non chiude la sessione: resta aperta e si rientra da "Allena".
                     onExit = { navController.popBackStack() },
+                    // Annullata, la sessione non esiste piu': si torna ad "Allena", non al riepilogo.
+                    onCancelled = {
+                        if (!navController.popBackStack(EinaDestination.Workout.route, inclusive = false)) {
+                            navController.navigate(EinaDestination.Workout.route)
+                        }
+                    },
+                    onOpenExercise = { exerciseId ->
+                        navController.navigate("library/exercise/$exerciseId")
+                    },
                     onFinished = {
                         // A fine allenamento si atterra sul riepilogo, da cui si puo' condividere l'immagine.
                         navController.popBackStack(EinaDestination.Workout.route, inclusive = false)

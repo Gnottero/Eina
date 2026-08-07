@@ -2,7 +2,9 @@ package com.eina.app.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -64,6 +66,7 @@ fun Modifier.islandShadow(elevation: Dp, shape: Shape): Modifier {
  * Contenitore base dello stile island: superficie flottante, angoli generosi, ombra morbida.
  * Tutto il resto della UI (card, tile, barra di navigazione, timer) e' costruito su questo.
  */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun IslandSurface(
     modifier: Modifier = Modifier,
@@ -72,6 +75,7 @@ fun IslandSurface(
     elevation: Dp = 10.dp,
     outlined: Boolean = false,
     onClick: (() -> Unit)? = null,
+    onLongClick: (() -> Unit)? = null,
     content: @Composable BoxScope.() -> Unit
 ) {
     val island = EinaTheme.island
@@ -83,7 +87,16 @@ fun IslandSurface(
             .background(color)
             .then(if (outlined) Modifier.border(1.dp, island.outlineSubtle, shape) else Modifier)
             .then(
-                if (onClick != null) Modifier.clickable { hapticTap(); onClick() } else Modifier
+                // Il tocco lungo apre le azioni dell'elemento: ha preso il posto dei tre puntini,
+                // quindi va agganciato anche quando l'isola non ha un tocco breve suo.
+                if (onClick != null || onLongClick != null) {
+                    Modifier.combinedClickable(
+                        onLongClick = onLongClick?.let { { hapticTap(); it() } },
+                        onClick = { onClick?.let { hapticTap(); it() } }
+                    )
+                } else {
+                    Modifier
+                }
             ),
         content = content
     )
@@ -99,6 +112,7 @@ fun IslandCard(
     contentPadding: PaddingValues = PaddingValues(Spacing.lg),
     verticalArrangement: Arrangement.Vertical = Arrangement.spacedBy(Spacing.sm),
     onClick: (() -> Unit)? = null,
+    onLongClick: (() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit
 ) {
     IslandSurface(
@@ -106,7 +120,8 @@ fun IslandCard(
         shape = shape,
         color = color,
         elevation = elevation,
-        onClick = onClick
+        onClick = onClick,
+        onLongClick = onLongClick
     ) {
         Column(
             modifier = Modifier

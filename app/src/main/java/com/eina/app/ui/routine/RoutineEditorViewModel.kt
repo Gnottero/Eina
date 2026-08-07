@@ -114,6 +114,15 @@ class RoutineEditorViewModel(
         viewModelScope.launch { repository.removeRoutineExercise(routineExercise) }
     }
 
+    /** Nota dell'esercizio nella routine: viene copiata nella sessione a ogni avvio. */
+    fun updateNotes(routineExercise: RoutineExerciseEntity, notes: String?) {
+        viewModelScope.launch {
+            repository.updateRoutineExercise(
+                routineExercise.copy(notes = notes?.trim()?.ifBlank { null })
+            )
+        }
+    }
+
     fun updateTargets(routineExercise: RoutineExerciseEntity, targetSets: Int, targetReps: Int, targetWeight: Double?, restSeconds: Int) {
         viewModelScope.launch {
             repository.updateRoutineExercise(

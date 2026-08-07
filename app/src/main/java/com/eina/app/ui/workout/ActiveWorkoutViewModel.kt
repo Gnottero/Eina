@@ -48,7 +48,16 @@ class ActiveWorkoutViewModel(
             val session = repository.getSession(sessionId)
             if (session != null) {
                 _uiState.update { it.copy(startTime = session.startTime) }
-                session.routineId?.let { routineTargets = repository.getRoutineTargets(it) }
+                session.routineId?.let { routineId ->
+                    routineTargets = repository.getRoutineTargets(routineId)
+                    val routine = repository.getRoutine(routineId)
+                    _uiState.update {
+                        it.copy(
+                            playlistUri = routine?.linkedPlaylistUri,
+                            playlistType = routine?.linkedPlaylistType
+                        )
+                    }
+                }
             }
             repository.getSessionExercises(sessionId).forEach { we ->
                 val exercise = repository.getExercise(we.exerciseId) ?: return@forEach
@@ -82,6 +91,7 @@ class ActiveWorkoutViewModel(
             name = exercise.name,
             weightType = exercise.weightType,
             order = workoutExercise.order,
+            notes = workoutExercise.notes,
             restSeconds = sets.firstOrNull()?.restSecondsPlanned
                 ?: routineTargets[exercise.id]?.restSeconds
                 ?: DEFAULT_REST_SECONDS,
@@ -196,12 +206,32 @@ class ActiveWorkoutViewModel(
 
     private suspend fun persistExerciseOrder(exercises: List<SessionExerciseUi>) {
         val entities = exercises.mapIndexed { index, ex ->
-            WorkoutExerciseEntity(id = ex.workoutExerciseId, sessionId = sessionId, exerciseId = ex.exerciseId, order = index)
+            // La nota va riportata: qui si riscrive la riga intera, ometterla la cancellerebbe.
+            WorkoutExerciseEntity(
+                id = ex.workoutExerciseId,
+                sessionId = sessionId,
+                exerciseId = ex.exerciseId,
+                order = index,
+                notes = ex.notes
+            )
         }
         repository.reorderExercises(entities)
         _uiState.update { state ->
             state.copy(exercises = state.exercises.mapIndexed { index, ex -> ex.copy(order = index) })
         }
+    }
+
+    /** Nota dell'esercizio in sessione: tocca solo questo allenamento, non la routine. */
+    fun setExerciseNotes(workoutExerciseId: Long, notes: String?) {
+        val clean = notes?.trim()?.ifBlank { null }
+        _uiState.update { state ->
+            state.copy(
+                exercises = state.exercises.map { ex ->
+                    if (ex.workoutExerciseId == workoutExerciseId) ex.copy(notes = clean) else ex
+                }
+            )
+        }
+        viewModelScope.launch { repository.setExerciseNotes(workoutExerciseId, clean) }
     }
 
     fun addSet(workoutExerciseId: Long) {
@@ -334,6 +364,18 @@ class ActiveWorkoutViewModel(
             repository.finishSession(sessionId)
             _uiState.update { it.copy(isFinished = true) }
             onFinished()
+        }
+    }
+
+    /**
+     * Annulla l'allenamento: la sessione viene eliminata, con le serie gia' registrate.
+     * E' l'uscita per l'allenamento aperto per sbaglio, distinta da "Termina" che invece salva.
+     */
+    fun cancelWorkout(onCancelled: () -> Unit) {
+        viewModelScope.launch {
+            skipTimer()
+            repository.cancelSession(sessionId)
+            onCancelled()
         }
     }
 

@@ -100,7 +100,7 @@ fun SessionDetailScreen(
                             onClick = {
                                 scope.launch {
                                     val data = shareCardDataOf(summary, state.exercises.map { it.toShareCardExercise() })
-                                    shareBitmap = withContext(Dispatchers.Default) { renderShareCard(data) }
+                                    shareBitmap = withContext(Dispatchers.Default) { renderShareCard(context, data) }
                                 }
                             }
                         )

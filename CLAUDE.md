@@ -339,6 +339,18 @@ stepper e griglia di durate che si applicano subito; picker esercizi con ricerca
 gruppo muscolare; eliminazione routine con conferma; vibrazione dei tap su canale non attenuato
 (EFFECT_HEAVY_CLICK) perche' quella precedente era impercettibile.
 
+**Fase 13 — Gesti, note e recupero a rulli** *(fatta)*
+DoD: allenamento annullabile (elimina la sessione, distinta da "Termina" che salva); tocco lungo
+al posto dei tre puntini su card esercizio in sessione, riga serie, routine ed esercizio di
+routine; tempo di recupero scelto con rulli stile sveglia (`DurationWheelPicker` +
+`RestTimeSheet` condivisi fra routine e allenamento); tasto "Modifica" tolto dalla card routine,
+finito nel foglio col tocco lungo insieme a "Elimina"; "Riproduci" spostato dall'editor routine
+all'header dell'allenamento in corso; nota libera per esercizio, sulla routine (`notes` su
+`routine_exercises`) e sulla sessione (`notes` su `workout_exercises`, ereditata all'avvio e
+modificabile senza toccare il template) — DB alla versione 2 con `MIGRATION_1_2`; logo unico in
+`res/drawable/ic_eina_logo.xml`, usato da ShareCard e da `EinaLogo` in Compose; il nome
+dell'esercizio in sessione apre la sua scheda; banner "Riprendi" con durata che scorre dal vivo.
+
 **Fase 9 — Rifinitura**
 DoD: ProGuard/R8 attivo, avvio a freddo ottimizzato, coerenza visiva su tutte le schermate, edge case gestiti (permessi galleria, app playlist assente).
 

@@ -1,6 +1,7 @@
 package com.eina.app.ui.workout
 
 import com.eina.app.data.db.ExerciseEntity
+import com.eina.app.data.db.PlaylistType
 import com.eina.app.data.db.SetEntryEntity
 import com.eina.app.data.db.WeightType
 
@@ -35,6 +36,8 @@ data class SessionExerciseUi(
     val weightType: WeightType,
     val order: Int,
     val restSeconds: Int = 90,
+    /** Nota dell'esercizio in questa sessione: ereditata dalla routine, modificabile qui. */
+    val notes: String? = null,
     val sets: List<SessionSetUi> = emptyList(),
     val lastTimeSets: List<SetEntryEntity> = emptyList(),
     /** Ultimi valori registrati per questo esercizio, ovunque: ultimo anello dei segnaposto. */
@@ -57,6 +60,9 @@ data class ActiveWorkoutUiState(
     val availableExercises: List<ExerciseEntity> = emptyList(),
     val timer: TimerUi? = null,
     val isFinished: Boolean = false,
+    /** Playlist della routine di partenza: si riproduce da qui, non dall'editor della routine. */
+    val playlistUri: String? = null,
+    val playlistType: PlaylistType? = null,
     /** Volume in kg delle sole serie completate, ricalcolato a ogni refresh. */
     val volumeKg: Double = 0.0
 ) {

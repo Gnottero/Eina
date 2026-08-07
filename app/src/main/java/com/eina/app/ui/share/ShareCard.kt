@@ -1,5 +1,6 @@
 package com.eina.app.ui.share
 
+import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Paint
@@ -7,6 +8,8 @@ import android.graphics.RectF
 import android.graphics.Typeface
 import android.text.TextPaint
 import android.text.TextUtils
+import androidx.core.content.res.ResourcesCompat
+import com.eina.app.R
 import com.eina.app.data.db.WeightType
 import com.eina.app.domain.SessionSummary
 import com.eina.app.ui.components.formatDecimal
@@ -106,25 +109,13 @@ private fun fitted(text: String, maxWidth: Float, paint: TextPaint, minSize: Flo
 }
 
 /**
- * Marchio stilizzato dell'app: tessera viola con tre barre bianche di lunghezza decrescente.
- * Si legge come una "E" e come un grafico che sale, e non usa asset esterni.
+ * Marchio dell'app, disegnato dal vettoriale condiviso con l'icona di sistema
+ * (res/drawable/ic_eina_logo.xml): un solo file da toccare se il logo cambia.
  */
-private fun Canvas.drawLogoMark(left: Float, top: Float, size: Float) {
-    drawRoundRect(RectF(left, top, left + size, top + size), size * 0.3f, size * 0.3f, fill(ACCENT))
-
-    val barHeight = size * 0.11f
-    val barLeft = left + size * 0.24f
-    val widths = listOf(size * 0.52f, size * 0.36f, size * 0.52f)
-    var barTop = top + size * 0.26f
-    widths.forEach { width ->
-        drawRoundRect(
-            RectF(barLeft, barTop, barLeft + width, barTop + barHeight),
-            barHeight / 2f,
-            barHeight / 2f,
-            fill(BG)
-        )
-        barTop += barHeight + size * 0.075f
-    }
+private fun Canvas.drawLogoMark(context: Context, left: Float, top: Float, size: Float) {
+    val logo = ResourcesCompat.getDrawable(context.resources, R.drawable.ic_eina_logo, context.theme) ?: return
+    logo.setBounds(left.toInt(), top.toInt(), (left + size).toInt(), (top + size).toInt())
+    logo.draw(this)
 }
 
 /**
@@ -132,7 +123,7 @@ private fun Canvas.drawLogoMark(left: Float, top: Float, size: Float) {
  * metriche essenziali (durata, volume, serie) e l'elenco degli esercizi. L'altezza si adatta
  * al numero di righe, cosi' una sessione da un esercizio non lascia mezza card vuota.
  */
-fun renderShareCard(data: ShareCardData): Bitmap {
+fun renderShareCard(context: Context, data: ShareCardData): Bitmap {
     val rowCount = minOf(data.exercises.size, MAX_EXERCISE_ROWS)
     val hiddenCount = data.exercises.size - rowCount
 
@@ -152,7 +143,7 @@ fun renderShareCard(data: ShareCardData): Bitmap {
 
     // Intestazione: marchio + wordmark
     val logoSize = 96f
-    canvas.drawLogoMark(PADDING, PADDING, logoSize)
+    canvas.drawLogoMark(context, PADDING, PADDING, logoSize)
     canvas.drawText(
         "Eina",
         PADDING + logoSize + 28f,

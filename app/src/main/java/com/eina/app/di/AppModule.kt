@@ -27,7 +27,9 @@ import org.koin.dsl.module
 
 val appModule = module {
     single {
-        Room.databaseBuilder(get(), EinaDatabase::class.java, EinaDatabase.DATABASE_NAME).build()
+        Room.databaseBuilder(get(), EinaDatabase::class.java, EinaDatabase.DATABASE_NAME)
+            .addMigrations(EinaDatabase.MIGRATION_1_2)
+            .build()
     }
 
     single { get<EinaDatabase>().exerciseDao() }
@@ -46,7 +48,8 @@ val appModule = module {
             setEntryDao = get(),
             exerciseDao = get(),
             bodyMetricDao = get(),
-            routineExerciseDao = get()
+            routineExerciseDao = get(),
+            routineDao = get()
         )
     }
 

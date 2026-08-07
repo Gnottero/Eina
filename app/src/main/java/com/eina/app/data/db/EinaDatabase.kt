@@ -3,6 +3,8 @@ package com.eina.app.data.db
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
     entities = [
@@ -14,7 +16,7 @@ import androidx.room.TypeConverters
         SetEntryEntity::class,
         BodyMetricEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -30,5 +32,17 @@ abstract class EinaDatabase : RoomDatabase() {
 
     companion object {
         const val DATABASE_NAME = "eina.db"
+
+        /**
+         * Note per esercizio: colonna aggiunta sia al template (routine) sia alla sessione, cosi'
+         * la nota puo' essere ritoccata durante l'allenamento senza sporcare la routine.
+         * Migrazione e non distruttiva: lo storico degli allenamenti non e' ricostruibile.
+         */
+        val MIGRATION_1_2 = object : Migration(1, 2) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE routine_exercises ADD COLUMN notes TEXT")
+                db.execSQL("ALTER TABLE workout_exercises ADD COLUMN notes TEXT")
+            }
+        }
     }
 }

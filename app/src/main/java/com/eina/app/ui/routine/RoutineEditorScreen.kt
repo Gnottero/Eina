@@ -1,13 +1,19 @@
 package com.eina.app.ui.routine
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.Notes
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Delete
-import androidx.compose.material.icons.outlined.PlayArrow
+import androidx.compose.material.icons.outlined.Timer
+import androidx.compose.material3.Icon
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -22,24 +28,30 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.eina.app.data.db.PlaylistType
 import com.eina.app.data.db.RoutineExerciseEntity
+import com.eina.app.ui.components.IslandBottomSheet
 import com.eina.app.ui.components.IslandButton
 import com.eina.app.ui.components.IslandCard
 import com.eina.app.ui.components.IslandEmptyState
-import com.eina.app.ui.components.IslandIconButton
 import com.eina.app.ui.components.IslandNumberField
 import com.eina.app.ui.components.IslandScreen
 import com.eina.app.ui.components.IslandSecondaryButton
 import com.eina.app.ui.components.IslandTextField
+import com.eina.app.ui.components.RestTimeSheet
 import com.eina.app.ui.components.ScreenHeader
 import com.eina.app.ui.components.SectionHeader
+import com.eina.app.ui.components.SheetActionRow
+import com.eina.app.ui.components.formatClock
 import com.eina.app.ui.components.sanitizeWeightInput
+import com.eina.app.ui.feedback.LocalHapticTap
 import com.eina.app.ui.theme.EinaTheme
+import com.eina.app.ui.theme.PillShape
 import com.eina.app.ui.theme.Spacing
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -57,7 +69,6 @@ fun RoutineEditorScreen(
     val uiState by viewModel.uiState.collectAsState()
     val routineExercises by viewModel.routineExercises.collectAsState()
     val exerciseNames by viewModel.exerciseNames.collectAsState()
-    val context = LocalContext.current
 
     LaunchedEffect(pickedExerciseId) {
         if (pickedExerciseId != null) {
@@ -104,16 +115,13 @@ fun RoutineEditorScreen(
                 label = "Link playlist (opzionale)",
                 modifier = Modifier.fillMaxWidth()
             )
-            if (uiState.linkedPlaylistType != null && uiState.linkedPlaylistUri.isNotBlank()) {
-                IslandSecondaryButton(
-                    text = "Riproduci",
-                    icon = Icons.Outlined.PlayArrow,
-                    onClick = {
-                        launchPlaylist(context, uiState.linkedPlaylistUri, uiState.linkedPlaylistType!!)
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
+            Text(
+                // Il tasto "Riproduci" e' stato spostato nell'allenamento in corso: la musica
+                // serve mentre ci si allena, non mentre si compila la scheda.
+                text = "La playlist si avvia dalla schermata dell'allenamento.",
+                style = MaterialTheme.typography.bodySmall,
+                color = EinaTheme.island.textSecondary
+            )
         }
 
         SectionHeader(title = "Esercizi")
@@ -131,6 +139,7 @@ fun RoutineEditorScreen(
                     onUpdate = { sets, reps, weight, rest ->
                         viewModel.updateTargets(routineExercise, sets, reps, weight, rest)
                     },
+                    onNotesChange = { notes -> viewModel.updateNotes(routineExercise, notes) },
                     onRemove = { viewModel.removeExercise(routineExercise) }
                 )
             }
@@ -156,41 +165,39 @@ private fun RoutineExerciseRow(
     routineExercise: RoutineExerciseEntity,
     exerciseName: String,
     onUpdate: (Int, Int, Double?, Int) -> Unit,
+    onNotesChange: (String?) -> Unit,
     onRemove: () -> Unit
 ) {
+    val island = EinaTheme.island
+    val hapticTap = LocalHapticTap.current
     var sets by remember(routineExercise.id) { mutableStateOf(routineExercise.targetSets.toString()) }
     var reps by remember(routineExercise.id) { mutableStateOf(routineExercise.targetReps.toString()) }
     var weight by remember(routineExercise.id) { mutableStateOf(routineExercise.targetWeight?.toString() ?: "") }
-    var rest by remember(routineExercise.id) { mutableStateOf(routineExercise.restSeconds.toString()) }
+    var actionsOpen by remember { mutableStateOf(false) }
+    var restSheetOpen by remember { mutableStateOf(false) }
+    var notesSheetOpen by remember { mutableStateOf(false) }
 
-    fun commit() {
+    fun commit(restSeconds: Int = routineExercise.restSeconds) {
         onUpdate(
             sets.toIntOrNull() ?: routineExercise.targetSets,
             reps.toIntOrNull() ?: routineExercise.targetReps,
             weight.toDoubleOrNull(),
-            rest.toIntOrNull() ?: routineExercise.restSeconds
+            restSeconds
         )
     }
 
-    IslandCard(modifier = Modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
-            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
-        ) {
-            Text(
-                exerciseName,
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.weight(1f)
-            )
-            IslandIconButton(
-                icon = Icons.Outlined.Delete,
-                contentDescription = "Rimuovi esercizio",
-                onClick = onRemove,
-                containerColor = EinaTheme.island.sunken,
-                size = 38.dp
-            )
+    // Come nell'allenamento: nessun tasto di servizio sulla card, le azioni stanno nel foglio
+    // che si apre col tocco lungo.
+    IslandCard(
+        modifier = Modifier.fillMaxWidth(),
+        onLongClick = { actionsOpen = true }
+    ) {
+        Text(exerciseName, style = MaterialTheme.typography.titleMedium)
+
+        routineExercise.notes?.takeIf { it.isNotBlank() }?.let { notes ->
+            Text(notes, style = MaterialTheme.typography.bodyMedium, color = island.textSecondary)
         }
+
         Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
             IslandNumberField(
                 value = sets,
@@ -213,14 +220,97 @@ private fun RoutineExerciseRow(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 modifier = Modifier.weight(1f)
             )
-            IslandNumberField(
-                value = rest,
-                onValueChange = { rest = it; commit() },
-                label = "Rec s",
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.weight(1f)
+        }
+
+        // Il recupero non e' un numero da digitare: si sceglie coi rulli, come una sveglia.
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(Spacing.xs),
+            modifier = Modifier
+                .clip(PillShape)
+                .background(island.sunken)
+                .clickable { hapticTap(); restSheetOpen = true }
+                .padding(horizontal = Spacing.lg, vertical = Spacing.sm)
+        ) {
+            Icon(
+                Icons.Outlined.Timer,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(16.dp)
+            )
+            Text(
+                text = "Recupero ${formatClock(routineExercise.restSeconds)}",
+                style = MaterialTheme.typography.labelMedium,
+                color = island.textSecondary
             )
         }
+    }
+
+    if (actionsOpen) {
+        IslandBottomSheet(onDismiss = { actionsOpen = false }, title = exerciseName) {
+            SheetActionRow(
+                icon = Icons.AutoMirrored.Outlined.Notes,
+                label = if (routineExercise.notes.isNullOrBlank()) "Aggiungi nota" else "Modifica nota",
+                description = routineExercise.notes?.takeIf { it.isNotBlank() },
+                onClick = { actionsOpen = false; notesSheetOpen = true }
+            )
+            SheetActionRow(
+                icon = Icons.Outlined.Timer,
+                label = "Tempo di recupero",
+                description = formatClock(routineExercise.restSeconds),
+                onClick = { actionsOpen = false; restSheetOpen = true }
+            )
+            SheetActionRow(
+                icon = Icons.Outlined.Delete,
+                label = "Rimuovi esercizio",
+                destructive = true,
+                onClick = { actionsOpen = false; onRemove() }
+            )
+        }
+    }
+
+    if (restSheetOpen) {
+        RestTimeSheet(
+            currentSeconds = routineExercise.restSeconds,
+            onConfirm = { seconds -> commit(restSeconds = seconds) },
+            onDismiss = { restSheetOpen = false },
+            description = "Recupero proposto fra le serie di questo esercizio."
+        )
+    }
+
+    if (notesSheetOpen) {
+        RoutineNotesSheet(
+            exerciseName = exerciseName,
+            notes = routineExercise.notes.orEmpty(),
+            onSave = onNotesChange,
+            onDismiss = { notesSheetOpen = false }
+        )
+    }
+}
+
+/** Nota della routine: promemoria sull'esecuzione, ereditata da ogni allenamento che la avvia. */
+@Composable
+private fun RoutineNotesSheet(
+    exerciseName: String,
+    notes: String,
+    onSave: (String?) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var text by remember(notes) { mutableStateOf(notes) }
+
+    IslandBottomSheet(onDismiss = onDismiss, title = "Nota su $exerciseName") {
+        IslandTextField(
+            value = text,
+            onValueChange = { text = it },
+            label = "Nota",
+            singleLine = false,
+            modifier = Modifier.fillMaxWidth()
+        )
+        IslandButton(
+            text = "Salva nota",
+            onClick = { onSave(text); onDismiss() },
+            modifier = Modifier.fillMaxWidth()
+        )
     }
 }
 

@@ -3,6 +3,8 @@ package com.eina.app.data.repository
 import com.eina.app.data.db.BodyMetricDao
 import com.eina.app.data.db.ExerciseDao
 import com.eina.app.data.db.ExerciseEntity
+import com.eina.app.data.db.RoutineDao
+import com.eina.app.data.db.RoutineEntity
 import com.eina.app.data.db.RoutineExerciseDao
 import com.eina.app.data.db.RoutineExerciseEntity
 import com.eina.app.data.db.SetEntryDao
@@ -22,7 +24,8 @@ class WorkoutRepository(
     private val setEntryDao: SetEntryDao,
     private val exerciseDao: ExerciseDao,
     private val bodyMetricDao: BodyMetricDao,
-    private val routineExerciseDao: RoutineExerciseDao
+    private val routineExerciseDao: RoutineExerciseDao,
+    private val routineDao: RoutineDao
 ) {
     fun observeExercises(): Flow<List<ExerciseEntity>> = exerciseDao.getAll()
 
@@ -59,7 +62,14 @@ class WorkoutRepository(
         val routineExercises = routineExerciseDao.getForRoutine(routineId).first().sortedBy { it.order }
         routineExercises.forEachIndexed { index, routineExercise ->
             val workoutExerciseId = workoutExerciseDao.insert(
-                WorkoutExerciseEntity(sessionId = sessionId, exerciseId = routineExercise.exerciseId, order = index)
+                WorkoutExerciseEntity(
+                    sessionId = sessionId,
+                    exerciseId = routineExercise.exerciseId,
+                    order = index,
+                    // La nota della routine parte come nota della sessione: modificarla durante
+                    // l'allenamento non deve riscrivere il template.
+                    notes = routineExercise.notes
+                )
             )
             repeat(routineExercise.targetSets) { setIndex ->
                 setEntryDao.insert(
@@ -80,7 +90,18 @@ class WorkoutRepository(
         workoutSessionDao.update(session.copy(endTime = System.currentTimeMillis()))
     }
 
+    /**
+     * Annulla la sessione: la riga sparisce e con lei, per cascade, esercizi e serie registrate.
+     * Serve per l'allenamento aperto per sbaglio, che altrimenti resterebbe nello storico.
+     */
+    suspend fun cancelSession(sessionId: Long) {
+        workoutSessionDao.deleteById(sessionId)
+    }
+
     suspend fun getSession(sessionId: Long): WorkoutSessionEntity? = workoutSessionDao.getById(sessionId)
+
+    /** Routine di partenza della sessione: serve il link playlist durante l'allenamento. */
+    suspend fun getRoutine(routineId: Long): RoutineEntity? = routineDao.getById(routineId)
 
     /** Target della routine per exerciseId: servono alla UI come segnaposto, non come valori registrati. */
     suspend fun getRoutineTargets(routineId: Long): Map<Long, RoutineExerciseEntity> =
@@ -111,6 +132,11 @@ class WorkoutRepository(
             )
         )
         return workoutExerciseId
+    }
+
+    suspend fun setExerciseNotes(workoutExerciseId: Long, notes: String?) {
+        val current = workoutExerciseDao.getById(workoutExerciseId) ?: return
+        workoutExerciseDao.update(current.copy(notes = notes))
     }
 
     suspend fun removeExercise(workoutExerciseId: Long) {
