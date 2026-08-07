@@ -16,4 +16,7 @@ interface BodyMetricDao {
 
     @Query("SELECT * FROM body_metrics ORDER BY date DESC")
     fun getAll(): Flow<List<BodyMetricEntity>>
+
+    @Query("DELETE FROM body_metrics WHERE id = :id")
+    suspend fun deleteById(id: Long)
 }

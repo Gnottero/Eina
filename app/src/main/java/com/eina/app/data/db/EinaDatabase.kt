@@ -26,6 +26,7 @@ abstract class EinaDatabase : RoomDatabase() {
     abstract fun workoutExerciseDao(): WorkoutExerciseDao
     abstract fun setEntryDao(): SetEntryDao
     abstract fun bodyMetricDao(): BodyMetricDao
+    abstract fun statsDao(): StatsDao
 
     companion object {
         const val DATABASE_NAME = "eina.db"

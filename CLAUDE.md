@@ -305,7 +305,7 @@ DoD: design system island in `ui/theme` + `ui/components`; tutte le schermate de
 riscritte sui nuovi componenti; nav flottante a pill; Dashboard e Progressi con layout bento e
 stati vuoti (dati reali in Fase 6).
 
-**Fase 6 — Dashboard e progressi**
+**Fase 6 — Dashboard e progressi** *(fatta)*
 DoD: dashboard storico allenamenti; grafici volume/PR; heatmap stile GitHub; schermata peso corporeo che alimenta `bodyweightSnapshotKg` ai nuovi set.
 
 **Fase 7 — Condivisione stile Strava**

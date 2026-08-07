@@ -11,17 +11,22 @@ import androidx.compose.material.icons.outlined.PlayArrow
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import com.eina.app.ui.components.IslandButton
 import com.eina.app.ui.components.IslandCard
 import com.eina.app.ui.components.IslandEmptyState
+import com.eina.app.ui.components.IslandScreen
 import com.eina.app.ui.components.MiniBarChart
 import com.eina.app.ui.components.ScreenHeader
 import com.eina.app.ui.components.SectionHeader
-import com.eina.app.ui.components.IslandScreen
+import com.eina.app.ui.components.SessionSummaryCard
 import com.eina.app.ui.components.StatTile
+import com.eina.app.ui.components.formatVolume
 import com.eina.app.ui.theme.EinaTheme
 import com.eina.app.ui.theme.Spacing
+import org.koin.androidx.compose.koinViewModel
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -31,12 +36,15 @@ private val weekDayLabels = listOf("L", "M", "M", "G", "V", "S", "D")
 
 @Composable
 fun DashboardScreen(
-    onStartWorkoutClick: () -> Unit = {}
+    onStartWorkoutClick: () -> Unit = {},
+    onHistoryClick: () -> Unit = {},
+    onSessionClick: (Long) -> Unit = {},
+    viewModel: DashboardViewModel = koinViewModel()
 ) {
     val island = EinaTheme.island
-    // TODO(Fase 6): collegare i dati reali (sessioni, volume, streak) tramite DashboardViewModel.
-    // Finche' la Fase 6 non e' fatta le isole mostrano stato vuoto, non numeri finti.
+    val state by viewModel.uiState.collectAsState()
     val today = LocalDate.now()
+    val hasWeekVolume = state.weekVolumeByDay.any { it > 0f }
 
     IslandScreen(
         header = {
@@ -53,15 +61,15 @@ fun DashboardScreen(
         ) {
             StatTile(
                 label = "Settimana",
-                value = "–",
-                unit = "sessioni",
+                value = state.weekSessions.toString(),
+                unit = if (state.weekSessions == 1) "sessione" else "sessioni",
                 icon = Icons.Outlined.CalendarMonth,
                 accentColor = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.weight(1f)
             )
             StatTile(
                 label = "Volume",
-                value = "–",
+                value = formatVolume(state.weekVolumeKg),
                 unit = "kg",
                 icon = Icons.Outlined.FitnessCenter,
                 modifier = Modifier.weight(1f)
@@ -71,25 +79,42 @@ fun DashboardScreen(
         IslandCard(modifier = Modifier.fillMaxWidth()) {
             Text("Volume settimanale", style = MaterialTheme.typography.titleMedium)
             Text(
-                "Nessun dato ancora",
+                text = if (hasWeekVolume) {
+                    "${formatVolume(state.weekVolumeKg)} kg sollevati questa settimana"
+                } else {
+                    "Nessun dato ancora"
+                },
                 style = MaterialTheme.typography.bodyMedium,
                 color = island.textSecondary
             )
             MiniBarChart(
-                values = List(7) { 0f },
+                values = state.weekVolumeByDay,
                 labels = weekDayLabels,
                 highlightIndex = today.dayOfWeek.value - 1,
                 modifier = Modifier.fillMaxWidth()
             )
         }
 
-        SectionHeader(title = "Ultimo allenamento")
-
-        IslandEmptyState(
-            title = "Nessun allenamento registrato",
-            description = "Avvia una sessione: qui comparira' il riepilogo dell'ultima, con serie, volume e PR.",
-            icon = Icons.Outlined.History
+        SectionHeader(
+            title = "Ultimi allenamenti",
+            actionLabel = if (state.recentSessions.isNotEmpty()) "Storico" else null,
+            onAction = onHistoryClick.takeIf { state.recentSessions.isNotEmpty() }
         )
+
+        if (state.recentSessions.isEmpty()) {
+            IslandEmptyState(
+                title = "Nessun allenamento registrato",
+                description = "Avvia una sessione: qui comparira' il riepilogo dell'ultima, con serie, volume e PR.",
+                icon = Icons.Outlined.History
+            )
+        } else {
+            state.recentSessions.take(3).forEach { session ->
+                SessionSummaryCard(
+                    summary = session,
+                    onClick = { onSessionClick(session.sessionId) }
+                )
+            }
+        }
 
         IslandButton(
             text = "Inizia allenamento",

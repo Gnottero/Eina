@@ -1,0 +1,136 @@
+package com.eina.app.domain
+
+import com.eina.app.data.db.CompletedSetRow
+import com.eina.app.data.db.WeightType
+import org.junit.Assert.assertEquals
+import org.junit.Test
+import java.time.LocalDate
+import java.time.ZoneId
+
+private val zone: ZoneId = ZoneId.systemDefault()
+
+private fun millisOf(date: LocalDate, hour: Int = 10): Long =
+    date.atTime(hour, 0).atZone(zone).toInstant().toEpochMilli()
+
+private fun row(
+    sessionId: Long,
+    date: LocalDate,
+    exerciseId: Long = 1,
+    exerciseName: String = "Panca piana",
+    weightType: WeightType = WeightType.FREE_WEIGHT,
+    setIndex: Int = 0,
+    reps: Int? = 10,
+    weight: Double? = 50.0,
+    bodyweight: Double? = null,
+    isWarmup: Boolean = false,
+    isPR: Boolean = false,
+    endHour: Int? = 11
+) = CompletedSetRow(
+    sessionId = sessionId,
+    sessionStart = millisOf(date),
+    sessionEnd = endHour?.let { millisOf(date, it) },
+    exerciseId = exerciseId,
+    exerciseName = exerciseName,
+    weightType = weightType,
+    setIndex = setIndex,
+    actualReps = reps,
+    weight = weight,
+    bodyweightSnapshotKg = bodyweight,
+    isWarmup = isWarmup,
+    isPR = isPR,
+    completedAt = millisOf(date, 10) + setIndex * 60_000L
+)
+
+class StatsTest {
+
+    private val today: LocalDate = LocalDate.of(2026, 3, 10)
+
+    @Test
+    fun `totalVolume esclude le warmup`() {
+        val rows = listOf(
+            row(1, today, setIndex = 0, reps = 10, weight = 50.0),
+            row(1, today, setIndex = 1, reps = 8, weight = 60.0),
+            row(1, today, setIndex = 2, reps = 15, weight = 20.0, isWarmup = true)
+        )
+        assertEquals(980.0, totalVolume(rows), 0.001)
+    }
+
+    @Test
+    fun `summarizeSessions aggrega per sessione e ordina dal piu recente`() {
+        val rows = listOf(
+            row(2, today, setIndex = 0, reps = 5, weight = 100.0, isPR = true),
+            row(1, today.minusDays(3), setIndex = 0, reps = 10, weight = 50.0),
+            row(1, today.minusDays(3), setIndex = 1, reps = 10, weight = 50.0, exerciseId = 2, exerciseName = "Squat")
+        )
+        val summaries = summarizeSessions(rows)
+
+        assertEquals(listOf(2L, 1L), summaries.map { it.sessionId })
+        val recent = summaries.first()
+        assertEquals(500.0, recent.volumeKg, 0.001)
+        assertEquals(1, recent.prCount)
+        assertEquals(60L, recent.durationMinutes)
+
+        val older = summaries.last()
+        assertEquals(2, older.setCount)
+        assertEquals(20, older.totalReps)
+        assertEquals(listOf("Panca piana", "Squat"), older.exerciseNames)
+    }
+
+    @Test
+    fun `volumeByDay usa la data locale della sessione`() {
+        val rows = listOf(
+            row(1, today, reps = 10, weight = 50.0),
+            row(2, today.minusDays(1), reps = 10, weight = 30.0)
+        )
+        val byDay = volumeByDay(rows, zone)
+
+        assertEquals(500.0, byDay.getValue(today), 0.001)
+        assertEquals(300.0, byDay.getValue(today.minusDays(1)), 0.001)
+    }
+
+    @Test
+    fun `currentStreak conta i giorni consecutivi fino a oggi`() {
+        val days = setOf(today, today.minusDays(1), today.minusDays(2), today.minusDays(5))
+        assertEquals(3, currentStreak(days, today))
+    }
+
+    @Test
+    fun `currentStreak parte da ieri se oggi non c e ancora allenamento`() {
+        val days = setOf(today.minusDays(1), today.minusDays(2))
+        assertEquals(2, currentStreak(days, today))
+    }
+
+    @Test
+    fun `currentStreak azzerato se l ultimo allenamento e piu vecchio di ieri`() {
+        assertEquals(0, currentStreak(setOf(today.minusDays(2)), today))
+        assertEquals(0, currentStreak(emptySet(), today))
+    }
+
+    @Test
+    fun `personalRecords tiene solo il PR piu recente per esercizio`() {
+        val rows = listOf(
+            row(3, today, exerciseId = 1, weight = 100.0, isPR = true),
+            row(2, today.minusDays(7), exerciseId = 1, weight = 90.0, isPR = true),
+            row(1, today.minusDays(9), exerciseId = 2, exerciseName = "Trazioni",
+                weightType = WeightType.BODYWEIGHT, reps = 12, weight = null, bodyweight = 70.0, isPR = true),
+            row(1, today.minusDays(9), exerciseId = 3, exerciseName = "Rematore", isPR = false)
+        )
+        val records = personalRecords(rows)
+
+        assertEquals(2, records.size)
+        assertEquals(1L, records.first().exerciseId)
+        assertEquals(100.0, records.first().weight!!, 0.001)
+        assertEquals(WeightType.BODYWEIGHT, records.last().weightType)
+        assertEquals(12, records.last().reps)
+    }
+
+    @Test
+    fun `volume a corpo libero usa lo snapshot del peso`() {
+        val rows = listOf(
+            row(1, today, weightType = WeightType.BODYWEIGHT, reps = 10, weight = null, bodyweight = 72.0),
+            row(1, today, weightType = WeightType.BODYWEIGHT_PLUS_LOAD, setIndex = 1,
+                reps = 5, weight = 10.0, bodyweight = 72.0)
+        )
+        assertEquals(720.0 + 410.0, totalVolume(rows), 0.001)
+    }
+}

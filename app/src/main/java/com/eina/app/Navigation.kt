@@ -30,9 +30,12 @@ import androidx.navigation.navArgument
 import com.eina.app.ui.components.IslandNavBar
 import com.eina.app.ui.components.IslandNavItem
 import com.eina.app.ui.dashboard.DashboardScreen
+import com.eina.app.ui.history.HistoryScreen
+import com.eina.app.ui.history.SessionDetailScreen
 import com.eina.app.ui.library.CreateExerciseScreen
 import com.eina.app.ui.library.ExerciseDetailScreen
 import com.eina.app.ui.library.LibraryScreen
+import com.eina.app.ui.progress.BodyWeightScreen
 import com.eina.app.ui.progress.ProgressScreen
 import com.eina.app.ui.routine.RoutineEditorScreen
 import com.eina.app.ui.workout.ActiveWorkoutScreen
@@ -71,7 +74,9 @@ fun EinaNavHost() {
         ) {
             composable(EinaDestination.Dashboard.route) {
                 DashboardScreen(
-                    onStartWorkoutClick = { navController.navigate(EinaDestination.Workout.route) }
+                    onStartWorkoutClick = { navController.navigate(EinaDestination.Workout.route) },
+                    onHistoryClick = { navController.navigate("history") },
+                    onSessionClick = { sessionId -> navController.navigate("history/session/$sessionId") }
                 )
             }
             composable(EinaDestination.Workout.route) {
@@ -155,7 +160,28 @@ fun EinaNavHost() {
                     onBack = { navController.popBackStack() }
                 )
             }
-            composable(EinaDestination.Progress.route) { ProgressScreen() }
+            composable("history") {
+                HistoryScreen(
+                    onBack = { navController.popBackStack() },
+                    onSessionClick = { sessionId -> navController.navigate("history/session/$sessionId") }
+                )
+            }
+            composable(
+                route = "history/session/{sessionId}",
+                arguments = listOf(navArgument("sessionId") { type = NavType.LongType })
+            ) { backStackEntry ->
+                val sessionId = backStackEntry.arguments?.getLong("sessionId") ?: return@composable
+                SessionDetailScreen(
+                    sessionId = sessionId,
+                    onBack = { navController.popBackStack() }
+                )
+            }
+            composable(EinaDestination.Progress.route) {
+                ProgressScreen(onBodyWeightClick = { navController.navigate("progress/bodyweight") })
+            }
+            composable("progress/bodyweight") {
+                BodyWeightScreen(onBack = { navController.popBackStack() })
+            }
         }
 
         AnimatedVisibility(

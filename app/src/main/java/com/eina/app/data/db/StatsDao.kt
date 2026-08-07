@@ -1,0 +1,64 @@
+package com.eina.app.data.db
+
+import androidx.room.Dao
+import androidx.room.Query
+import kotlinx.coroutines.flow.Flow
+
+/**
+ * Riga denormalizzata: una set completata con il contesto di sessione ed esercizio.
+ * DECISIONE: statistiche (volume, PR, heatmap, storico) si calcolano in Kotlin su questa
+ * singola query invece che con N query SQL aggregate — dataset locale piccolo, e la logica
+ * di volume dipende dal weightType, gia' scritta in domain/PrCalculator.
+ */
+data class CompletedSetRow(
+    val sessionId: Long,
+    val sessionStart: Long,
+    val sessionEnd: Long?,
+    val exerciseId: Long,
+    val exerciseName: String,
+    val weightType: WeightType,
+    val setIndex: Int,
+    val actualReps: Int?,
+    val weight: Double?,
+    val bodyweightSnapshotKg: Double?,
+    val isWarmup: Boolean,
+    val isPR: Boolean,
+    val completedAt: Long
+)
+
+@Dao
+interface StatsDao {
+    @Query(
+        """
+        SELECT ws.id AS sessionId, ws.startTime AS sessionStart, ws.endTime AS sessionEnd,
+               e.id AS exerciseId, e.name AS exerciseName, e.weightType AS weightType,
+               se.setIndex AS setIndex, se.actualReps AS actualReps, se.weight AS weight,
+               se.bodyweightSnapshotKg AS bodyweightSnapshotKg, se.isWarmup AS isWarmup,
+               se.isPR AS isPR, se.completedAt AS completedAt
+        FROM set_entries se
+        INNER JOIN workout_exercises we ON se.workoutExerciseId = we.id
+        INNER JOIN workout_sessions ws ON we.sessionId = ws.id
+        INNER JOIN exercises e ON we.exerciseId = e.id
+        WHERE se.completedAt IS NOT NULL
+        ORDER BY ws.startTime DESC, we.`order` ASC, se.setIndex ASC
+        """
+    )
+    fun observeCompletedSets(): Flow<List<CompletedSetRow>>
+
+    @Query(
+        """
+        SELECT ws.id AS sessionId, ws.startTime AS sessionStart, ws.endTime AS sessionEnd,
+               e.id AS exerciseId, e.name AS exerciseName, e.weightType AS weightType,
+               se.setIndex AS setIndex, se.actualReps AS actualReps, se.weight AS weight,
+               se.bodyweightSnapshotKg AS bodyweightSnapshotKg, se.isWarmup AS isWarmup,
+               se.isPR AS isPR, se.completedAt AS completedAt
+        FROM set_entries se
+        INNER JOIN workout_exercises we ON se.workoutExerciseId = we.id
+        INNER JOIN workout_sessions ws ON we.sessionId = ws.id
+        INNER JOIN exercises e ON we.exerciseId = e.id
+        WHERE se.completedAt IS NOT NULL AND ws.id = :sessionId
+        ORDER BY we.`order` ASC, se.setIndex ASC
+        """
+    )
+    fun observeCompletedSetsForSession(sessionId: Long): Flow<List<CompletedSetRow>>
+}

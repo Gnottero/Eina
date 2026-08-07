@@ -3,11 +3,17 @@ package com.eina.app.di
 import androidx.room.Room
 import com.eina.app.data.db.EinaDatabase
 import com.eina.app.data.repository.RoutineRepository
+import com.eina.app.data.repository.StatsRepository
 import com.eina.app.data.repository.WorkoutRepository
 import com.eina.app.data.seed.ExerciseSeeder
+import com.eina.app.ui.dashboard.DashboardViewModel
+import com.eina.app.ui.history.HistoryViewModel
+import com.eina.app.ui.history.SessionDetailViewModel
 import com.eina.app.ui.library.CreateExerciseViewModel
 import com.eina.app.ui.library.ExerciseDetailViewModel
 import com.eina.app.ui.library.LibraryViewModel
+import com.eina.app.ui.progress.BodyWeightViewModel
+import com.eina.app.ui.progress.ProgressViewModel
 import com.eina.app.ui.routine.RoutineEditorViewModel
 import com.eina.app.ui.routine.RoutineListViewModel
 import com.eina.app.ui.workout.ActiveWorkoutViewModel
@@ -28,6 +34,7 @@ val appModule = module {
     single { get<EinaDatabase>().workoutExerciseDao() }
     single { get<EinaDatabase>().setEntryDao() }
     single { get<EinaDatabase>().bodyMetricDao() }
+    single { get<EinaDatabase>().statsDao() }
 
     single {
         WorkoutRepository(
@@ -42,6 +49,8 @@ val appModule = module {
 
     single { RoutineRepository(routineDao = get(), routineExerciseDao = get(), exerciseDao = get()) }
 
+    single { StatsRepository(statsDao = get(), bodyMetricDao = get()) }
+
     single { ExerciseSeeder(get(), get()) }
 
     viewModel { WorkoutViewModel(get()) }
@@ -51,4 +60,9 @@ val appModule = module {
     viewModel { CreateExerciseViewModel(get(), androidContext()) }
     viewModel { RoutineListViewModel(get(), get()) }
     viewModel { (routineId: Long) -> RoutineEditorViewModel(get(), routineId) }
+    viewModel { DashboardViewModel(get()) }
+    viewModel { ProgressViewModel(get()) }
+    viewModel { BodyWeightViewModel(get()) }
+    viewModel { HistoryViewModel(get()) }
+    viewModel { (sessionId: Long) -> SessionDetailViewModel(get(), sessionId) }
 }
