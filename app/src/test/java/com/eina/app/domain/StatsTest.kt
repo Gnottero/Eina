@@ -24,11 +24,14 @@ private fun row(
     bodyweight: Double? = null,
     isWarmup: Boolean = false,
     isPR: Boolean = false,
-    endHour: Int? = 11
+    endHour: Int? = 11,
+    workoutExerciseId: Long = exerciseId
 ) = CompletedSetRow(
     sessionId = sessionId,
     sessionStart = millisOf(date),
     sessionEnd = endHour?.let { millisOf(date, it) },
+    workoutExerciseId = workoutExerciseId,
+    exerciseOrder = workoutExerciseId.toInt(),
     exerciseId = exerciseId,
     exerciseName = exerciseName,
     weightType = weightType,
@@ -74,6 +77,18 @@ class StatsTest {
         assertEquals(2, older.setCount)
         assertEquals(20, older.totalReps)
         assertEquals(listOf("Panca piana", "Squat"), older.exerciseNames)
+    }
+
+    @Test
+    fun `lo stesso esercizio ripetuto nella sessione resta due voci`() {
+        val rows = listOf(
+            row(1, today, exerciseId = 1, workoutExerciseId = 10, setIndex = 0),
+            row(1, today, exerciseId = 2, exerciseName = "Squat", workoutExerciseId = 11, setIndex = 0),
+            row(1, today, exerciseId = 1, workoutExerciseId = 12, setIndex = 0)
+        )
+        val summary = summarizeSessions(rows).single()
+
+        assertEquals(listOf("Panca piana", "Squat", "Panca piana"), summary.exerciseNames)
     }
 
     @Test

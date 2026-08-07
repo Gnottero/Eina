@@ -6,6 +6,7 @@ import com.eina.app.data.db.RoutineDao
 import com.eina.app.data.db.RoutineEntity
 import com.eina.app.data.db.RoutineExerciseDao
 import com.eina.app.data.db.RoutineExerciseEntity
+import com.eina.app.data.db.RoutineExercisePreviewRow
 import kotlinx.coroutines.flow.Flow
 
 class RoutineRepository(
@@ -21,6 +22,10 @@ class RoutineRepository(
 
     fun observeRoutineExercises(routineId: Long): Flow<List<RoutineExerciseEntity>> =
         routineExerciseDao.getForRoutine(routineId)
+
+    /** Anteprime di tutte le routine in un colpo solo: alimenta le card dell'elenco. */
+    fun observeRoutinePreviews(): Flow<List<RoutineExercisePreviewRow>> =
+        routineExerciseDao.observeAllPreviews()
 
     /** Insert se id == 0 (nuova routine), update altrimenti: evita OnConflictStrategy.REPLACE che
      * cancellerebbe e ricreerebbe la riga, triggerando la cascade delete su routine_exercises. */

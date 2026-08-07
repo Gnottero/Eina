@@ -1,10 +1,19 @@
 package com.eina.app.ui.components
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -17,9 +26,9 @@ import com.eina.app.ui.theme.EinaTheme
 import com.eina.app.ui.theme.Spacing
 
 /**
- * Card di riepilogo sessione, in chiave minimale: giorno e ora in testa, una sola riga di
- * metriche separate da punti e i nomi degli esercizi. Niente riquadri dentro la card — la
- * gerarchia la fanno il corpo del testo e lo spazio, non altri contenitori.
+ * Card di riepilogo sessione in chiave minimale: una riga di intestazione (giorno, ora, chevron),
+ * tre metriche incolonnate con etichetta piccola e numero grande, e gli esercizi su una riga sola.
+ * Nessun riquadro interno e nessun divisore marcato: la gerarchia la fanno corpo del testo e spazio.
  */
 @Composable
 fun SessionSummaryCard(
@@ -31,7 +40,7 @@ fun SessionSummaryCard(
     IslandCard(
         modifier = modifier.fillMaxWidth(),
         contentPadding = PaddingValues(horizontal = Spacing.lg, vertical = Spacing.lg),
-        verticalArrangement = Arrangement.spacedBy(Spacing.md),
+        verticalArrangement = Arrangement.spacedBy(Spacing.lg),
         onClick = onClick
     ) {
         Row(
@@ -41,7 +50,12 @@ fun SessionSummaryCard(
         ) {
             Text(
                 text = formatRelativeDay(summary.startTime),
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.titleMedium
+            )
+            Text(
+                text = formatTime(summary.startTime),
+                style = MaterialTheme.typography.bodyMedium,
+                color = island.textSecondary,
                 modifier = Modifier.weight(1f)
             )
             if (summary.prCount > 0) {
@@ -50,45 +64,97 @@ fun SessionSummaryCard(
                     color = MaterialTheme.colorScheme.primary
                 )
             }
-            Text(
-                text = formatTime(summary.startTime),
-                style = MaterialTheme.typography.bodySmall,
-                color = island.textSecondary
+            if (onClick != null) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Outlined.KeyboardArrowRight,
+                    contentDescription = null,
+                    tint = island.textSecondary.copy(alpha = 0.6f),
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+        }
+
+        Row(modifier = Modifier.fillMaxWidth()) {
+            SummaryMetric(
+                label = "Durata",
+                value = summary.durationMinutes?.let { formatDuration(it) } ?: "—",
+                modifier = Modifier.weight(1f)
+            )
+            MetricDivider()
+            SummaryMetric(
+                label = "Volume",
+                value = formatVolume(summary.volumeKg),
+                unit = "kg",
+                modifier = Modifier.weight(1f)
+            )
+            MetricDivider()
+            SummaryMetric(
+                label = "Serie",
+                value = summary.setCount.toString(),
+                modifier = Modifier.weight(1f)
             )
         }
 
-        Text(
-            text = listOfNotNull(
-                summary.durationMinutes?.let { formatDuration(it) },
-                "${formatVolume(summary.volumeKg)} kg",
-                if (summary.setCount == 1) "1 serie" else "${summary.setCount} serie"
-            ).joinToString(" · "),
-            style = MaterialTheme.typography.titleSmall
-        )
-
         if (summary.exerciseNames.isNotEmpty()) {
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                summary.exerciseNames.take(MAX_EXERCISE_LINES).forEach { name ->
-                    Text(
-                        text = name,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = island.textSecondary,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
-                val hidden = summary.exerciseNames.size - MAX_EXERCISE_LINES
-                if (hidden > 0) {
-                    Text(
-                        text = "+ altri $hidden",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = island.textSecondary
-                    )
-                }
+            // Una riga sola: la card e' un'anteprima, l'elenco completo sta nel dettaglio.
+            Text(
+                text = summary.exerciseNames.joinToString(" · "),
+                style = MaterialTheme.typography.bodyMedium,
+                color = island.textSecondary,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+    }
+}
+
+/** Colonna metrica: etichetta piccola sopra, numero grande sotto con l'unita' in coda. */
+@Composable
+private fun SummaryMetric(
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier,
+    unit: String? = null
+) {
+    val island = EinaTheme.island
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(Spacing.xs)
+    ) {
+        Text(
+            text = label.uppercase(),
+            style = MaterialTheme.typography.labelSmall,
+            color = island.textSecondary,
+            maxLines = 1
+        )
+        Row(verticalAlignment = Alignment.Bottom) {
+            Text(
+                text = value,
+                style = MaterialTheme.typography.titleLarge,
+                maxLines = 1,
+                overflow = TextOverflow.Clip
+            )
+            if (unit != null) {
+                Text(
+                    text = " $unit",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = island.textSecondary,
+                    modifier = Modifier.padding(bottom = 2.dp)
+                )
             }
         }
     }
 }
 
-/** Quanti esercizi si elencano per esteso prima di riassumere i restanti in "+ altri N". */
-private const val MAX_EXERCISE_LINES = 3
+/** Filo verticale fra due metriche: separa senza disegnare riquadri. */
+@Composable
+private fun MetricDivider() {
+    val island = EinaTheme.island
+    Box(
+        modifier = Modifier
+            .padding(horizontal = Spacing.md)
+            .width(1.dp)
+            .height(32.dp)
+            .background(island.outlineSubtle)
+    )
+}

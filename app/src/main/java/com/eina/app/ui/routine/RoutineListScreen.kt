@@ -2,6 +2,7 @@ package com.eina.app.ui.routine
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
@@ -19,14 +20,17 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
 import com.eina.app.data.db.RoutineEntity
 import com.eina.app.ui.components.DestructiveRed
 import com.eina.app.ui.components.IslandBottomSheet
-import com.eina.app.ui.components.IslandButton
 import com.eina.app.ui.components.IslandCard
 import com.eina.app.ui.components.IslandEmptyState
+import com.eina.app.ui.components.IslandIconButton
 import com.eina.app.ui.components.SheetActionRow
 import com.eina.app.ui.theme.EinaTheme
 import com.eina.app.ui.theme.IslandShape
@@ -58,14 +62,14 @@ fun RoutineListScreen(
                 icon = Icons.AutoMirrored.Outlined.ListAlt
             )
         } else {
-            routines.forEach { routine ->
+            routines.forEach { card ->
                 RoutineRow(
-                    routine = routine,
+                    card = card,
                     // Avviare una routine crea una NUOVA sessione: passare direttamente routine.id
                     // apriva la sessione con quell'id, cioe' un allenamento vecchio gia' svolto.
-                    onStart = { viewModel.startSession(routine.id, onStartSession) },
-                    onEdit = { onEditRoutine(routine.id) },
-                    onDelete = { viewModel.deleteRoutine(routine) },
+                    onStart = { viewModel.startSession(card.routine.id, onStartSession) },
+                    onEdit = { onEditRoutine(card.routine.id) },
+                    onDelete = { viewModel.deleteRoutine(card.routine) },
                     startEnabled = !startBlocked
                 )
             }
@@ -73,42 +77,84 @@ fun RoutineListScreen(
     }
 }
 
+/**
+ * Card routine minimale: nome, una riga di contenuto ("5 esercizi · 18 serie"), l'elenco degli
+ * esercizi in grigio e un solo bottone tondo per avviare. Modifica ed eliminazione restano nel
+ * foglio che si apre col tocco lungo, cosi' la card resta pulita.
+ */
 @Composable
 private fun RoutineRow(
-    routine: RoutineEntity,
+    card: RoutineCardUi,
     onStart: () -> Unit,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
     startEnabled: Boolean
 ) {
     val island = EinaTheme.island
+    val routine: RoutineEntity = card.routine
     val name = routine.name.ifBlank { "Routine senza nome" }
     var actionsOpen by remember { mutableStateOf(false) }
     var confirmDelete by remember { mutableStateOf(false) }
 
-    // Una routine ha una sola azione ovvia: avviarla. Modifica ed eliminazione stanno nel foglio
-    // che si apre col tocco lungo, cosi' la card resta un bottone grande e basta.
     IslandCard(
         modifier = Modifier.fillMaxWidth(),
+        contentPadding = PaddingValues(horizontal = Spacing.lg, vertical = Spacing.lg),
+        verticalArrangement = Arrangement.spacedBy(Spacing.sm),
         onLongClick = { actionsOpen = true }
     ) {
-        Text(
-            text = name,
-            style = MaterialTheme.typography.titleMedium,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.fillMaxWidth()
-        )
-        routine.notes?.takeIf { it.isNotBlank() }?.let {
-            Text(it, style = MaterialTheme.typography.bodyMedium, color = island.textSecondary)
-        }
-        Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
-            IslandButton(
-                text = "Avvia",
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(Spacing.md)
+        ) {
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(Spacing.xs)
+            ) {
+                Text(
+                    text = name,
+                    style = MaterialTheme.typography.titleMedium,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    text = summaryLine(card),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = island.textSecondary,
+                    maxLines = 1
+                )
+            }
+            IslandIconButton(
                 icon = Icons.Outlined.PlayArrow,
-                onClick = onStart,
-                enabled = startEnabled,
-                modifier = Modifier.fillMaxWidth()
+                contentDescription = "Avvia $name",
+                onClick = { if (startEnabled) onStart() },
+                size = 48.dp,
+                containerColor = if (startEnabled) {
+                    MaterialTheme.colorScheme.primary
+                } else {
+                    island.sunken
+                },
+                contentColor = if (startEnabled) Color.White else island.textSecondary
+            )
+        }
+
+        if (card.exerciseNames.isNotEmpty()) {
+            Text(
+                text = card.exerciseNames.joinToString(" · "),
+                style = MaterialTheme.typography.bodyMedium,
+                color = island.textSecondary,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+
+        routine.notes?.takeIf { it.isNotBlank() }?.let {
+            Text(
+                text = it,
+                style = MaterialTheme.typography.bodySmall,
+                color = island.textSecondary,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
             )
         }
     }
@@ -150,4 +196,12 @@ private fun RoutineRow(
             }
         )
     }
+}
+
+/** "5 esercizi · 18 serie", oppure l'invito a riempirla se e' ancora vuota. */
+private fun summaryLine(card: RoutineCardUi): String {
+    if (card.exerciseCount == 0) return "Nessun esercizio"
+    val exercises = if (card.exerciseCount == 1) "1 esercizio" else "${card.exerciseCount} esercizi"
+    val sets = if (card.setCount == 1) "1 serie" else "${card.setCount} serie"
+    return "$exercises · $sets"
 }

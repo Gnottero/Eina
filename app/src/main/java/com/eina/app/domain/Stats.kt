@@ -62,7 +62,13 @@ fun summarizeSessions(rows: List<CompletedSetRow>): List<SessionSummary> =
                 sessionId = sessionId,
                 startTime = sessionRows.first().sessionStart,
                 endTime = sessionRows.first().sessionEnd,
-                exerciseNames = sessionRows.map { it.exerciseName }.distinct(),
+                // Un esercizio ripetuto nella stessa sessione compare due volte: sono due blocchi
+                // di lavoro distinti, non un duplicato da collassare.
+                exerciseNames = sessionRows
+                    .sortedBy { it.exerciseOrder }
+                    .groupBy { it.workoutExerciseId }
+                    .values
+                    .map { it.first().exerciseName },
                 setCount = working.size,
                 totalReps = working.sumOf { it.actualReps ?: 0 },
                 volumeKg = working.sumOf { volumeOf(it) },

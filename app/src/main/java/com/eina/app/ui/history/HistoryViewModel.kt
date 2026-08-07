@@ -5,9 +5,12 @@ import androidx.lifecycle.viewModelScope
 import com.eina.app.data.db.CompletedSetRow
 import com.eina.app.data.repository.StatsRepository
 import com.eina.app.domain.SessionSummary
+import com.eina.app.domain.currentStreak
 import com.eina.app.domain.summarizeSessions
+import com.eina.app.domain.trainingDays
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
@@ -17,34 +20,48 @@ class HistoryViewModel(repository: StatsRepository) : ViewModel() {
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 }
 
-/** Un esercizio della sessione con le sue set completate, in ordine. */
+/**
+ * Un blocco di lavoro della sessione con le sue set completate, in ordine. La chiave e'
+ * workoutExerciseId: lo stesso esercizio svolto due volte nella stessa sessione resta due blocchi.
+ */
 data class SessionExerciseDetail(
+    val workoutExerciseId: Long,
     val exerciseId: Long,
     val exerciseName: String,
     val sets: List<CompletedSetRow>
-)
+) {
+    val workingSets: List<CompletedSetRow> get() = sets.filter { !it.isWarmup }
+}
 
 data class SessionDetailUiState(
     val summary: SessionSummary? = null,
-    val exercises: List<SessionExerciseDetail> = emptyList()
+    val exercises: List<SessionExerciseDetail> = emptyList(),
+    val streakDays: Int = 0
 )
 
 class SessionDetailViewModel(
     repository: StatsRepository,
     sessionId: Long
 ) : ViewModel() {
-    val uiState: StateFlow<SessionDetailUiState> = repository.observeSessionSets(sessionId)
-        .map { rows ->
-            SessionDetailUiState(
-                summary = summarizeSessions(rows).firstOrNull(),
-                exercises = rows.groupBy { it.exerciseId }.map { (exerciseId, exerciseRows) ->
+    val uiState: StateFlow<SessionDetailUiState> = combine(
+        repository.observeSessionSets(sessionId),
+        // La striscia si calcola su tutto lo storico: e' il numero che si mostra a fine allenamento.
+        repository.observeCompletedSets()
+    ) { rows, allRows ->
+        SessionDetailUiState(
+            summary = summarizeSessions(rows).firstOrNull(),
+            exercises = rows
+                .sortedWith(compareBy({ it.exerciseOrder }, { it.setIndex }))
+                .groupBy { it.workoutExerciseId }
+                .map { (workoutExerciseId, exerciseRows) ->
                     SessionExerciseDetail(
-                        exerciseId = exerciseId,
+                        workoutExerciseId = workoutExerciseId,
+                        exerciseId = exerciseRows.first().exerciseId,
                         exerciseName = exerciseRows.first().exerciseName,
                         sets = exerciseRows.sortedBy { it.setIndex }
                     )
-                }
-            )
-        }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SessionDetailUiState())
+                },
+            streakDays = currentStreak(trainingDays(allRows))
+        )
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SessionDetailUiState())
 }

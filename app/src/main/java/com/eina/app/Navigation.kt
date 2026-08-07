@@ -149,9 +149,10 @@ fun EinaNavHost() {
                         navController.navigate("library/exercise/$exerciseId")
                     },
                     onFinished = {
-                        // A fine allenamento si atterra sul riepilogo, da cui si puo' condividere l'immagine.
+                        // A fine allenamento si atterra sul riepilogo, con la striscia in evidenza
+                        // e l'immagine da condividere a portata di header.
                         navController.popBackStack(EinaDestination.Workout.route, inclusive = false)
-                        navController.navigate("history/session/$sessionId")
+                        navController.navigate("history/session/$sessionId?justFinished=true")
                     }
                 )
             }
@@ -188,12 +189,19 @@ fun EinaNavHost() {
                 )
             }
             composable(
-                route = "history/session/{sessionId}",
-                arguments = listOf(navArgument("sessionId") { type = NavType.LongType })
+                route = "history/session/{sessionId}?justFinished={justFinished}",
+                arguments = listOf(
+                    navArgument("sessionId") { type = NavType.LongType },
+                    navArgument("justFinished") {
+                        type = NavType.BoolType
+                        defaultValue = false
+                    }
+                )
             ) { backStackEntry ->
                 val sessionId = backStackEntry.arguments?.getLong("sessionId") ?: return@composable
                 SessionDetailScreen(
                     sessionId = sessionId,
+                    justFinished = backStackEntry.arguments?.getBoolean("justFinished") == true,
                     onBack = { navController.popBackStack() }
                 )
             }

@@ -14,6 +14,10 @@ data class CompletedSetRow(
     val sessionId: Long,
     val sessionStart: Long,
     val sessionEnd: Long?,
+    // Identifica la voce di sessione, non l'esercizio di libreria: lo stesso esercizio ripetuto
+    // due volte nello stesso allenamento resta cosi' due blocchi distinti, non uno solo.
+    val workoutExerciseId: Long = 0,
+    val exerciseOrder: Int = 0,
     val exerciseId: Long,
     val exerciseName: String,
     val weightType: WeightType,
@@ -31,6 +35,7 @@ interface StatsDao {
     @Query(
         """
         SELECT ws.id AS sessionId, ws.startTime AS sessionStart, ws.endTime AS sessionEnd,
+               we.id AS workoutExerciseId, we.`order` AS exerciseOrder,
                e.id AS exerciseId, e.name AS exerciseName, e.weightType AS weightType,
                se.setIndex AS setIndex, se.actualReps AS actualReps, se.weight AS weight,
                se.bodyweightSnapshotKg AS bodyweightSnapshotKg, se.isWarmup AS isWarmup,
@@ -48,6 +53,7 @@ interface StatsDao {
     @Query(
         """
         SELECT ws.id AS sessionId, ws.startTime AS sessionStart, ws.endTime AS sessionEnd,
+               we.id AS workoutExerciseId, we.`order` AS exerciseOrder,
                e.id AS exerciseId, e.name AS exerciseName, e.weightType AS weightType,
                se.setIndex AS setIndex, se.actualReps AS actualReps, se.weight AS weight,
                se.bodyweightSnapshotKg AS bodyweightSnapshotKg, se.isWarmup AS isWarmup,
