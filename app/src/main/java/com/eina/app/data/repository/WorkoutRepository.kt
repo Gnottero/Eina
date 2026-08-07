@@ -25,6 +25,12 @@ class WorkoutRepository(
 
     suspend fun getExercise(exerciseId: Long): ExerciseEntity? = exerciseDao.getById(exerciseId)
 
+    suspend fun insertExercise(exercise: ExerciseEntity): Long = exerciseDao.insert(exercise)
+
+    suspend fun updateExercise(exercise: ExerciseEntity) = exerciseDao.update(exercise)
+
+    suspend fun deleteExercise(exercise: ExerciseEntity) = exerciseDao.delete(exercise)
+
     suspend fun startSession(): Long =
         workoutSessionDao.insert(WorkoutSessionEntity(startTime = System.currentTimeMillis()))
 

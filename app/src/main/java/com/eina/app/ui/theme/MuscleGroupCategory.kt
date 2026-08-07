@@ -39,3 +39,7 @@ fun categoryFor(muscle: String): MuscleGroupCategory =
 /** Categoria "primaria" di un esercizio: quella del primo muscolo primario, per badge in lista. */
 fun primaryCategoryFor(muscleGroupsPrimary: List<String>): MuscleGroupCategory =
     muscleGroupsPrimary.firstOrNull()?.let { categoryFor(it) } ?: MuscleGroupCategory.OTHER
+
+/** Chiave muscolo canonica per categoria: usata quando l'utente sceglie una categoria nel form esercizio custom. */
+fun canonicalMuscleKey(category: MuscleGroupCategory): String =
+    muscleToCategory.entries.firstOrNull { it.value == category }?.key ?: "neck"

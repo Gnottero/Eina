@@ -11,10 +11,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -32,11 +37,21 @@ import org.koin.androidx.compose.koinViewModel
 @Composable
 fun LibraryScreen(
     onExerciseClick: (Long) -> Unit = {},
+    onCreateExerciseClick: () -> Unit = {},
     viewModel: LibraryViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    Column(modifier = Modifier.fillMaxSize()) {
+    Scaffold(
+        floatingActionButton = {
+            FloatingActionButton(onClick = onCreateExerciseClick) {
+                Icon(Icons.Filled.Add, contentDescription = "Nuovo esercizio")
+            }
+        }
+    ) { innerPadding ->
+    Column(modifier = Modifier
+        .fillMaxSize()
+        .padding(innerPadding)) {
         OutlinedTextField(
             value = uiState.query,
             onValueChange = viewModel::onQueryChange,
@@ -73,6 +88,7 @@ fun LibraryScreen(
                 ExerciseListItem(exercise = exercise, onClick = { onExerciseClick(exercise.id) })
             }
         }
+    }
     }
 }
 
