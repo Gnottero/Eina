@@ -1,7 +1,8 @@
 package com.eina.app.ui.routine
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -160,6 +161,7 @@ fun RoutineEditorScreen(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun RoutineExerciseRow(
     routineExercise: RoutineExerciseEntity,
@@ -229,7 +231,11 @@ private fun RoutineExerciseRow(
             modifier = Modifier
                 .clip(PillShape)
                 .background(island.sunken)
-                .clickable { hapticTap(); restSheetOpen = true }
+                // Come sulla card: il tocco lungo apre le azioni anche partendo dal chip.
+                .combinedClickable(
+                    onLongClick = { hapticTap(); actionsOpen = true },
+                    onClick = { hapticTap(); restSheetOpen = true }
+                )
                 .padding(horizontal = Spacing.lg, vertical = Spacing.sm)
         ) {
             Icon(

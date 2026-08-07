@@ -493,6 +493,7 @@ private fun MetricTile(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun ExerciseCard(
     exercise: SessionExerciseUi,
@@ -527,7 +528,12 @@ private fun ExerciseCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(TileShape)
-                .clickable { hapticTap(); onOpenExercise() }
+                // Anche i figli cliccabili devono rispondere al tocco lungo: senza, il gesto
+                // funzionerebbe solo sui pochi punti morti della card.
+                .combinedClickable(
+                    onLongClick = { hapticTap(); onOpenActions() },
+                    onClick = { hapticTap(); onOpenExercise() }
+                )
         )
 
         exercise.notes?.takeIf { it.isNotBlank() }?.let { notes ->
@@ -545,7 +551,10 @@ private fun ExerciseCard(
             modifier = Modifier
                 .clip(PillShape)
                 .background(island.sunken)
-                .clickable { hapticTap(); onEditRest() }
+                .combinedClickable(
+                    onLongClick = { hapticTap(); onOpenActions() },
+                    onClick = { hapticTap(); onEditRest() }
+                )
                 .padding(horizontal = Spacing.lg, vertical = Spacing.sm)
         ) {
             Icon(
@@ -582,7 +591,10 @@ private fun ExerciseCard(
                 .fillMaxWidth()
                 .clip(PillShape)
                 .background(island.sunken)
-                .clickable { hapticTap(); onAddSet() }
+                .combinedClickable(
+                    onLongClick = { hapticTap(); onOpenActions() },
+                    onClick = { hapticTap(); onAddSet() }
+                )
                 .padding(vertical = Spacing.md)
         )
     }
