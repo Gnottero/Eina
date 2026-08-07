@@ -12,10 +12,10 @@ Due cose spariscono rispetto all'export:
   - i campi di lavorazione dello script di conversione (`needsReview`,
     `_originalCategory`), che al runtime non servivano a nessuno.
 
-Le traduzioni delle descrizioni stanno in un file a parte
-(tools/descriptions_translations.json, mappa nome -> {it, fr}) e vengono innestate
-qui come `descriptionIt` / `descriptionFr`. Un esercizio senza traduzione resta in
-inglese: mancare una lingua non deve togliere l'esercizio dal catalogo.
+Le traduzioni delle descrizioni stanno in tools/translations/*.json, un file per blocco
+di lavorazione, ciascuno una mappa nome -> {it, fr}. Vengono innestate qui come
+`descriptionIt` / `descriptionFr`. Un esercizio senza traduzione resta in inglese:
+mancare una lingua non deve togliere l'esercizio dal catalogo.
 """
 
 import json
@@ -25,7 +25,7 @@ import sys
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 SOURCE = ROOT / "eina_exercises_seed.json"
 WHITELIST = ROOT / "tools" / "common_exercises.txt"
-TRANSLATIONS = ROOT / "tools" / "descriptions_translations.json"
+TRANSLATIONS_DIR = ROOT / "tools" / "translations"
 OUTPUT = ROOT / "app" / "src" / "main" / "assets" / "seed" / "exercises.json"
 
 DROPPED_FIELDS = ("loggingInstructions", "needsReview", "_originalCategory")
@@ -53,13 +53,24 @@ def main():
         sys.exit("Nomi non presenti nel dataset:\n  " + "\n  ".join(missing))
 
     translations = {}
-    if TRANSLATIONS.exists():
-        translations = json.loads(TRANSLATIONS.read_text(encoding="utf-8"))
+    for batch in sorted(TRANSLATIONS_DIR.glob("*.json")):
+        for name, texts in json.loads(batch.read_text(encoding="utf-8")).items():
+            if name in translations:
+                sys.exit(f"{name} tradotto due volte, l'ultima in {batch.name}")
+            translations[name] = texts
+
+    unknown = [n for n in translations if n not in catalog]
+    if unknown:
+        sys.exit("Tradotti nomi fuori dal dataset:\n  " + "\n  ".join(unknown))
 
     curated = []
     for name in wanted:
         entry = {k: v for k, v in catalog[name].items() if k not in DROPPED_FIELDS}
         translated = translations.get(name, {})
+        # Due esercizi del dataset originale hanno la descrizione vuota: la chiave "en"
+        # nel file di traduzione permette di colmarla senza toccare l'export a monte.
+        if translated.get("en"):
+            entry["description"] = translated["en"]
         if translated.get("it"):
             entry["descriptionIt"] = translated["it"]
         if translated.get("fr"):
