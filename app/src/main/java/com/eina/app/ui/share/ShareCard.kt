@@ -66,8 +66,11 @@ fun bestSetLabel(weightType: WeightType, reps: Int?, weight: Double?): String =
 // dimensione fissa e indipendente dallo schermo, dal tema attivo e dal ciclo di vita della UI.
 
 private const val CARD_WIDTH = 1080
-private const val CARD_HEIGHT = 1350
 private const val PADDING = 76f
+
+private const val EXERCISES_TOP = 736f
+private const val ROW_HEIGHT = 92f
+private const val FOOTER_GAP = 96f
 
 private const val BG = 0xFF1C1C1E.toInt()
 private const val SURFACE = 0xFF2C2C2E.toInt()
@@ -103,9 +106,18 @@ private fun fitted(text: String, maxWidth: Float, paint: TextPaint, minSize: Flo
     return paint
 }
 
-/** Immagine quadrata-verticale (1080×1350) pronta per lo share. */
+/**
+ * Immagine verticale larga 1080 pronta per lo share. L'altezza si adatta al numero di esercizi
+ * (fra 4:5 e quasi quadrata) cosi' una sessione da un esercizio non lascia meta' card vuota.
+ */
 fun renderShareCard(data: ShareCardData): Bitmap {
-    val bitmap = Bitmap.createBitmap(CARD_WIDTH, CARD_HEIGHT, Bitmap.Config.ARGB_8888)
+    val rowCount = minOf(data.exercises.size, MAX_EXERCISE_ROWS)
+    val hiddenCount = data.exercises.size - rowCount
+    val contentEnd = EXERCISES_TOP + rowCount * ROW_HEIGHT - 12f + if (hiddenCount > 0) 46f else 0f
+    val footerBaseline = contentEnd + FOOTER_GAP
+    val cardHeight = (footerBaseline + 68f).toInt().coerceIn(CARD_WIDTH, 1350)
+
+    val bitmap = Bitmap.createBitmap(CARD_WIDTH, cardHeight, Bitmap.Config.ARGB_8888)
     val canvas = Canvas(bitmap)
     canvas.drawColor(BG)
 
@@ -152,12 +164,11 @@ fun renderShareCard(data: ShareCardData): Bitmap {
     }
 
     // Elenco esercizi
-    var y = tileTop + tileHeight + 96f
-    canvas.drawText("ESERCIZI", PADDING, y, textPaint(26f, TEXT_SECONDARY, spacing = 0.12f))
-    y += 40f
+    canvas.drawText("ESERCIZI", PADDING, EXERCISES_TOP - 40f, textPaint(26f, TEXT_SECONDARY, spacing = 0.12f))
+    var y = EXERCISES_TOP
 
     val shown = data.exercises.take(MAX_EXERCISE_ROWS)
-    val rowHeight = 92f
+    val rowHeight = ROW_HEIGHT
     shown.forEach { exercise ->
         val rect = RectF(PADDING, y, right, y + rowHeight - 12f)
         canvas.drawRoundRect(rect, 32f, 32f, Paint(Paint.ANTI_ALIAS_FLAG).apply { color = SURFACE })
@@ -189,23 +200,22 @@ fun renderShareCard(data: ShareCardData): Bitmap {
         y += rowHeight
     }
 
-    val hidden = data.exercises.size - shown.size
-    if (hidden > 0) {
+    if (hiddenCount > 0) {
         canvas.drawText(
-            "+ altri $hidden esercizi",
+            "+ altri $hiddenCount esercizi",
             PADDING + 32f,
             y + 34f,
             textPaint(28f, TEXT_SECONDARY)
         )
     }
 
-    // Piede
+    // Piede: ancorato al fondo reale della card, non all'ultima riga.
     val footerPaint = textPaint(28f, TEXT_SECONDARY)
     val footer = "Registrato con Eina"
     canvas.drawText(
         footer,
         (CARD_WIDTH - footerPaint.measureText(footer)) / 2f,
-        CARD_HEIGHT - PADDING,
+        cardHeight - PADDING,
         footerPaint
     )
 
