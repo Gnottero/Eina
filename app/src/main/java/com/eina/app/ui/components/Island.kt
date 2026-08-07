@@ -1,8 +1,8 @@
 package com.eina.app.ui.components
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -32,9 +32,11 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.eina.app.R
 import com.eina.app.ui.feedback.LocalHapticTap
 import com.eina.app.ui.theme.EinaTheme
 import com.eina.app.ui.theme.IslandShape
@@ -222,7 +224,7 @@ fun ScreenHeader(
         if (onBack != null) {
             IslandIconButton(
                 icon = Icons.AutoMirrored.Outlined.ArrowBack,
-                contentDescription = "Indietro",
+                contentDescription = stringResource(R.string.action_back),
                 onClick = onBack
             )
         }

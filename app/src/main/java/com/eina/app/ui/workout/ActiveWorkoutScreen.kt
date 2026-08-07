@@ -24,8 +24,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -54,18 +54,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.eina.app.R
 import com.eina.app.data.db.ExerciseEntity
 import com.eina.app.data.db.PlaylistType
 import com.eina.app.ui.components.BottomTimerBar
+import com.eina.app.ui.components.DestructiveRed
 import com.eina.app.ui.components.IslandBottomSheet
 import com.eina.app.ui.components.IslandButton
-import com.eina.app.ui.components.DestructiveRed
 import com.eina.app.ui.components.IslandCard
 import com.eina.app.ui.components.IslandChip
 import com.eina.app.ui.components.IslandEmptyState
@@ -76,14 +78,16 @@ import com.eina.app.ui.components.IslandTextField
 import com.eina.app.ui.components.RestTimeSheet
 import com.eina.app.ui.components.SheetActionRow
 import com.eina.app.ui.components.sanitizeWeightInput
-import com.eina.app.ui.routine.launchPlaylist
 import com.eina.app.ui.feedback.LocalHapticTap
+import com.eina.app.ui.library.equipmentLabel
+import com.eina.app.ui.routine.launchPlaylist
 import com.eina.app.ui.theme.EinaTheme
 import com.eina.app.ui.theme.IslandShape
 import com.eina.app.ui.theme.MuscleGroupCategory
 import com.eina.app.ui.theme.PillShape
 import com.eina.app.ui.theme.Spacing
 import com.eina.app.ui.theme.TileShape
+import com.eina.app.ui.theme.label
 import com.eina.app.ui.theme.primaryCategoryFor
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -147,8 +151,8 @@ fun ActiveWorkoutScreen(
                 if (state.exercises.isEmpty()) {
                     item {
                         IslandEmptyState(
-                            title = "Sessione vuota",
-                            description = "Aggiungi il primo esercizio per iniziare a registrare le serie."
+                            title = stringResource(R.string.active_empty_title),
+                            description = stringResource(R.string.active_empty_description)
                         )
                     }
                 }
@@ -176,7 +180,7 @@ fun ActiveWorkoutScreen(
 
                 item {
                     IslandSecondaryButton(
-                        text = "Aggiungi esercizio",
+                        text = stringResource(R.string.action_add_exercise),
                         icon = Icons.Outlined.Add,
                         onClick = { showPicker = true },
                         modifier = Modifier.fillMaxWidth()
@@ -243,7 +247,7 @@ fun ActiveWorkoutScreen(
             currentSeconds = restSheetExercise.restSeconds,
             onConfirm = { seconds -> viewModel.setRestSeconds(restSheetExercise.workoutExerciseId, seconds) },
             onDismiss = { restSheetFor = null },
-            description = "Vale per tutte le serie non ancora svolte di questo esercizio."
+            description = stringResource(R.string.active_rest_apply_description)
         )
     }
 
@@ -261,11 +265,12 @@ fun ActiveWorkoutScreen(
             ?.sets?.indexOfFirst { it.id == ref.setId } ?: -1
         IslandBottomSheet(
             onDismiss = { setActionsFor = null },
-            title = if (setIndex >= 0) "Serie ${setIndex + 1}" else "Serie"
+            title = if (setIndex >= 0) stringResource(R.string.active_set_sheet_title, setIndex + 1)
+            else stringResource(R.string.active_set_sheet_title_generic)
         ) {
             SheetActionRow(
                 icon = Icons.Outlined.Delete,
-                label = "Elimina serie",
+                label = stringResource(R.string.active_delete_set),
                 destructive = true,
                 onClick = {
                     viewModel.removeSet(ref.workoutExerciseId, ref.setId)
@@ -281,16 +286,16 @@ fun ActiveWorkoutScreen(
             onDismissRequest = { confirmFinish = false },
             shape = IslandShape,
             containerColor = MaterialTheme.colorScheme.surface,
-            title = { Text("Terminare l'allenamento?", style = MaterialTheme.typography.titleLarge) },
-            text = { Text("La sessione verra' chiusa e salvata nello storico.") },
+            title = { Text(stringResource(R.string.active_finish_confirm_title), style = MaterialTheme.typography.titleLarge) },
+            text = { Text(stringResource(R.string.active_finish_confirm_text)) },
             confirmButton = {
-                HapticTextButton(text = "Termina", onClick = {
+                HapticTextButton(text = stringResource(R.string.active_finish_confirm_action), onClick = {
                     confirmFinish = false
                     viewModel.finishWorkout(onFinished)
                 })
             },
             dismissButton = {
-                HapticTextButton(text = "Continua", onClick = { confirmFinish = false })
+                HapticTextButton(text = stringResource(R.string.action_continue), onClick = { confirmFinish = false })
             }
         )
     }
@@ -301,16 +306,16 @@ fun ActiveWorkoutScreen(
             onDismissRequest = { confirmCancel = false },
             shape = IslandShape,
             containerColor = MaterialTheme.colorScheme.surface,
-            title = { Text("Annullare l'allenamento?", style = MaterialTheme.typography.titleLarge) },
-            text = { Text("La sessione e le serie registrate finora verranno eliminate. Non finira' nello storico.") },
+            title = { Text(stringResource(R.string.active_cancel_confirm_title), style = MaterialTheme.typography.titleLarge) },
+            text = { Text(stringResource(R.string.active_cancel_confirm_text)) },
             confirmButton = {
-                HapticTextButton(text = "Annulla allenamento", color = DestructiveRed, onClick = {
+                HapticTextButton(text = stringResource(R.string.active_cancel), color = DestructiveRed, onClick = {
                     confirmCancel = false
                     viewModel.cancelWorkout(onCancelled)
                 })
             },
             dismissButton = {
-                HapticTextButton(text = "Continua", onClick = { confirmCancel = false })
+                HapticTextButton(text = stringResource(R.string.action_continue), onClick = { confirmCancel = false })
             }
         )
     }
@@ -360,13 +365,13 @@ private fun SessionHeader(
                 // Uscire mette l'allenamento in pausa "sociale": resta in corso, si rientra da Allena.
                 IslandIconButton(
                     icon = Icons.Outlined.KeyboardArrowDown,
-                    contentDescription = "Esci senza terminare",
+                    contentDescription = stringResource(R.string.active_exit_cd),
                     onClick = onExit,
                     containerColor = island.sunken,
                     size = 40.dp
                 )
                 Text(
-                    text = "Allenamento in corso",
+                    text = stringResource(R.string.active_title),
                     style = MaterialTheme.typography.labelLarge,
                     color = island.textSecondary,
                     maxLines = 1,
@@ -378,14 +383,14 @@ private fun SessionHeader(
                 if (playlistType != null && !playlistUri.isNullOrBlank()) {
                     IslandIconButton(
                         icon = Icons.Outlined.MusicNote,
-                        contentDescription = "Riproduci playlist",
+                        contentDescription = stringResource(R.string.active_play_playlist_cd),
                         onClick = {
                             // Senza app musicale ne' browser non succede nulla: lo si dice,
                             // invece di lasciare il tasto muto.
                             if (!launchPlaylist(context, playlistUri, playlistType)) {
                                 Toast.makeText(
                                     context,
-                                    "Nessuna app per aprire la playlist.",
+                                    context.getString(R.string.active_playlist_error),
                                     Toast.LENGTH_SHORT
                                 ).show()
                             }
@@ -402,15 +407,15 @@ private fun SessionHeader(
             ) {
                 MetricTile(
                     icon = Icons.Outlined.Timer,
-                    label = "Durata",
+                    label = stringResource(R.string.stat_duration),
                     value = formatDuration(elapsedSeconds),
                     modifier = Modifier.weight(1f)
                 )
                 MetricTile(
                     icon = Icons.Outlined.FitnessCenter,
-                    label = "Volume",
+                    label = stringResource(R.string.stat_volume),
                     value = formatVolumeValue(volumeKg),
-                    unit = "kg",
+                    unit = stringResource(R.string.unit_kg),
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -432,13 +437,13 @@ private fun SessionHeader(
             }
 
             IslandButton(
-                text = "Termina allenamento",
+                text = stringResource(R.string.active_finish),
                 onClick = onFinish,
                 modifier = Modifier.fillMaxWidth()
             )
 
             Text(
-                text = "Annulla allenamento",
+                text = stringResource(R.string.active_cancel),
                 style = MaterialTheme.typography.labelLarge,
                 color = DestructiveRed,
                 textAlign = TextAlign.Center,
@@ -575,7 +580,7 @@ private fun ExerciseCard(
                 modifier = Modifier.size(16.dp)
             )
             Text(
-                text = "Recupero ${formatDuration(exercise.restSeconds)}",
+                text = stringResource(R.string.rest_label, formatDuration(exercise.restSeconds)),
                 style = MaterialTheme.typography.labelMedium,
                 color = island.textSecondary
             )
@@ -594,7 +599,7 @@ private fun ExerciseCard(
         }
 
         Text(
-            text = "+ Aggiungi serie",
+            text = stringResource(R.string.active_add_set),
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.primary,
             textAlign = TextAlign.Center,
@@ -618,10 +623,10 @@ private fun SetTableHeader() {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
     ) {
-        TableLabel("Serie", Modifier.width(40.dp))
-        TableLabel("Prec.", Modifier.weight(1.1f))
-        TableLabel("Kg", Modifier.weight(1f))
-        TableLabel("Rip", Modifier.weight(1f))
+        TableLabel(stringResource(R.string.table_set), Modifier.width(40.dp))
+        TableLabel(stringResource(R.string.table_previous), Modifier.weight(1.1f))
+        TableLabel(stringResource(R.string.table_kg), Modifier.weight(1f))
+        TableLabel(stringResource(R.string.table_reps), Modifier.weight(1f))
         Box(Modifier.size(42.dp))
     }
 }
@@ -670,7 +675,7 @@ private fun SetRow(
         Box(modifier = Modifier.width(40.dp), contentAlignment = Alignment.Center) {
             if (set.isPR) {
                 Text(
-                    text = "PR",
+                    text = stringResource(R.string.badge_pr),
                     style = MaterialTheme.typography.labelSmall,
                     color = Color.White,
                     modifier = Modifier
@@ -747,7 +752,7 @@ private fun SetCheckButton(completed: Boolean, onClick: () -> Unit) {
         if (completed) {
             Icon(
                 Icons.Outlined.Check,
-                contentDescription = "Annulla serie",
+                contentDescription = stringResource(R.string.active_undo_set_cd),
                 tint = Color.White,
                 modifier = Modifier.size(20.dp)
             )
@@ -815,44 +820,44 @@ private fun ExerciseActionsSheet(
     IslandBottomSheet(onDismiss = onDismiss, title = exercise.name) {
         SheetActionRow(
             icon = Icons.Outlined.Search,
-            label = "Apri scheda esercizio",
+            label = stringResource(R.string.active_open_exercise),
             onClick = onOpenExercise
         )
         SheetActionRow(
             icon = Icons.AutoMirrored.Outlined.Notes,
-            label = if (exercise.notes.isNullOrBlank()) "Aggiungi nota" else "Modifica nota",
+            label = stringResource(if (exercise.notes.isNullOrBlank()) R.string.note_add else R.string.note_edit),
             description = exercise.notes?.takeIf { it.isNotBlank() },
             onClick = onEditNotes
         )
         SheetActionRow(
             icon = Icons.Outlined.Timer,
-            label = "Tempo di recupero",
+            label = stringResource(R.string.rest_time_title),
             description = formatDuration(exercise.restSeconds),
             onClick = onEditRest
         )
         SheetActionRow(
             icon = Icons.Outlined.Add,
-            label = "Aggiungi serie",
+            label = stringResource(R.string.active_add_set_action),
             onClick = onAddSet
         )
         if (canMoveUp) {
             SheetActionRow(
                 icon = Icons.Outlined.KeyboardArrowUp,
-                label = "Sposta su",
+                label = stringResource(R.string.active_move_up),
                 onClick = onMoveUp
             )
         }
         if (canMoveDown) {
             SheetActionRow(
                 icon = Icons.Outlined.KeyboardArrowDown,
-                label = "Sposta giu'",
+                label = stringResource(R.string.active_move_down),
                 onClick = onMoveDown
             )
         }
         SheetActionRow(
             icon = Icons.Outlined.Delete,
-            label = "Rimuovi esercizio",
-            description = "Elimina anche le serie registrate qui",
+            label = stringResource(R.string.action_remove_exercise),
+            description = stringResource(R.string.active_remove_exercise_description),
             destructive = true,
             onClick = onRemove
         )
@@ -871,16 +876,16 @@ private fun ExerciseNotesSheet(
 ) {
     var text by remember(exercise.workoutExerciseId) { mutableStateOf(exercise.notes.orEmpty()) }
 
-    IslandBottomSheet(onDismiss = onDismiss, title = "Nota su ${exercise.name}") {
+    IslandBottomSheet(onDismiss = onDismiss, title = stringResource(R.string.note_sheet_title, exercise.name)) {
         IslandTextField(
             value = text,
             onValueChange = { text = it },
-            label = "Nota",
+            label = stringResource(R.string.field_note),
             singleLine = false,
             modifier = Modifier.fillMaxWidth()
         )
         IslandButton(
-            text = "Salva nota",
+            text = stringResource(R.string.action_save_note),
             onClick = { onSave(text); onDismiss() },
             modifier = Modifier.fillMaxWidth()
         )
@@ -923,11 +928,11 @@ private fun ExercisePickerSheet(
         }
     }
 
-    IslandBottomSheet(onDismiss = onDismiss, title = "Aggiungi esercizio") {
+    IslandBottomSheet(onDismiss = onDismiss, title = stringResource(R.string.active_add_exercise_sheet_title)) {
         IslandTextField(
             value = query,
             onValueChange = { query = it },
-            label = "Cerca esercizio",
+            label = stringResource(R.string.library_search),
             leadingIcon = Icons.Outlined.Search,
             modifier = Modifier.fillMaxWidth()
         )
@@ -938,7 +943,7 @@ private fun ExercisePickerSheet(
         ) {
             items(MuscleGroupCategory.entries) { entry ->
                 IslandChip(
-                    text = entry.label,
+                    text = entry.label(),
                     selected = category == entry,
                     accentColor = entry.color,
                     onClick = { category = if (category == entry) null else entry }
@@ -949,9 +954,9 @@ private fun ExercisePickerSheet(
         if (filtered.isEmpty()) {
             Text(
                 text = if (exercises.isEmpty()) {
-                    "Nessun esercizio in libreria."
+                    stringResource(R.string.active_library_empty)
                 } else {
-                    "Nessun esercizio trovato. Cambia filtro o cerca un altro nome."
+                    stringResource(R.string.active_search_empty)
                 },
                 style = MaterialTheme.typography.bodyMedium,
                 color = island.textSecondary,
@@ -974,8 +979,8 @@ private fun ExercisePickerSheet(
                         Text(exercise.name, style = MaterialTheme.typography.titleSmall)
                         Text(
                             text = listOfNotNull(
-                                exerciseCategory.label,
-                                exercise.equipment?.takeIf { it.isNotBlank() }
+                                exerciseCategory.label(),
+                                exercise.equipment?.takeIf { it.isNotBlank() }?.let { equipmentLabel(it) }
                             ).joinToString(" · "),
                             style = MaterialTheme.typography.labelMedium,
                             color = island.textSecondary

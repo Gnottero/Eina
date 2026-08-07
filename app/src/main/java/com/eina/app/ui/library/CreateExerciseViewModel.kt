@@ -4,19 +4,20 @@ import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.eina.app.R
 import com.eina.app.data.db.ExerciseEntity
 import com.eina.app.data.db.WeightType
 import com.eina.app.data.repository.WorkoutRepository
 import com.eina.app.ui.theme.MuscleGroupCategory
 import com.eina.app.ui.theme.canonicalMuscleKey
+import java.io.File
+import java.util.UUID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.File
-import java.util.UUID
 
 data class CreateExerciseUiState(
     val name: String = "",
@@ -60,7 +61,7 @@ class CreateExerciseViewModel(
             if (copied == null) {
                 // La copia puo' fallire su file remoti (Drive offline) o revocati: senza un
                 // messaggio l'utente vedeva solo l'anteprima non comparire.
-                it.copy(mediaError = "Immagine non copiata: riprova o scegline un'altra.")
+                it.copy(mediaError = appContext.getString(R.string.error_media_copy))
             } else {
                 it.copy(mediaUri = copied, mediaError = null)
             }
@@ -69,7 +70,7 @@ class CreateExerciseViewModel(
 
     /** Nessuna app risponde alla richiesta di immagini: device senza galleria o picker disabilitato. */
     fun onMediaPickerUnavailable() = _uiState.update {
-        it.copy(mediaError = "Nessuna app per scegliere immagini su questo telefono.")
+        it.copy(mediaError = appContext.getString(R.string.error_no_gallery))
     }
 
     private suspend fun copyMediaToInternalStorage(uri: Uri): String? = withContext(Dispatchers.IO) {

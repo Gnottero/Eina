@@ -1,0 +1,242 @@
+# Catalogo curato di Eina — sottoinsieme "comune" di free-exercise-db.
+#
+# Criterio: esercizi che una persona incontra davvero in una palestra commerciale o
+# allenandosi a corpo libero. Fuori restano varianti iper-specifiche (decine di curl
+# quasi identici), attrezzi da garage (slitte, martelli, corde da battaglia), drill
+# pliometrici da atletica e tutto lo stretching: erano rumore in un tracker di forza e
+# rendevano impraticabile una traduzione curata di ogni descrizione.
+#
+# I nomi sono le chiavi esatte del dataset originale: lo script di curazione fallisce
+# se una riga non corrisponde, cosi' un refuso non passa inosservato.
+# Righe vuote e righe che iniziano con # sono ignorate.
+
+## Petto
+Barbell Bench Press - Medium Grip
+Wide-Grip Barbell Bench Press
+Barbell Incline Bench Press - Medium Grip
+Decline Barbell Bench Press
+Dumbbell Bench Press
+Incline Dumbbell Press
+Decline Dumbbell Bench Press
+Dumbbell Flyes
+Incline Dumbbell Flyes
+Cable Crossover
+Low Cable Crossover
+Cable Chest Press
+Machine Bench Press
+Butterfly
+Smith Machine Bench Press
+Straight-Arm Dumbbell Pullover
+Pushups
+Incline Push-Up
+Push-Ups With Feet Elevated
+Dips - Chest Version
+
+## Dorsali
+Pullups
+Chin-Up
+Weighted Pull Ups
+Band Assisted Pull-Up
+Wide-Grip Lat Pulldown
+Close-Grip Front Lat Pulldown
+V-Bar Pulldown
+Underhand Cable Pulldowns
+Straight-Arm Pulldown
+Muscle Up
+
+## Schiena (spessore)
+Bent Over Barbell Row
+Reverse Grip Bent-Over Rows
+Bent Over Two-Dumbbell Row
+One-Arm Dumbbell Row
+One-Arm Kettlebell Row
+Seated Cable Rows
+T-Bar Row with Handle
+Lying T-Bar Row
+Leverage High Row
+Smith Machine Bent Over Row
+Inverted Row
+
+## Lombari
+Barbell Deadlift
+Rack Pulls
+Deficit Deadlift
+Hyperextensions (Back Extensions)
+
+## Trapezi
+Barbell Shrug
+Dumbbell Shrug
+Cable Shrugs
+Leverage Shrug
+Standing Dumbbell Upright Row
+
+## Spalle
+Barbell Shoulder Press
+Standing Military Press
+Seated Barbell Military Press
+Dumbbell Shoulder Press
+Seated Dumbbell Press
+Arnold Dumbbell Press
+Machine Shoulder (Military) Press
+Cable Shoulder Press
+Push Press
+Handstand Push-Ups
+Side Lateral Raise
+Seated Side Lateral Raise
+Front Dumbbell Raise
+Front Plate Raise
+Reverse Flyes
+Reverse Machine Flyes
+Cable Rear Delt Fly
+Face Pull
+Band Pull Apart
+External Rotation with Band
+Upright Barbell Row
+
+## Bicipiti
+Barbell Curl
+EZ-Bar Curl
+Reverse Barbell Curl
+Dumbbell Bicep Curl
+Dumbbell Alternate Bicep Curl
+Seated Dumbbell Curl
+Incline Dumbbell Curl
+Hammer Curls
+Cross Body Hammer Curl
+Concentration Curls
+Preacher Curl
+Cable Preacher Curl
+Machine Bicep Curl
+Standing Biceps Cable Curl
+Cable Hammer Curls - Rope Attachment
+Spider Curl
+Zottman Curl
+
+## Tricipiti
+Triceps Pushdown
+Triceps Pushdown - Rope Attachment
+Triceps Pushdown - V-Bar Attachment
+Reverse Grip Triceps Pushdown
+EZ-Bar Skullcrusher
+Lying Triceps Press
+Close-Grip Barbell Bench Press
+Close-Grip Dumbbell Press
+Dumbbell Floor Press
+Dips - Triceps Version
+Parallel Bar Dip
+Bench Dips
+Cable Rope Overhead Triceps Extension
+Standing Dumbbell Triceps Extension
+Seated Triceps Press
+Tricep Dumbbell Kickback
+Machine Triceps Extension
+
+## Quadricipiti
+Barbell Squat
+Barbell Full Squat
+Front Barbell Squat
+Front Squat (Clean Grip)
+Goblet Squat
+Bodyweight Squat
+Box Squat
+Overhead Squat
+Hack Squat
+Barbell Hack Squat
+Smith Machine Squat
+Leg Press
+Narrow Stance Leg Press
+Leg Extensions
+Barbell Lunge
+Barbell Walking Lunge
+Dumbbell Lunges
+Dumbbell Rear Lunge
+Bodyweight Walking Lunge
+Split Squat with Dumbbells
+Barbell Step Ups
+Dumbbell Step Ups
+Trap Bar Deadlift
+Freehand Jump Squat
+Mountain Climbers
+
+## Femorali
+Romanian Deadlift
+Stiff-Legged Barbell Deadlift
+Stiff-Legged Dumbbell Deadlift
+Sumo Deadlift
+Kettlebell One-Legged Deadlift
+Good Morning
+Lying Leg Curls
+Seated Leg Curl
+Standing Leg Curl
+Glute Ham Raise
+
+## Glutei
+Barbell Hip Thrust
+Barbell Glute Bridge
+Single Leg Glute Bridge
+Butt Lift (Bridge)
+Glute Kickback
+One-Legged Cable Kickback
+Pull Through
+Step-up with Knee Raise
+
+## Adduttori e abduttori
+Thigh Adductor
+Thigh Abductor
+
+## Polpacci
+Standing Calf Raises
+Standing Barbell Calf Raise
+Standing Dumbbell Calf Raise
+Seated Calf Raise
+Calf Press On The Leg Press Machine
+Smith Machine Calf Raise
+Donkey Calf Raises
+
+## Core
+Crunches
+Weighted Crunches
+Decline Crunch
+Reverse Crunch
+Cable Crunch
+Rope Crunch
+Ab Crunch Machine
+Sit-Up
+Air Bike
+Dead Bug
+Hanging Leg Raise
+Knee/Hip Raise On Parallel Bars
+Flat Bench Lying Leg Raise
+Plank
+Side Bridge
+Russian Twist
+Cable Russian Twists
+Standing Cable Wood Chop
+Pallof Press
+Ab Roller
+Barbell Ab Rollout - On Knees
+
+## Avambracci
+Palms-Up Barbell Wrist Curl Over A Bench
+Palms-Down Wrist Curl Over A Bench
+Cable Wrist Curl
+Wrist Roller
+Plate Pinch
+
+## Sollevamento olimpico
+Clean
+Power Clean
+Hang Clean
+Clean and Jerk
+Snatch
+Power Snatch
+
+## Cardio
+Running, Treadmill
+Jogging, Treadmill
+Walking, Treadmill
+Bicycling, Stationary
+Rowing, Stationary
+Elliptical Trainer
+Stairmaster
+Rope Jumping

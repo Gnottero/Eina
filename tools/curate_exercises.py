@@ -1,0 +1,84 @@
+#!/usr/bin/env python3
+"""Riduce il seed completo di free-exercise-db al catalogo curato di Eina.
+
+    python3 tools/curate_exercises.py
+
+Legge l'export integrale (eina_exercises_seed.json), tiene solo i nomi elencati in
+tools/common_exercises.txt e riscrive app/src/main/assets/seed/exercises.json.
+
+Due cose spariscono rispetto all'export:
+  - `loggingInstructions`, che era una delle cinque frasi canoniche derivate da
+    `weightType`: ora vive in strings.xml e si traduce da sola con la UI;
+  - i campi di lavorazione dello script di conversione (`needsReview`,
+    `_originalCategory`), che al runtime non servivano a nessuno.
+
+Le traduzioni delle descrizioni stanno in un file a parte
+(tools/descriptions_translations.json, mappa nome -> {it, fr}) e vengono innestate
+qui come `descriptionIt` / `descriptionFr`. Un esercizio senza traduzione resta in
+inglese: mancare una lingua non deve togliere l'esercizio dal catalogo.
+"""
+
+import json
+import pathlib
+import sys
+
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+SOURCE = ROOT / "eina_exercises_seed.json"
+WHITELIST = ROOT / "tools" / "common_exercises.txt"
+TRANSLATIONS = ROOT / "tools" / "descriptions_translations.json"
+OUTPUT = ROOT / "app" / "src" / "main" / "assets" / "seed" / "exercises.json"
+
+DROPPED_FIELDS = ("loggingInstructions", "needsReview", "_originalCategory")
+
+
+def read_whitelist():
+    names = []
+    for line in WHITELIST.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if line and not line.startswith("#"):
+            names.append(line)
+    duplicates = [n for n in set(names) if names.count(n) > 1]
+    if duplicates:
+        sys.exit(f"Nomi ripetuti nella whitelist: {sorted(duplicates)}")
+    return names
+
+
+def main():
+    catalog = {e["name"]: e for e in json.loads(SOURCE.read_text(encoding="utf-8"))}
+    wanted = read_whitelist()
+
+    # Un refuso nella whitelist toglierebbe un esercizio in silenzio: meglio fermarsi.
+    missing = [n for n in wanted if n not in catalog]
+    if missing:
+        sys.exit("Nomi non presenti nel dataset:\n  " + "\n  ".join(missing))
+
+    translations = {}
+    if TRANSLATIONS.exists():
+        translations = json.loads(TRANSLATIONS.read_text(encoding="utf-8"))
+
+    curated = []
+    for name in wanted:
+        entry = {k: v for k, v in catalog[name].items() if k not in DROPPED_FIELDS}
+        translated = translations.get(name, {})
+        if translated.get("it"):
+            entry["descriptionIt"] = translated["it"]
+        if translated.get("fr"):
+            entry["descriptionFr"] = translated["fr"]
+        curated.append(entry)
+
+    OUTPUT.parent.mkdir(parents=True, exist_ok=True)
+    OUTPUT.write_text(
+        json.dumps(curated, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+    )
+
+    untranslated = [e["name"] for e in curated if "descriptionIt" not in e or "descriptionFr" not in e]
+    print(f"{len(curated)} esercizi scritti in {OUTPUT.relative_to(ROOT)}")
+    print(f"  con traduzione IT+FR: {len(curated) - len(untranslated)}")
+    if untranslated:
+        print(f"  ancora solo in inglese: {len(untranslated)}")
+        for name in untranslated:
+            print(f"    - {name}")
+
+
+if __name__ == "__main__":
+    main()

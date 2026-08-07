@@ -25,8 +25,10 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.eina.app.R
 import com.eina.app.ui.feedback.LocalHapticTap
 import com.eina.app.ui.theme.EinaTheme
 import com.eina.app.ui.theme.Spacing
@@ -84,14 +86,14 @@ fun DurationWheelPicker(
                 onSelected = { minutes = it; onSecondsChange(it * 60 + restSeconds) },
                 modifier = Modifier.width(84.dp)
             )
-            WheelLabel("min")
+            WheelLabel(stringResource(R.string.wheel_min))
             WheelColumn(
                 values = secondValues,
                 selected = restSeconds,
                 onSelected = { restSeconds = it; onSecondsChange(minutes * 60 + it) },
                 modifier = Modifier.width(84.dp)
             )
-            WheelLabel("sec")
+            WheelLabel(stringResource(R.string.wheel_sec))
         }
     }
 }
@@ -106,7 +108,7 @@ fun RestTimeSheet(
     currentSeconds: Int,
     onConfirm: (Int) -> Unit,
     onDismiss: () -> Unit,
-    title: String = "Tempo di recupero",
+    title: String = stringResource(R.string.rest_time_title),
     description: String? = null
 ) {
     val island = EinaTheme.island
@@ -121,9 +123,9 @@ fun RestTimeSheet(
 
         Text(
             text = if (pending == 0) {
-                "Nessun recupero: la serie successiva parte subito."
+                stringResource(R.string.rest_none)
             } else {
-                description ?: "Recupero impostato a ${formatClock(pending)}."
+                description ?: stringResource(R.string.rest_set_to, formatClock(pending))
             },
             style = MaterialTheme.typography.bodySmall,
             color = island.textSecondary,
@@ -131,7 +133,7 @@ fun RestTimeSheet(
         )
 
         IslandButton(
-            text = "Fatto",
+            text = stringResource(R.string.action_done),
             onClick = { onConfirm(pending); onDismiss() },
             modifier = Modifier.fillMaxWidth()
         )

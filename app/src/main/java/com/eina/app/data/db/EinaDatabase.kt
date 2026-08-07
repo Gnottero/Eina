@@ -16,7 +16,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         SetEntryEntity::class,
         BodyMetricEntity::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -42,6 +42,17 @@ abstract class EinaDatabase : RoomDatabase() {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE routine_exercises ADD COLUMN notes TEXT")
                 db.execSQL("ALTER TABLE workout_exercises ADD COLUMN notes TEXT")
+            }
+        }
+
+        /**
+         * Descrizioni tradotte. Le colonne nascono vuote: le riempie ExerciseSeeder al
+         * primo avvio successivo, allineando la libreria al catalogo curato.
+         */
+        val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE exercises ADD COLUMN descriptionIt TEXT")
+                db.execSQL("ALTER TABLE exercises ADD COLUMN descriptionFr TEXT")
             }
         }
     }

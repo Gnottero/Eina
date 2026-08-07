@@ -1,7 +1,7 @@
 package com.eina.app.ui.routine
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -14,12 +14,12 @@ import androidx.compose.material.icons.automirrored.outlined.Notes
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Timer
-import androidx.compose.material3.Icon
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -32,8 +32,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.eina.app.R
 import com.eina.app.data.db.PlaylistType
 import com.eina.app.data.db.RoutineExerciseEntity
 import com.eina.app.ui.components.IslandBottomSheet
@@ -81,7 +83,7 @@ fun RoutineEditorScreen(
     IslandScreen(
         header = {
             ScreenHeader(
-                title = if (routineId == 0L) "Nuova routine" else "Routine",
+                title = stringResource(if (routineId == 0L) R.string.routine_editor_new_title else R.string.routine_editor_title),
                 subtitle = uiState.name.takeIf { it.isNotBlank() },
                 onBack = onBack?.let { back -> { viewModel.discardIfEmpty(back) } }
             )
@@ -92,20 +94,20 @@ fun RoutineEditorScreen(
             IslandTextField(
                 value = uiState.name,
                 onValueChange = viewModel::onNameChange,
-                label = "Nome routine",
+                label = stringResource(R.string.field_routine_name),
                 modifier = Modifier.fillMaxWidth()
             )
             IslandTextField(
                 value = uiState.notes,
                 onValueChange = viewModel::onNotesChange,
-                label = "Note (opzionale)",
+                label = stringResource(R.string.field_notes),
                 singleLine = false,
                 modifier = Modifier.fillMaxWidth()
             )
         }
 
         IslandCard(modifier = Modifier.fillMaxWidth()) {
-            Text("Playlist", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.routine_playlist), style = MaterialTheme.typography.titleMedium)
             PlaylistTypeDropdown(
                 selected = uiState.linkedPlaylistType,
                 onSelected = viewModel::onPlaylistTypeChange
@@ -113,24 +115,24 @@ fun RoutineEditorScreen(
             IslandTextField(
                 value = uiState.linkedPlaylistUri,
                 onValueChange = viewModel::onPlaylistUriChange,
-                label = "Link playlist (opzionale)",
+                label = stringResource(R.string.field_playlist_link),
                 modifier = Modifier.fillMaxWidth()
             )
             Text(
                 // Il tasto "Riproduci" e' stato spostato nell'allenamento in corso: la musica
                 // serve mentre ci si allena, non mentre si compila la scheda.
-                text = "La playlist si avvia dalla schermata dell'allenamento.",
+                text = stringResource(R.string.routine_playlist_hint),
                 style = MaterialTheme.typography.bodySmall,
                 color = EinaTheme.island.textSecondary
             )
         }
 
-        SectionHeader(title = "Esercizi")
+        SectionHeader(title = stringResource(R.string.section_exercises))
 
         if (routineExercises.isEmpty()) {
             IslandEmptyState(
-                title = "Nessun esercizio",
-                description = "Aggiungi esercizi e imposta serie, ripetizioni, peso e recupero target."
+                title = stringResource(R.string.routine_editor_empty_title),
+                description = stringResource(R.string.routine_editor_empty_description)
             )
         } else {
             routineExercises.forEach { routineExercise ->
@@ -147,14 +149,14 @@ fun RoutineEditorScreen(
         }
 
         IslandSecondaryButton(
-            text = "Aggiungi esercizio",
+            text = stringResource(R.string.action_add_exercise),
             icon = Icons.Outlined.Add,
             onClick = onPickExercise,
             modifier = Modifier.fillMaxWidth()
         )
 
         IslandButton(
-            text = "Salva routine",
+            text = stringResource(R.string.action_save_routine),
             onClick = { viewModel.save(onSaved) },
             modifier = Modifier.fillMaxWidth()
         )
@@ -204,21 +206,21 @@ private fun RoutineExerciseRow(
             IslandNumberField(
                 value = sets,
                 onValueChange = { sets = it; commit() },
-                label = "Serie",
+                label = stringResource(R.string.field_sets),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier.weight(1f)
             )
             IslandNumberField(
                 value = reps,
                 onValueChange = { reps = it; commit() },
-                label = "Reps",
+                label = stringResource(R.string.field_reps),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier.weight(1f)
             )
             IslandNumberField(
                 value = weight,
                 onValueChange = { weight = sanitizeWeightInput(weight, it); commit() },
-                label = "Kg",
+                label = stringResource(R.string.field_kg),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 modifier = Modifier.weight(1f)
             )
@@ -245,7 +247,7 @@ private fun RoutineExerciseRow(
                 modifier = Modifier.size(16.dp)
             )
             Text(
-                text = "Recupero ${formatClock(routineExercise.restSeconds)}",
+                text = stringResource(R.string.rest_label, formatClock(routineExercise.restSeconds)),
                 style = MaterialTheme.typography.labelMedium,
                 color = island.textSecondary
             )
@@ -256,19 +258,19 @@ private fun RoutineExerciseRow(
         IslandBottomSheet(onDismiss = { actionsOpen = false }, title = exerciseName) {
             SheetActionRow(
                 icon = Icons.AutoMirrored.Outlined.Notes,
-                label = if (routineExercise.notes.isNullOrBlank()) "Aggiungi nota" else "Modifica nota",
+                label = stringResource(if (routineExercise.notes.isNullOrBlank()) R.string.note_add else R.string.note_edit),
                 description = routineExercise.notes?.takeIf { it.isNotBlank() },
                 onClick = { actionsOpen = false; notesSheetOpen = true }
             )
             SheetActionRow(
                 icon = Icons.Outlined.Timer,
-                label = "Tempo di recupero",
+                label = stringResource(R.string.rest_time_title),
                 description = formatClock(routineExercise.restSeconds),
                 onClick = { actionsOpen = false; restSheetOpen = true }
             )
             SheetActionRow(
                 icon = Icons.Outlined.Delete,
-                label = "Rimuovi esercizio",
+                label = stringResource(R.string.action_remove_exercise),
                 destructive = true,
                 onClick = { actionsOpen = false; onRemove() }
             )
@@ -280,7 +282,7 @@ private fun RoutineExerciseRow(
             currentSeconds = routineExercise.restSeconds,
             onConfirm = { seconds -> commit(restSeconds = seconds) },
             onDismiss = { restSheetOpen = false },
-            description = "Recupero proposto fra le serie di questo esercizio."
+            description = stringResource(R.string.rest_description_routine)
         )
     }
 
@@ -304,16 +306,16 @@ private fun RoutineNotesSheet(
 ) {
     var text by remember(notes) { mutableStateOf(notes) }
 
-    IslandBottomSheet(onDismiss = onDismiss, title = "Nota su $exerciseName") {
+    IslandBottomSheet(onDismiss = onDismiss, title = stringResource(R.string.note_sheet_title, exerciseName)) {
         IslandTextField(
             value = text,
             onValueChange = { text = it },
-            label = "Nota",
+            label = stringResource(R.string.field_note),
             singleLine = false,
             modifier = Modifier.fillMaxWidth()
         )
         IslandButton(
-            text = "Salva nota",
+            text = stringResource(R.string.action_save_note),
             onClick = { onSave(text); onDismiss() },
             modifier = Modifier.fillMaxWidth()
         )
@@ -327,21 +329,21 @@ private fun PlaylistTypeDropdown(selected: PlaylistType?, onSelected: (PlaylistT
     val label = when (selected) {
         PlaylistType.SPOTIFY -> "Spotify"
         PlaylistType.YOUTUBE_MUSIC -> "YouTube Music"
-        null -> "Nessuna playlist"
+        null -> stringResource(R.string.playlist_none)
     }
     ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = it }) {
         IslandTextField(
             value = label,
             onValueChange = {},
             readOnly = true,
-            label = "Servizio",
+            label = stringResource(R.string.playlist_service),
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
             modifier = Modifier
                 .fillMaxWidth()
                 .menuAnchor()
         )
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            DropdownMenuItem(text = { Text("Nessuna playlist") }, onClick = { onSelected(null); expanded = false })
+            DropdownMenuItem(text = { Text(stringResource(R.string.playlist_none)) }, onClick = { onSelected(null); expanded = false })
             DropdownMenuItem(text = { Text("Spotify") }, onClick = { onSelected(PlaylistType.SPOTIFY); expanded = false })
             DropdownMenuItem(text = { Text("YouTube Music") }, onClick = { onSelected(PlaylistType.YOUTUBE_MUSIC); expanded = false })
         }

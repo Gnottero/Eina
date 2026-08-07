@@ -5,6 +5,7 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.net.Uri
 import androidx.core.content.FileProvider
+import com.eina.app.R
 import java.io.File
 import java.io.FileOutputStream
 
@@ -67,7 +68,7 @@ fun shareImage(context: Context, uri: Uri, text: String? = null) {
         text?.let { putExtra(Intent.EXTRA_TEXT, it) }
         addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
     }
-    val chooser = Intent.createChooser(send, "Condividi allenamento").apply {
+    val chooser = Intent.createChooser(send, context.getString(R.string.share_chooser_title)).apply {
         addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
     }
     context.startActivity(chooser)

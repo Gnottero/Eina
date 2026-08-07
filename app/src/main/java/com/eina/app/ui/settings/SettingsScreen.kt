@@ -1,9 +1,11 @@
 package com.eina.app.ui.settings
 
+import android.app.Activity
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Coffee
 import androidx.compose.material.icons.outlined.DeleteSweep
@@ -23,10 +25,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.eina.app.BuildConfig
+import com.eina.app.R
+import com.eina.app.data.prefs.AppLanguage
 import com.eina.app.ui.components.DestructiveRed
 import com.eina.app.ui.components.IslandCard
+import com.eina.app.ui.components.IslandChip
 import com.eina.app.ui.components.IslandScreen
 import com.eina.app.ui.components.IslandSecondaryButton
 import com.eina.app.ui.components.ScreenHeader
@@ -45,6 +51,7 @@ fun SettingsScreen(
     val island = EinaTheme.island
     val context = LocalContext.current
     var confirmClear by remember { mutableStateOf(false) }
+    val language by viewModel.language.collectAsState()
     val haptics by viewModel.hapticsEnabled.collectAsState()
     val sound by viewModel.timerSoundEnabled.collectAsState()
     val vibration by viewModel.timerVibrationEnabled.collectAsState()
@@ -52,69 +59,106 @@ fun SettingsScreen(
     IslandScreen(
         header = {
             ScreenHeader(
-                title = "Impostazioni",
-                subtitle = "Feedback e comportamento dell'app",
+                title = stringResource(R.string.settings_title),
+                subtitle = stringResource(R.string.settings_subtitle),
                 onBack = onBack
             )
         },
         verticalArrangement = Arrangement.spacedBy(Spacing.md)
     ) {
-        SectionHeader(title = "Timer di recupero")
+        SectionHeader(title = stringResource(R.string.settings_section_language))
+
+        IslandCard(modifier = Modifier.fillMaxWidth()) {
+            Text(
+                stringResource(R.string.settings_language_title),
+                style = MaterialTheme.typography.titleSmall
+            )
+            Text(
+                stringResource(R.string.settings_language_description),
+                style = MaterialTheme.typography.bodySmall,
+                color = island.textSecondary
+            )
+            LazyRow(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+                items(AppLanguage.entries.size) { index ->
+                    val entry = AppLanguage.entries[index]
+                    IslandChip(
+                        text = stringResource(entry.labelRes),
+                        selected = entry == language,
+                        onClick = {
+                            if (entry != language) {
+                                viewModel.setLanguage(entry)
+                                // Le risorse della schermata sono gia' risolte: senza ricreare
+                                // l'Activity resterebbe tutto nella lingua precedente.
+                                (context as? Activity)?.recreate()
+                            }
+                        }
+                    )
+                }
+            }
+        }
+
+        SectionHeader(title = stringResource(R.string.settings_section_timer))
 
         IslandCard(modifier = Modifier.fillMaxWidth()) {
             SettingSwitch(
-                title = "Suono a fine recupero",
-                description = "Riproduce un breve avviso quando il timer arriva a zero.",
+                title = stringResource(R.string.settings_sound_title),
+                description = stringResource(R.string.settings_sound_description),
                 checked = sound,
                 onCheckedChange = viewModel::setTimerSound
             )
             SettingSwitch(
-                title = "Vibrazione a fine recupero",
-                description = "Doppia vibrazione all'esaurimento del timer.",
+                title = stringResource(R.string.settings_vibration_title),
+                description = stringResource(R.string.settings_vibration_description),
                 checked = vibration,
                 onCheckedChange = viewModel::setTimerVibration
             )
         }
 
-        SectionHeader(title = "Feedback aptico")
+        SectionHeader(title = stringResource(R.string.settings_section_haptics))
 
         IslandCard(modifier = Modifier.fillMaxWidth()) {
             SettingSwitch(
-                title = "Vibrazione sui comandi",
-                description = "Micro-vibrazione a ogni tocco: bottoni, chip, menu e check delle serie.",
+                title = stringResource(R.string.settings_haptics_title),
+                description = stringResource(R.string.settings_haptics_description),
                 checked = haptics,
                 onCheckedChange = viewModel::setHaptics
             )
         }
 
-        SectionHeader(title = "Sostieni Eina")
+        SectionHeader(title = stringResource(R.string.settings_section_support))
 
         IslandCard(modifier = Modifier.fillMaxWidth()) {
-            Text("Offrimi un caffe'", style = MaterialTheme.typography.titleSmall)
             Text(
-                "Eina resta gratuita e senza account: la donazione e' volontaria e non sblocca nulla.",
+                stringResource(R.string.settings_donate_title),
+                style = MaterialTheme.typography.titleSmall
+            )
+            Text(
+                stringResource(R.string.settings_donate_description),
                 style = MaterialTheme.typography.bodySmall,
                 color = island.textSecondary
             )
             IslandSecondaryButton(
-                text = "Offrimi un caffe'",
+                text = stringResource(R.string.settings_donate_title),
                 icon = Icons.Outlined.Coffee,
                 onClick = { launchDonationPage(context) },
                 modifier = Modifier.fillMaxWidth()
             )
         }
 
-        SectionHeader(title = "Dati")
+        SectionHeader(title = stringResource(R.string.settings_section_data))
 
         IslandCard(modifier = Modifier.fillMaxWidth()) {
-            Text("Cancella lo storico", style = MaterialTheme.typography.titleSmall)
             Text(
-                "Elimina tutti gli allenamenti registrati, serie comprese. Routine, esercizi e peso corporeo restano.",
+                stringResource(R.string.settings_clear_title),
+                style = MaterialTheme.typography.titleSmall
+            )
+            Text(
+                stringResource(R.string.settings_clear_description),
                 style = MaterialTheme.typography.bodySmall,
                 color = island.textSecondary
             )
             IslandSecondaryButton(
-                text = "Cancella storico allenamenti",
+                text = stringResource(R.string.settings_clear_button),
                 icon = Icons.Outlined.DeleteSweep,
                 onClick = { confirmClear = true },
                 contentColor = DestructiveRed,
@@ -122,16 +166,13 @@ fun SettingsScreen(
             )
         }
 
-        SectionHeader(title = "Info")
+        SectionHeader(title = stringResource(R.string.settings_section_info))
 
         IslandCard(modifier = Modifier.fillMaxWidth()) {
-            InfoRow("Versione", BuildConfig.VERSION_NAME)
-            InfoRow("Privacy", "Nessun account, nessun server, nessun dato che lascia il telefono.")
-            InfoRow(
-                "Libreria esercizi",
-                "Dati da free-exercise-db (Unlicense), adattati per Eina."
-            )
-            InfoRow("Icone", "Material Symbols (Apache License 2.0).")
+            InfoRow(stringResource(R.string.info_version), BuildConfig.VERSION_NAME)
+            InfoRow(stringResource(R.string.info_privacy), stringResource(R.string.info_privacy_value))
+            InfoRow(stringResource(R.string.info_library), stringResource(R.string.info_library_value))
+            InfoRow(stringResource(R.string.info_icons), stringResource(R.string.info_icons_value))
         }
     }
 
@@ -141,18 +182,23 @@ fun SettingsScreen(
             onDismissRequest = { confirmClear = false },
             shape = IslandShape,
             containerColor = MaterialTheme.colorScheme.surface,
-            title = { Text("Cancellare tutto lo storico?", style = MaterialTheme.typography.titleLarge) },
-            text = { Text("Tutti gli allenamenti registrati verranno eliminati. L'operazione non e' annullabile.") },
+            title = {
+                Text(
+                    stringResource(R.string.settings_clear_confirm_title),
+                    style = MaterialTheme.typography.titleLarge
+                )
+            },
+            text = { Text(stringResource(R.string.settings_clear_confirm_text)) },
             confirmButton = {
                 TextButton(onClick = { confirmClear = false; viewModel.clearHistory() }) {
-                    Text("Cancella", color = DestructiveRed)
+                    Text(stringResource(R.string.action_delete), color = DestructiveRed)
                 }
             },
             dismissButton = {
                 // Neutro, non accentato: con la palette arancio "Annulla" primario si confondeva
                 // col rosso di "Cancella" e le due azioni sembravano la stessa cosa.
                 TextButton(onClick = { confirmClear = false }) {
-                    Text("Annulla", color = island.textSecondary)
+                    Text(stringResource(R.string.action_cancel), color = island.textSecondary)
                 }
             }
         )

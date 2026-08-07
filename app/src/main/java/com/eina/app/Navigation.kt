@@ -9,10 +9,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material.icons.outlined.BarChart
 import androidx.compose.material.icons.outlined.FitnessCenter
 import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -27,6 +27,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.eina.app.R
 import com.eina.app.ui.components.IslandNavBar
 import com.eina.app.ui.components.IslandNavItem
 import com.eina.app.ui.dashboard.DashboardScreen
@@ -120,7 +121,7 @@ fun EinaNavHost() {
             }
             composable("routines/edit/{routineId}/pick-exercise") {
                 LibraryScreen(
-                    title = "Scegli esercizio",
+                    title = stringResource(R.string.library_pick_title),
                     onExerciseClick = { exerciseId ->
                         navController.previousBackStackEntry
                             ?.savedStateHandle

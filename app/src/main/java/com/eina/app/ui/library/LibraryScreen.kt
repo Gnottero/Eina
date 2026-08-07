@@ -22,7 +22,10 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.eina.app.R
 import com.eina.app.data.db.ExerciseEntity
 import com.eina.app.ui.components.EinaBadge
 import com.eina.app.ui.components.IslandCard
@@ -36,6 +39,7 @@ import com.eina.app.ui.components.islandListContentPadding
 import com.eina.app.ui.theme.EinaTheme
 import com.eina.app.ui.theme.MuscleGroupCategory
 import com.eina.app.ui.theme.Spacing
+import com.eina.app.ui.theme.label
 import com.eina.app.ui.theme.primaryCategoryFor
 import org.koin.androidx.compose.koinViewModel
 
@@ -44,7 +48,7 @@ fun LibraryScreen(
     onExerciseClick: (Long) -> Unit = {},
     onCreateExerciseClick: (() -> Unit)? = null,
     onBack: (() -> Unit)? = null,
-    title: String = "Esercizi",
+    title: String? = null,
     viewModel: LibraryViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -53,14 +57,14 @@ fun LibraryScreen(
     IslandListScreen(
         header = {
             ScreenHeader(
-                title = title,
-                subtitle = "${uiState.exercises.size} esercizi",
+                title = title ?: stringResource(R.string.library_title),
+                subtitle = pluralStringResource(R.plurals.exercise_count, uiState.exercises.size, uiState.exercises.size),
                 onBack = onBack,
                 trailing = {
                     if (onCreateExerciseClick != null) {
                         IslandIconButton(
                             icon = Icons.Outlined.Add,
-                            contentDescription = "Nuovo esercizio",
+                            contentDescription = stringResource(R.string.library_new_exercise),
                             onClick = onCreateExerciseClick
                         )
                     }
@@ -71,7 +75,7 @@ fun LibraryScreen(
         IslandTextField(
             value = uiState.query,
             onValueChange = viewModel::onQueryChange,
-            label = "Cerca esercizio",
+            label = stringResource(R.string.library_search),
             leadingIcon = Icons.Outlined.Search,
             modifier = Modifier
                 .fillMaxWidth()
@@ -84,7 +88,7 @@ fun LibraryScreen(
         ) {
             items(MuscleGroupCategory.entries) { category ->
                 IslandChip(
-                    text = category.label,
+                    text = category.label(),
                     selected = uiState.selectedCategory == category,
                     accentColor = category.color,
                     onClick = { viewModel.onCategorySelected(category) }
@@ -95,8 +99,8 @@ fun LibraryScreen(
         if (uiState.exercises.isEmpty()) {
             Box(modifier = Modifier.padding(horizontal = Spacing.xl)) {
                 IslandEmptyState(
-                    title = "Nessun esercizio trovato",
-                    description = "Cambia filtro o cerca un altro nome."
+                    title = stringResource(R.string.library_empty_title),
+                    description = stringResource(R.string.library_empty_description)
                 )
             }
         } else {
@@ -139,10 +143,10 @@ private fun ExerciseListItem(
             ) {
                 Text(exercise.name, style = MaterialTheme.typography.titleMedium)
                 Row(horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
-                    EinaBadge(text = category.label, color = category.color)
+                    EinaBadge(text = category.label(), color = category.color)
                     exercise.equipment?.takeIf { it.isNotBlank() }?.let {
                         Text(
-                            text = it,
+                            text = equipmentLabel(it),
                             style = MaterialTheme.typography.labelMedium,
                             color = secondaryColor,
                             modifier = Modifier.align(Alignment.CenterVertically)

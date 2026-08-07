@@ -127,10 +127,10 @@ fun renderShareCard(context: Context, data: ShareCardData): Bitmap {
 
     // Griglia 2x2: e' tutto il contenuto del widget.
     val metrics = listOf(
-        Triple("DURATA", data.durationLabel, TEXT),
-        Triple("VOLUME", "${formatVolume(data.volumeKg)} kg", ACCENT),
-        Triple("SERIE", data.setCount.toString(), TEXT),
-        Triple("PR", data.prCount.toString(), if (data.prCount > 0) ACCENT else TEXT)
+        Triple(context.getString(R.string.share_card_duration), data.durationLabel, TEXT),
+        Triple(context.getString(R.string.share_card_volume), "${formatVolume(data.volumeKg)} kg", ACCENT),
+        Triple(context.getString(R.string.share_card_sets), data.setCount.toString(), TEXT),
+        Triple(context.getString(R.string.share_card_pr), data.prCount.toString(), if (data.prCount > 0) ACCENT else TEXT)
     )
     val columnWidth = contentWidth / 2f
     metrics.forEachIndexed { index, (label, value, color) ->

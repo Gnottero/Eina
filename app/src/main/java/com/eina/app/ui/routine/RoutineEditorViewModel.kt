@@ -1,7 +1,9 @@
 package com.eina.app.ui.routine
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.eina.app.R
 import com.eina.app.data.db.PlaylistType
 import com.eina.app.data.db.RoutineEntity
 import com.eina.app.data.db.RoutineExerciseEntity
@@ -26,6 +28,7 @@ data class RoutineEditorUiState(
 
 class RoutineEditorViewModel(
     private val repository: RoutineRepository,
+    private val appContext: Context,
     initialRoutineId: Long
 ) : ViewModel() {
     private var routineId: Long = initialRoutineId
@@ -76,7 +79,7 @@ class RoutineEditorViewModel(
             repository.saveRoutine(
                 RoutineEntity(
                     id = routineId,
-                    name = state.name.trim().ifBlank { "Routine senza nome" },
+                    name = state.name.trim().ifBlank { appContext.getString(R.string.routine_unnamed) },
                     notes = state.notes.trim().ifBlank { null },
                     linkedPlaylistUri = state.linkedPlaylistUri.trim().ifBlank { null },
                     linkedPlaylistType = state.linkedPlaylistType

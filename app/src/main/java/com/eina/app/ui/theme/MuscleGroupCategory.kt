@@ -1,17 +1,24 @@
 package com.eina.app.ui.theme
 
+import androidx.annotation.StringRes
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
+import com.eina.app.R
 
 /** Raggruppa i muscoli grezzi del dataset (in inglese) nelle categorie definite in CLAUDE.md. */
-enum class MuscleGroupCategory(val label: String, val color: Color) {
-    CHEST_PUSH("Petto/Push", MuscleGroupColors.ChestPush),
-    BACK_PULL("Schiena/Pull", MuscleGroupColors.BackPull),
-    LEGS("Gambe", MuscleGroupColors.Legs),
-    SHOULDERS("Spalle", MuscleGroupColors.Shoulders),
-    ARMS("Braccia", MuscleGroupColors.Arms),
-    CORE("Core", MuscleGroupColors.Core),
-    OTHER("Altro", Color(0xFF9E9E9E))
+enum class MuscleGroupCategory(@StringRes val labelRes: Int, val color: Color) {
+    CHEST_PUSH(R.string.muscle_category_chest_push, MuscleGroupColors.ChestPush),
+    BACK_PULL(R.string.muscle_category_back_pull, MuscleGroupColors.BackPull),
+    LEGS(R.string.muscle_category_legs, MuscleGroupColors.Legs),
+    SHOULDERS(R.string.muscle_category_shoulders, MuscleGroupColors.Shoulders),
+    ARMS(R.string.muscle_category_arms, MuscleGroupColors.Arms),
+    CORE(R.string.muscle_category_core, MuscleGroupColors.Core),
+    OTHER(R.string.muscle_category_other, Color(0xFF9E9E9E))
 }
+
+@Composable
+fun MuscleGroupCategory.label(): String = stringResource(labelRes)
 
 private val muscleToCategory: Map<String, MuscleGroupCategory> = mapOf(
     "chest" to MuscleGroupCategory.CHEST_PUSH,

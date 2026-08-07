@@ -6,6 +6,9 @@ import androidx.compose.material.icons.outlined.History
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
+import com.eina.app.R
 import com.eina.app.ui.components.IslandEmptyState
 import com.eina.app.ui.components.IslandScreen
 import com.eina.app.ui.components.ScreenHeader
@@ -24,11 +27,11 @@ fun HistoryScreen(
     IslandScreen(
         header = {
             ScreenHeader(
-                title = "Storico",
+                title = stringResource(R.string.history_title),
                 subtitle = if (sessions.isEmpty()) {
-                    "Nessun allenamento"
+                    stringResource(R.string.history_none)
                 } else {
-                    "${sessions.size} allenamenti registrati"
+                    pluralStringResource(R.plurals.history_count, sessions.size, sessions.size)
                 },
                 onBack = onBack
             )
@@ -37,8 +40,8 @@ fun HistoryScreen(
     ) {
         if (sessions.isEmpty()) {
             IslandEmptyState(
-                title = "Nessun allenamento registrato",
-                description = "Le sessioni completate compaiono qui, dalla piu' recente.",
+                title = stringResource(R.string.history_empty_title),
+                description = stringResource(R.string.history_empty_description),
                 icon = Icons.Outlined.History
             )
         } else {

@@ -1,5 +1,6 @@
 package com.eina.app.ui.history
 
+import android.content.Context
 import android.graphics.Bitmap
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -35,10 +36,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import com.eina.app.R
 import com.eina.app.data.db.CompletedSetRow
 import com.eina.app.data.db.WeightType
 import com.eina.app.domain.totalVolume
@@ -59,12 +63,12 @@ import com.eina.app.ui.components.formatTime
 import com.eina.app.ui.components.formatVolume
 import com.eina.app.ui.share.isInstagramInstalled
 import com.eina.app.ui.share.renderShareCard
-import com.eina.app.ui.share.shareToInstagramStory
 import com.eina.app.ui.share.saveShareImage
 import com.eina.app.ui.share.shareCardDataOf
 import com.eina.app.ui.share.shareImage
-import com.eina.app.ui.theme.IslandShape
+import com.eina.app.ui.share.shareToInstagramStory
 import com.eina.app.ui.theme.EinaTheme
+import com.eina.app.ui.theme.IslandShape
 import com.eina.app.ui.theme.Spacing
 import com.eina.app.ui.theme.TileShape
 import kotlinx.coroutines.Dispatchers
@@ -92,7 +96,7 @@ fun SessionDetailScreen(
             onDismiss = { shareBitmap = null },
             onShare = {
                 val uri = saveShareImage(context, bitmap, "eina-allenamento-$sessionId.png")
-                shareImage(context, uri, text = "Allenamento registrato con Eina")
+                shareImage(context, uri, text = context.getString(R.string.session_share_text))
                 shareBitmap = null
             },
             // Sticker: la card resta un adesivo sopra la storia invece di diventarne lo sfondo.
@@ -100,7 +104,7 @@ fun SessionDetailScreen(
                 {
                     val uri = saveShareImage(context, bitmap, "eina-allenamento-$sessionId.png")
                     if (!shareToInstagramStory(context, uri)) {
-                        shareImage(context, uri, text = "Allenamento registrato con Eina")
+                        shareImage(context, uri, text = context.getString(R.string.session_share_text))
                     }
                     shareBitmap = null
                 }
@@ -115,9 +119,9 @@ fun SessionDetailScreen(
             ScreenHeader(
                 // Titolo corto: "Allenamento completato" andava a capo e finiva sotto il tasto indietro.
                 title = if (justFinished) {
-                    "Completato"
+                    stringResource(R.string.session_completed)
                 } else {
-                    summary?.let { formatFullDate(it.startTime) } ?: "Allenamento"
+                    summary?.let { formatFullDate(it.startTime) } ?: stringResource(R.string.session_fallback_title)
                 },
                 subtitle = summary?.let { session ->
                     buildString {
@@ -134,7 +138,7 @@ fun SessionDetailScreen(
                     {
                         IslandIconButton(
                             icon = Icons.Outlined.Share,
-                            contentDescription = "Condividi allenamento",
+                            contentDescription = stringResource(R.string.session_share_cd),
                             onClick = {
                                 scope.launch {
                                     val data = shareCardDataOf(summary)
@@ -150,8 +154,8 @@ fun SessionDetailScreen(
     ) {
         if (summary == null) {
             IslandEmptyState(
-                title = "Sessione senza serie completate",
-                description = "Questo allenamento non ha serie registrate.",
+                title = stringResource(R.string.session_empty_title),
+                description = stringResource(R.string.session_empty_description),
                 icon = Icons.Outlined.History
             )
             return@IslandScreen
@@ -167,14 +171,14 @@ fun SessionDetailScreen(
             horizontalArrangement = Arrangement.spacedBy(Spacing.md)
         ) {
             StatTile(
-                label = "Volume",
+                label = stringResource(R.string.stat_volume),
                 value = formatVolume(summary.volumeKg),
-                unit = "kg",
+                unit = stringResource(R.string.unit_kg),
                 accentColor = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.weight(1f)
             )
             StatTile(
-                label = "Serie",
+                label = stringResource(R.string.stat_sets),
                 value = summary.setCount.toString(),
                 modifier = Modifier.weight(1f)
             )
@@ -215,15 +219,15 @@ private fun StreakCard(weeks: Int) {
             }
             Column(verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
                 Text(
-                    text = if (weeks == 1) "1 settimana di fila" else "$weeks settimane di fila",
+                    text = pluralStringResource(R.plurals.session_streak_weeks, weeks, weeks),
                     style = MaterialTheme.typography.titleLarge,
                     color = Color.White
                 )
                 Text(
                     text = if (weeks <= 1) {
-                        "Lo streak parte da qui: allenati anche la prossima settimana."
+                        stringResource(R.string.session_streak_start)
                     } else {
-                        "Streak in corso. Torna la prossima settimana per non perderlo."
+                        stringResource(R.string.session_streak_ongoing)
                     },
                     style = MaterialTheme.typography.bodyMedium,
                     color = Color.White.copy(alpha = 0.85f)
@@ -276,7 +280,7 @@ private fun ExerciseSummaryCard(position: Int, exercise: SessionExerciseDetail) 
                 )
                 Text(
                     text = buildString {
-                        append(if (working.size == 1) "1 serie" else "${working.size} serie")
+                        append(pluralStringResource(R.plurals.set_count, working.size, working.size))
                         if (volume > 0.0) append(" · ${formatVolume(volume)} kg")
                     },
                     style = MaterialTheme.typography.labelMedium,
@@ -320,15 +324,15 @@ private fun SetRow(number: Int, set: CompletedSetRow) {
             modifier = Modifier.width(24.dp)
         )
         Text(
-            text = setLabel(set),
+            text = LocalContext.current.setLabel(set),
             style = MaterialTheme.typography.bodyLarge,
             modifier = Modifier.weight(1f)
         )
         if (set.isWarmup) {
-            EinaBadge(text = "Risc.", color = island.textSecondary)
+            EinaBadge(text = stringResource(R.string.badge_warmup), color = island.textSecondary)
         }
         if (set.isPR) {
-            EinaBadge(text = "PR", color = MaterialTheme.colorScheme.primary)
+            EinaBadge(text = stringResource(R.string.badge_pr), color = MaterialTheme.colorScheme.primary)
         }
     }
 }
@@ -342,10 +346,10 @@ private fun SharePreviewDialog(
 ) {
     Dialog(onDismissRequest = onDismiss) {
         IslandCard(modifier = Modifier.fillMaxWidth()) {
-            Text("Anteprima", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.session_preview), style = MaterialTheme.typography.titleMedium)
             Image(
                 bitmap = bitmap.asImageBitmap(),
-                contentDescription = "Riepilogo allenamento",
+                contentDescription = stringResource(R.string.session_preview_cd),
                 contentScale = ContentScale.Fit,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -364,20 +368,20 @@ private fun SharePreviewDialog(
                 horizontalArrangement = Arrangement.spacedBy(Spacing.md)
             ) {
                 IslandSecondaryButton(
-                    text = "Annulla",
+                    text = stringResource(R.string.action_cancel),
                     onClick = onDismiss,
                     modifier = Modifier.weight(1f)
                 )
                 if (onShareToStory != null) {
                     IslandSecondaryButton(
-                        text = "Altro",
+                        text = stringResource(R.string.action_more),
                         onClick = onShare,
                         icon = Icons.Outlined.Share,
                         modifier = Modifier.weight(1f)
                     )
                 } else {
                     IslandButton(
-                        text = "Condividi",
+                        text = stringResource(R.string.action_share),
                         onClick = onShare,
                         icon = Icons.Outlined.Share,
                         modifier = Modifier.weight(1f)
@@ -388,9 +392,9 @@ private fun SharePreviewDialog(
     }
 }
 
-private fun setLabel(set: CompletedSetRow): String = when (set.weightType) {
+private fun Context.setLabel(set: CompletedSetRow): String = when (set.weightType) {
     WeightType.TIME_BASED -> "${set.actualReps ?: 0} s"
-    WeightType.BODYWEIGHT -> "${set.actualReps ?: 0} rip."
+    WeightType.BODYWEIGHT -> getString(R.string.unit_reps_value, set.actualReps ?: 0)
     WeightType.BODYWEIGHT_PLUS_LOAD ->
         "+${formatDecimal(set.weight ?: 0.0)} kg × ${set.actualReps ?: 0}"
     WeightType.ASSISTED ->

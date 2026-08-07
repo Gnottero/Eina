@@ -13,6 +13,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import com.eina.app.R
 import com.eina.app.ui.components.BodyDiagram
 import com.eina.app.ui.components.EinaBadge
 import com.eina.app.ui.components.IslandCard
@@ -41,7 +43,7 @@ fun ExerciseDetailScreen(
                 .background(MaterialTheme.colorScheme.background),
             contentAlignment = Alignment.Center
         ) {
-            Text("Caricamento...", color = island.textSecondary)
+            Text(stringResource(R.string.loading), color = island.textSecondary)
         }
         return
     }
@@ -50,7 +52,7 @@ fun ExerciseDetailScreen(
         header = {
             ScreenHeader(
                 title = current.name,
-                subtitle = current.equipment?.takeIf { it.isNotBlank() },
+                subtitle = current.equipment?.takeIf { it.isNotBlank() }?.let { equipmentLabel(it) },
                 onBack = onBack
             )
         },
@@ -64,31 +66,31 @@ fun ExerciseDetailScreen(
             )
             Row(horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
                 current.muscleGroupsPrimary.forEach { muscle ->
-                    EinaBadge(text = muscle, color = categoryFor(muscle).color, filled = true)
+                    EinaBadge(text = muscleLabel(muscle), color = categoryFor(muscle).color, filled = true)
                 }
             }
             if (current.muscleGroupsSecondary.isNotEmpty()) {
                 Row(horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
                     current.muscleGroupsSecondary.forEach { muscle ->
-                        EinaBadge(text = muscle, color = categoryFor(muscle).color)
+                        EinaBadge(text = muscleLabel(muscle), color = categoryFor(muscle).color)
                     }
                 }
             }
         }
 
         IslandCard(modifier = Modifier.fillMaxWidth()) {
-            Text("Descrizione", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.exercise_description), style = MaterialTheme.typography.titleMedium)
             Text(
-                current.description,
+                current.localizedDescription(),
                 style = MaterialTheme.typography.bodyMedium,
                 color = island.textSecondary
             )
         }
 
         IslandCard(modifier = Modifier.fillMaxWidth()) {
-            Text("Come registrare", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.exercise_how_to_log), style = MaterialTheme.typography.titleMedium)
             Text(
-                current.loggingInstructions,
+                current.localizedLoggingInstructions(),
                 style = MaterialTheme.typography.bodyMedium,
                 color = island.textSecondary
             )

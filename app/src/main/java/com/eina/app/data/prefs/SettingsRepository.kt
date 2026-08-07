@@ -9,9 +9,12 @@ import kotlinx.coroutines.flow.asStateFlow
  * Preferenze locali dell'app. DECISIONE: SharedPreferences invece di DataStore, per non
  * aggiungere una dipendenza a un solo pugno di flag booleani.
  */
-class SettingsRepository(context: Context) {
+class SettingsRepository(private val context: Context) {
 
     private val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+
+    private val _language = MutableStateFlow(AppLocale.stored(context))
+    val language: StateFlow<AppLanguage> = _language.asStateFlow()
 
     private val _hapticsEnabled = MutableStateFlow(prefs.getBoolean(KEY_HAPTICS, true))
     val hapticsEnabled: StateFlow<Boolean> = _hapticsEnabled.asStateFlow()
@@ -21,6 +24,15 @@ class SettingsRepository(context: Context) {
 
     private val _timerVibrationEnabled = MutableStateFlow(prefs.getBoolean(KEY_TIMER_VIBRATION, true))
     val timerVibrationEnabled: StateFlow<Boolean> = _timerVibrationEnabled.asStateFlow()
+
+    /**
+     * La lingua non si applica da sola: le risorse sono gia' state risolte. Chi chiama
+     * ricrea l'Activity, cosi' attachBaseContext ripassa da AppLocale.wrap.
+     */
+    fun setLanguage(language: AppLanguage) {
+        AppLocale.store(context, language)
+        _language.value = language
+    }
 
     fun setHapticsEnabled(enabled: Boolean) = update(KEY_HAPTICS, enabled, _hapticsEnabled)
 

@@ -19,8 +19,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.eina.app.R
 import com.eina.app.domain.SessionSummary
 import com.eina.app.ui.theme.EinaTheme
 import com.eina.app.ui.theme.Spacing
@@ -37,6 +41,7 @@ fun SessionSummaryCard(
     onClick: (() -> Unit)? = null
 ) {
     val island = EinaTheme.island
+    val context = LocalContext.current
     IslandCard(
         modifier = modifier.fillMaxWidth(),
         contentPadding = PaddingValues(horizontal = Spacing.lg, vertical = Spacing.lg),
@@ -51,7 +56,7 @@ fun SessionSummaryCard(
             // Il titolo e' il nome della routine: dice cosa si e' fatto. Senza routine
             // (allenamento libero) lo si scrive esplicitamente, non si lascia il vuoto.
             Text(
-                text = summary.routineName ?: "Allenamento libero",
+                text = summary.routineName ?: stringResource(R.string.workout_free_name),
                 style = MaterialTheme.typography.titleMedium,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
@@ -59,14 +64,14 @@ fun SessionSummaryCard(
             )
             // Quando: sul lato destro, in secondo piano rispetto al nome.
             Text(
-                text = "${formatRelativeDay(summary.startTime)} · ${formatTime(summary.startTime)}",
+                text = "${context.formatRelativeDay(summary.startTime)} · ${formatTime(summary.startTime)}",
                 style = MaterialTheme.typography.bodyMedium,
                 color = island.textSecondary,
                 maxLines = 1
             )
             if (summary.prCount > 0) {
                 EinaBadge(
-                    text = if (summary.prCount == 1) "1 PR" else "${summary.prCount} PR",
+                    text = pluralStringResource(R.plurals.pr_count, summary.prCount, summary.prCount),
                     color = MaterialTheme.colorScheme.primary
                 )
             }
@@ -82,20 +87,20 @@ fun SessionSummaryCard(
 
         Row(modifier = Modifier.fillMaxWidth()) {
             SummaryMetric(
-                label = "Durata",
+                label = stringResource(R.string.stat_duration),
                 value = summary.durationMinutes?.let { formatDuration(it) } ?: "—",
                 modifier = Modifier.weight(1f)
             )
             MetricDivider()
             SummaryMetric(
-                label = "Volume",
+                label = stringResource(R.string.stat_volume),
                 value = formatVolume(summary.volumeKg),
-                unit = "kg",
+                unit = stringResource(R.string.unit_kg),
                 modifier = Modifier.weight(1f)
             )
             MetricDivider()
             SummaryMetric(
-                label = "Serie",
+                label = stringResource(R.string.stat_sets),
                 value = summary.setCount.toString(),
                 modifier = Modifier.weight(1f)
             )

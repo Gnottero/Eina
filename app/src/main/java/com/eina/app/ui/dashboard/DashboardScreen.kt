@@ -15,6 +15,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
+import com.eina.app.R
 import com.eina.app.ui.components.IslandButton
 import com.eina.app.ui.components.IslandCard
 import com.eina.app.ui.components.IslandEmptyState
@@ -25,16 +28,16 @@ import com.eina.app.ui.components.ScreenHeader
 import com.eina.app.ui.components.SectionHeader
 import com.eina.app.ui.components.SessionSummaryCard
 import com.eina.app.ui.components.StatTile
+import com.eina.app.ui.components.formatFullDate
 import com.eina.app.ui.components.formatVolume
+import com.eina.app.ui.components.weekDayInitials
 import com.eina.app.ui.theme.EinaTheme
 import com.eina.app.ui.theme.Spacing
-import org.koin.androidx.compose.koinViewModel
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import org.koin.androidx.compose.koinViewModel
 
-private val dateFormatter = DateTimeFormatter.ofPattern("EEEE d MMMM", Locale.ITALIAN)
-private val weekDayLabels = listOf("L", "M", "M", "G", "V", "S", "D")
 
 @Composable
 fun DashboardScreen(
@@ -52,12 +55,12 @@ fun DashboardScreen(
     IslandScreen(
         header = {
             ScreenHeader(
-                title = "Oggi",
-                subtitle = today.format(dateFormatter).replaceFirstChar { it.uppercase() },
+                title = stringResource(R.string.dashboard_title),
+                subtitle = formatFullDate(today),
                 trailing = {
                     IslandIconButton(
                         icon = Icons.Outlined.Settings,
-                        contentDescription = "Impostazioni",
+                        contentDescription = stringResource(R.string.dashboard_settings),
                         onClick = onSettingsClick
                     )
                 }
@@ -70,52 +73,53 @@ fun DashboardScreen(
             horizontalArrangement = Arrangement.spacedBy(Spacing.md)
         ) {
             StatTile(
-                label = "Settimana",
+                label = stringResource(R.string.dashboard_week),
                 value = state.weekSessions.toString(),
-                unit = if (state.weekSessions == 1) "sessione" else "sessioni",
+                unit = pluralStringResource(R.plurals.session_count, state.weekSessions, state.weekSessions)
+                    .substringAfter(' '),
                 icon = Icons.Outlined.CalendarMonth,
                 accentColor = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.weight(1f)
             )
             StatTile(
-                label = "Volume",
+                label = stringResource(R.string.stat_volume),
                 value = formatVolume(state.weekVolumeKg),
-                unit = "kg",
+                unit = stringResource(R.string.unit_kg),
                 icon = Icons.Outlined.FitnessCenter,
                 modifier = Modifier.weight(1f)
             )
         }
 
         IslandCard(modifier = Modifier.fillMaxWidth()) {
-            Text("Volume settimanale", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.dashboard_weekly_volume), style = MaterialTheme.typography.titleMedium)
             Text(
                 text = if (hasWeekVolume) {
-                    "${formatVolume(state.weekVolumeKg)} kg sollevati questa settimana"
+                    stringResource(R.string.dashboard_weekly_volume_value, formatVolume(state.weekVolumeKg))
                 } else {
-                    "Nessun dato ancora"
+                    stringResource(R.string.dashboard_no_data)
                 },
                 style = MaterialTheme.typography.bodyMedium,
                 color = island.textSecondary
             )
             MiniBarChart(
                 values = state.weekVolumeByDay,
-                labels = weekDayLabels,
+                labels = weekDayInitials(),
                 highlightIndex = today.dayOfWeek.value - 1,
                 modifier = Modifier.fillMaxWidth()
             )
         }
 
         SectionHeader(
-            title = "Ultimi allenamenti",
-            actionLabel = "Storico",
+            title = stringResource(R.string.dashboard_recent),
+            actionLabel = stringResource(R.string.dashboard_history),
             actionIcon = Icons.Outlined.History.takeIf { state.recentSessions.isNotEmpty() },
             onAction = onHistoryClick.takeIf { state.recentSessions.isNotEmpty() }
         )
 
         if (state.recentSessions.isEmpty()) {
             IslandEmptyState(
-                title = "Nessun allenamento registrato",
-                description = "Avvia una sessione: qui comparira' il riepilogo dell'ultima, con serie, volume e PR.",
+                title = stringResource(R.string.dashboard_empty_title),
+                description = stringResource(R.string.dashboard_empty_description),
                 icon = Icons.Outlined.History
             )
         } else {
@@ -128,7 +132,7 @@ fun DashboardScreen(
         }
 
         IslandButton(
-            text = "Inizia allenamento",
+            text = stringResource(R.string.dashboard_start_workout),
             icon = Icons.Outlined.PlayArrow,
             onClick = onStartWorkoutClick,
             modifier = Modifier.fillMaxWidth()

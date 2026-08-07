@@ -6,9 +6,9 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ListAlt
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.EditNote
-import androidx.compose.material.icons.automirrored.outlined.ListAlt
 import androidx.compose.material.icons.outlined.PlayArrow
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
@@ -23,8 +23,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.eina.app.R
 import com.eina.app.data.db.RoutineEntity
 import com.eina.app.ui.components.DestructiveRed
 import com.eina.app.ui.components.IslandBottomSheet
@@ -57,8 +60,8 @@ fun RoutineListScreen(
     ) {
         if (routines.isEmpty()) {
             IslandEmptyState(
-                title = "Nessuna routine",
-                description = "Crea una routine per avere serie, ripetizioni e recupero gia' pronti.",
+                title = stringResource(R.string.routine_empty_title),
+                description = stringResource(R.string.routine_empty_description),
                 icon = Icons.AutoMirrored.Outlined.ListAlt
             )
         } else {
@@ -92,7 +95,7 @@ private fun RoutineRow(
 ) {
     val island = EinaTheme.island
     val routine: RoutineEntity = card.routine
-    val name = routine.name.ifBlank { "Routine senza nome" }
+    val name = routine.name.ifBlank { stringResource(R.string.routine_unnamed) }
     var actionsOpen by remember { mutableStateOf(false) }
     var confirmDelete by remember { mutableStateOf(false) }
 
@@ -128,7 +131,7 @@ private fun RoutineRow(
             }
             IslandIconButton(
                 icon = Icons.Outlined.PlayArrow,
-                contentDescription = "Avvia $name",
+                contentDescription = stringResource(R.string.routine_start_cd, name),
                 onClick = { if (startEnabled) onStart() },
                 size = 48.dp,
                 containerColor = if (startEnabled) {
@@ -165,13 +168,13 @@ private fun RoutineRow(
         IslandBottomSheet(onDismiss = { actionsOpen = false }, title = name) {
             SheetActionRow(
                 icon = Icons.Outlined.EditNote,
-                label = "Modifica routine",
+                label = stringResource(R.string.routine_edit),
                 onClick = { actionsOpen = false; onEdit() }
             )
             SheetActionRow(
                 icon = Icons.Outlined.Delete,
-                label = "Elimina routine",
-                description = "Gli allenamenti gia' registrati restano nello storico",
+                label = stringResource(R.string.routine_delete),
+                description = stringResource(R.string.routine_delete_description),
                 destructive = true,
                 onClick = { actionsOpen = false; confirmDelete = true }
             )
@@ -184,16 +187,16 @@ private fun RoutineRow(
             onDismissRequest = { confirmDelete = false },
             shape = IslandShape,
             containerColor = MaterialTheme.colorScheme.surface,
-            title = { Text("Eliminare \"$name\"?", style = MaterialTheme.typography.titleLarge) },
-            text = { Text("La routine e i suoi esercizi pianificati verranno rimossi.") },
+            title = { Text(stringResource(R.string.routine_delete_confirm_title, name), style = MaterialTheme.typography.titleLarge) },
+            text = { Text(stringResource(R.string.routine_delete_confirm_text)) },
             confirmButton = {
                 TextButton(onClick = { confirmDelete = false; onDelete() }) {
-                    Text("Elimina", color = DestructiveRed)
+                    Text(stringResource(R.string.action_delete), color = DestructiveRed)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { confirmDelete = false }) {
-                    Text("Annulla", color = island.textSecondary)
+                    Text(stringResource(R.string.action_cancel), color = island.textSecondary)
                 }
             }
         )
@@ -201,9 +204,10 @@ private fun RoutineRow(
 }
 
 /** "5 esercizi · 18 serie", oppure l'invito a riempirla se e' ancora vuota. */
+@Composable
 private fun summaryLine(card: RoutineCardUi): String {
-    if (card.exerciseCount == 0) return "Nessun esercizio"
-    val exercises = if (card.exerciseCount == 1) "1 esercizio" else "${card.exerciseCount} esercizi"
-    val sets = if (card.setCount == 1) "1 serie" else "${card.setCount} serie"
+    if (card.exerciseCount == 0) return stringResource(R.string.routine_no_exercises)
+    val exercises = pluralStringResource(R.plurals.exercise_count, card.exerciseCount, card.exerciseCount)
+    val sets = pluralStringResource(R.plurals.set_count, card.setCount, card.setCount)
     return "$exercises · $sets"
 }

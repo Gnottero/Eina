@@ -21,7 +21,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.eina.app.R
 import com.eina.app.ui.theme.EinaTheme
 import com.eina.app.ui.theme.IslandShape
 import com.eina.app.ui.theme.PillShape
@@ -64,7 +66,7 @@ fun BottomTimerBar(
             ) {
                 Column {
                     Text(
-                        text = "Recupero",
+                        text = stringResource(R.string.timer_rest),
                         style = MaterialTheme.typography.labelMedium,
                         color = island.textSecondary
                     )
@@ -77,19 +79,19 @@ fun BottomTimerBar(
                 Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
                     IslandIconButton(
                         icon = Icons.Outlined.Remove,
-                        contentDescription = "-15s",
+                        contentDescription = stringResource(R.string.timer_minus_15),
                         onClick = onMinus15,
                         containerColor = island.sunken
                     )
                     IslandIconButton(
                         icon = Icons.Outlined.Add,
-                        contentDescription = "+15s",
+                        contentDescription = stringResource(R.string.timer_plus_15),
                         onClick = onPlus15,
                         containerColor = island.sunken
                     )
                     IslandIconButton(
                         icon = Icons.Outlined.SkipNext,
-                        contentDescription = "Salta recupero",
+                        contentDescription = stringResource(R.string.timer_skip),
                         onClick = onSkip,
                         containerColor = MaterialTheme.colorScheme.primary,
                         contentColor = androidx.compose.ui.graphics.Color.White

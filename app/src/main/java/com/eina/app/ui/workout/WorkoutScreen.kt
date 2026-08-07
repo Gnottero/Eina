@@ -16,6 +16,8 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import com.eina.app.R
 import com.eina.app.ui.components.IslandButton
 import com.eina.app.ui.components.IslandCard
 import com.eina.app.ui.components.IslandIconButton
@@ -41,12 +43,12 @@ fun WorkoutScreen(
     IslandScreen(
         header = {
             ScreenHeader(
-                title = "Allena",
-                subtitle = "Parti libero o segui una routine",
+                title = stringResource(R.string.workout_title),
+                subtitle = stringResource(R.string.workout_subtitle),
                 trailing = {
                     IslandIconButton(
                         icon = Icons.Outlined.Add,
-                        contentDescription = "Nuova routine",
+                        contentDescription = stringResource(R.string.workout_new_routine),
                         onClick = onCreateRoutineClick
                     )
                 }
@@ -71,19 +73,19 @@ fun WorkoutScreen(
             // Con una sessione aperta l'unica azione possibile e' rientrarci: due allenamenti
             // in parallelo renderebbero ambiguo dove finiscono le serie registrate.
             IslandCard(modifier = Modifier.fillMaxWidth()) {
-                Text("Allenamento in corso", style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(R.string.workout_in_progress_title), style = MaterialTheme.typography.titleMedium)
                 Text(
                     text = formatElapsed(elapsedSeconds),
                     style = MaterialTheme.typography.displaySmall,
                     color = MaterialTheme.colorScheme.primary
                 )
                 Text(
-                    "Hai una sessione aperta. Riprendila o terminala per iniziarne una nuova.",
+                    stringResource(R.string.workout_in_progress_description),
                     style = MaterialTheme.typography.bodyMedium,
                     color = island.textSecondary
                 )
                 IslandButton(
-                    text = "Riprendi allenamento",
+                    text = stringResource(R.string.workout_resume),
                     icon = Icons.Outlined.PlayArrow,
                     onClick = { onSessionStarted(active.id) },
                     modifier = Modifier.fillMaxWidth()
@@ -91,14 +93,14 @@ fun WorkoutScreen(
             }
         } else {
             IslandCard(modifier = Modifier.fillMaxWidth()) {
-                Text("Allenamento libero", style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(R.string.workout_free_title), style = MaterialTheme.typography.titleMedium)
                 Text(
-                    "Aggiungi esercizi mentre ti alleni, senza pianificare nulla.",
+                    stringResource(R.string.workout_free_description),
                     style = MaterialTheme.typography.bodyMedium,
                     color = island.textSecondary
                 )
                 IslandButton(
-                    text = "Inizia ora",
+                    text = stringResource(R.string.workout_start_now),
                     icon = Icons.Outlined.Bolt,
                     onClick = { viewModel.startNewSession(onSessionStarted) },
                     modifier = Modifier.fillMaxWidth()
@@ -107,7 +109,7 @@ fun WorkoutScreen(
         }
 
         // Nessuna azione qui: la creazione routine sta solo nel "+" dell'header, un punto solo.
-        SectionHeader(title = "Le tue routine")
+        SectionHeader(title = stringResource(R.string.workout_your_routines))
 
         RoutineListScreen(
             onStartSession = onSessionStarted,

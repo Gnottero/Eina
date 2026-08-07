@@ -108,4 +108,4 @@ fun HeatmapCalendar(
 }
 
 private fun monthLabel(date: LocalDate): String =
-    date.month.getDisplayName(TextStyle.SHORT, Locale.ITALIAN).replaceFirstChar { it.uppercase() }
+    date.month.getDisplayName(TextStyle.SHORT, Locale.getDefault()).replaceFirstChar { it.uppercase() }

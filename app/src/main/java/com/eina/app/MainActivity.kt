@@ -1,5 +1,6 @@
 package com.eina.app
 
+import android.content.Context
 import android.graphics.Color
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -13,12 +14,19 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import com.eina.app.data.prefs.AppLocale
 import com.eina.app.ui.feedback.LocalHapticTap
 import com.eina.app.ui.feedback.WorkoutFeedback
 import com.eina.app.ui.theme.EinaTheme
 import org.koin.compose.koinInject
 
 class MainActivity : ComponentActivity() {
+    // La lingua scelta in Impostazioni si applica qui, prima che vengano risolte le risorse.
+    // Cambiarla ricrea l'Activity e ripassa da questo punto.
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(AppLocale.wrap(newBase))
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         // App solo in light mode: barre di sistema trasparenti con icone scure, anche se

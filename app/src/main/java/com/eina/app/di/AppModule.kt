@@ -28,7 +28,7 @@ import org.koin.dsl.module
 val appModule = module {
     single {
         Room.databaseBuilder(get(), EinaDatabase::class.java, EinaDatabase.DATABASE_NAME)
-            .addMigrations(EinaDatabase.MIGRATION_1_2)
+            .addMigrations(EinaDatabase.MIGRATION_1_2, EinaDatabase.MIGRATION_2_3)
             .build()
     }
 
@@ -69,7 +69,7 @@ val appModule = module {
     viewModel { (exerciseId: Long) -> ExerciseDetailViewModel(get(), exerciseId) }
     viewModel { CreateExerciseViewModel(get(), androidContext()) }
     viewModel { RoutineListViewModel(get(), get()) }
-    viewModel { (routineId: Long) -> RoutineEditorViewModel(get(), routineId) }
+    viewModel { (routineId: Long) -> RoutineEditorViewModel(get(), androidContext(), routineId) }
     viewModel { DashboardViewModel(get()) }
     viewModel { ProgressViewModel(get()) }
     viewModel { BodyWeightViewModel(get()) }
