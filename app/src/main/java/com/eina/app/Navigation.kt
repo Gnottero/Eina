@@ -107,7 +107,13 @@ fun EinaNavHost() {
                     onPickExercise = {
                         navController.navigate("routines/edit/$routineId/pick-exercise")
                     },
-                    onBack = { navController.popBackStack() }
+                    onBack = { navController.popBackStack() },
+                    // Salvata la routine si torna ad "Allena": l'editor e' un passaggio, non una destinazione.
+                    onSaved = {
+                        if (!navController.popBackStack(EinaDestination.Workout.route, inclusive = false)) {
+                            navController.navigate(EinaDestination.Workout.route)
+                        }
+                    }
                 )
             }
             composable("routines/edit/{routineId}/pick-exercise") {

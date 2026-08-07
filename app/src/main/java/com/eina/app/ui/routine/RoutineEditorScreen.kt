@@ -50,6 +50,7 @@ fun RoutineEditorScreen(
     pickedExerciseId: Long? = null,
     onExercisePickedConsumed: () -> Unit = {},
     onBack: (() -> Unit)? = null,
+    onSaved: () -> Unit = {},
     viewModel: RoutineEditorViewModel = koinViewModel(parameters = { parametersOf(routineId) })
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -69,7 +70,7 @@ fun RoutineEditorScreen(
             ScreenHeader(
                 title = if (routineId == 0L) "Nuova routine" else "Routine",
                 subtitle = uiState.name.takeIf { it.isNotBlank() },
-                onBack = onBack
+                onBack = onBack?.let { back -> { viewModel.discardIfEmpty(back) } }
             )
         },
         verticalArrangement = Arrangement.spacedBy(Spacing.md)
@@ -143,7 +144,7 @@ fun RoutineEditorScreen(
 
         IslandButton(
             text = "Salva routine",
-            onClick = viewModel::save,
+            onClick = { viewModel.save(onSaved) },
             modifier = Modifier.fillMaxWidth()
         )
     }

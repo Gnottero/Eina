@@ -4,6 +4,7 @@ import com.eina.app.data.db.BodyMetricDao
 import com.eina.app.data.db.ExerciseDao
 import com.eina.app.data.db.ExerciseEntity
 import com.eina.app.data.db.RoutineExerciseDao
+import com.eina.app.data.db.RoutineExerciseEntity
 import com.eina.app.data.db.SetEntryDao
 import com.eina.app.data.db.SetEntryEntity
 import com.eina.app.data.db.WeightType
@@ -36,7 +37,11 @@ class WorkoutRepository(
     suspend fun startSession(): Long =
         workoutSessionDao.insert(WorkoutSessionEntity(startTime = System.currentTimeMillis()))
 
-    /** Crea sessione legata alla routine e precompila esercizi/set con i target definiti in RoutineExerciseEntity. */
+    /**
+     * Crea sessione legata alla routine e prepara esercizi/set vuoti.
+     * I valori della routine restano *target* (targetReps, recupero pianificato): non vengono
+     * scritti in `weight`/`actualReps`, cosi' una serie appena creata non risulta gia' svolta.
+     */
     suspend fun startSessionFromRoutine(routineId: Long): Long {
         val sessionId = workoutSessionDao.insert(
             WorkoutSessionEntity(routineId = routineId, startTime = System.currentTimeMillis())
@@ -52,7 +57,6 @@ class WorkoutRepository(
                         workoutExerciseId = workoutExerciseId,
                         setIndex = setIndex,
                         targetReps = routineExercise.targetReps,
-                        weight = routineExercise.targetWeight,
                         restSecondsPlanned = routineExercise.restSeconds
                     )
                 )
@@ -65,6 +69,12 @@ class WorkoutRepository(
         val session = workoutSessionDao.getById(sessionId) ?: return
         workoutSessionDao.update(session.copy(endTime = System.currentTimeMillis()))
     }
+
+    suspend fun getSession(sessionId: Long): WorkoutSessionEntity? = workoutSessionDao.getById(sessionId)
+
+    /** Target della routine per exerciseId: servono alla UI come segnaposto, non come valori registrati. */
+    suspend fun getRoutineTargets(routineId: Long): Map<Long, RoutineExerciseEntity> =
+        routineExerciseDao.getForRoutine(routineId).first().associateBy { it.exerciseId }
 
     suspend fun getSessionExercises(sessionId: Long): List<WorkoutExerciseEntity> =
         workoutExerciseDao.getForSessionOnce(sessionId)

@@ -70,18 +70,37 @@ class RoutineEditorViewModel(
     fun onPlaylistUriChange(value: String) = _uiState.update { it.copy(linkedPlaylistUri = value) }
     fun onPlaylistTypeChange(value: PlaylistType?) = _uiState.update { it.copy(linkedPlaylistType = value) }
 
-    fun save() {
+    fun save(onSaved: () -> Unit = {}) {
         val state = _uiState.value
         viewModelScope.launch {
             repository.saveRoutine(
                 RoutineEntity(
                     id = routineId,
-                    name = state.name.trim(),
+                    name = state.name.trim().ifBlank { "Routine senza nome" },
                     notes = state.notes.trim().ifBlank { null },
                     linkedPlaylistUri = state.linkedPlaylistUri.trim().ifBlank { null },
                     linkedPlaylistType = state.linkedPlaylistType
                 )
             )
+            onSaved()
+        }
+    }
+
+    /**
+     * Uscire senza salvare non deve lasciare in lista la bozza creata all'apertura:
+     * la si elimina solo se e' rimasta davvero vuota (nessun nome, nessun esercizio).
+     */
+    fun discardIfEmpty(onDone: () -> Unit) {
+        val state = _uiState.value
+        viewModelScope.launch {
+            val existing = repository.getRoutine(routineId)
+            val untouched = state.name.isBlank() &&
+                state.notes.isBlank() &&
+                state.linkedPlaylistUri.isBlank() &&
+                routineExercises.value.isEmpty() &&
+                existing?.name.isNullOrBlank()
+            if (untouched && existing != null) repository.deleteRoutine(existing)
+            onDone()
         }
     }
 
