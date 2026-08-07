@@ -9,6 +9,7 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import com.eina.app.ui.theme.EinaTheme
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import com.eina.app.ui.theme.MuscleGroupCategory
 import com.eina.app.ui.theme.categoryFor
@@ -23,6 +24,9 @@ fun BodyDiagram(
     muscleGroupsSecondary: List<String>,
     modifier: Modifier = Modifier
 ) {
+    // I muscoli non coinvolti usano la superficie incassata del tema: un grigio fisso
+    // sparava bianco sul fondo scuro.
+    val idleColor = EinaTheme.island.sunken
     val primaryCategories = muscleGroupsPrimary.map { categoryFor(it) }.toSet()
     val secondaryCategories = muscleGroupsSecondary.map { categoryFor(it) }.toSet() - primaryCategories
 
@@ -31,8 +35,6 @@ fun BodyDiagram(
             .fillMaxWidth()
             .aspectRatio(1f)
     ) {
-        val idleColor = Color(0xFFE0E0E0)
-
         fun colorFor(region: MuscleGroupCategory): Color = when {
             primaryCategories.contains(region) -> region.color
             secondaryCategories.contains(region) -> region.color.copy(alpha = 0.4f)
