@@ -8,7 +8,6 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -22,6 +21,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import com.eina.app.ui.theme.EinaTheme
@@ -57,17 +57,19 @@ fun IslandNavBar(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = Spacing.sm, vertical = Spacing.sm),
+                .padding(Spacing.sm),
             horizontalArrangement = Arrangement.spacedBy(Spacing.xs, Alignment.CenterHorizontally),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            // Le voci si dimensionano sul contenuto: con un weight fisso l'etichetta della voce
+            // attiva verrebbe tagliata (etichette di lunghezza molto diversa fra loro).
             items.forEach { item -> IslandNavBarItem(item) }
         }
     }
 }
 
 @Composable
-private fun RowScope.IslandNavBarItem(item: IslandNavItem) {
+private fun IslandNavBarItem(item: IslandNavItem) {
     val accent = MaterialTheme.colorScheme.primary
     val island = EinaTheme.island
     val contentColor by animateColorAsState(
@@ -82,9 +84,8 @@ private fun RowScope.IslandNavBarItem(item: IslandNavItem) {
 
     Row(
         modifier = Modifier
-            .weight(if (item.selected) 1.4f else 1f)
             .clip(PillShape)
-            .background(if (item.selected) accent.copy(alpha = 0.12f) else androidx.compose.ui.graphics.Color.Transparent)
+            .background(if (item.selected) accent.copy(alpha = 0.12f) else Color.Transparent)
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,
@@ -106,7 +107,8 @@ private fun RowScope.IslandNavBarItem(item: IslandNavItem) {
                 text = item.label,
                 style = MaterialTheme.typography.labelLarge,
                 color = contentColor,
-                maxLines = 1
+                maxLines = 1,
+                softWrap = false
             )
         }
     }
