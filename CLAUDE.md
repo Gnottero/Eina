@@ -17,7 +17,7 @@
 - Leggerezza: minime dipendenze, avvio istantaneo.
 - Nessuna funzione social interna. L'unica condivisione è export immagine verso app esterne.
 - Design pulito, ispirato ad Apple Health ma con asset e font propri (mai SF Symbols/SF Pro, mai loghi Apple).
-- Donazioni volontarie (Buy Me a Coffee), nessun Play Billing, nessun vantaggio sbloccato in cambio della donazione.
+- Donazioni volontarie (Ko-fi), nessun Play Billing, nessun vantaggio sbloccato in cambio della donazione.
 
 ---
 
@@ -311,9 +311,9 @@ DoD: dashboard storico allenamenti; grafici volume/PR; heatmap stile GitHub; sch
 DoD: immagine riepilogo sessione generata e condivisibile via `Intent.ACTION_SEND`.
 
 **Fase 8 — Impostazioni, tema, donazioni** *(fatta)*
-DoD: voce "Offrimi un caffè" apre l'URL Buy Me a Coffee in Custom Tabs (fallback
-ACTION_VIEW; **URL ancora segnaposto**, vedi TODO in `ui/settings/DonationLauncher.kt`);
-sezione Info con versione, nota privacy e licenze. Il toggle tema non serve più:
+DoD: voce "Offrimi un caffè" apre l'URL Ko-fi (`https://ko-fi.com/gnottero`,
+`DONATION_URL` in `ui/settings/DonationLauncher.kt`) in Custom Tabs, fallback
+ACTION_VIEW; sezione Info con versione, nota privacy e licenze. Il toggle tema non serve più:
 dalla Fase 10 l'app è light-only.
 
 **Fase 10 — UX allenamento + palette viola** *(fatta)*
@@ -376,8 +376,9 @@ seed fallito non abbatte l'avvio).
 ## Asset da preparare TU prima di lanciare Claude Code (per non farlo bloccare a metà)
 
 - [x] Nome definitivo e package name → **Eina**, `com.<org>.eina`
-- [ ] URL Buy Me a Coffee → in codice c'è il segnaposto `https://buymeacoffee.com/eina`
-  (`DONATION_URL` in `ui/settings/DonationLauncher.kt`): sostituiscilo con quello vero.
+- [x] URL donazioni → **Ko-fi**: `https://ko-fi.com/gnottero` (`DONATION_URL` in
+  `ui/settings/DonationLauncher.kt`). Ko-fi e non Buy Me a Coffee perché BMC accetta solo
+  Stripe per i nuovi account, mentre Ko-fi incassa direttamente su PayPal.
 - [x] Dataset esercizi arricchito → **pronto**: `seed/eina_exercises_seed.json` (873 esercizi convertiti da free-exercise-db con `weightType`/`description`/`loggingInstructions`). Copialo in `app/src/main/assets/seed/exercises.json`. **274 esercizi hanno `needsReview: true`** (classificazione `weightType` incerta, o categoria "stretching" ambigua per un tracker di forza) — filtra su questo campo per una revisione manuale mirata, non serve rivederli tutti. Le `description` sono in inglese (lingua originale del dataset): per la v1 puoi tenerle così, una traduzione IT è un'iterazione successiva non bloccante.
 - [x] Icona app → **fatta**: marchio Eina (tessera arancio + tre barre bianche) come adaptive icon in `res/drawable/ic_launcher_foreground.xml`, stesso segno disegnato in `ui/share/ShareCard.kt`
 - [ ] **Decisione sulle immagini esercizio**: ogni esercizio ha in media 2 frame JPG da ~38KB l'uno → bundlare tutte le immagini di libreria (~1700 file) costerebbe ~65-70MB di APK, in conflitto col principio "leggera". Opzioni da decidere prima della Fase 3: (a) bundlare solo la prima immagine per esercizio (~33MB), (b) bundlare un sottoinsieme curato (es. i 150-200 esercizi più comuni) e usare Play Asset Delivery per il resto, (c) ricomprimere/ridimensionare le immagini prima del bundling. Lo script di conversione salva comunque tutti i path in `mediaFrames` per ogni esercizio, così qualunque opzione si scelga i dati sono già pronti.

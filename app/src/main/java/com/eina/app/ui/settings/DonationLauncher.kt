@@ -7,8 +7,9 @@ import android.net.Uri
 import androidx.browser.customtabs.CustomTabsIntent
 import androidx.core.graphics.toColorInt
 
-// TODO: sostituire con l'URL Buy Me a Coffee definitivo (asset ancora non fornito).
-const val DONATION_URL = "https://buymeacoffee.com/eina"
+// Ko-fi invece di Buy Me a Coffee: BMC accetta solo Stripe per i nuovi account,
+// Ko-fi permette di incassare direttamente su PayPal.
+const val DONATION_URL = "https://ko-fi.com/gnottero"
 
 /**
  * Apre la pagina donazioni in una Custom Tab, cosi' la si legge senza uscire dall'app.
