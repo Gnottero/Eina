@@ -8,6 +8,7 @@ import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.FitnessCenter
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.PlayArrow
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -17,6 +18,7 @@ import androidx.compose.ui.Modifier
 import com.eina.app.ui.components.IslandButton
 import com.eina.app.ui.components.IslandCard
 import com.eina.app.ui.components.IslandEmptyState
+import com.eina.app.ui.components.IslandIconButton
 import com.eina.app.ui.components.IslandScreen
 import com.eina.app.ui.components.MiniBarChart
 import com.eina.app.ui.components.ScreenHeader
@@ -39,6 +41,7 @@ fun DashboardScreen(
     onStartWorkoutClick: () -> Unit = {},
     onHistoryClick: () -> Unit = {},
     onSessionClick: (Long) -> Unit = {},
+    onSettingsClick: () -> Unit = {},
     viewModel: DashboardViewModel = koinViewModel()
 ) {
     val island = EinaTheme.island
@@ -50,7 +53,14 @@ fun DashboardScreen(
         header = {
             ScreenHeader(
                 title = "Oggi",
-                subtitle = today.format(dateFormatter).replaceFirstChar { it.uppercase() }
+                subtitle = today.format(dateFormatter).replaceFirstChar { it.uppercase() },
+                trailing = {
+                    IslandIconButton(
+                        icon = Icons.Outlined.Settings,
+                        contentDescription = "Impostazioni",
+                        onClick = onSettingsClick
+                    )
+                }
             )
         },
         verticalArrangement = Arrangement.spacedBy(Spacing.md)

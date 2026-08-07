@@ -8,6 +8,7 @@ import com.eina.app.data.db.SetEntryEntity
 import com.eina.app.data.db.WorkoutExerciseEntity
 import com.eina.app.data.repository.WorkoutRepository
 import com.eina.app.domain.volumeForSet
+import com.eina.app.ui.feedback.WorkoutFeedback
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,6 +22,7 @@ import kotlinx.coroutines.launch
 
 class ActiveWorkoutViewModel(
     private val repository: WorkoutRepository,
+    private val feedback: WorkoutFeedback,
     private val sessionId: Long
 ) : ViewModel() {
 
@@ -230,6 +232,7 @@ class ActiveWorkoutViewModel(
             val set = exercise.sets.find { it.id == setId } ?: return@launch
             val completed = repository.completeSet(set.toEntity(workoutExerciseId), exercise.exerciseId, exercise.weightType)
             refreshSets(workoutExerciseId)
+            feedback.haptic()
             if (!completed.isWarmup) startRestTimer(completed.restSecondsPlanned)
         }
     }
@@ -255,16 +258,13 @@ class ActiveWorkoutViewModel(
                 val next = current.remainingSeconds - 1
                 if (next <= 0) {
                     _uiState.update { it.copy(timer = null) }
-                    onRestTimerFinished()
+                    feedback.restTimerFinished()
                     break
                 }
                 _uiState.update { it.copy(timer = current.copy(remainingSeconds = next)) }
             }
         }
     }
-
-    /** Sovrascritto dal wiring del feedback (suono + vibrazione) nella schermata. */
-    var onRestTimerFinished: () -> Unit = {}
 
     fun adjustTimer(deltaSeconds: Int) {
         val current = _uiState.value.timer ?: return

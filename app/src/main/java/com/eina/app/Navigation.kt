@@ -38,6 +38,7 @@ import com.eina.app.ui.library.LibraryScreen
 import com.eina.app.ui.progress.BodyWeightScreen
 import com.eina.app.ui.progress.ProgressScreen
 import com.eina.app.ui.routine.RoutineEditorScreen
+import com.eina.app.ui.settings.SettingsScreen
 import com.eina.app.ui.workout.ActiveWorkoutScreen
 import com.eina.app.ui.workout.WorkoutScreen
 
@@ -76,7 +77,8 @@ fun EinaNavHost() {
                 DashboardScreen(
                     onStartWorkoutClick = { navController.navigate(EinaDestination.Workout.route) },
                     onHistoryClick = { navController.navigate("history") },
-                    onSessionClick = { sessionId -> navController.navigate("history/session/$sessionId") }
+                    onSessionClick = { sessionId -> navController.navigate("history/session/$sessionId") },
+                    onSettingsClick = { navController.navigate("settings") }
                 )
             }
             composable(EinaDestination.Workout.route) {
@@ -186,6 +188,9 @@ fun EinaNavHost() {
             }
             composable(EinaDestination.Progress.route) {
                 ProgressScreen(onBodyWeightClick = { navController.navigate("progress/bodyweight") })
+            }
+            composable("settings") {
+                SettingsScreen(onBack = { navController.popBackStack() })
             }
             composable("progress/bodyweight") {
                 BodyWeightScreen(onBack = { navController.popBackStack() })
