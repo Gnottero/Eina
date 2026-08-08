@@ -3,9 +3,10 @@ package com.eina.app.ui.settings
 import android.app.Activity
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Coffee
 import androidx.compose.material.icons.outlined.DeleteSweep
@@ -43,6 +44,7 @@ import com.eina.app.ui.theme.IslandShape
 import com.eina.app.ui.theme.Spacing
 import org.koin.androidx.compose.koinViewModel
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun SettingsScreen(
     onBack: () -> Unit,
@@ -78,9 +80,13 @@ fun SettingsScreen(
                 style = MaterialTheme.typography.bodySmall,
                 color = island.textSecondary
             )
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
-                items(AppLanguage.entries.size) { index ->
-                    val entry = AppLanguage.entries[index]
+            // FlowRow e non LazyRow: le lingue vanno a capo e si vedono tutte insieme,
+            // senza scorrimento laterale che ne nasconde una.
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
+                verticalArrangement = Arrangement.spacedBy(Spacing.sm)
+            ) {
+                AppLanguage.entries.forEach { entry ->
                     IslandChip(
                         text = stringResource(entry.labelRes),
                         selected = entry == language,

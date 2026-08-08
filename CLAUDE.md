@@ -128,7 +128,9 @@ enum class PlaylistType { SPOTIFY, YOUTUBE_MUSIC }
 @Entity(tableName = "exercises")
 data class ExerciseEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    val name: String,
+    val name: String,                  // inglese: chiave con cui il seeder riconosce l'esercizio
+    val nameIt: String? = null,        // aggiunti in Fase 17 (DB v4, MIGRATION_3_4)
+    val nameFr: String? = null,
     val description: String,           // inglese: e' anche il fallback delle altre lingue
     val descriptionIt: String? = null, // aggiunte in Fase 16 (DB v3, MIGRATION_2_3)
     val descriptionFr: String? = null,
@@ -378,6 +380,14 @@ esercizi comuni con descrizioni tradotte; DB alla versione 3 con `MIGRATION_2_3`
 ancora usati da routine e storico; condivisione con due stili — tessera opaca e overlay
 trasparente da appoggiare sulla propria foto — che si salva in galleria, finisce negli appunti e
 apre la fotocamera storie di Instagram.
+
+**Fase 17 — Nomi tradotti e condivisione a un'immagine sola** *(fatta)*
+DoD: nomi dei 197 esercizi tradotti in italiano e francese (`tools/exercise_names.json` →
+`nameIt`/`nameFr`, DB v4 con `MIGRATION_3_4`), risolti al disegno con `ExerciseName.localized`
+e ordinati alfabeticamente nella lingua attiva; ricerca esercizi che guarda tutte e tre le
+lingue; selettore lingua in Impostazioni su FlowRow, senza scorrimento laterale; foglio di
+condivisione con una sola immagine e interruttore "Sfondo trasparente" al posto delle due
+varianti "Tessera"/"Statistiche".
 
 **Fase 9 — Rifinitura** *(fatta)*
 DoD: R8 + shrinkResources attivi sulla release (20,5 MB → 2,2 MB), regole in
