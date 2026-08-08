@@ -35,6 +35,7 @@ import com.eina.app.ui.components.IslandCard
 import com.eina.app.ui.components.IslandEmptyState
 import com.eina.app.ui.components.IslandIconButton
 import com.eina.app.ui.components.SheetActionRow
+import com.eina.app.ui.library.currentLocale
 import com.eina.app.ui.theme.EinaTheme
 import com.eina.app.ui.theme.IslandShape
 import com.eina.app.ui.theme.Spacing
@@ -94,6 +95,7 @@ private fun RoutineRow(
     startEnabled: Boolean
 ) {
     val island = EinaTheme.island
+    val locale = currentLocale()
     val routine: RoutineEntity = card.routine
     val name = routine.name.ifBlank { stringResource(R.string.routine_unnamed) }
     var actionsOpen by remember { mutableStateOf(false) }
@@ -145,7 +147,7 @@ private fun RoutineRow(
 
         if (card.exerciseNames.isNotEmpty()) {
             Text(
-                text = card.exerciseNames.joinToString(" · "),
+                text = card.exerciseNames.joinToString(" · ") { it.localized(locale) },
                 style = MaterialTheme.typography.bodyMedium,
                 color = island.textSecondary,
                 maxLines = 2,

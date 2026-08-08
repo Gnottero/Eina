@@ -4,9 +4,11 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.eina.app.R
+import com.eina.app.data.db.ExerciseName
 import com.eina.app.data.db.PlaylistType
 import com.eina.app.data.db.RoutineEntity
 import com.eina.app.data.db.RoutineExerciseEntity
+import com.eina.app.data.db.exerciseName
 import com.eina.app.data.repository.RoutineRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -41,8 +43,14 @@ class RoutineEditorViewModel(
         .flatMapLatest { id -> if (id == 0L) flowOf(emptyList()) else repository.observeRoutineExercises(id) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    val exerciseNames: StateFlow<Map<Long, String>> = routineExercises
-        .map { list -> list.associate { it.exerciseId to (repository.getExercise(it.exerciseId)?.name ?: "?") } }
+    val exerciseNames: StateFlow<Map<Long, ExerciseName>> = routineExercises
+        .map { list ->
+            list.associate { routineExercise ->
+                routineExercise.exerciseId to
+                    (repository.getExercise(routineExercise.exerciseId)?.exerciseName()
+                        ?: ExerciseName("?"))
+            }
+        }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
 
     init {

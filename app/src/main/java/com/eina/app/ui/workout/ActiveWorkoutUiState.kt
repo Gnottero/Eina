@@ -1,6 +1,7 @@
 package com.eina.app.ui.workout
 
 import com.eina.app.data.db.ExerciseEntity
+import com.eina.app.data.db.ExerciseName
 import com.eina.app.data.db.PlaylistType
 import com.eina.app.data.db.SetEntryEntity
 import com.eina.app.data.db.WeightType
@@ -32,7 +33,7 @@ data class SessionSetUi(
 data class SessionExerciseUi(
     val workoutExerciseId: Long,
     val exerciseId: Long,
-    val name: String,
+    val name: ExerciseName,
     val weightType: WeightType,
     val order: Int,
     val restSeconds: Int = 90,

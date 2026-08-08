@@ -1,6 +1,7 @@
 package com.eina.app.domain
 
 import com.eina.app.data.db.CompletedSetRow
+import com.eina.app.data.db.ExerciseName
 import com.eina.app.data.db.SetEntryEntity
 import com.eina.app.data.db.WeightType
 import java.time.Instant
@@ -14,7 +15,7 @@ data class SessionSummary(
     val endTime: Long?,
     /** Nome della routine seguita, se la sessione non era un allenamento libero. */
     val routineName: String? = null,
-    val exerciseNames: List<String>,
+    val exerciseNames: List<ExerciseName>,
     val setCount: Int,
     val totalReps: Int,
     val volumeKg: Double,
@@ -27,7 +28,7 @@ data class SessionSummary(
 /** Un record personale, con il valore gia' formattato secondo il weightType. */
 data class PrRecord(
     val exerciseId: Long,
-    val exerciseName: String,
+    val exerciseName: ExerciseName,
     val weightType: WeightType,
     val achievedAt: Long,
     val weight: Double?,

@@ -2,6 +2,7 @@ package com.eina.app.ui.routine
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.eina.app.data.db.ExerciseName
 import com.eina.app.data.db.RoutineEntity
 import com.eina.app.data.repository.RoutineRepository
 import com.eina.app.data.repository.WorkoutRepository
@@ -14,7 +15,7 @@ import kotlinx.coroutines.launch
 /** Una routine con quel tanto di contenuto che serve alla card dell'elenco. */
 data class RoutineCardUi(
     val routine: RoutineEntity,
-    val exerciseNames: List<String>,
+    val exerciseNames: List<ExerciseName>,
     val setCount: Int
 ) {
     val exerciseCount: Int get() = exerciseNames.size

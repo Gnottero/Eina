@@ -20,6 +20,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
@@ -27,6 +28,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.eina.app.R
 import com.eina.app.data.db.ExerciseEntity
+import com.eina.app.data.db.exerciseName
 import com.eina.app.ui.components.EinaBadge
 import com.eina.app.ui.components.IslandCard
 import com.eina.app.ui.components.IslandChip
@@ -53,12 +55,17 @@ fun LibraryScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val island = EinaTheme.island
+    val locale = currentLocale()
+    // Ordine alfabetico nella lingua attiva: il database li tiene ordinati per nome inglese.
+    val exercises = remember(uiState.exercises, locale) {
+        uiState.exercises.sortedBy { it.exerciseName().localized(locale).lowercase(locale) }
+    }
 
     IslandListScreen(
         header = {
             ScreenHeader(
                 title = title ?: stringResource(R.string.library_title),
-                subtitle = pluralStringResource(R.plurals.exercise_count, uiState.exercises.size, uiState.exercises.size),
+                subtitle = pluralStringResource(R.plurals.exercise_count, exercises.size, exercises.size),
                 onBack = onBack,
                 trailing = {
                     if (onCreateExerciseClick != null) {
@@ -96,7 +103,7 @@ fun LibraryScreen(
             }
         }
 
-        if (uiState.exercises.isEmpty()) {
+        if (exercises.isEmpty()) {
             Box(modifier = Modifier.padding(horizontal = Spacing.xl)) {
                 IslandEmptyState(
                     title = stringResource(R.string.library_empty_title),
@@ -108,7 +115,7 @@ fun LibraryScreen(
                 contentPadding = islandListContentPadding(),
                 verticalArrangement = Arrangement.spacedBy(Spacing.sm)
             ) {
-                items(uiState.exercises, key = { it.id }) { exercise ->
+                items(exercises, key = { it.id }) { exercise ->
                     ExerciseListItem(
                         exercise = exercise,
                         onClick = { onExerciseClick(exercise.id) },
@@ -141,7 +148,7 @@ private fun ExerciseListItem(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(Spacing.sm)
             ) {
-                Text(exercise.name, style = MaterialTheme.typography.titleMedium)
+                Text(exercise.localizedName(), style = MaterialTheme.typography.titleMedium)
                 Row(horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
                     EinaBadge(text = category.label(), color = category.color)
                     exercise.equipment?.takeIf { it.isNotBlank() }?.let {

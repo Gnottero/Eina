@@ -64,6 +64,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.eina.app.R
 import com.eina.app.data.db.ExerciseEntity
 import com.eina.app.data.db.PlaylistType
+import com.eina.app.data.db.exerciseName
+import com.eina.app.data.db.matchesQuery
 import com.eina.app.ui.components.BottomTimerBar
 import com.eina.app.ui.components.DestructiveRed
 import com.eina.app.ui.components.IslandBottomSheet
@@ -79,7 +81,10 @@ import com.eina.app.ui.components.RestTimeSheet
 import com.eina.app.ui.components.SheetActionRow
 import com.eina.app.ui.components.sanitizeWeightInput
 import com.eina.app.ui.feedback.LocalHapticTap
+import com.eina.app.ui.library.currentLocale
 import com.eina.app.ui.library.equipmentLabel
+import com.eina.app.ui.library.localized
+import com.eina.app.ui.library.localizedName
 import com.eina.app.ui.routine.launchPlaylist
 import com.eina.app.ui.theme.EinaTheme
 import com.eina.app.ui.theme.IslandShape
@@ -536,7 +541,7 @@ private fun ExerciseCard(
         // Il nome porta alla scheda dell'esercizio: durante una serie serve rileggere
         // l'esecuzione, non ricercarlo in libreria.
         Text(
-            exercise.name,
+            exercise.name.localized(),
             style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.primary,
             maxLines = 2,
@@ -817,7 +822,7 @@ private fun ExerciseActionsSheet(
     onRemove: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    IslandBottomSheet(onDismiss = onDismiss, title = exercise.name) {
+    IslandBottomSheet(onDismiss = onDismiss, title = exercise.name.localized()) {
         SheetActionRow(
             icon = Icons.Outlined.Search,
             label = stringResource(R.string.active_open_exercise),
@@ -876,7 +881,7 @@ private fun ExerciseNotesSheet(
 ) {
     var text by remember(exercise.workoutExerciseId) { mutableStateOf(exercise.notes.orEmpty()) }
 
-    IslandBottomSheet(onDismiss = onDismiss, title = stringResource(R.string.note_sheet_title, exercise.name)) {
+    IslandBottomSheet(onDismiss = onDismiss, title = stringResource(R.string.note_sheet_title, exercise.name.localized())) {
         IslandTextField(
             value = text,
             onValueChange = { text = it },
@@ -919,9 +924,11 @@ private fun ExercisePickerSheet(
     var query by remember { mutableStateOf("") }
     var category by remember { mutableStateOf<MuscleGroupCategory?>(null) }
 
-    val filtered = remember(exercises, query, category) {
-        exercises.filter { exercise ->
-            val matchesQuery = query.isBlank() || exercise.name.contains(query, ignoreCase = true)
+    val locale = currentLocale()
+    // Ordine alfabetico nella lingua attiva: il database li tiene ordinati per nome inglese.
+    val filtered = remember(exercises, query, category, locale) {
+        exercises.sortedBy { it.exerciseName().localized(locale).lowercase(locale) }.filter { exercise ->
+            val matchesQuery = query.isBlank() || exercise.matchesQuery(query)
             val matchesCategory = category == null ||
                 primaryCategoryFor(exercise.muscleGroupsPrimary) == category
             matchesQuery && matchesCategory
@@ -976,7 +983,7 @@ private fun ExercisePickerSheet(
                         color = island.sunken,
                         onClick = { onPick(exercise) }
                     ) {
-                        Text(exercise.name, style = MaterialTheme.typography.titleSmall)
+                        Text(exercise.localizedName(), style = MaterialTheme.typography.titleSmall)
                         Text(
                             text = listOfNotNull(
                                 exerciseCategory.label(),

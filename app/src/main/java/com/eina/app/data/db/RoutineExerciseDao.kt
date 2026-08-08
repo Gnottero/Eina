@@ -2,6 +2,7 @@ package com.eina.app.data.db
 
 import androidx.room.Dao
 import androidx.room.Delete
+import androidx.room.Embedded
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
@@ -11,7 +12,7 @@ import kotlinx.coroutines.flow.Flow
 /** Riga per l'anteprima di una routine nell'elenco: nome esercizio e serie pianificate. */
 data class RoutineExercisePreviewRow(
     val routineId: Long,
-    val exerciseName: String,
+    @Embedded val exerciseName: ExerciseName,
     val targetSets: Int
 )
 
@@ -31,7 +32,8 @@ interface RoutineExerciseDao {
 
     @Query(
         """
-        SELECT re.routineId AS routineId, e.name AS exerciseName, re.targetSets AS targetSets
+        SELECT re.routineId AS routineId, re.targetSets AS targetSets,
+               e.name AS nameEn, e.nameIt AS nameIt, e.nameFr AS nameFr
         FROM routine_exercises re
         INNER JOIN exercises e ON re.exerciseId = e.id
         ORDER BY re.routineId ASC, re.`order` ASC

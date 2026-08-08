@@ -1,6 +1,7 @@
 package com.eina.app.data.db
 
 import androidx.room.Dao
+import androidx.room.Embedded
 import androidx.room.Query
 import kotlinx.coroutines.flow.Flow
 
@@ -21,7 +22,7 @@ data class CompletedSetRow(
     // Nome della routine da cui e' partita la sessione: null per un allenamento libero.
     val routineName: String? = null,
     val exerciseId: Long,
-    val exerciseName: String,
+    @Embedded val exerciseName: ExerciseName,
     val weightType: WeightType,
     val setIndex: Int,
     val actualReps: Int?,
@@ -39,7 +40,8 @@ interface StatsDao {
         SELECT ws.id AS sessionId, ws.startTime AS sessionStart, ws.endTime AS sessionEnd,
                we.id AS workoutExerciseId, we.`order` AS exerciseOrder,
                r.name AS routineName,
-               e.id AS exerciseId, e.name AS exerciseName, e.weightType AS weightType,
+               e.id AS exerciseId, e.weightType AS weightType,
+               e.name AS nameEn, e.nameIt AS nameIt, e.nameFr AS nameFr,
                se.setIndex AS setIndex, se.actualReps AS actualReps, se.weight AS weight,
                se.bodyweightSnapshotKg AS bodyweightSnapshotKg, se.isWarmup AS isWarmup,
                se.isPR AS isPR, se.completedAt AS completedAt
@@ -59,7 +61,8 @@ interface StatsDao {
         SELECT ws.id AS sessionId, ws.startTime AS sessionStart, ws.endTime AS sessionEnd,
                we.id AS workoutExerciseId, we.`order` AS exerciseOrder,
                r.name AS routineName,
-               e.id AS exerciseId, e.name AS exerciseName, e.weightType AS weightType,
+               e.id AS exerciseId, e.weightType AS weightType,
+               e.name AS nameEn, e.nameIt AS nameIt, e.nameFr AS nameFr,
                se.setIndex AS setIndex, se.actualReps AS actualReps, se.weight AS weight,
                se.bodyweightSnapshotKg AS bodyweightSnapshotKg, se.isWarmup AS isWarmup,
                se.isPR AS isPR, se.completedAt AS completedAt

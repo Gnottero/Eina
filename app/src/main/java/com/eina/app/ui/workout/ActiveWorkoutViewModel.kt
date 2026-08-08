@@ -6,6 +6,7 @@ import com.eina.app.data.db.ExerciseEntity
 import com.eina.app.data.db.RoutineExerciseEntity
 import com.eina.app.data.db.SetEntryEntity
 import com.eina.app.data.db.WorkoutExerciseEntity
+import com.eina.app.data.db.exerciseName
 import com.eina.app.data.repository.WorkoutRepository
 import com.eina.app.domain.volumeForSet
 import com.eina.app.ui.components.MAX_WEIGHT_KG
@@ -88,7 +89,7 @@ class ActiveWorkoutViewModel(
         val exerciseUi = SessionExerciseUi(
             workoutExerciseId = workoutExercise.id,
             exerciseId = exercise.id,
-            name = exercise.name,
+            name = exercise.exerciseName(),
             weightType = exercise.weightType,
             order = workoutExercise.order,
             notes = workoutExercise.notes,

@@ -28,7 +28,11 @@ import org.koin.dsl.module
 val appModule = module {
     single {
         Room.databaseBuilder(get(), EinaDatabase::class.java, EinaDatabase.DATABASE_NAME)
-            .addMigrations(EinaDatabase.MIGRATION_1_2, EinaDatabase.MIGRATION_2_3)
+            .addMigrations(
+                EinaDatabase.MIGRATION_1_2,
+                EinaDatabase.MIGRATION_2_3,
+                EinaDatabase.MIGRATION_3_4
+            )
             .build()
     }
 

@@ -51,7 +51,7 @@ fun ExerciseDetailScreen(
     IslandScreen(
         header = {
             ScreenHeader(
-                title = current.name,
+                title = current.localizedName(),
                 subtitle = current.equipment?.takeIf { it.isNotBlank() }?.let { equipmentLabel(it) },
                 onBack = onBack
             )

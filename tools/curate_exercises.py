@@ -14,8 +14,11 @@ Due cose spariscono rispetto all'export:
 
 Le traduzioni delle descrizioni stanno in tools/translations/*.json, un file per blocco
 di lavorazione, ciascuno una mappa nome -> {it, fr}. Vengono innestate qui come
-`descriptionIt` / `descriptionFr`. Un esercizio senza traduzione resta in inglese:
-mancare una lingua non deve togliere l'esercizio dal catalogo.
+`descriptionIt` / `descriptionFr`. I nomi tradotti stanno invece in un file unico,
+tools/exercise_names.json (stessa forma), e diventano `nameIt` / `nameFr`: il nome
+inglese resta la chiave con cui il seeder riconosce l'esercizio nel database.
+Un esercizio senza traduzione resta in inglese: mancare una lingua non deve toglierlo
+dal catalogo.
 """
 
 import json
@@ -26,6 +29,7 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 SOURCE = ROOT / "eina_exercises_seed.json"
 WHITELIST = ROOT / "tools" / "common_exercises.txt"
 TRANSLATIONS_DIR = ROOT / "tools" / "translations"
+NAMES_FILE = ROOT / "tools" / "exercise_names.json"
 OUTPUT = ROOT / "app" / "src" / "main" / "assets" / "seed" / "exercises.json"
 
 DROPPED_FIELDS = ("loggingInstructions", "needsReview", "_originalCategory")
@@ -63,6 +67,11 @@ def main():
     if unknown:
         sys.exit("Tradotti nomi fuori dal dataset:\n  " + "\n  ".join(unknown))
 
+    names = json.loads(NAMES_FILE.read_text(encoding="utf-8"))
+    unknown_names = [n for n in names if n not in catalog]
+    if unknown_names:
+        sys.exit("Nomi tradotti fuori dal dataset:\n  " + "\n  ".join(unknown_names))
+
     curated = []
     for name in wanted:
         entry = {k: v for k, v in catalog[name].items() if k not in DROPPED_FIELDS}
@@ -75,6 +84,11 @@ def main():
             entry["descriptionIt"] = translated["it"]
         if translated.get("fr"):
             entry["descriptionFr"] = translated["fr"]
+        translated_name = names.get(name, {})
+        if translated_name.get("it"):
+            entry["nameIt"] = translated_name["it"]
+        if translated_name.get("fr"):
+            entry["nameFr"] = translated_name["fr"]
         curated.append(entry)
 
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
@@ -83,8 +97,14 @@ def main():
     )
 
     untranslated = [e["name"] for e in curated if "descriptionIt" not in e or "descriptionFr" not in e]
+    unnamed = [e["name"] for e in curated if "nameIt" not in e or "nameFr" not in e]
     print(f"{len(curated)} esercizi scritti in {OUTPUT.relative_to(ROOT)}")
-    print(f"  con traduzione IT+FR: {len(curated) - len(untranslated)}")
+    print(f"  con descrizione IT+FR: {len(curated) - len(untranslated)}")
+    print(f"  con nome IT+FR: {len(curated) - len(unnamed)}")
+    if unnamed:
+        print(f"  nome ancora solo in inglese: {len(unnamed)}")
+        for name in unnamed:
+            print(f"    - {name}")
     if untranslated:
         print(f"  ancora solo in inglese: {len(untranslated)}")
         for name in untranslated:

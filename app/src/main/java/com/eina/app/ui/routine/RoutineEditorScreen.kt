@@ -53,6 +53,7 @@ import com.eina.app.ui.components.SheetActionRow
 import com.eina.app.ui.components.formatClock
 import com.eina.app.ui.components.sanitizeWeightInput
 import com.eina.app.ui.feedback.LocalHapticTap
+import com.eina.app.ui.library.localized
 import com.eina.app.ui.theme.EinaTheme
 import com.eina.app.ui.theme.PillShape
 import com.eina.app.ui.theme.Spacing
@@ -138,7 +139,7 @@ fun RoutineEditorScreen(
             routineExercises.forEach { routineExercise ->
                 RoutineExerciseRow(
                     routineExercise = routineExercise,
-                    exerciseName = exerciseNames[routineExercise.exerciseId] ?: "...",
+                    exerciseName = exerciseNames[routineExercise.exerciseId]?.localized() ?: "…",
                     onUpdate = { sets, reps, weight, rest ->
                         viewModel.updateTargets(routineExercise, sets, reps, weight, rest)
                     },

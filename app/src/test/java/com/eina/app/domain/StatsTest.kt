@@ -1,6 +1,7 @@
 package com.eina.app.domain
 
 import com.eina.app.data.db.CompletedSetRow
+import com.eina.app.data.db.ExerciseName
 import com.eina.app.data.db.WeightType
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -33,7 +34,7 @@ private fun row(
     workoutExerciseId = workoutExerciseId,
     exerciseOrder = workoutExerciseId.toInt(),
     exerciseId = exerciseId,
-    exerciseName = exerciseName,
+    exerciseName = ExerciseName(exerciseName),
     weightType = weightType,
     setIndex = setIndex,
     actualReps = reps,
@@ -76,7 +77,7 @@ class StatsTest {
         val older = summaries.last()
         assertEquals(2, older.setCount)
         assertEquals(20, older.totalReps)
-        assertEquals(listOf("Panca piana", "Squat"), older.exerciseNames)
+        assertEquals(listOf("Panca piana", "Squat"), older.exerciseNames.map { it.nameEn })
     }
 
     @Test
@@ -88,7 +89,10 @@ class StatsTest {
         )
         val summary = summarizeSessions(rows).single()
 
-        assertEquals(listOf("Panca piana", "Squat", "Panca piana"), summary.exerciseNames)
+        assertEquals(
+            listOf("Panca piana", "Squat", "Panca piana"),
+            summary.exerciseNames.map { it.nameEn }
+        )
     }
 
     @Test

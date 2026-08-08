@@ -3,6 +3,7 @@ package com.eina.app.ui.library
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.eina.app.data.db.ExerciseEntity
+import com.eina.app.data.db.matchesQuery
 import com.eina.app.data.repository.WorkoutRepository
 import com.eina.app.ui.theme.MuscleGroupCategory
 import com.eina.app.ui.theme.primaryCategoryFor
@@ -28,7 +29,7 @@ class LibraryViewModel(private val repository: WorkoutRepository) : ViewModel() 
         selectedCategory
     ) { exercises, q, category ->
         val filtered = exercises.filter { exercise ->
-            val matchesQuery = q.isBlank() || exercise.name.contains(q, ignoreCase = true)
+            val matchesQuery = q.isBlank() || exercise.matchesQuery(q)
             val matchesCategory = category == null || primaryCategoryFor(exercise.muscleGroupsPrimary) == category
             matchesQuery && matchesCategory
         }

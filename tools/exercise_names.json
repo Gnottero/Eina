@@ -1,0 +1,790 @@
+{
+  "Barbell Bench Press - Medium Grip": {
+    "it": "Panca piana con bilanciere - presa media",
+    "fr": "Développé couché à la barre - prise moyenne"
+  },
+  "Wide-Grip Barbell Bench Press": {
+    "it": "Panca piana con bilanciere presa larga",
+    "fr": "Développé couché à la barre, prise large"
+  },
+  "Barbell Incline Bench Press - Medium Grip": {
+    "it": "Panca inclinata con bilanciere - presa media",
+    "fr": "Développé incliné à la barre - prise moyenne"
+  },
+  "Decline Barbell Bench Press": {
+    "it": "Panca declinata con bilanciere",
+    "fr": "Développé décliné à la barre"
+  },
+  "Dumbbell Bench Press": {
+    "it": "Panca piana con manubri",
+    "fr": "Développé couché aux haltères"
+  },
+  "Incline Dumbbell Press": {
+    "it": "Panca inclinata con manubri",
+    "fr": "Développé incliné aux haltères"
+  },
+  "Decline Dumbbell Bench Press": {
+    "it": "Panca declinata con manubri",
+    "fr": "Développé décliné aux haltères"
+  },
+  "Dumbbell Flyes": {
+    "it": "Croci con manubri",
+    "fr": "Écartés aux haltères"
+  },
+  "Incline Dumbbell Flyes": {
+    "it": "Croci su panca inclinata",
+    "fr": "Écartés inclinés aux haltères"
+  },
+  "Cable Crossover": {
+    "it": "Croci ai cavi alti",
+    "fr": "Écartés à la poulie haute"
+  },
+  "Low Cable Crossover": {
+    "it": "Croci ai cavi bassi",
+    "fr": "Écartés à la poulie basse"
+  },
+  "Cable Chest Press": {
+    "it": "Spinte per il petto ai cavi",
+    "fr": "Développé pectoraux à la poulie"
+  },
+  "Machine Bench Press": {
+    "it": "Panca piana alla macchina",
+    "fr": "Développé couché à la machine"
+  },
+  "Butterfly": {
+    "it": "Pectoral machine",
+    "fr": "Pec deck (butterfly)"
+  },
+  "Smith Machine Bench Press": {
+    "it": "Panca piana al multipower",
+    "fr": "Développé couché à la Smith machine"
+  },
+  "Straight-Arm Dumbbell Pullover": {
+    "it": "Pullover con manubrio a braccia tese",
+    "fr": "Pullover à l'haltère bras tendus"
+  },
+  "Pushups": {
+    "it": "Piegamenti sulle braccia",
+    "fr": "Pompes"
+  },
+  "Incline Push-Up": {
+    "it": "Piegamenti con mani rialzate",
+    "fr": "Pompes inclinées, mains surélevées"
+  },
+  "Push-Ups With Feet Elevated": {
+    "it": "Piegamenti con piedi rialzati",
+    "fr": "Pompes pieds surélevés"
+  },
+  "Dips - Chest Version": {
+    "it": "Dip alle parallele - versione petto",
+    "fr": "Dips - version pectoraux"
+  },
+  "Pullups": {
+    "it": "Trazioni alla sbarra",
+    "fr": "Tractions"
+  },
+  "Chin-Up": {
+    "it": "Trazioni a presa supina",
+    "fr": "Tractions en supination"
+  },
+  "Weighted Pull Ups": {
+    "it": "Trazioni zavorrate",
+    "fr": "Tractions lestées"
+  },
+  "Band Assisted Pull-Up": {
+    "it": "Trazioni assistite con elastico",
+    "fr": "Tractions assistées à l'élastique"
+  },
+  "Wide-Grip Lat Pulldown": {
+    "it": "Lat machine presa larga",
+    "fr": "Tirage vertical prise large"
+  },
+  "Close-Grip Front Lat Pulldown": {
+    "it": "Lat machine presa stretta al petto",
+    "fr": "Tirage vertical prise serrée devant"
+  },
+  "V-Bar Pulldown": {
+    "it": "Lat machine con triangolo",
+    "fr": "Tirage vertical à la barre en V"
+  },
+  "Underhand Cable Pulldowns": {
+    "it": "Lat machine presa supina",
+    "fr": "Tirage vertical en supination"
+  },
+  "Straight-Arm Pulldown": {
+    "it": "Pulldown a braccia tese",
+    "fr": "Pull-over à la poulie bras tendus"
+  },
+  "Muscle Up": {
+    "it": "Muscle up",
+    "fr": "Muscle up"
+  },
+  "Bent Over Barbell Row": {
+    "it": "Rematore con bilanciere",
+    "fr": "Rowing à la barre, buste penché"
+  },
+  "Reverse Grip Bent-Over Rows": {
+    "it": "Rematore con bilanciere presa supina",
+    "fr": "Rowing à la barre en supination"
+  },
+  "Bent Over Two-Dumbbell Row": {
+    "it": "Rematore con due manubri",
+    "fr": "Rowing aux deux haltères"
+  },
+  "One-Arm Dumbbell Row": {
+    "it": "Rematore con manubrio a un braccio",
+    "fr": "Rowing à un bras avec haltère"
+  },
+  "One-Arm Kettlebell Row": {
+    "it": "Rematore con kettlebell a un braccio",
+    "fr": "Rowing à un bras avec kettlebell"
+  },
+  "Seated Cable Rows": {
+    "it": "Pulley basso da seduto",
+    "fr": "Rowing assis à la poulie basse"
+  },
+  "T-Bar Row with Handle": {
+    "it": "Rematore a T con maniglia",
+    "fr": "Rowing T-bar avec poignée"
+  },
+  "Lying T-Bar Row": {
+    "it": "Rematore a T su panca prona",
+    "fr": "Rowing T-bar allongé"
+  },
+  "Leverage High Row": {
+    "it": "Rematore alto alla macchina",
+    "fr": "Rowing haut à la machine"
+  },
+  "Smith Machine Bent Over Row": {
+    "it": "Rematore al multipower",
+    "fr": "Rowing buste penché à la Smith machine"
+  },
+  "Inverted Row": {
+    "it": "Rematore australiano",
+    "fr": "Rowing inversé (australien)"
+  },
+  "Barbell Deadlift": {
+    "it": "Stacco da terra con bilanciere",
+    "fr": "Soulevé de terre à la barre"
+  },
+  "Rack Pulls": {
+    "it": "Stacco dai blocchi (rack pull)",
+    "fr": "Soulevé de terre partiel (rack pull)"
+  },
+  "Deficit Deadlift": {
+    "it": "Stacco in deficit",
+    "fr": "Soulevé de terre en déficit"
+  },
+  "Hyperextensions (Back Extensions)": {
+    "it": "Iperestensioni lombari",
+    "fr": "Extensions lombaires (hyperextensions)"
+  },
+  "Barbell Shrug": {
+    "it": "Scrollate con bilanciere",
+    "fr": "Shrugs à la barre"
+  },
+  "Dumbbell Shrug": {
+    "it": "Scrollate con manubri",
+    "fr": "Shrugs aux haltères"
+  },
+  "Cable Shrugs": {
+    "it": "Scrollate ai cavi",
+    "fr": "Shrugs à la poulie"
+  },
+  "Leverage Shrug": {
+    "it": "Scrollate alla macchina",
+    "fr": "Shrugs à la machine"
+  },
+  "Standing Dumbbell Upright Row": {
+    "it": "Tirate al mento con manubri",
+    "fr": "Rowing menton aux haltères"
+  },
+  "Barbell Shoulder Press": {
+    "it": "Lento avanti con bilanciere",
+    "fr": "Développé épaules à la barre"
+  },
+  "Standing Military Press": {
+    "it": "Military press in piedi",
+    "fr": "Développé militaire debout"
+  },
+  "Seated Barbell Military Press": {
+    "it": "Military press da seduto",
+    "fr": "Développé militaire assis à la barre"
+  },
+  "Dumbbell Shoulder Press": {
+    "it": "Lento avanti con manubri",
+    "fr": "Développé épaules aux haltères"
+  },
+  "Seated Dumbbell Press": {
+    "it": "Lento avanti con manubri da seduto",
+    "fr": "Développé haltères assis"
+  },
+  "Arnold Dumbbell Press": {
+    "it": "Arnold press",
+    "fr": "Développé Arnold"
+  },
+  "Machine Shoulder (Military) Press": {
+    "it": "Lento avanti alla macchina",
+    "fr": "Développé épaules à la machine"
+  },
+  "Cable Shoulder Press": {
+    "it": "Lento avanti ai cavi",
+    "fr": "Développé épaules à la poulie"
+  },
+  "Push Press": {
+    "it": "Spinta in slancio (push press)",
+    "fr": "Développé avec impulsion (push press)"
+  },
+  "Handstand Push-Ups": {
+    "it": "Piegamenti in verticale",
+    "fr": "Pompes en équilibre sur les mains"
+  },
+  "Side Lateral Raise": {
+    "it": "Alzate laterali",
+    "fr": "Élévations latérales"
+  },
+  "Seated Side Lateral Raise": {
+    "it": "Alzate laterali da seduto",
+    "fr": "Élévations latérales assis"
+  },
+  "Front Dumbbell Raise": {
+    "it": "Alzate frontali con manubri",
+    "fr": "Élévations frontales aux haltères"
+  },
+  "Front Plate Raise": {
+    "it": "Alzate frontali con disco",
+    "fr": "Élévations frontales avec disque"
+  },
+  "Reverse Flyes": {
+    "it": "Alzate posteriori con manubri",
+    "fr": "Écartés inversés aux haltères"
+  },
+  "Reverse Machine Flyes": {
+    "it": "Alzate posteriori alla macchina",
+    "fr": "Écartés inversés à la machine"
+  },
+  "Cable Rear Delt Fly": {
+    "it": "Croci inverse ai cavi",
+    "fr": "Écartés inversés à la poulie"
+  },
+  "Face Pull": {
+    "it": "Face pull ai cavi",
+    "fr": "Face pull à la poulie"
+  },
+  "Band Pull Apart": {
+    "it": "Aperture con elastico",
+    "fr": "Écartés à l'élastique"
+  },
+  "External Rotation with Band": {
+    "it": "Rotazioni esterne con elastico",
+    "fr": "Rotations externes à l'élastique"
+  },
+  "Upright Barbell Row": {
+    "it": "Tirate al mento con bilanciere",
+    "fr": "Rowing menton à la barre"
+  },
+  "Barbell Curl": {
+    "it": "Curl con bilanciere",
+    "fr": "Curl à la barre"
+  },
+  "EZ-Bar Curl": {
+    "it": "Curl con bilanciere EZ",
+    "fr": "Curl à la barre EZ"
+  },
+  "Reverse Barbell Curl": {
+    "it": "Curl inverso con bilanciere",
+    "fr": "Curl inversé à la barre"
+  },
+  "Dumbbell Bicep Curl": {
+    "it": "Curl con manubri",
+    "fr": "Curl aux haltères"
+  },
+  "Dumbbell Alternate Bicep Curl": {
+    "it": "Curl alternato con manubri",
+    "fr": "Curl alterné aux haltères"
+  },
+  "Seated Dumbbell Curl": {
+    "it": "Curl con manubri da seduto",
+    "fr": "Curl aux haltères assis"
+  },
+  "Incline Dumbbell Curl": {
+    "it": "Curl su panca inclinata",
+    "fr": "Curl incliné aux haltères"
+  },
+  "Hammer Curls": {
+    "it": "Curl a martello",
+    "fr": "Curl marteau"
+  },
+  "Cross Body Hammer Curl": {
+    "it": "Curl a martello incrociato",
+    "fr": "Curl marteau croisé"
+  },
+  "Concentration Curls": {
+    "it": "Curl di concentrazione",
+    "fr": "Curl concentré"
+  },
+  "Preacher Curl": {
+    "it": "Curl su panca Scott",
+    "fr": "Curl au pupitre"
+  },
+  "Cable Preacher Curl": {
+    "it": "Curl su panca Scott ai cavi",
+    "fr": "Curl au pupitre à la poulie"
+  },
+  "Machine Bicep Curl": {
+    "it": "Curl alla macchina",
+    "fr": "Curl à la machine"
+  },
+  "Standing Biceps Cable Curl": {
+    "it": "Curl ai cavi in piedi",
+    "fr": "Curl à la poulie debout"
+  },
+  "Cable Hammer Curls - Rope Attachment": {
+    "it": "Curl a martello ai cavi con corda",
+    "fr": "Curl marteau à la poulie avec corde"
+  },
+  "Spider Curl": {
+    "it": "Spider curl",
+    "fr": "Spider curl"
+  },
+  "Zottman Curl": {
+    "it": "Curl Zottman",
+    "fr": "Curl Zottman"
+  },
+  "Triceps Pushdown": {
+    "it": "Pushdown per tricipiti ai cavi",
+    "fr": "Extensions triceps à la poulie"
+  },
+  "Triceps Pushdown - Rope Attachment": {
+    "it": "Pushdown per tricipiti con corda",
+    "fr": "Extensions triceps à la corde"
+  },
+  "Triceps Pushdown - V-Bar Attachment": {
+    "it": "Pushdown per tricipiti con barra a V",
+    "fr": "Extensions triceps à la barre en V"
+  },
+  "Reverse Grip Triceps Pushdown": {
+    "it": "Pushdown per tricipiti presa supina",
+    "fr": "Extensions triceps en supination"
+  },
+  "EZ-Bar Skullcrusher": {
+    "it": "French press con bilanciere EZ",
+    "fr": "Barre au front à la barre EZ"
+  },
+  "Lying Triceps Press": {
+    "it": "Distensioni per tricipiti da sdraiato",
+    "fr": "Extensions triceps allongé"
+  },
+  "Close-Grip Barbell Bench Press": {
+    "it": "Panca piana presa stretta",
+    "fr": "Développé couché prise serrée"
+  },
+  "Close-Grip Dumbbell Press": {
+    "it": "Distensioni con manubri presa stretta",
+    "fr": "Développé haltères prise serrée"
+  },
+  "Dumbbell Floor Press": {
+    "it": "Floor press con manubri",
+    "fr": "Développé au sol aux haltères"
+  },
+  "Dips - Triceps Version": {
+    "it": "Dip alle parallele - versione tricipiti",
+    "fr": "Dips - version triceps"
+  },
+  "Parallel Bar Dip": {
+    "it": "Dip alle parallele",
+    "fr": "Dips aux barres parallèles"
+  },
+  "Bench Dips": {
+    "it": "Dip fra due panche",
+    "fr": "Dips sur banc"
+  },
+  "Cable Rope Overhead Triceps Extension": {
+    "it": "Estensioni tricipiti sopra la testa con corda",
+    "fr": "Extensions triceps au-dessus de la tête à la corde"
+  },
+  "Standing Dumbbell Triceps Extension": {
+    "it": "Estensioni tricipiti con manubrio in piedi",
+    "fr": "Extensions triceps à l'haltère debout"
+  },
+  "Seated Triceps Press": {
+    "it": "Estensioni tricipiti da seduto",
+    "fr": "Extensions triceps assis"
+  },
+  "Tricep Dumbbell Kickback": {
+    "it": "Kickback per tricipiti con manubrio",
+    "fr": "Kickback triceps à l'haltère"
+  },
+  "Machine Triceps Extension": {
+    "it": "Estensioni tricipiti alla macchina",
+    "fr": "Extensions triceps à la machine"
+  },
+  "Barbell Squat": {
+    "it": "Squat con bilanciere",
+    "fr": "Squat à la barre"
+  },
+  "Barbell Full Squat": {
+    "it": "Squat completo con bilanciere",
+    "fr": "Squat complet à la barre"
+  },
+  "Front Barbell Squat": {
+    "it": "Front squat con bilanciere",
+    "fr": "Squat avant à la barre"
+  },
+  "Front Squat (Clean Grip)": {
+    "it": "Front squat con presa da girata",
+    "fr": "Squat avant, prise d'épaulé"
+  },
+  "Goblet Squat": {
+    "it": "Goblet squat",
+    "fr": "Goblet squat"
+  },
+  "Bodyweight Squat": {
+    "it": "Squat a corpo libero",
+    "fr": "Squat au poids du corps"
+  },
+  "Box Squat": {
+    "it": "Box squat",
+    "fr": "Box squat"
+  },
+  "Overhead Squat": {
+    "it": "Overhead squat",
+    "fr": "Squat overhead"
+  },
+  "Hack Squat": {
+    "it": "Hack squat alla macchina",
+    "fr": "Hack squat à la machine"
+  },
+  "Barbell Hack Squat": {
+    "it": "Hack squat con bilanciere",
+    "fr": "Hack squat à la barre"
+  },
+  "Smith Machine Squat": {
+    "it": "Squat al multipower",
+    "fr": "Squat à la Smith machine"
+  },
+  "Leg Press": {
+    "it": "Pressa per gambe",
+    "fr": "Presse à cuisses"
+  },
+  "Narrow Stance Leg Press": {
+    "it": "Pressa a piedi stretti",
+    "fr": "Presse à cuisses, pieds serrés"
+  },
+  "Leg Extensions": {
+    "it": "Leg extension",
+    "fr": "Leg extension"
+  },
+  "Barbell Lunge": {
+    "it": "Affondi con bilanciere",
+    "fr": "Fentes à la barre"
+  },
+  "Barbell Walking Lunge": {
+    "it": "Affondi camminati con bilanciere",
+    "fr": "Fentes marchées à la barre"
+  },
+  "Dumbbell Lunges": {
+    "it": "Affondi con manubri",
+    "fr": "Fentes aux haltères"
+  },
+  "Dumbbell Rear Lunge": {
+    "it": "Affondi indietro con manubri",
+    "fr": "Fentes arrière aux haltères"
+  },
+  "Bodyweight Walking Lunge": {
+    "it": "Affondi camminati a corpo libero",
+    "fr": "Fentes marchées au poids du corps"
+  },
+  "Split Squat with Dumbbells": {
+    "it": "Split squat con manubri",
+    "fr": "Split squat aux haltères"
+  },
+  "Barbell Step Ups": {
+    "it": "Step up con bilanciere",
+    "fr": "Montées sur banc à la barre"
+  },
+  "Dumbbell Step Ups": {
+    "it": "Step up con manubri",
+    "fr": "Montées sur banc aux haltères"
+  },
+  "Trap Bar Deadlift": {
+    "it": "Stacco con trap bar",
+    "fr": "Soulevé de terre à la trap bar"
+  },
+  "Freehand Jump Squat": {
+    "it": "Squat con salto",
+    "fr": "Squat sauté"
+  },
+  "Mountain Climbers": {
+    "it": "Mountain climber",
+    "fr": "Mountain climbers"
+  },
+  "Romanian Deadlift": {
+    "it": "Stacco rumeno",
+    "fr": "Soulevé de terre roumain"
+  },
+  "Stiff-Legged Barbell Deadlift": {
+    "it": "Stacco a gambe tese con bilanciere",
+    "fr": "Soulevé de terre jambes tendues à la barre"
+  },
+  "Stiff-Legged Dumbbell Deadlift": {
+    "it": "Stacco a gambe tese con manubri",
+    "fr": "Soulevé de terre jambes tendues aux haltères"
+  },
+  "Sumo Deadlift": {
+    "it": "Stacco sumo",
+    "fr": "Soulevé de terre sumo"
+  },
+  "Kettlebell One-Legged Deadlift": {
+    "it": "Stacco su una gamba con kettlebell",
+    "fr": "Soulevé de terre unijambiste au kettlebell"
+  },
+  "Good Morning": {
+    "it": "Good morning",
+    "fr": "Good morning"
+  },
+  "Lying Leg Curls": {
+    "it": "Leg curl da sdraiato",
+    "fr": "Leg curl allongé"
+  },
+  "Seated Leg Curl": {
+    "it": "Leg curl da seduto",
+    "fr": "Leg curl assis"
+  },
+  "Standing Leg Curl": {
+    "it": "Leg curl in piedi",
+    "fr": "Leg curl debout"
+  },
+  "Glute Ham Raise": {
+    "it": "Glute ham raise",
+    "fr": "Glute ham raise"
+  },
+  "Barbell Hip Thrust": {
+    "it": "Hip thrust con bilanciere",
+    "fr": "Hip thrust à la barre"
+  },
+  "Barbell Glute Bridge": {
+    "it": "Ponte per glutei con bilanciere",
+    "fr": "Pont fessier à la barre"
+  },
+  "Single Leg Glute Bridge": {
+    "it": "Ponte per glutei su una gamba",
+    "fr": "Pont fessier unijambiste"
+  },
+  "Butt Lift (Bridge)": {
+    "it": "Ponte per glutei a corpo libero",
+    "fr": "Pont fessier au poids du corps"
+  },
+  "Glute Kickback": {
+    "it": "Slanci per glutei a terra",
+    "fr": "Kickback fessiers au sol"
+  },
+  "One-Legged Cable Kickback": {
+    "it": "Slanci per glutei ai cavi",
+    "fr": "Kickback fessiers à la poulie"
+  },
+  "Pull Through": {
+    "it": "Pull through ai cavi",
+    "fr": "Pull through à la poulie"
+  },
+  "Step-up with Knee Raise": {
+    "it": "Step up con richiamo del ginocchio",
+    "fr": "Montée sur banc avec relevé de genou"
+  },
+  "Thigh Adductor": {
+    "it": "Macchina adduttori",
+    "fr": "Machine à adducteurs"
+  },
+  "Thigh Abductor": {
+    "it": "Macchina abduttori",
+    "fr": "Machine à abducteurs"
+  },
+  "Standing Calf Raises": {
+    "it": "Calf in piedi alla macchina",
+    "fr": "Extensions mollets debout à la machine"
+  },
+  "Standing Barbell Calf Raise": {
+    "it": "Calf in piedi con bilanciere",
+    "fr": "Extensions mollets debout à la barre"
+  },
+  "Standing Dumbbell Calf Raise": {
+    "it": "Calf in piedi con manubrio",
+    "fr": "Extensions mollets debout à l'haltère"
+  },
+  "Seated Calf Raise": {
+    "it": "Calf da seduto",
+    "fr": "Extensions mollets assis"
+  },
+  "Calf Press On The Leg Press Machine": {
+    "it": "Calf alla pressa",
+    "fr": "Extensions mollets à la presse"
+  },
+  "Smith Machine Calf Raise": {
+    "it": "Calf al multipower",
+    "fr": "Extensions mollets à la Smith machine"
+  },
+  "Donkey Calf Raises": {
+    "it": "Calf a novanta gradi (donkey)",
+    "fr": "Extensions mollets penché (donkey)"
+  },
+  "Crunches": {
+    "it": "Crunch",
+    "fr": "Crunch"
+  },
+  "Weighted Crunches": {
+    "it": "Crunch con sovraccarico",
+    "fr": "Crunch lesté"
+  },
+  "Decline Crunch": {
+    "it": "Crunch su panca declinata",
+    "fr": "Crunch décliné"
+  },
+  "Reverse Crunch": {
+    "it": "Crunch inverso",
+    "fr": "Crunch inversé"
+  },
+  "Cable Crunch": {
+    "it": "Crunch ai cavi",
+    "fr": "Crunch à la poulie"
+  },
+  "Rope Crunch": {
+    "it": "Crunch ai cavi con corda",
+    "fr": "Crunch à la corde"
+  },
+  "Ab Crunch Machine": {
+    "it": "Crunch alla macchina",
+    "fr": "Crunch à la machine"
+  },
+  "Sit-Up": {
+    "it": "Sit-up",
+    "fr": "Redressement assis (sit-up)"
+  },
+  "Air Bike": {
+    "it": "Bicicletta a terra",
+    "fr": "Bicyclette au sol"
+  },
+  "Dead Bug": {
+    "it": "Dead bug",
+    "fr": "Dead bug"
+  },
+  "Hanging Leg Raise": {
+    "it": "Sollevamento gambe alla sbarra",
+    "fr": "Relevé de jambes suspendu"
+  },
+  "Knee/Hip Raise On Parallel Bars": {
+    "it": "Sollevamento ginocchia alle parallele",
+    "fr": "Relevé de genoux aux barres parallèles"
+  },
+  "Flat Bench Lying Leg Raise": {
+    "it": "Sollevamento gambe su panca piana",
+    "fr": "Relevé de jambes allongé sur banc"
+  },
+  "Plank": {
+    "it": "Plank",
+    "fr": "Planche (gainage)"
+  },
+  "Side Bridge": {
+    "it": "Plank laterale",
+    "fr": "Gainage latéral"
+  },
+  "Russian Twist": {
+    "it": "Russian twist",
+    "fr": "Russian twist"
+  },
+  "Cable Russian Twists": {
+    "it": "Russian twist ai cavi",
+    "fr": "Russian twist à la poulie"
+  },
+  "Standing Cable Wood Chop": {
+    "it": "Wood chop ai cavi in piedi",
+    "fr": "Rotation à la poulie debout (wood chop)"
+  },
+  "Pallof Press": {
+    "it": "Pallof press",
+    "fr": "Pallof press"
+  },
+  "Ab Roller": {
+    "it": "Ruota per addominali",
+    "fr": "Roue abdominale"
+  },
+  "Barbell Ab Rollout - On Knees": {
+    "it": "Rollout con bilanciere in ginocchio",
+    "fr": "Rollout à la barre à genoux"
+  },
+  "Palms-Up Barbell Wrist Curl Over A Bench": {
+    "it": "Curl per polsi con bilanciere, palmi in su",
+    "fr": "Curl poignets à la barre, paumes vers le haut"
+  },
+  "Palms-Down Wrist Curl Over A Bench": {
+    "it": "Curl per polsi con bilanciere, palmi in giù",
+    "fr": "Curl poignets à la barre, paumes vers le bas"
+  },
+  "Cable Wrist Curl": {
+    "it": "Curl per polsi ai cavi",
+    "fr": "Curl poignets à la poulie"
+  },
+  "Wrist Roller": {
+    "it": "Rullo per avambracci",
+    "fr": "Rouleau à poignets"
+  },
+  "Plate Pinch": {
+    "it": "Presa a pinza con dischi",
+    "fr": "Pince avec disques"
+  },
+  "Clean": {
+    "it": "Girata (clean)",
+    "fr": "Épaulé"
+  },
+  "Power Clean": {
+    "it": "Girata in power (power clean)",
+    "fr": "Épaulé de force (power clean)"
+  },
+  "Hang Clean": {
+    "it": "Girata dal sospeso",
+    "fr": "Épaulé depuis suspension"
+  },
+  "Clean and Jerk": {
+    "it": "Slancio (clean and jerk)",
+    "fr": "Épaulé-jeté"
+  },
+  "Snatch": {
+    "it": "Strappo",
+    "fr": "Arraché"
+  },
+  "Power Snatch": {
+    "it": "Strappo in power",
+    "fr": "Arraché de force"
+  },
+  "Running, Treadmill": {
+    "it": "Corsa sul tapis roulant",
+    "fr": "Course sur tapis"
+  },
+  "Jogging, Treadmill": {
+    "it": "Corsa lenta sul tapis roulant",
+    "fr": "Jogging sur tapis"
+  },
+  "Walking, Treadmill": {
+    "it": "Camminata sul tapis roulant",
+    "fr": "Marche sur tapis"
+  },
+  "Bicycling, Stationary": {
+    "it": "Cyclette",
+    "fr": "Vélo d'appartement"
+  },
+  "Rowing, Stationary": {
+    "it": "Vogatore",
+    "fr": "Rameur"
+  },
+  "Elliptical Trainer": {
+    "it": "Ellittica",
+    "fr": "Vélo elliptique"
+  },
+  "Stairmaster": {
+    "it": "Simulatore di scale",
+    "fr": "Simulateur d'escalier"
+  },
+  "Rope Jumping": {
+    "it": "Salto con la corda",
+    "fr": "Corde à sauter"
+  }
+}

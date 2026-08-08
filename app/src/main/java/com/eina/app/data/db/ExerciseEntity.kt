@@ -6,7 +6,11 @@ import androidx.room.PrimaryKey
 @Entity(tableName = "exercises")
 data class ExerciseEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    // Nome inglese del dataset: e' la chiave con cui ExerciseSeeder riconosce l'esercizio
+    // fra un catalogo e l'altro, oltre al fallback quando manca la traduzione.
     val name: String,
+    val nameIt: String? = null,
+    val nameFr: String? = null,
     // Testo originale del dataset, in inglese: e' anche il fallback quando manca la
     // traduzione nella lingua attiva.
     val description: String,

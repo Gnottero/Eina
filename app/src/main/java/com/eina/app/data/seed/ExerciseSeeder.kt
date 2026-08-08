@@ -55,6 +55,8 @@ class ExerciseSeeder(
 
     private fun JSONObject.toExerciseEntity(): ExerciseEntity = ExerciseEntity(
         name = getString("name"),
+        nameIt = optNullableString("nameIt"),
+        nameFr = optNullableString("nameFr"),
         description = getString("description"),
         descriptionIt = optNullableString("descriptionIt"),
         descriptionFr = optNullableString("descriptionFr"),
@@ -84,6 +86,6 @@ class ExerciseSeeder(
         private const val KEY_CATALOG_VERSION = "catalog_version"
 
         /** Da alzare a ogni rigenerazione di exercises.json che cambia i contenuti. */
-        private const val CATALOG_VERSION = 2
+        private const val CATALOG_VERSION = 3
     }
 }

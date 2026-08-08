@@ -3,6 +3,7 @@ package com.eina.app.ui.history
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.eina.app.data.db.CompletedSetRow
+import com.eina.app.data.db.ExerciseName
 import com.eina.app.data.repository.StatsRepository
 import com.eina.app.domain.SessionSummary
 import com.eina.app.domain.currentStreak
@@ -27,7 +28,7 @@ class HistoryViewModel(repository: StatsRepository) : ViewModel() {
 data class SessionExerciseDetail(
     val workoutExerciseId: Long,
     val exerciseId: Long,
-    val exerciseName: String,
+    val exerciseName: ExerciseName,
     val sets: List<CompletedSetRow>
 ) {
     val workingSets: List<CompletedSetRow> get() = sets.filter { !it.isWarmup }

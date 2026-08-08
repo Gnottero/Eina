@@ -26,6 +26,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.eina.app.R
 import com.eina.app.domain.SessionSummary
+import com.eina.app.ui.library.currentLocale
 import com.eina.app.ui.theme.EinaTheme
 import com.eina.app.ui.theme.Spacing
 
@@ -41,6 +42,7 @@ fun SessionSummaryCard(
     onClick: (() -> Unit)? = null
 ) {
     val island = EinaTheme.island
+    val locale = currentLocale()
     val context = LocalContext.current
     IslandCard(
         modifier = modifier.fillMaxWidth(),
@@ -109,7 +111,7 @@ fun SessionSummaryCard(
         if (summary.exerciseNames.isNotEmpty()) {
             // Una riga sola: la card e' un'anteprima, l'elenco completo sta nel dettaglio.
             Text(
-                text = summary.exerciseNames.joinToString(" · "),
+                text = summary.exerciseNames.joinToString(" · ") { it.localized(locale) },
                 style = MaterialTheme.typography.bodyMedium,
                 color = island.textSecondary,
                 maxLines = 1,

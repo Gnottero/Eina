@@ -34,6 +34,7 @@ import com.eina.app.ui.components.formatPrValue
 import com.eina.app.ui.components.formatRelativeDay
 import com.eina.app.ui.components.formatVolume
 import com.eina.app.ui.components.weekDayInitials
+import com.eina.app.ui.library.localized
 import com.eina.app.ui.theme.EinaTheme
 import com.eina.app.ui.theme.Spacing
 import org.koin.androidx.compose.koinViewModel
@@ -168,7 +169,7 @@ private fun PrRow(record: PrRecord) {
             horizontalArrangement = Arrangement.spacedBy(Spacing.md)
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text(record.exerciseName, style = MaterialTheme.typography.titleSmall)
+                Text(record.exerciseName.localized(), style = MaterialTheme.typography.titleSmall)
                 Text(
                     text = context.formatRelativeDay(record.achievedAt),
                     style = MaterialTheme.typography.bodySmall,

@@ -16,7 +16,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         SetEntryEntity::class,
         BodyMetricEntity::class
     ],
-    version = 3,
+    version = 4,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -53,6 +53,17 @@ abstract class EinaDatabase : RoomDatabase() {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE exercises ADD COLUMN descriptionIt TEXT")
                 db.execSQL("ALTER TABLE exercises ADD COLUMN descriptionFr TEXT")
+            }
+        }
+
+        /**
+         * Nomi tradotti, stessa storia delle descrizioni: colonne vuote alla migrazione,
+         * le riempie ExerciseSeeder al primo avvio successivo.
+         */
+        val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE exercises ADD COLUMN nameIt TEXT")
+                db.execSQL("ALTER TABLE exercises ADD COLUMN nameFr TEXT")
             }
         }
     }

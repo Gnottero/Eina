@@ -5,7 +5,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 import com.eina.app.R
 import com.eina.app.data.db.ExerciseEntity
+import com.eina.app.data.db.ExerciseName
 import com.eina.app.data.db.WeightType
+import com.eina.app.data.db.exerciseName
 import java.util.Locale
 
 /**
@@ -87,6 +89,17 @@ fun Context.equipmentLabel(equipment: String): String =
 @Composable
 fun equipmentLabel(equipment: String): String = LocalContext.current.equipmentLabel(equipment)
 
+/** Locale con cui la UI sta disegnando: cambia con la lingua scelta in Impostazioni. */
+@Composable
+fun currentLocale(): Locale = LocalContext.current.resources.configuration.locales[0]
+
+/** Nome dell'esercizio nella lingua attiva, con l'inglese come fallback. */
+@Composable
+fun ExerciseName.localized(): String = localized(currentLocale())
+
+@Composable
+fun ExerciseEntity.localizedName(): String = exerciseName().localized(currentLocale())
+
 /**
  * Descrizione nella lingua attiva, con l'inglese come rete di sicurezza: il catalogo e'
  * tradotto ma un esercizio custom, o uno tradotto solo a meta', non deve restare muto.
@@ -98,8 +111,7 @@ fun ExerciseEntity.localizedDescription(locale: Locale): String = when (locale.l
 }?.takeIf { it.isNotBlank() } ?: description
 
 @Composable
-fun ExerciseEntity.localizedDescription(): String =
-    localizedDescription(LocalContext.current.resources.configuration.locales[0])
+fun ExerciseEntity.localizedDescription(): String = localizedDescription(currentLocale())
 
 /**
  * Come registrare l'esercizio: la nota scritta a mano su un esercizio custom vince, gli
