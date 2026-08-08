@@ -389,6 +389,21 @@ lingue; selettore lingua in Impostazioni su FlowRow, senza scorrimento laterale;
 condivisione con una sola immagine e interruttore "Sfondo trasparente" al posto delle due
 varianti "Tessera"/"Statistiche".
 
+**Fase 18 — Carichi coerenti, animazioni, scambio routine** *(fatta)*
+DoD: niente campo kg dove non c'è un carico da digitare (`WeightType.usesWeight`: BODYWEIGHT e
+TIME_BASED), in tabella serie e nei target di routine, con la colonna "precedente" ridotta alle
+sole ripetizioni e nessun peso proposto alla chiusura della serie; per gli esercizi a tempo la
+colonna ripetizioni si chiama "sec"; fine allenamento con foglio di conferma che permette di
+correggere data (oggi/ieri/calendario, cambia il giorno e non l'ora) e durata (rulli ore/minuti),
+scritte su `startTime`/`endTime` della sessione; animazione dell'esercizio a due fotogrammi in
+dissolvenza in stile Hevy (`ui/components/ExerciseAnimation.kt`, WebP bundlati, miniatura anche
+in libreria) e schema anatomico fronte/retro per regione muscolare al posto dei rettangoli
+(`ui/components/BodyDiagram.kt`); badge dei muscoli in FlowRow, non più tagliati sugli esercizi
+con molti secondari; esportazione e importazione routine come file JSON
+(`data/transfer/RoutineTransfer.kt`, formato `eina.routine` v1) — esporta dal foglio del tocco
+lungo sulla routine, importa dall'icona in "Allena"; gli esercizi si riagganciano per nome
+inglese e quelli sconosciuti diventano custom.
+
 **Fase 9 — Rifinitura** *(fatta)*
 DoD: R8 + shrinkResources attivi sulla release (20,5 MB → 2,2 MB), regole in
 `app/proguard-rules.pro`; release firmata con la chiave di debug finché non esiste un
@@ -413,7 +428,12 @@ seed fallito non abbatte l'avvio).
   `app/src/main/assets/seed/exercises.json` basta rilanciare lo script; se cambiano i
   contenuti, alza `CATALOG_VERSION` in `ExerciseSeeder`.
 - [x] Icona app → **fatta**: marchio Eina (tessera arancio + tre barre bianche) come adaptive icon in `res/drawable/ic_launcher_foreground.xml`, stesso segno disegnato in `ui/share/ShareCard.kt`
-- [ ] **Decisione sulle immagini esercizio**: ogni esercizio ha in media 2 frame JPG da ~38KB l'uno → bundlare tutte le immagini di libreria (~1700 file) costerebbe ~65-70MB di APK, in conflitto col principio "leggera". Opzioni da decidere prima della Fase 3: (a) bundlare solo la prima immagine per esercizio (~33MB), (b) bundlare un sottoinsieme curato (es. i 150-200 esercizi più comuni) e usare Play Asset Delivery per il resto, (c) ricomprimere/ridimensionare le immagini prima del bundling. Lo script di conversione salva comunque tutti i path in `mediaFrames` per ogni esercizio, così qualunque opzione si scelga i dati sono già pronti.
+- [x] **Decisione sulle immagini esercizio** (presa in Fase 18): opzione (b)+(c). Si bundlano
+  entrambi i fotogrammi dei soli 197 esercizi del catalogo curato, ricompressi in WebP a 480px
+  q70 da `tools/fetch_exercise_media.py` → `app/src/main/assets/media/<cartella>/{0,1}.webp`,
+  394 file per 5,6 MB (APK di release da 2,2 a 8,2 MB). Niente Play Asset Delivery: il catalogo
+  è chiuso e il costo è accettabile. Rilancia lo script solo se cambia il catalogo (salta i file
+  già presenti) e alza `CATALOG_VERSION` in `ExerciseSeeder`.
 
 ---
 

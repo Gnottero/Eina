@@ -85,9 +85,23 @@ class WorkoutRepository(
         return sessionId
     }
 
-    suspend fun finishSession(sessionId: Long) {
+    /**
+     * Chiude la sessione. `startTime` ed `endTime` arrivano dalla conferma di fine allenamento,
+     * dove sono correggibili: un allenamento fatto ieri va nello storico di ieri.
+     */
+    suspend fun finishSession(
+        sessionId: Long,
+        startTime: Long? = null,
+        endTime: Long? = null
+    ) {
         val session = workoutSessionDao.getById(sessionId) ?: return
-        workoutSessionDao.update(session.copy(endTime = System.currentTimeMillis()))
+        val start = startTime ?: session.startTime
+        workoutSessionDao.update(
+            session.copy(
+                startTime = start,
+                endTime = endTime ?: System.currentTimeMillis()
+            )
+        )
     }
 
     /**

@@ -111,6 +111,7 @@
     <string name="action_save_routine">Save routine</string>
     <string name="field_sets">Sets</string>
     <string name="field_reps">Reps</string>
+    <string name="field_seconds">Sec</string>
     <string name="field_kg">Kg</string>
     <string name="rest_label">Rest %1$s</string>
     <string name="note_add">Add note</string>
@@ -156,6 +157,7 @@
     <string name="table_previous">Prev.</string>
     <string name="table_kg">Kg</string>
     <string name="table_reps">Reps</string>
+    <string name="table_seconds">Sec</string>
 
     <!-- Timer di recupero -->
     <string name="timer_rest">Rest</string>
@@ -358,4 +360,19 @@
     <string name="share_copied">Image copied to the clipboard</string>
     <string name="share_permission_needed">Allow access to your photos to save the overlay</string>
     <string name="share_instagram_missing">Instagram is not installed</string>
+    <string name="body_diagram_front">Front</string>
+    <string name="body_diagram_back">Back</string>
+    <string name="exercise_animation_cd">Exercise movement</string>
+    <string name="wheel_hour">h</string>
+    <string name="finish_date">Date</string>
+    <string name="finish_date_today">Today</string>
+    <string name="finish_date_yesterday">Yesterday</string>
+    <string name="finish_date_pick">Another date</string>
+    <string name="finish_duration">Duration</string>
+    <string name="routine_export">Export routine</string>
+    <string name="routine_export_description">Save it as a file to send to someone</string>
+    <string name="routine_export_failed">Could not export the routine</string>
+    <string name="routine_import">Import routine</string>
+    <string name="routine_import_done">Routine imported</string>
+    <string name="routine_import_failed">This file is not an Eina routine</string>
 </resources>

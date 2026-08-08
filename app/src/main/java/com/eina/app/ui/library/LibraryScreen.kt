@@ -30,7 +30,13 @@ import com.eina.app.R
 import com.eina.app.data.db.ExerciseEntity
 import com.eina.app.data.db.exerciseName
 import com.eina.app.ui.components.EinaBadge
+import androidx.compose.foundation.background
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import coil.compose.AsyncImage
 import com.eina.app.ui.components.IslandCard
+import com.eina.app.ui.components.hasExerciseMedia
+import com.eina.app.ui.theme.TileShape
 import com.eina.app.ui.components.IslandChip
 import com.eina.app.ui.components.IslandEmptyState
 import com.eina.app.ui.components.IslandIconButton
@@ -144,6 +150,18 @@ private fun ExerciseListItem(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(Spacing.md)
         ) {
+            // Miniatura del primo fotogramma: si riconosce il movimento senza aprire la scheda.
+            if (hasExerciseMedia(exercise.mediaUri)) {
+                AsyncImage(
+                    model = exercise.mediaUri,
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .size(52.dp)
+                        .clip(TileShape)
+                        .background(EinaTheme.island.sunken)
+                )
+            }
             androidx.compose.foundation.layout.Column(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(Spacing.sm)

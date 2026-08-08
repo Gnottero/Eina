@@ -9,6 +9,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ListAlt
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.EditNote
+import androidx.compose.material.icons.outlined.IosShare
 import androidx.compose.material.icons.outlined.PlayArrow
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
@@ -20,9 +21,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import android.widget.Toast
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -74,6 +77,7 @@ fun RoutineListScreen(
                     onStart = { viewModel.startSession(card.routine.id, onStartSession) },
                     onEdit = { onEditRoutine(card.routine.id) },
                     onDelete = { viewModel.deleteRoutine(card.routine) },
+                    onExport = { onExported -> viewModel.exportRoutine(card.routine.id, onExported) },
                     startEnabled = !startBlocked
                 )
             }
@@ -92,14 +96,17 @@ private fun RoutineRow(
     onStart: () -> Unit,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
+    onExport: ((String?) -> Unit) -> Unit,
     startEnabled: Boolean
 ) {
+    val context = LocalContext.current
     val island = EinaTheme.island
     val locale = currentLocale()
     val routine: RoutineEntity = card.routine
     val name = routine.name.ifBlank { stringResource(R.string.routine_unnamed) }
     var actionsOpen by remember { mutableStateOf(false) }
     var confirmDelete by remember { mutableStateOf(false) }
+    val exportFailed = stringResource(R.string.routine_export_failed)
 
     IslandCard(
         modifier = Modifier.fillMaxWidth(),
@@ -172,6 +179,23 @@ private fun RoutineRow(
                 icon = Icons.Outlined.EditNote,
                 label = stringResource(R.string.routine_edit),
                 onClick = { actionsOpen = false; onEdit() }
+            )
+            // Esportare serve a chi la scheda la scrive per qualcun altro: il file va dove
+            // vuole l'utente (messaggio, mail, file), non su un servizio nostro.
+            SheetActionRow(
+                icon = Icons.Outlined.IosShare,
+                label = stringResource(R.string.routine_export),
+                description = stringResource(R.string.routine_export_description),
+                onClick = {
+                    actionsOpen = false
+                    onExport { json ->
+                        if (json == null) {
+                            Toast.makeText(context, exportFailed, Toast.LENGTH_SHORT).show()
+                        } else {
+                            shareRoutineFile(context, routineFileName(name), json)
+                        }
+                    }
+                }
             )
             SheetActionRow(
                 icon = Icons.Outlined.Delete,

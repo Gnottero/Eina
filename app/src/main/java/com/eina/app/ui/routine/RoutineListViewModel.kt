@@ -49,4 +49,14 @@ class RoutineListViewModel(
     fun deleteRoutine(routine: RoutineEntity) {
         viewModelScope.launch { routineRepository.deleteRoutine(routine) }
     }
+
+    /** Prepara il file di scambio della routine e lo passa al chiamante, che apre il chooser. */
+    fun exportRoutine(routineId: Long, onReady: (String?) -> Unit) {
+        viewModelScope.launch { onReady(routineRepository.exportRoutine(routineId)) }
+    }
+
+    /** Importa una routine da un file di scambio. `onDone` riceve false se il file non e' valido. */
+    fun importRoutine(json: String, onDone: (Boolean) -> Unit) {
+        viewModelScope.launch { onDone(routineRepository.importRoutine(json) != null) }
+    }
 }

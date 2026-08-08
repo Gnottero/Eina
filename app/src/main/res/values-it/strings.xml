@@ -103,6 +103,7 @@
     <string name="action_save_routine">Salva routine</string>
     <string name="field_sets">Serie</string>
     <string name="field_reps">Rip.</string>
+    <string name="field_seconds">Sec</string>
     <string name="field_kg">Kg</string>
     <string name="rest_label">Recupero %1$s</string>
     <string name="note_add">Aggiungi nota</string>
@@ -146,6 +147,7 @@
     <string name="table_previous">Prec.</string>
     <string name="table_kg">Kg</string>
     <string name="table_reps">Rip</string>
+    <string name="table_seconds">Sec</string>
 
     <!-- Timer di recupero -->
     <string name="timer_rest">Recupero</string>
@@ -341,4 +343,19 @@
     <string name="share_copied">Immagine copiata negli appunti</string>
     <string name="share_permission_needed">Serve l\'accesso alle foto per salvare l\'overlay</string>
     <string name="share_instagram_missing">Instagram non è installato</string>
+    <string name="body_diagram_front">Fronte</string>
+    <string name="body_diagram_back">Retro</string>
+    <string name="exercise_animation_cd">Movimento dell\'esercizio</string>
+    <string name="wheel_hour">h</string>
+    <string name="finish_date">Data</string>
+    <string name="finish_date_today">Oggi</string>
+    <string name="finish_date_yesterday">Ieri</string>
+    <string name="finish_date_pick">Un\'altra data</string>
+    <string name="finish_duration">Durata</string>
+    <string name="routine_export">Esporta routine</string>
+    <string name="routine_export_description">La salva come file da mandare a qualcuno</string>
+    <string name="routine_export_failed">Non è stato possibile esportare la routine</string>
+    <string name="routine_import">Importa routine</string>
+    <string name="routine_import_done">Routine importata</string>
+    <string name="routine_import_failed">Questo file non è una routine Eina</string>
 </resources>

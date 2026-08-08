@@ -38,6 +38,9 @@ import androidx.compose.ui.unit.dp
 import com.eina.app.R
 import com.eina.app.data.db.PlaylistType
 import com.eina.app.data.db.RoutineExerciseEntity
+import com.eina.app.data.db.WeightType
+import com.eina.app.data.db.usesDuration
+import com.eina.app.data.db.usesWeight
 import com.eina.app.ui.components.IslandBottomSheet
 import com.eina.app.ui.components.IslandButton
 import com.eina.app.ui.components.IslandCard
@@ -53,7 +56,7 @@ import com.eina.app.ui.components.SheetActionRow
 import com.eina.app.ui.components.formatClock
 import com.eina.app.ui.components.sanitizeWeightInput
 import com.eina.app.ui.feedback.LocalHapticTap
-import com.eina.app.ui.library.localized
+import com.eina.app.ui.library.localizedName
 import com.eina.app.ui.theme.EinaTheme
 import com.eina.app.ui.theme.PillShape
 import com.eina.app.ui.theme.Spacing
@@ -72,7 +75,7 @@ fun RoutineEditorScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val routineExercises by viewModel.routineExercises.collectAsState()
-    val exerciseNames by viewModel.exerciseNames.collectAsState()
+    val exercises by viewModel.exercises.collectAsState()
 
     LaunchedEffect(pickedExerciseId) {
         if (pickedExerciseId != null) {
@@ -139,7 +142,8 @@ fun RoutineEditorScreen(
             routineExercises.forEach { routineExercise ->
                 RoutineExerciseRow(
                     routineExercise = routineExercise,
-                    exerciseName = exerciseNames[routineExercise.exerciseId]?.localized() ?: "…",
+                    exerciseName = exercises[routineExercise.exerciseId]?.localizedName() ?: "…",
+                    weightType = exercises[routineExercise.exerciseId]?.weightType ?: WeightType.FREE_WEIGHT,
                     onUpdate = { sets, reps, weight, rest ->
                         viewModel.updateTargets(routineExercise, sets, reps, weight, rest)
                     },
@@ -169,6 +173,7 @@ fun RoutineEditorScreen(
 private fun RoutineExerciseRow(
     routineExercise: RoutineExerciseEntity,
     exerciseName: String,
+    weightType: WeightType,
     onUpdate: (Int, Int, Double?, Int) -> Unit,
     onNotesChange: (String?) -> Unit,
     onRemove: () -> Unit
@@ -214,17 +219,21 @@ private fun RoutineExerciseRow(
             IslandNumberField(
                 value = reps,
                 onValueChange = { reps = it; commit() },
-                label = stringResource(R.string.field_reps),
+                label = stringResource(if (weightType.usesDuration) R.string.field_seconds else R.string.field_reps),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier.weight(1f)
             )
-            IslandNumberField(
-                value = weight,
-                onValueChange = { weight = sanitizeWeightInput(weight, it); commit() },
-                label = stringResource(R.string.field_kg),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                modifier = Modifier.weight(1f)
-            )
+            // Nessun carico da pianificare a corpo libero o a tempo: il campo sparisce come
+            // nella tabella dell'allenamento.
+            if (weightType.usesWeight) {
+                IslandNumberField(
+                    value = weight,
+                    onValueChange = { weight = sanitizeWeightInput(weight, it); commit() },
+                    label = stringResource(R.string.field_kg),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    modifier = Modifier.weight(1f)
+                )
+            }
         }
 
         // Il recupero non e' un numero da digitare: si sceglie coi rulli, come una sveglia.

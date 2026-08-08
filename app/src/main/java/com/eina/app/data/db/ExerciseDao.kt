@@ -31,6 +31,10 @@ interface ExerciseDao {
     @Query("SELECT * FROM exercises WHERE id = :id")
     suspend fun getById(id: Long): ExerciseEntity?
 
+    /** Ricerca per nome inglese: e' la chiave con cui viaggiano le routine esportate. */
+    @Query("SELECT * FROM exercises WHERE name = :name LIMIT 1")
+    suspend fun getByName(name: String): ExerciseEntity?
+
     @Query("SELECT COUNT(*) FROM exercises")
     suspend fun getCount(): Int
 

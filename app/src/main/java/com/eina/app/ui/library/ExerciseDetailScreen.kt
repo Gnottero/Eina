@@ -3,7 +3,8 @@ package com.eina.app.ui.library
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.MaterialTheme
@@ -17,6 +18,8 @@ import androidx.compose.ui.res.stringResource
 import com.eina.app.R
 import com.eina.app.ui.components.BodyDiagram
 import com.eina.app.ui.components.EinaBadge
+import com.eina.app.ui.components.ExerciseAnimation
+import com.eina.app.ui.components.hasExerciseMedia
 import com.eina.app.ui.components.IslandCard
 import com.eina.app.ui.components.IslandScreen
 import com.eina.app.ui.components.ScreenHeader
@@ -26,6 +29,7 @@ import com.eina.app.ui.theme.categoryFor
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ExerciseDetailScreen(
     exerciseId: Long,
@@ -58,19 +62,35 @@ fun ExerciseDetailScreen(
         },
         verticalArrangement = Arrangement.spacedBy(Spacing.md)
     ) {
+        if (hasExerciseMedia(current.mediaUri)) {
+            IslandCard(modifier = Modifier.fillMaxWidth()) {
+                ExerciseAnimation(mediaUri = current.mediaUri, modifier = Modifier.fillMaxWidth())
+            }
+        }
+
         IslandCard(modifier = Modifier.fillMaxWidth()) {
             BodyDiagram(
                 muscleGroupsPrimary = current.muscleGroupsPrimary,
                 muscleGroupsSecondary = current.muscleGroupsSecondary,
                 modifier = Modifier.fillMaxWidth()
             )
-            Row(horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+            // FlowRow e non Row: esercizi come "Girata (clean)" hanno cinque muscoli secondari
+            // e su una riga sola l'ultimo finiva tagliato fuori dallo schermo.
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(Spacing.xs),
+                verticalArrangement = Arrangement.spacedBy(Spacing.xs),
+                modifier = Modifier.fillMaxWidth()
+            ) {
                 current.muscleGroupsPrimary.forEach { muscle ->
                     EinaBadge(text = muscleLabel(muscle), color = categoryFor(muscle).color, filled = true)
                 }
             }
             if (current.muscleGroupsSecondary.isNotEmpty()) {
-                Row(horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.xs),
+                    verticalArrangement = Arrangement.spacedBy(Spacing.xs),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
                     current.muscleGroupsSecondary.forEach { muscle ->
                         EinaBadge(text = muscleLabel(muscle), color = categoryFor(muscle).color)
                     }

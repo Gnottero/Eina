@@ -5,8 +5,10 @@ import androidx.lifecycle.viewModelScope
 import com.eina.app.data.db.ExerciseEntity
 import com.eina.app.data.db.RoutineExerciseEntity
 import com.eina.app.data.db.SetEntryEntity
+import com.eina.app.data.db.WeightType
 import com.eina.app.data.db.WorkoutExerciseEntity
 import com.eina.app.data.db.exerciseName
+import com.eina.app.data.db.usesWeight
 import com.eina.app.data.repository.WorkoutRepository
 import com.eina.app.domain.volumeForSet
 import com.eina.app.ui.components.MAX_WEIGHT_KG
@@ -84,7 +86,8 @@ class ActiveWorkoutViewModel(
         val sets = withSuggestions(
             repository.getSetsForWorkoutExercise(workoutExercise.id).map { it.toUi(exercise.id, lastTimeSets) },
             lastWeight,
-            lastReps
+            lastReps,
+            exercise.weightType
         )
         val exerciseUi = SessionExerciseUi(
             workoutExerciseId = workoutExercise.id,
@@ -114,7 +117,8 @@ class ActiveWorkoutViewModel(
             repository.getSetsForWorkoutExercise(workoutExerciseId)
                 .map { it.toUi(exercise.exerciseId, exercise.lastTimeSets) },
             exercise.lastRecordedWeight,
-            exercise.lastRecordedReps
+            exercise.lastRecordedReps,
+            exercise.weightType
         )
         _uiState.update { state ->
             state.copy(
@@ -160,12 +164,16 @@ class ActiveWorkoutViewModel(
     private fun withSuggestions(
         sets: List<SessionSetUi>,
         fallbackWeight: Double?,
-        fallbackReps: Int?
+        fallbackReps: Int?,
+        weightType: WeightType
     ): List<SessionSetUi> {
-        var lastWeight: Double? = fallbackWeight
+        var lastWeight: Double? = if (weightType.usesWeight) fallbackWeight else null
         var lastReps: Int? = fallbackReps
         return sets.map { set ->
-            val suggestedWeight = set.previous?.weight ?: set.targetWeight ?: lastWeight
+            // Senza campo kg in tabella non si propone nemmeno un carico: completare la serie
+            // scriverebbe un peso che l'utente non ha mai visto ne' potuto correggere.
+            val suggestedWeight = if (!weightType.usesWeight) null
+            else set.previous?.weight ?: set.targetWeight ?: lastWeight
             val suggestedReps = set.previous?.actualReps ?: set.targetReps ?: lastReps
             lastWeight = set.weight ?: suggestedWeight ?: lastWeight
             lastReps = set.actualReps ?: suggestedReps ?: lastReps
@@ -286,7 +294,8 @@ class ActiveWorkoutViewModel(
                         sets = withSuggestions(
                             ex.sets.map { if (it.id == setId) updated else it },
                             ex.lastRecordedWeight,
-                            ex.lastRecordedReps
+                            ex.lastRecordedReps,
+                            ex.weightType
                         )
                     )
                 }
@@ -359,10 +368,19 @@ class ActiveWorkoutViewModel(
         _uiState.update { it.copy(timer = null) }
     }
 
-    fun finishWorkout(onFinished: () -> Unit) {
+    /**
+     * Chiude la sessione con la data e la durata confermate a fine allenamento: la fine si
+     * ricalcola dall'inizio scelto, cosi' storico e statistiche vedono l'allenamento nel giorno
+     * in cui e' stato fatto davvero.
+     */
+    fun finishWorkout(startTime: Long, durationSeconds: Int, onFinished: () -> Unit) {
         viewModelScope.launch {
             skipTimer()
-            repository.finishSession(sessionId)
+            repository.finishSession(
+                sessionId = sessionId,
+                startTime = startTime,
+                endTime = startTime + durationSeconds.coerceAtLeast(0) * 1000L
+            )
             _uiState.update { it.copy(isFinished = true) }
             onFinished()
         }

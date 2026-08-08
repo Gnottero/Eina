@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Bolt
+import androidx.compose.material.icons.outlined.FileDownload
 import androidx.compose.material.icons.outlined.PlayArrow
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -16,8 +17,13 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import com.eina.app.R
+import com.eina.app.data.transfer.RoutineTransfer
 import com.eina.app.ui.components.IslandButton
 import com.eina.app.ui.components.IslandCard
 import com.eina.app.ui.components.IslandIconButton
@@ -25,6 +31,8 @@ import com.eina.app.ui.components.IslandScreen
 import com.eina.app.ui.components.ScreenHeader
 import com.eina.app.ui.components.SectionHeader
 import com.eina.app.ui.routine.RoutineListScreen
+import com.eina.app.ui.routine.RoutineListViewModel
+import com.eina.app.ui.routine.readRoutineFile
 import com.eina.app.ui.theme.EinaTheme
 import com.eina.app.ui.theme.Spacing
 import kotlinx.coroutines.delay
@@ -38,7 +46,24 @@ fun WorkoutScreen(
     viewModel: WorkoutViewModel = koinViewModel()
 ) {
     val island = EinaTheme.island
+    val context = LocalContext.current
     val activeSession by viewModel.activeSession.collectAsState()
+    val routineListViewModel: RoutineListViewModel = koinViewModel()
+    val importDone = stringResource(R.string.routine_import_done)
+    val importFailed = stringResource(R.string.routine_import_failed)
+
+    // Selettore di sistema: la routine arriva come file, quindi non serve nessun permesso
+    // sullo storage ne' un formato proprietario.
+    val importPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        val json = uri?.let { readRoutineFile(context, it) }
+        if (json == null) {
+            if (uri != null) Toast.makeText(context, importFailed, Toast.LENGTH_SHORT).show()
+            return@rememberLauncherForActivityResult
+        }
+        routineListViewModel.importRoutine(json) { imported ->
+            Toast.makeText(context, if (imported) importDone else importFailed, Toast.LENGTH_SHORT).show()
+        }
+    }
 
     IslandScreen(
         header = {
@@ -46,6 +71,15 @@ fun WorkoutScreen(
                 title = stringResource(R.string.workout_title),
                 subtitle = stringResource(R.string.workout_subtitle),
                 trailing = {
+                    // Importare una scheda e' l'altra faccia dell'esportazione: sta accanto al
+                    // "+", perche' e' l'altro modo di farsi entrare una routine in casa.
+                    IslandIconButton(
+                        icon = Icons.Outlined.FileDownload,
+                        contentDescription = stringResource(R.string.routine_import),
+                        onClick = { importPicker.launch(arrayOf(RoutineTransfer.MIME_TYPE, "*/*")) },
+                        containerColor = EinaTheme.island.sunken,
+                        contentColor = EinaTheme.island.textSecondary
+                    )
                     IslandIconButton(
                         icon = Icons.Outlined.Add,
                         contentDescription = stringResource(R.string.workout_new_routine),

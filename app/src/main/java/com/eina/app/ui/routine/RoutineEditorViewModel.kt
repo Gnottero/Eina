@@ -4,11 +4,10 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.eina.app.R
-import com.eina.app.data.db.ExerciseName
+import com.eina.app.data.db.ExerciseEntity
 import com.eina.app.data.db.PlaylistType
 import com.eina.app.data.db.RoutineEntity
 import com.eina.app.data.db.RoutineExerciseEntity
-import com.eina.app.data.db.exerciseName
 import com.eina.app.data.repository.RoutineRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -43,13 +42,12 @@ class RoutineEditorViewModel(
         .flatMapLatest { id -> if (id == 0L) flowOf(emptyList()) else repository.observeRoutineExercises(id) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    val exerciseNames: StateFlow<Map<Long, ExerciseName>> = routineExercises
+    /** Esercizi referenziati dalla routine: servono nome tradotto e tipo di carico (campo kg). */
+    val exercises: StateFlow<Map<Long, ExerciseEntity>> = routineExercises
         .map { list ->
-            list.associate { routineExercise ->
-                routineExercise.exerciseId to
-                    (repository.getExercise(routineExercise.exerciseId)?.exerciseName()
-                        ?: ExerciseName("?"))
-            }
+            list.mapNotNull { routineExercise ->
+                repository.getExercise(routineExercise.exerciseId)?.let { routineExercise.exerciseId to it }
+            }.toMap()
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
 

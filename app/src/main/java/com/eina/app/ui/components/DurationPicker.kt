@@ -99,6 +99,56 @@ fun DurationWheelPicker(
 }
 
 /**
+ * Rulli ore/minuti, per la durata di un allenamento intero: [DurationWheelPicker] arriva a dieci
+ * minuti e conta i secondi, qui servono le ore e il minuto esatto.
+ */
+@Composable
+fun HourMinuteWheelPicker(
+    seconds: Int,
+    onSecondsChange: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+    maxHours: Int = 12
+) {
+    val island = EinaTheme.island
+    val hourValues = remember(maxHours) { (0..maxHours).toList() }
+    val minuteValues = remember { (0..59).toList() }
+
+    var hours by remember { mutableIntStateOf((seconds / 3600).coerceIn(0, maxHours)) }
+    var minutes by remember { mutableIntStateOf((seconds % 3600) / 60) }
+
+    Box(modifier = modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(ITEM_HEIGHT)
+                .clip(TileShape)
+                .background(island.sunken)
+        )
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            WheelColumn(
+                values = hourValues,
+                selected = hours,
+                onSelected = { hours = it; onSecondsChange(it * 3600 + minutes * 60) },
+                modifier = Modifier.width(84.dp)
+            )
+            WheelLabel(stringResource(R.string.wheel_hour))
+            WheelColumn(
+                values = minuteValues,
+                selected = minutes,
+                onSelected = { minutes = it; onSecondsChange(hours * 3600 + it * 60) },
+                modifier = Modifier.width(84.dp)
+            )
+            WheelLabel(stringResource(R.string.wheel_min))
+        }
+    }
+}
+
+/**
  * Foglio del tempo di recupero, unico per routine e allenamento in corso: rulli stile sveglia e
  * una conferma. Il valore si applica solo su "Fatto", perche' scorrendo si passa per decine di
  * valori intermedi che non vanno scritti nel database uno per uno.

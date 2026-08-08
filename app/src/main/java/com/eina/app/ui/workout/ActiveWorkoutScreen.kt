@@ -64,8 +64,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.eina.app.R
 import com.eina.app.data.db.ExerciseEntity
 import com.eina.app.data.db.PlaylistType
+import com.eina.app.data.db.WeightType
 import com.eina.app.data.db.exerciseName
 import com.eina.app.data.db.matchesQuery
+import com.eina.app.data.db.usesDuration
+import com.eina.app.data.db.usesWeight
 import com.eina.app.ui.components.BottomTimerBar
 import com.eina.app.ui.components.DestructiveRed
 import com.eina.app.ui.components.IslandBottomSheet
@@ -286,22 +289,15 @@ fun ActiveWorkoutScreen(
     }
 
     if (confirmFinish) {
-        // "Termina" e' l'unico modo di chiudere una sessione: si conferma perche' e' irreversibile.
-        AlertDialog(
-            onDismissRequest = { confirmFinish = false },
-            shape = IslandShape,
-            containerColor = MaterialTheme.colorScheme.surface,
-            title = { Text(stringResource(R.string.active_finish_confirm_title), style = MaterialTheme.typography.titleLarge) },
-            text = { Text(stringResource(R.string.active_finish_confirm_text)) },
-            confirmButton = {
-                HapticTextButton(text = stringResource(R.string.active_finish_confirm_action), onClick = {
-                    confirmFinish = false
-                    viewModel.finishWorkout(onFinished)
-                })
+        // "Termina" e' l'unico modo di chiudere una sessione: si conferma perche' e' irreversibile,
+        // e nella conferma si correggono data e durata prima di scriverle nello storico.
+        FinishWorkoutSheet(
+            startTime = state.startTime,
+            elapsedSeconds = state.elapsedSeconds,
+            onConfirm = { startTime, duration ->
+                viewModel.finishWorkout(startTime, duration, onFinished)
             },
-            dismissButton = {
-                HapticTextButton(text = stringResource(R.string.action_continue), onClick = { confirmFinish = false })
-            }
+            onDismiss = { confirmFinish = false }
         )
     }
 
@@ -592,10 +588,11 @@ private fun ExerciseCard(
         }
 
         Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
-            SetTableHeader()
+            SetTableHeader(weightType = exercise.weightType)
             exercise.sets.forEach { set ->
                 SetRow(
                     set = set,
+                    weightType = exercise.weightType,
                     onValuesChange = { reps, weight -> onSetValuesChange(set.id, reps, weight) },
                     onToggle = { onToggleSet(set.id, set.completedAt != null) },
                     onLongClick = { onOpenSetActions(set.id) }
@@ -622,7 +619,7 @@ private fun ExerciseCard(
 }
 
 @Composable
-private fun SetTableHeader() {
+private fun SetTableHeader(weightType: WeightType) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
@@ -630,8 +627,14 @@ private fun SetTableHeader() {
     ) {
         TableLabel(stringResource(R.string.table_set), Modifier.width(40.dp))
         TableLabel(stringResource(R.string.table_previous), Modifier.weight(1.1f))
-        TableLabel(stringResource(R.string.table_kg), Modifier.weight(1f))
-        TableLabel(stringResource(R.string.table_reps), Modifier.weight(1f))
+        // Senza carico da digitare la colonna kg non compare: lo spazio va alle ripetizioni.
+        if (weightType.usesWeight) {
+            TableLabel(stringResource(R.string.table_kg), Modifier.weight(1f))
+        }
+        TableLabel(
+            stringResource(if (weightType.usesDuration) R.string.table_seconds else R.string.table_reps),
+            Modifier.weight(1f)
+        )
         Box(Modifier.size(42.dp))
     }
 }
@@ -652,6 +655,7 @@ private fun TableLabel(text: String, modifier: Modifier = Modifier) {
 @Composable
 private fun SetRow(
     set: SessionSetUi,
+    weightType: WeightType,
     onValuesChange: (Int?, Double?) -> Unit,
     onToggle: () -> Unit,
     onLongClick: () -> Unit
@@ -698,7 +702,7 @@ private fun SetRow(
         }
 
         Text(
-            text = set.previous?.let { formatPrevious(it) } ?: "—",
+            text = set.previous?.let { formatPrevious(it, weightType) } ?: "—",
             style = MaterialTheme.typography.bodyMedium,
             color = island.textSecondary,
             textAlign = TextAlign.Center,
@@ -708,16 +712,18 @@ private fun SetRow(
 
         // Segnaposto = valori proposti dal ViewModel, gli stessi che vengono registrati se la
         // serie viene chiusa senza digitare nulla.
-        SetValueField(
-            value = weightText,
-            placeholder = set.suggestedWeight?.let { formatNumber(it) },
-            onValueChange = { typed ->
-                weightText = sanitizeWeightInput(weightText, typed)
-                onValuesChange(repsText.toIntOrNull(), weightText.toDoubleOrNull())
-            },
-            keyboardType = KeyboardType.Decimal,
-            modifier = Modifier.weight(1f)
-        )
+        if (weightType.usesWeight) {
+            SetValueField(
+                value = weightText,
+                placeholder = set.suggestedWeight?.let { formatNumber(it) },
+                onValueChange = { typed ->
+                    weightText = sanitizeWeightInput(weightText, typed)
+                    onValuesChange(repsText.toIntOrNull(), weightText.toDoubleOrNull())
+                },
+                keyboardType = KeyboardType.Decimal,
+                modifier = Modifier.weight(1f)
+            )
+        }
 
         SetValueField(
             value = repsText,
@@ -1014,8 +1020,13 @@ private fun formatVolumeValue(kg: Double): String =
 private fun formatNumber(value: Double): String =
     if (value % 1.0 == 0.0) value.toInt().toString() else value.toString()
 
-private fun formatPrevious(set: com.eina.app.data.db.SetEntryEntity): String {
+/**
+ * "60kg×8" dove il carico esiste, le sole ripetizioni (o i secondi) a corpo libero e a tempo:
+ * stampare "0kg×8" su una trazione sarebbe un dato inventato.
+ */
+private fun formatPrevious(set: com.eina.app.data.db.SetEntryEntity, weightType: WeightType): String {
+    val reps = set.actualReps?.toString()
+    if (!weightType.usesWeight) return reps ?: "—"
     val weight = set.weight?.let { "${formatNumber(it)}kg" }
-    val reps = set.actualReps?.let { "$it" }
     return listOfNotNull(weight, reps).joinToString("×").ifBlank { "—" }
 }

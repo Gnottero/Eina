@@ -37,6 +37,7 @@ class ExerciseSeeder(
         val catalog = (0 until array.length()).map { i -> array.getJSONObject(i).toExerciseEntity() }
 
         val existing = exerciseDao.getLibraryExercises().associateBy { it.name }
+
         val (toUpdate, toInsert) = catalog.partition { it.name in existing }
 
         exerciseDao.insertAll(toInsert)
@@ -67,13 +68,31 @@ class ExerciseSeeder(
         muscleGroupsPrimary = getJSONArray("muscleGroupsPrimary").toStringList(),
         muscleGroupsSecondary = getJSONArray("muscleGroupsSecondary").toStringList(),
         equipment = optNullableString("equipment"),
-        // TODO: immagini esercizio non bundlate (vedi CLAUDE.md, sez. "Decisione sulle immagini esercizio").
-        // mediaUri nel dataset punta a path relativi mai copiati in assets: ignorato finché non si decide
-        // la strategia di bundling (miniature ridotte vs Play Asset Delivery vs subset curato).
-        mediaUri = null,
+        mediaUri = bundledMediaUri(optNullableString("mediaUri")),
         isCustom = false,
         source = optNullableString("source")
     )
+
+    /**
+     * Primo fotogramma bundlato dell'esercizio, o null se le immagini di quel movimento non
+     * sono state scaricate. Il catalogo cita i JPG originali di free-exercise-db
+     * ("Squat/0.jpg"); in assets ci sono i WebP ricompressi da tools/fetch_exercise_media.py.
+     * Il secondo fotogramma lo ricava la UI per convenzione (ui/components/ExerciseAnimation.kt).
+     */
+    private fun bundledMediaUri(catalogPath: String?): String? {
+        val path = catalogPath?.takeIf { it.isNotBlank() } ?: return null
+        val assetPath = "media/" + path.substringBeforeLast('.') + ".webp"
+        if (assetPath !in bundledMedia) return null
+        return "file:///android_asset/$assetPath"
+    }
+
+    /** Elenco dei WebP presenti in assets/media: una lettura sola, poi si controlla in memoria. */
+    private val bundledMedia: Set<String> by lazy {
+        val folders = context.assets.list("media")?.toList().orEmpty()
+        folders.flatMap { folder ->
+            context.assets.list("media/$folder")?.map { "media/$folder/$it" }.orEmpty()
+        }.toSet()
+    }
 
     private fun JSONObject.optNullableString(name: String): String? =
         if (has(name) && !isNull(name)) getString(name) else null
@@ -86,6 +105,6 @@ class ExerciseSeeder(
         private const val KEY_CATALOG_VERSION = "catalog_version"
 
         /** Da alzare a ogni rigenerazione di exercises.json che cambia i contenuti. */
-        private const val CATALOG_VERSION = 3
+        private const val CATALOG_VERSION = 4
     }
 }
