@@ -1,19 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Blocco della splash: tessera del marchio e sotto il nome "EINA".
+  Immagine della splash: tessera del marchio e sotto il nome "EINA".
   Il nome e' disegnato a tratti (stesso stile monolinea della lettera nel logo) e non come testo:
-  serve al windowBackground (@drawable/splash_screen), che il sistema disegna prima che esista
-  una Compose e quindi non puo' usare un font. La stessa immagine la ridisegna SplashOverlay,
-  cosi' fra il primo fotogramma di sistema e la composizione non si vede nessun salto.
+  questa immagine la disegna il sistema prima che l'app esista, come windowBackground sotto
+  Android 12 e come windowSplashScreenAnimatedIcon da Android 12 in su, e li' non c'e' un font.
+  Canvas quadrata perche' la splash di sistema mette l'icona in un riquadro quadrato.
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="200dp"
-    android:height="164dp"
+    android:height="200dp"
     android:viewportWidth="200"
-    android:viewportHeight="164">
+    android:viewportHeight="200">
 
-    <!-- Tessera del marchio, identica a ic_eina_logo.xml, centrata in orizzontale. -->
-    <group android:translateX="46">
+    <!--
+      La splash di sistema ritaglia l'icona dentro un cerchio: il marchio va rimpicciolito
+      perche' ci stia tutto, nome compreso (senza, le lettere restano tagliate sotto).
+    -->
+    <group android:pivotX="100" android:pivotY="100" android:scaleX="0.72" android:scaleY="0.72">
+
+    <!-- Tessera del marchio, identica a ic_eina_logo.xml. -->
+    <group android:translateX="46" android:translateY="18">
         <path
             android:fillColor="#F97348"
             android:pathData="M36,0 L72,0 C96,0 108,12 108,36 L108,72 C108,96 96,108 72,108 L36,108 C12,108 0,96 0,72 L0,36 C0,12 12,0 36,0 Z" />
@@ -31,7 +37,7 @@
     </group>
 
     <!-- EINA: quattro lettere a tratto, altezza 30, spessore 7, spaziate larghe. -->
-    <group>
+    <group android:translateY="18">
         <path
             android:strokeColor="#2A1B14"
             android:strokeWidth="7"
@@ -65,5 +71,6 @@
             android:strokeWidth="7"
             android:strokeLineCap="round"
             android:pathData="M141,150 L159,150" />
+    </group>
     </group>
 </vector>

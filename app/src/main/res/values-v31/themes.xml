@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Da Android 12 il windowBackground non si vede piu' all'avvio: il sistema disegna la sua
-  splash, fondo pieno + icona al centro. Qui la si porta sul bianco e sulla tessera del marchio,
-  cosi' combacia con quella di values/themes.xml (usata sotto Android 12) e con SplashOverlay.
+  Da Android 12 il windowBackground non si vede piu' all'avvio: il sistema disegna la sua splash,
+  fondo pieno + icona al centro, e resta finche' l'app non ha il primo fotogramma. Qui l'icona
+  e' l'intero marchio col nome, la stessa immagine di values/themes.xml: cosi' all'avvio c'e'
+  una schermata sola e non un'icona nuda seguita da marchio e nome.
 -->
 <resources>
     <style name="Theme.Eina" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:windowBackground">@drawable/splash_screen</item>
         <item name="android:windowSplashScreenBackground">@android:color/white</item>
-        <item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_eina_splash_icon</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_eina_splash_mark</item>
     </style>
 </resources>
