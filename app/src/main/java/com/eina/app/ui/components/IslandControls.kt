@@ -130,13 +130,24 @@ fun IslandTextField(
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     leadingIcon: ImageVector? = null,
     trailingIcon: @Composable (() -> Unit)? = null,
-    readOnly: Boolean = false
+    readOnly: Boolean = false,
+    // Nei campi di ricerca l'etichetta non deve restare: appena si scrive sparisce e il testo
+    // digitato si prende tutta l'altezza della barra, invece di stringersi sotto l'etichetta.
+    labelAsPlaceholder: Boolean = false
 ) {
     val island = EinaTheme.island
+    val labelText: @Composable () -> Unit = {
+        Text(
+            label,
+            style = MaterialTheme.typography.bodyMedium,
+            color = if (labelAsPlaceholder) island.textSecondary else Color.Unspecified
+        )
+    }
     TextField(
         value = value,
         onValueChange = onValueChange,
-        label = { Text(label, style = MaterialTheme.typography.bodyMedium) },
+        label = if (labelAsPlaceholder) null else labelText,
+        placeholder = if (labelAsPlaceholder) labelText else null,
         singleLine = singleLine,
         readOnly = readOnly,
         keyboardOptions = keyboardOptions,

@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -641,13 +642,17 @@ private fun ExerciseCard(
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(TileShape)
+                // Raggio piccolo: TileShape (24dp) e' piu' alto di mezza riga di testo e la sua
+                // curva mangiava le prime e le ultime lettere dei nomi lunghi. Cosi' il nome
+                // resta a filo del bordo della card, in colonna con recupero e tabella serie.
+                .clip(RoundedCornerShape(8.dp))
                 // Anche i figli cliccabili devono rispondere al tocco lungo: senza, il gesto
                 // funzionerebbe solo sui pochi punti morti della card.
                 .combinedClickable(
                     onLongClick = { hapticTap(); onOpenActions() },
                     onClick = { hapticTap(); onOpenExercise() }
                 )
+                .padding(vertical = Spacing.xs)
         )
 
         exercise.notes?.takeIf { it.isNotBlank() }?.let { notes ->
@@ -1049,6 +1054,7 @@ private fun ExercisePickerSheet(
             value = query,
             onValueChange = { query = it },
             label = stringResource(R.string.library_search),
+            labelAsPlaceholder = true,
             leadingIcon = Icons.Outlined.Search,
             modifier = Modifier.fillMaxWidth()
         )

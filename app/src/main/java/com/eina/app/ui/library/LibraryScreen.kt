@@ -106,6 +106,7 @@ fun LibraryScreen(
             value = uiState.query,
             onValueChange = viewModel::onQueryChange,
             label = stringResource(R.string.library_search),
+            labelAsPlaceholder = true,
             leadingIcon = Icons.Outlined.Search,
             modifier = Modifier
                 .fillMaxWidth()
