@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -49,17 +50,18 @@ fun ExerciseAnimation(
     val frames = remember(mediaUri) { exerciseFrames(mediaUri) }
     if (frames.isEmpty()) return
 
-    // Le animazioni anatomiche sono quadrate: un riquadro piu' alto delle foto le lascia
-    // respirare invece di ridurle a una striscia in mezzo a due bande vuote.
-    val ratio = if (isAnimatedMedia(mediaUri)) 4f / 3f else 3f / 2f
+    val animated = isAnimatedMedia(mediaUri)
+    // Le animazioni anatomiche sono quadrate e su fondo bianco: riquadro quadrato e superficie
+    // dello stesso bianco della card, altrimenti restano due bande di superficie incassata ai
+    // lati della figura. Le foto, che riempiono il riquadro, tengono il fondo incassato.
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .aspectRatio(ratio)
+            .aspectRatio(if (animated) 1f else 3f / 2f)
             .clip(TileShape)
-            .background(EinaTheme.island.sunken)
+            .background(if (animated) MaterialTheme.colorScheme.surface else EinaTheme.island.sunken)
     ) {
-        if (isAnimatedMedia(mediaUri)) {
+        if (animated) {
             AnimatedMedia(uri = frames.first(), modifier = Modifier.fillMaxSize())
         } else {
             CrossfadingFrames(

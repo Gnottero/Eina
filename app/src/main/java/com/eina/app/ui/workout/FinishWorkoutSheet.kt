@@ -59,7 +59,12 @@ fun FinishWorkoutSheet(
 
     val dateFormat = remember(locale) { DateFormat.getDateInstance(DateFormat.FULL, locale) }
 
-    IslandBottomSheet(onDismiss = onDismiss, title = stringResource(R.string.active_finish_confirm_title)) {
+    IslandBottomSheet(
+        onDismiss = onDismiss,
+        title = stringResource(R.string.active_finish_confirm_title),
+        // Col calendario aperto il foglio supera lo schermo.
+        scrollable = true
+    ) {
         Text(
             text = stringResource(R.string.active_finish_confirm_text),
             style = MaterialTheme.typography.bodyMedium,

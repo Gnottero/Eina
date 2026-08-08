@@ -2,6 +2,7 @@ package com.eina.app.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -41,8 +43,13 @@ fun IslandBottomSheet(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
     title: String? = null,
+    // Da attivare quando il contenuto puo' superare lo schermo (un calendario che si apre, per
+    // dire): senza, la Column comprime i figli ad altezza fissa e i rulli di durata finiscono
+    // scollati dalla loro banda di selezione.
+    scrollable: Boolean = false,
     content: @Composable ColumnScope.() -> Unit
 ) {
+    val scrollState = rememberScrollState()
     val island = EinaTheme.island
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -65,6 +72,7 @@ fun IslandBottomSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .then(if (scrollable) Modifier.verticalScroll(scrollState) else Modifier)
                 .navigationBarsPadding()
                 .padding(horizontal = Spacing.xl)
                 .padding(bottom = Spacing.lg),
