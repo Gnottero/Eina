@@ -33,16 +33,6 @@ fun shareCardDataOf(summary: SessionSummary): ShareCardData = ShareCardData(
     prCount = summary.prCount
 )
 
-/**
- * Due modi di disegnare lo stesso riepilogo.
- *
- * CARD: tessera bianca opaca, si legge anche da sola e regge su qualsiasi sfondo.
- * TRANSPARENT: solo testo bianco su fondo trasparente, da appoggiare sopra una propria foto
- * nella storia. E' il "transparent stats overlay" che si vede in Strava: il PNG conserva il
- * canale alfa, quindi incollato come adesivo lascia vedere la foto sotto.
- */
-enum class ShareCardStyle { CARD, TRANSPARENT }
-
 // --- Disegno ---------------------------------------------------------------
 // DECISIONE: la card e' disegnata con android.graphics invece di catturare una view Compose:
 // dimensione fissa e indipendente dallo schermo, dal tema attivo e dal ciclo di vita della UI.
@@ -110,15 +100,20 @@ private fun Canvas.drawLogoMark(context: Context, left: Float, top: Float, size:
 /**
  * Widget quadrato da storia: marchio, data e le quattro metriche essenziali in griglia 2x2
  * (durata, volume, serie, PR). Niente elenco esercizi: deve restare piccolo e leggibile.
+ *
+ * Un'immagine sola, con un interruttore: `transparent` toglie la tessera bianca e lascia il
+ * solo testo su fondo vuoto, da appoggiare sopra una propria foto nella storia (il PNG
+ * conserva il canale alfa). Il testo passa al bianco con ombra portata, l'unico modo di
+ * restare leggibile sia su cielo che su asfalto.
  */
 fun renderShareCard(
     context: Context,
     data: ShareCardData,
-    style: ShareCardStyle = ShareCardStyle.CARD
+    transparent: Boolean = false
 ): Bitmap {
     val bitmap = Bitmap.createBitmap(CANVAS_SIZE, CANVAS_SIZE, Bitmap.Config.ARGB_8888)
     val canvas = Canvas(bitmap)
-    val onPhoto = style == ShareCardStyle.TRANSPARENT
+    val onPhoto = transparent
 
     val textColor = if (onPhoto) TEXT_ON_PHOTO else TEXT
     val secondaryColor = if (onPhoto) TEXT_ON_PHOTO_SECONDARY else TEXT_SECONDARY

@@ -27,6 +27,8 @@ import androidx.compose.material.icons.outlined.LocalFireDepartment
 import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -56,7 +58,6 @@ import com.eina.app.domain.totalVolume
 import com.eina.app.ui.components.EinaBadge
 import com.eina.app.ui.components.IslandButton
 import com.eina.app.ui.components.IslandCard
-import com.eina.app.ui.components.IslandChip
 import com.eina.app.ui.components.IslandEmptyState
 import com.eina.app.ui.components.IslandIconButton
 import com.eina.app.ui.components.IslandScreen
@@ -69,8 +70,9 @@ import com.eina.app.ui.components.formatDuration
 import com.eina.app.ui.components.formatFullDate
 import com.eina.app.ui.components.formatTime
 import com.eina.app.ui.components.formatVolume
+import com.eina.app.ui.feedback.LocalHapticTap
+import com.eina.app.ui.library.localized
 import com.eina.app.ui.share.ShareCardData
-import com.eina.app.ui.share.ShareCardStyle
 import com.eina.app.ui.share.copyImageToClipboard
 import com.eina.app.ui.share.isInstagramInstalled
 import com.eina.app.ui.share.needsLegacyStoragePermission
@@ -264,7 +266,7 @@ private fun ExerciseSummaryCard(position: Int, exercise: SessionExerciseDetail) 
             }
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = exercise.exerciseName,
+                    text = exercise.exerciseName.localized(),
                     style = MaterialTheme.typography.titleMedium,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
@@ -329,13 +331,13 @@ private fun SetRow(number: Int, set: CompletedSetRow) {
 }
 
 /**
- * Foglio di condivisione in due modi.
+ * Foglio di condivisione: una sola immagine, con l'interruttore dello sfondo trasparente.
  *
- * "Tessera" e' l'immagine autonoma di sempre. "Solo statistiche" e' l'overlay trasparente:
- * si salva nel rullino (e in parallelo finisce negli appunti), poi si apre Instagram, si
- * sceglie la propria foto di sfondo e lo si aggiunge come adesivo. E' il giro che fa Strava,
- * e resta l'unico modo di comporre foto propria + statistiche: l'intent ADD_TO_STORY di
- * Instagram accetta un adesivo ma impone lui lo sfondo.
+ * Con lo sfondo, l'immagine si regge da sola su qualsiasi supporto. Senza, resta il solo
+ * testo: si salva nel rullino (e in parallelo finisce negli appunti), poi si apre Instagram,
+ * si sceglie la propria foto di sfondo e lo si aggiunge come adesivo. E' il giro che fa
+ * Strava, e resta l'unico modo di comporre foto propria + statistiche: l'intent ADD_TO_STORY
+ * di Instagram accetta un adesivo ma impone lui lo sfondo.
  */
 @Composable
 private fun ShareSheet(
@@ -345,11 +347,12 @@ private fun ShareSheet(
 ) {
     val island = EinaTheme.island
     val context = LocalContext.current
-    var style by remember { mutableStateOf(ShareCardStyle.TRANSPARENT) }
+    val hapticTap = LocalHapticTap.current
+    var transparent by remember { mutableStateOf(true) }
     var bitmap by remember { mutableStateOf<Bitmap?>(null) }
 
-    LaunchedEffect(style) {
-        bitmap = withContext(Dispatchers.Default) { renderShareCard(context, data, style) }
+    LaunchedEffect(transparent) {
+        bitmap = withContext(Dispatchers.Default) { renderShareCard(context, data, transparent) }
     }
 
     // Fino ad Android 9 scrivere nel rullino richiede un permesso esplicito; concesso,
@@ -386,26 +389,13 @@ private fun ShareSheet(
         IslandCard(modifier = Modifier.fillMaxWidth()) {
             Text(stringResource(R.string.share_title), style = MaterialTheme.typography.titleMedium)
 
-            Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
-                IslandChip(
-                    text = stringResource(R.string.share_style_transparent),
-                    selected = style == ShareCardStyle.TRANSPARENT,
-                    onClick = { style = ShareCardStyle.TRANSPARENT }
-                )
-                IslandChip(
-                    text = stringResource(R.string.share_style_card),
-                    selected = style == ShareCardStyle.CARD,
-                    onClick = { style = ShareCardStyle.CARD }
-                )
-            }
-
-            // Fondo scuro dietro l'anteprima: l'overlay e' testo bianco su nulla, su carta
-            // chiara non si vedrebbe affatto.
+            // Fondo scuro dietro l'anteprima: senza sfondo l'immagine e' testo bianco sul
+            // nulla, su carta chiara non si vedrebbe affatto.
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(IslandShape)
-                    .background(if (style == ShareCardStyle.TRANSPARENT) PreviewBackdrop else island.sunken),
+                    .background(if (transparent) PreviewBackdrop else island.sunken),
                 contentAlignment = Alignment.Center
             ) {
                 bitmap?.let {
@@ -418,7 +408,30 @@ private fun ShareSheet(
                 }
             }
 
-            if (style == ShareCardStyle.TRANSPARENT) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(Spacing.md)
+            ) {
+                Text(
+                    stringResource(R.string.share_transparent_toggle),
+                    style = MaterialTheme.typography.titleSmall,
+                    modifier = Modifier.weight(1f)
+                )
+                Switch(
+                    checked = transparent,
+                    onCheckedChange = { hapticTap(); transparent = it },
+                    colors = SwitchDefaults.colors(
+                        checkedThumbColor = Color.White,
+                        checkedTrackColor = MaterialTheme.colorScheme.primary,
+                        uncheckedThumbColor = Color.White,
+                        uncheckedTrackColor = island.sunken,
+                        uncheckedBorderColor = island.outlineSubtle
+                    )
+                )
+            }
+
+            if (transparent) {
                 Text(
                     stringResource(R.string.share_transparent_hint),
                     style = MaterialTheme.typography.bodySmall,

@@ -331,8 +331,7 @@
     <string name="share_card_volume">VOLUME</string>
     <string name="share_card_sets">SÉRIES</string>
     <string name="share_title">Partager</string>
-    <string name="share_style_card">Carte</string>
-    <string name="share_style_transparent">Stats seules</string>
+    <string name="share_transparent_toggle">Fond transparent</string>
     <string name="share_transparent_hint">1. Enregistre l\'overlay. 2. Ouvre les stories Instagram et choisis ta photo de fond. 3. Ajoute l\'image enregistrée comme sticker, ou colle-la si tu l\'as copiée.</string>
     <string name="share_save_and_open">Enregistrer et ouvrir Instagram</string>
     <string name="share_save_to_gallery">Enregistrer dans la galerie</string>

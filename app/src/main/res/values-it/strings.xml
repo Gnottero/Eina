@@ -331,8 +331,7 @@
     <string name="share_card_volume">VOLUME</string>
     <string name="share_card_sets">SERIE</string>
     <string name="share_title">Condividi</string>
-    <string name="share_style_card">Tessera</string>
-    <string name="share_style_transparent">Solo statistiche</string>
+    <string name="share_transparent_toggle">Sfondo trasparente</string>
     <string name="share_transparent_hint">1. Salva l\'overlay. 2. Apri le storie di Instagram e scegli la tua foto di sfondo. 3. Aggiungi l\'immagine salvata come adesivo, o incollala se l\'hai copiata.</string>
     <string name="share_save_and_open">Salva e apri Instagram</string>
     <string name="share_save_to_gallery">Salva in galleria</string>
