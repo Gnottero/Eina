@@ -74,13 +74,20 @@ class ExerciseSeeder(
     )
 
     /**
-     * Primo fotogramma bundlato dell'esercizio, o null se le immagini di quel movimento non
-     * sono state scaricate. Il catalogo cita i JPG originali di free-exercise-db
-     * ("Squat/0.jpg"); in assets ci sono i WebP ricompressi da tools/fetch_exercise_media.py.
+     * Immagine bundlata dell'esercizio, o null se per quel movimento non c'e' niente in assets.
+     * Il catalogo cita i JPG originali di free-exercise-db ("Squat/0.jpg"); in assets, nella
+     * cartella con lo stesso nome, ci puo' essere:
+     *   - `anim.webp`: l'animazione anatomica coi muscoli lavorati colorati
+     *     (tools/fetch_exercise_gifs.py), che si preferisce sempre;
+     *   - `0.webp` / `1.webp`: i due fotogrammi fotografici (tools/fetch_exercise_media.py),
+     *     rimasti solo dove non esiste un'animazione adatta.
      * Il secondo fotogramma lo ricava la UI per convenzione (ui/components/ExerciseAnimation.kt).
      */
     private fun bundledMediaUri(catalogPath: String?): String? {
         val path = catalogPath?.takeIf { it.isNotBlank() } ?: return null
+        val folder = path.substringBefore('/')
+        val animPath = "media/$folder/anim.webp"
+        if (animPath in bundledMedia) return "file:///android_asset/$animPath"
         val assetPath = "media/" + path.substringBeforeLast('.') + ".webp"
         if (assetPath !in bundledMedia) return null
         return "file:///android_asset/$assetPath"
@@ -105,6 +112,6 @@ class ExerciseSeeder(
         private const val KEY_CATALOG_VERSION = "catalog_version"
 
         /** Da alzare a ogni rigenerazione di exercises.json che cambia i contenuti. */
-        private const val CATALOG_VERSION = 4
+        private const val CATALOG_VERSION = 5
     }
 }

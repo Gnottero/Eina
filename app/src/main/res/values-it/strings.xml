@@ -343,14 +343,14 @@
     <string name="share_copied">Immagine copiata negli appunti</string>
     <string name="share_permission_needed">Serve l\'accesso alle foto per salvare l\'overlay</string>
     <string name="share_instagram_missing">Instagram non è installato</string>
-    <string name="body_diagram_front">Fronte</string>
-    <string name="body_diagram_back">Retro</string>
     <string name="exercise_animation_cd">Movimento dell\'esercizio</string>
     <string name="wheel_hour">h</string>
     <string name="finish_date">Data</string>
     <string name="finish_date_today">Oggi</string>
     <string name="finish_date_yesterday">Ieri</string>
     <string name="finish_date_pick">Un\'altra data</string>
+    <string name="calendar_previous_month">Mese precedente</string>
+    <string name="calendar_next_month">Mese successivo</string>
     <string name="finish_duration">Durata</string>
     <string name="routine_export">Esporta routine</string>
     <string name="routine_export_description">La salva come file da mandare a qualcuno</string>

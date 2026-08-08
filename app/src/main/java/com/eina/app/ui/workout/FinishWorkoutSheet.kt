@@ -6,12 +6,8 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.DatePicker
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -21,11 +17,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.window.Dialog
 import com.eina.app.R
 import com.eina.app.ui.components.HourMinuteWheelPicker
 import com.eina.app.ui.components.IslandBottomSheet
 import com.eina.app.ui.components.IslandButton
+import com.eina.app.ui.components.IslandCalendar
 import com.eina.app.ui.components.IslandCard
 import com.eina.app.ui.components.IslandChip
 import com.eina.app.ui.components.SectionHeader
@@ -33,6 +29,8 @@ import com.eina.app.ui.library.currentLocale
 import com.eina.app.ui.theme.EinaTheme
 import com.eina.app.ui.theme.Spacing
 import java.text.DateFormat
+import java.time.Instant
+import java.time.ZoneId
 import java.util.Calendar
 import java.util.Date
 
@@ -57,6 +55,7 @@ fun FinishWorkoutSheet(
     var start by remember { mutableLongStateOf(startTime) }
     var duration by remember { mutableIntStateOf(elapsedSeconds.coerceAtLeast(0)) }
     var datePickerOpen by remember { mutableStateOf(false) }
+    val zone = remember { ZoneId.systemDefault() }
 
     val dateFormat = remember(locale) { DateFormat.getDateInstance(DateFormat.FULL, locale) }
 
@@ -87,8 +86,23 @@ fun FinishWorkoutSheet(
                 )
                 IslandChip(
                     text = stringResource(R.string.finish_date_pick),
-                    selected = false,
-                    onClick = { datePickerOpen = true }
+                    selected = datePickerOpen,
+                    onClick = { datePickerOpen = !datePickerOpen }
+                )
+            }
+            // Calendario nello stesso foglio e non in un secondo foglio sopra: due ModalBottomSheet
+            // sovrapposti si rubano il gesto di chiusura.
+            if (datePickerOpen) {
+                IslandCalendar(
+                    selected = Instant.ofEpochMilli(start).atZone(zone).toLocalDate(),
+                    onSelect = { picked ->
+                        // Mezzogiorno e non mezzanotte: withDateOf rimette comunque l'ora vera,
+                        // e cosi' uno scarto di fuso non fa scivolare il giorno.
+                        val millis = picked.atTime(12, 0).atZone(zone).toInstant().toEpochMilli()
+                        start = withDateOf(millis, start)
+                    },
+                    locale = locale,
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
         }
@@ -107,35 +121,6 @@ fun FinishWorkoutSheet(
         )
     }
 
-    if (datePickerOpen) {
-        WorkoutDatePickerDialog(
-            initialMillis = start,
-            onPick = { picked -> start = withDateOf(picked, start); datePickerOpen = false },
-            onDismiss = { datePickerOpen = false }
-        )
-    }
-}
-
-/** Calendario per una data qualunque: i chip coprono ieri e oggi, il resto passa da qui. */
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun WorkoutDatePickerDialog(
-    initialMillis: Long,
-    onPick: (Long) -> Unit,
-    onDismiss: () -> Unit
-) {
-    val state = rememberDatePickerState(initialSelectedDateMillis = initialMillis)
-    Dialog(onDismissRequest = onDismiss) {
-        IslandCard(modifier = Modifier.fillMaxWidth()) {
-            DatePicker(state = state, showModeToggle = false)
-            TextButton(
-                onClick = { state.selectedDateMillis?.let(onPick) ?: onDismiss() },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(stringResource(R.string.action_done))
-            }
-        }
-    }
 }
 
 /** Riporta il giorno di `dateMillis` sull'orario di `timeMillis`: si cambia data, non ora. */

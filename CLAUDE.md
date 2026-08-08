@@ -408,6 +408,21 @@ bloccata se l'esercizio e' ancora usato da una routine o dallo storico) — serv
 tornare indietro da un import. Verificata sul dispositivo: avvio a freddo della release
 470-520 ms, invariato rispetto alla Fase 9.
 
+**Fase 19 — Animazioni anatomiche e calendario island** *(fatta)*
+DoD: la scheda esercizio mostra una figura anatomica che esegue il movimento coi muscoli
+lavorati colorati (stile Hevy) al posto dei due fotogrammi fotografici e del `BodyDiagram`
+vettoriale, che e' stato eliminato; le animazioni sono WebP animate a 288px bundlate in
+`assets/media/<cartella>/anim.webp`, generate da `tools/fetch_exercise_gifs.py` a partire dalle
+GIF di omercotkd/exercises-gifs (MIT) con la mappatura curata a mano in `tools/exercise_gifs.json`
+(186 esercizi su 197; gli 11 senza animazione adatta tengono le foto di free-exercise-db);
+i decoder animati si chiedono sulla singola richiesta Coil, cosi' le miniature della libreria
+restano ferme sul primo fotogramma; sotto API 28 (niente `ImageDecoder`) l'animazione resta
+un'immagine ferma; `ExerciseSeeder` preferisce `anim.webp` a `0.webp` (CATALOG_VERSION 5);
+scelta della data di fine allenamento con calendario proprio (`ui/components/IslandDatePicker.kt`:
+giorni tondi, oggi a contorno, selezione a pastiglia arancio, settimana che parte dal primo
+giorno della lingua attiva) aperto dentro lo stesso foglio invece del `DatePicker` Material in
+un dialog. APK di release da 8,2 a 12,0 MB.
+
 **Fase 9 — Rifinitura** *(fatta)*
 DoD: R8 + shrinkResources attivi sulla release (20,5 MB → 2,2 MB), regole in
 `app/proguard-rules.pro`; release firmata con la chiave di debug finché non esiste un
@@ -432,12 +447,14 @@ seed fallito non abbatte l'avvio).
   `app/src/main/assets/seed/exercises.json` basta rilanciare lo script; se cambiano i
   contenuti, alza `CATALOG_VERSION` in `ExerciseSeeder`.
 - [x] Icona app → **fatta**: marchio Eina (tessera arancio + tre barre bianche) come adaptive icon in `res/drawable/ic_launcher_foreground.xml`, stesso segno disegnato in `ui/share/ShareCard.kt`
-- [x] **Decisione sulle immagini esercizio** (presa in Fase 18): opzione (b)+(c). Si bundlano
-  entrambi i fotogrammi dei soli 197 esercizi del catalogo curato, ricompressi in WebP a 480px
-  q70 da `tools/fetch_exercise_media.py` → `app/src/main/assets/media/<cartella>/{0,1}.webp`,
-  394 file per 5,6 MB (APK di release da 2,2 a 8,2 MB). Niente Play Asset Delivery: il catalogo
-  è chiuso e il costo è accettabile. Rilancia lo script solo se cambia il catalogo (salta i file
-  già presenti) e alza `CATALOG_VERSION` in `ExerciseSeeder`.
+- [x] **Decisione sulle immagini esercizio** (presa in Fase 18, rivista in Fase 19): le foto a
+  due fotogrammi di free-exercise-db (`tools/fetch_exercise_media.py`) restano solo per gli 11
+  esercizi senza animazione. Per gli altri 186 si bundla una WebP animata a 288px q60 con la
+  figura anatomica e i muscoli lavorati colorati, generata da `tools/fetch_exercise_gifs.py`
+  → `app/src/main/assets/media/<cartella>/anim.webp` (9,6 MB in assets, APK di release 12,0 MB).
+  Niente Play Asset Delivery: il catalogo è chiuso e il costo è accettabile. Rilancia lo script
+  solo se cambia il catalogo o la mappatura (salta i file già presenti) e alza `CATALOG_VERSION`
+  in `ExerciseSeeder`.
 
 ---
 

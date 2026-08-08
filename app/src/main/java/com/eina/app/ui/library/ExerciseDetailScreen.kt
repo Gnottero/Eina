@@ -16,7 +16,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.eina.app.R
-import com.eina.app.ui.components.BodyDiagram
 import com.eina.app.ui.components.EinaBadge
 import com.eina.app.ui.components.ExerciseAnimation
 import com.eina.app.ui.components.hasExerciseMedia
@@ -68,12 +67,9 @@ fun ExerciseDetailScreen(
             }
         }
 
+        // I muscoli lavorati li mostra l'animazione stessa, colorati sulla figura: qui restano
+        // solo le etichette, per chi cerca il nome del gruppo.
         IslandCard(modifier = Modifier.fillMaxWidth()) {
-            BodyDiagram(
-                muscleGroupsPrimary = current.muscleGroupsPrimary,
-                muscleGroupsSecondary = current.muscleGroupsSecondary,
-                modifier = Modifier.fillMaxWidth()
-            )
             // FlowRow e non Row: esercizi come "Girata (clean)" hanno cinque muscoli secondari
             // e su una riga sola l'ultimo finiva tagliato fuori dallo schermo.
             FlowRow(
