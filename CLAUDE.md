@@ -363,6 +363,19 @@ di dettaglio e rendevano la Dashboard irraggiungibile); condivisione come sticke
 Instagram (`com.instagram.share.ADD_TO_STORY`) con fallback al chooser di sistema; Impostazioni
 con "Cancella storico allenamenti" a conferma.
 
+**Fase 16 — Multilingua e overlay di condivisione** *(fatta)*
+DoD: inglese (default, `values/`), italiano e francese; tutte le stringhe delle schermate in
+`strings.xml`, comprese le etichette di muscoli, attrezzatura e tipo di carico (nel DB restano
+chiavi inglesi, la traduzione avviene al disegno); date, iniziali dei giorni e decimali seguono
+la lingua attiva; `loggingInstructions` derivate da `weightType` invece che salvate nel seed;
+selettore lingua in Impostazioni (Sistema/English/Italiano/Français) applicato riscrivendo la
+Configuration in `attachBaseContext`, senza aggiungere appcompat; catalogo ridotto a 197
+esercizi comuni con descrizioni tradotte; DB alla versione 3 con `MIGRATION_2_3`, e
+`ExerciseSeeder` che sincronizza la libreria per nome senza toccare esercizi custom o esercizi
+ancora usati da routine e storico; condivisione con due stili — tessera opaca e overlay
+trasparente da appoggiare sulla propria foto — che si salva in galleria, finisce negli appunti e
+apre la fotocamera storie di Instagram.
+
 **Fase 9 — Rifinitura** *(fatta)*
 DoD: R8 + shrinkResources attivi sulla release (20,5 MB → 2,2 MB), regole in
 `app/proguard-rules.pro`; release firmata con la chiave di debug finché non esiste un
@@ -379,7 +392,13 @@ seed fallito non abbatte l'avvio).
 - [x] URL donazioni → **Ko-fi**: `https://ko-fi.com/gnottero` (`DONATION_URL` in
   `ui/settings/DonationLauncher.kt`). Ko-fi e non Buy Me a Coffee perché BMC accetta solo
   Stripe per i nuovi account, mentre Ko-fi incassa direttamente su PayPal.
-- [x] Dataset esercizi arricchito → **pronto**: `seed/eina_exercises_seed.json` (873 esercizi convertiti da free-exercise-db con `weightType`/`description`/`loggingInstructions`). Copialo in `app/src/main/assets/seed/exercises.json`. **274 esercizi hanno `needsReview: true`** (classificazione `weightType` incerta, o categoria "stretching" ambigua per un tracker di forza) — filtra su questo campo per una revisione manuale mirata, non serve rivederli tutti. Le `description` sono in inglese (lingua originale del dataset): per la v1 puoi tenerle così, una traduzione IT è un'iterazione successiva non bloccante.
+- [x] Dataset esercizi → **fatto**: l'export integrale resta in `eina_exercises_seed.json` (873
+  esercizi da free-exercise-db), ma il catalogo dell'app è il sottoinsieme curato di **197
+  esercizi comuni** generato da `tools/curate_exercises.py` a partire da
+  `tools/common_exercises.txt`. Ogni descrizione è tradotta in italiano e francese
+  (`tools/translations/*.json` → `descriptionIt`/`descriptionFr`). Per rigenerare
+  `app/src/main/assets/seed/exercises.json` basta rilanciare lo script; se cambiano i
+  contenuti, alza `CATALOG_VERSION` in `ExerciseSeeder`.
 - [x] Icona app → **fatta**: marchio Eina (tessera arancio + tre barre bianche) come adaptive icon in `res/drawable/ic_launcher_foreground.xml`, stesso segno disegnato in `ui/share/ShareCard.kt`
 - [ ] **Decisione sulle immagini esercizio**: ogni esercizio ha in media 2 frame JPG da ~38KB l'uno → bundlare tutte le immagini di libreria (~1700 file) costerebbe ~65-70MB di APK, in conflitto col principio "leggera". Opzioni da decidere prima della Fase 3: (a) bundlare solo la prima immagine per esercizio (~33MB), (b) bundlare un sottoinsieme curato (es. i 150-200 esercizi più comuni) e usare Play Asset Delivery per il resto, (c) ricomprimere/ridimensionare le immagini prima del bundling. Lo script di conversione salva comunque tutti i path in `mediaFrames` per ogni esercizio, così qualunque opzione si scelga i dati sono già pronti.
 
