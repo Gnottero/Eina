@@ -129,8 +129,11 @@ enum class PlaylistType { SPOTIFY, YOUTUBE_MUSIC }
 data class ExerciseEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val name: String,
-    val description: String,
-    val loggingInstructions: String,
+    val description: String,           // inglese: e' anche il fallback delle altre lingue
+    val descriptionIt: String? = null, // aggiunte in Fase 16 (DB v3, MIGRATION_2_3)
+    val descriptionFr: String? = null,
+    val loggingInstructions: String,   // vuota per la libreria: la frase viene da weightType
+                                       // via strings.xml. La riempie solo un esercizio custom.
     val weightType: WeightType,
     val muscleGroupsPrimary: List<String>,     // TypeConverter: JSON string
     val muscleGroupsSecondary: List<String>,   // TypeConverter: JSON string
