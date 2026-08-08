@@ -11,11 +11,13 @@ i due fotogrammi fotografici (0.webp / 1.webp) di free-exercise-db, che l'animaz
 sostituisce. Gli esercizi senza mappatura (valore null) restano com'erano.
 
 Le GIF di partenza sono 360x360: la conversione tiene quella risoluzione (non si ingrandisce,
-non ci sarebbe dettaglio in piu') e una qualita' alta, altrimenti la figura arriva sgranata
-sullo schermo, dove il riquadro e' largo quanto la card.
+non ci sarebbe dettaglio in piu') e di default e' lossless, cioe' l'animazione nell'app e'
+identica alla GIF di GitHub. Lossless costa meno della GIF stessa (la GIF ha 256 colori:
+WebP lossless li tiene tutti e comprime meglio), quindi non c'e' motivo di degradarla.
+Con --quality N si torna a una conversione lossy (era q85 fino alla Fase 20).
 
 Uso:
-    python3 tools/fetch_exercise_gifs.py [--width 360] [--quality 85] [--force]
+    python3 tools/fetch_exercise_gifs.py [--width 360] [--quality N] [--force]
 
 Serve ffmpeg con libwebp. Rilancialo solo se cambia il catalogo o la mappatura (salta i
 file gia' presenti); poi alza CATALOG_VERSION in ExerciseSeeder.
@@ -39,6 +41,8 @@ BASE_URL = "https://raw.githubusercontent.com/omercotkd/exercises-gifs/main/asse
 
 def convert(gif_bytes, dest, width, quality):
     os.makedirs(os.path.dirname(dest), exist_ok=True)
+    # quality None = lossless: l'animazione resta quella originale di GitHub.
+    codec = ["-lossless", "1"] if quality is None else ["-lossless", "0", "-q:v", str(quality)]
     # ffmpeg legge la GIF da file e non da stdin: il demuxer gif vuole poter fare seek.
     with tempfile.NamedTemporaryFile(suffix=".gif") as source:
         source.write(gif_bytes)
@@ -51,8 +55,7 @@ def convert(gif_bytes, dest, width, quality):
                 "-vf", f"scale='min(iw,{width})':-1:flags=lanczos",
                 "-loop", "0",
                 "-c:v", "libwebp_anim",
-                "-lossless", "0",
-                "-q:v", str(quality),
+                *codec,
                 "-compression_level", "6",
                 dest,
             ],
@@ -63,7 +66,7 @@ def convert(gif_bytes, dest, width, quality):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--width", type=int, default=360)
-    parser.add_argument("--quality", type=int, default=85)
+    parser.add_argument("--quality", type=int, default=None, help="conversione lossy a questa qualita' (default: lossless)")
     parser.add_argument("--force", action="store_true", help="riconverte anche cio' che c'e' gia'")
     args = parser.parse_args()
 

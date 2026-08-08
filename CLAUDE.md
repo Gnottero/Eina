@@ -433,6 +433,14 @@ terminato senza nemmeno un esercizio non finisce nello storico ma viene eliminat
 "Annulla"), e il foglio di conferma lo dice e nasconde data e durata, che non verrebbero
 salvate da nessuna parte.
 
+**Fase 21 — Animazioni lossless e titolo Dashboard** *(fatta)*
+DoD: le animazioni degli esercizi sono WebP lossless, cioe' identiche alle GIF originali di
+omercotkd/exercises-gifs (`tools/fetch_exercise_gifs.py` converte in lossless di default;
+`--quality N` torna alla vecchia conversione lossy). Lossless costa meno della GIF stessa
+perche' la sorgente ha 256 colori: `assets/media` da 22,6 a 45,2 MB, APK di release da 25,0
+a 47,6 MB. `mediaUri` non cambia (stessi `anim.webp`), quindi CATALOG_VERSION resta 5. Titolo
+della Dashboard "Dashboard" in tutte e tre le lingue (era Oggi / Today / Aujourd'hui).
+
 **Fase 9 — Rifinitura** *(fatta)*
 DoD: R8 + shrinkResources attivi sulla release (20,5 MB → 2,2 MB), regole in
 `app/proguard-rules.pro`; release firmata con la chiave di debug finché non esiste un

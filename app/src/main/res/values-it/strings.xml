@@ -32,7 +32,7 @@
     <string name="date_yesterday">Ieri</string>
 
     <!-- Dashboard -->
-    <string name="dashboard_title">Oggi</string>
+    <string name="dashboard_title">Dashboard</string>
     <string name="dashboard_settings">Impostazioni</string>
     <string name="dashboard_week">Settimana</string>
     <string name="dashboard_weekly_volume">Volume settimanale</string>

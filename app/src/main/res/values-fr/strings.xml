@@ -32,7 +32,7 @@
     <string name="date_yesterday">Hier</string>
 
     <!-- Accueil -->
-    <string name="dashboard_title">Aujourd\'hui</string>
+    <string name="dashboard_title">Dashboard</string>
     <string name="dashboard_settings">Réglages</string>
     <string name="dashboard_week">Semaine</string>
     <string name="dashboard_weekly_volume">Volume hebdomadaire</string>
