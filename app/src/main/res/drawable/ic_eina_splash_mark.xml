@@ -36,41 +36,45 @@
             android:pathData="M36,54 L62,54" />
     </group>
 
-    <!-- EINA: quattro lettere a tratto, altezza 30, spessore 7, spaziate larghe. -->
+    <!--
+      EINA: quattro lettere a tratto, altezza 30, spessore 7. Le distanze non sono uguali fra
+      loro ma pareggiate a occhio (la A e' un triangolo e porta gia' aria a sinistra), e la
+      parola e' larga quanto la tessera: cosi' il blocco si legge centrato.
+    -->
     <group android:translateY="18">
         <path
             android:strokeColor="#2A1B14"
             android:strokeWidth="7"
             android:strokeLineCap="round"
             android:strokeLineJoin="round"
-            android:pathData="M62,130 L36,130 L36,160 L62,160" />
+            android:pathData="M66,130 L42,130 L42,160 L66,160" />
         <path
             android:strokeColor="#2A1B14"
             android:strokeWidth="7"
             android:strokeLineCap="round"
-            android:pathData="M36,145 L56,145" />
+            android:pathData="M42,145 L60,145" />
         <path
             android:strokeColor="#2A1B14"
             android:strokeWidth="7"
             android:strokeLineCap="round"
-            android:pathData="M78,130 L78,160" />
-        <path
-            android:strokeColor="#2A1B14"
-            android:strokeWidth="7"
-            android:strokeLineCap="round"
-            android:strokeLineJoin="round"
-            android:pathData="M94,160 L94,130 L120,160 L120,130" />
+            android:pathData="M81,130 L81,160" />
         <path
             android:strokeColor="#2A1B14"
             android:strokeWidth="7"
             android:strokeLineCap="round"
             android:strokeLineJoin="round"
-            android:pathData="M136,160 L150,130 L164,160" />
+            android:pathData="M96,160 L96,130 L120,160 L120,130" />
         <path
             android:strokeColor="#2A1B14"
             android:strokeWidth="7"
             android:strokeLineCap="round"
-            android:pathData="M141,150 L159,150" />
+            android:strokeLineJoin="round"
+            android:pathData="M132,160 L145,130 L158,160" />
+        <path
+            android:strokeColor="#2A1B14"
+            android:strokeWidth="7"
+            android:strokeLineCap="round"
+            android:pathData="M137,151 L153,151" />
     </group>
     </group>
 </vector>
