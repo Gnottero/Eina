@@ -94,6 +94,7 @@ class ActiveWorkoutViewModel(
             exerciseId = exercise.id,
             name = exercise.exerciseName(),
             weightType = exercise.weightType,
+            bodyweightFactor = exercise.bodyweightFactor,
             order = workoutExercise.order,
             notes = workoutExercise.notes,
             restSeconds = sets.firstOrNull()?.restSecondsPlanned
@@ -134,7 +135,7 @@ class ActiveWorkoutViewModel(
         _uiState.update { state ->
             val volume = state.exercises.sumOf { ex ->
                 ex.sets.filter { it.completedAt != null && !it.isWarmup }
-                    .sumOf { volumeForSet(ex.weightType, it.toEntity(ex.workoutExerciseId)) }
+                    .sumOf { volumeForSet(ex.weightType, it.toEntity(ex.workoutExerciseId), ex.bodyweightFactor) }
             }
             state.copy(volumeKg = volume)
         }

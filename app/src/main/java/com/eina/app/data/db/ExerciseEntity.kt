@@ -21,6 +21,12 @@ data class ExerciseEntity(
     // esercizio custom e vuole scriversi una nota propria.
     val loggingInstructions: String,
     val weightType: WeightType,
+    // Quanta parte del peso corporeo l'esercizio solleva davvero, da 0 a 1: e' cio' che
+    // distingue le trazioni (1: il corpo sale tutto) dai crunch (0: il corpo non si alza
+    // contro gravita', e sommarlo gonfierebbe il volume della sessione). Conta solo per
+    // BODYWEIGHT / BODYWEIGHT_PLUS_LOAD / ASSISTED; per gli altri weightType il volume
+    // guarda solo il carico digitato e questo campo resta ignorato.
+    val bodyweightFactor: Double = 1.0,
     val muscleGroupsPrimary: List<String>,     // TypeConverter: JSON string
     val muscleGroupsSecondary: List<String>,   // TypeConverter: JSON string
     val equipment: String? = null,

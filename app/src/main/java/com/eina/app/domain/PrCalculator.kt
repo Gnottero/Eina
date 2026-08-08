@@ -27,17 +27,26 @@ fun isNewPR(
     }
 }
 
-fun volumeForSet(weightType: WeightType, set: SetEntryEntity): Double {
+/**
+ * Volume in kg di una set.
+ *
+ * Il peso corporeo conta solo per la quota che l'esercizio solleva davvero
+ * ([ExerciseEntity.bodyweightFactor]): le trazioni tirano su tutto il corpo e vanno nel
+ * totale, i crunch non lo alzano contro gravita' e valgono 0, altrimenti bastava fare
+ * addominali per gonfiare il volume della sessione in proporzione a quanto si pesa.
+ */
+fun volumeForSet(weightType: WeightType, set: SetEntryEntity, bodyweightFactor: Double = 1.0): Double {
     val reps = set.actualReps ?: 0
+    val liftedBodyweight = (set.bodyweightSnapshotKg ?: 0.0) * bodyweightFactor
     return when (weightType) {
         WeightType.FREE_WEIGHT, WeightType.MACHINE_STACK ->
             (set.weight ?: 0.0) * reps
         WeightType.BODYWEIGHT ->
-            (set.bodyweightSnapshotKg ?: 0.0) * reps
+            liftedBodyweight * reps
         WeightType.BODYWEIGHT_PLUS_LOAD ->
-            ((set.bodyweightSnapshotKg ?: 0.0) + (set.weight ?: 0.0)) * reps
+            (liftedBodyweight + (set.weight ?: 0.0)) * reps
         WeightType.ASSISTED ->
-            ((set.bodyweightSnapshotKg ?: 0.0) - (set.weight ?: 0.0)).coerceAtLeast(0.0) * reps
+            (liftedBodyweight - (set.weight ?: 0.0)).coerceAtLeast(0.0) * reps
         WeightType.TIME_BASED ->
             0.0 // il "volume" per esercizi a tempo non e' in kg; escludi dal totale kg sollevati
     }

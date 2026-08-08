@@ -49,7 +49,8 @@ private fun volumeOf(row: CompletedSetRow): Double = volumeForSet(
         restSecondsPlanned = 0,
         isWarmup = row.isWarmup,
         bodyweightSnapshotKg = row.bodyweightSnapshotKg
-    )
+    ),
+    row.bodyweightFactor
 )
 
 /** Volume in kg di una lista di set (le warmup non contano nel totale sollevato). */

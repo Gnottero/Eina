@@ -16,7 +16,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         SetEntryEntity::class,
         BodyMetricEntity::class
     ],
-    version = 4,
+    version = 5,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -64,6 +64,19 @@ abstract class EinaDatabase : RoomDatabase() {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE exercises ADD COLUMN nameIt TEXT")
                 db.execSQL("ALTER TABLE exercises ADD COLUMN nameFr TEXT")
+            }
+        }
+
+        /**
+         * Quota di peso corporeo sollevata (vedi ExerciseEntity.bodyweightFactor). Nasce a 1
+         * per tutti — il valore giusto per gli esercizi che sollevano davvero il corpo — e
+         * ExerciseSeeder porta gli altri al loro valore al primo avvio successivo. Il volume
+         * gia' salvato nello storico non si tocca: si ricalcola al volo dalle set, quindi i
+         * totali passati si aggiornano da soli.
+         */
+        val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE exercises ADD COLUMN bodyweightFactor REAL NOT NULL DEFAULT 1.0")
             }
         }
     }

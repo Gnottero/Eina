@@ -65,6 +65,9 @@ class ExerciseSeeder(
         // in strings.xml. Vedi ExerciseEntity.loggingInstructions.
         loggingInstructions = "",
         weightType = WeightType.valueOf(getString("weightType")),
+        // Assente per gli esercizi con un carico esterno: li' il peso corporeo non entra
+        // nel volume e il campo non viene guardato.
+        bodyweightFactor = optDouble("bodyweightFactor", 1.0),
         muscleGroupsPrimary = getJSONArray("muscleGroupsPrimary").toStringList(),
         muscleGroupsSecondary = getJSONArray("muscleGroupsSecondary").toStringList(),
         equipment = optNullableString("equipment"),
@@ -112,6 +115,6 @@ class ExerciseSeeder(
         private const val KEY_CATALOG_VERSION = "catalog_version"
 
         /** Da alzare a ogni rigenerazione di exercises.json che cambia i contenuti. */
-        private const val CATALOG_VERSION = 5
+        private const val CATALOG_VERSION = 6
     }
 }

@@ -397,7 +397,8 @@
     "descriptionIt": "Sdraiati a terra a pancia in giù e appoggia le mani a circa 90 cm l'una dall'altra, tenendo il busto sollevato a braccia distese. Scendi finché il petto non sfiora il pavimento, inspirando. Espira e spingi il busto verso l'alto fino alla posizione di partenza contraendo il petto. Dopo una breve pausa in alto, ricomincia a scendere per le ripetizioni che ti servono.",
     "descriptionFr": "Allonge-toi au sol face contre terre et pose les mains à environ 90 cm l'une de l'autre, buste soulevé bras tendus. Descends jusqu'à ce que la poitrine effleure le sol, en inspirant. Expire et repousse le buste vers le haut jusqu'à la position de départ en contractant les pectoraux. Après une brève pause en haut, redescends pour le nombre de répétitions voulu.",
     "nameIt": "Piegamenti sulle braccia",
-    "nameFr": "Pompes"
+    "nameFr": "Pompes",
+    "bodyweightFactor": 0.64
   },
   {
     "name": "Incline Push-Up",
@@ -421,7 +422,8 @@
     "descriptionIt": "Mettiti di fronte a una panca o a un piano rialzato stabile. Appoggia le mani sul bordo, poco più larghe delle spalle. Porta i piedi indietro con braccia e corpo distesi; le braccia devono essere perpendicolari al corpo. Tenendo il corpo in linea, abbassa il petto verso il bordo piegando le braccia. Spingi finché le braccia non tornano distese. Ripeti.",
     "descriptionFr": "Place-toi face à un banc ou à une plateforme surélevée stable. Pose les mains sur le bord, un peu plus larges que les épaules. Recule les pieds, bras et corps tendus ; les bras doivent être perpendiculaires au corps. En gardant le corps aligné, descends la poitrine vers le bord en pliant les bras. Pousse jusqu'à tendre de nouveau les bras. Répète.",
     "nameIt": "Piegamenti con mani rialzate",
-    "nameFr": "Pompes inclinées, mains surélevées"
+    "nameFr": "Pompes inclinées, mains surélevées",
+    "bodyweightFactor": 0.55
   },
   {
     "name": "Push-Ups With Feet Elevated",
@@ -445,7 +447,8 @@
     "descriptionIt": "Sdraiati a terra a pancia in giù e appoggia le mani a circa 90 cm l'una dall'altra, tenendo il busto sollevato a braccia distese. Appoggia le punte dei piedi su una panca piana, così da avere il corpo inclinato. Nota: più è alto il rialzo, più l'esercizio è difficile. Scendi finché il petto non sfiora il pavimento, inspirando. Con i pettorali, spingi il busto verso l'alto fino alla posizione di partenza e contrai il petto, espirando. Dopo una pausa di un secondo in contrazione, ripeti per le ripetizioni previste.",
     "descriptionFr": "Allonge-toi au sol face contre terre et pose les mains à environ 90 cm l'une de l'autre, buste soulevé bras tendus. Pose la pointe des pieds sur un banc plat, de façon à incliner le corps. Note : plus la surélévation est haute, plus l'exercice est difficile. Descends jusqu'à ce que la poitrine effleure le sol, en inspirant. Avec les pectoraux, repousse le buste vers le haut jusqu'à la position de départ en contractant la poitrine, en expirant. Après une pause d'une seconde en contraction, répète le nombre de répétitions prévu.",
     "nameIt": "Piegamenti con piedi rialzati",
-    "nameFr": "Pompes pieds surélevés"
+    "nameFr": "Pompes pieds surélevés",
+    "bodyweightFactor": 0.75
   },
   {
     "name": "Dips - Chest Version",
@@ -493,7 +496,8 @@
     "descriptionIt": "Afferra la sbarra con i palmi rivolti in avanti, alla larghezza prevista. Nota sulle prese: la presa larga vuole le mani più distanti della larghezza delle spalle, quella media alla larghezza delle spalle, quella stretta più vicine. Con entrambe le braccia distese sopra di te, porta il busto indietro di una trentina di gradi inarcando leggermente la zona lombare e spingendo il petto in fuori: è la posizione di partenza. Tira il busto verso l'alto finché la sbarra non tocca la parte alta del petto, portando spalle e braccia in basso e indietro. Espira durante questa fase. Consiglio: concentrati sulla contrazione dei muscoli della schiena una volta arrivato in alto. Il busto resta rigido mentre si muove nello spazio, solo le braccia lavorano; gli avambracci si limitano a tenere la sbarra. Dopo un secondo in contrazione, inspira e scendi lentamente fino a braccia completamente distese e dorsali in allungamento. Ripeti per le ripetizioni previste.",
     "descriptionFr": "Saisis la barre de traction, paumes vers l'avant, à la largeur prévue. Note sur les prises : la prise large demande des mains plus écartées que les épaules, la prise moyenne à largeur d'épaules, la prise serrée plus rapprochées. Bras tendus au-dessus de toi, recule le buste d'une trentaine de degrés en creusant légèrement le bas du dos et en sortant la poitrine : c'est la position de départ. Tire le buste vers le haut jusqu'à ce que la barre touche le haut de la poitrine, en amenant épaules et bras vers le bas et l'arrière. Expire pendant cette phase. Conseil : concentre-toi sur la contraction des muscles du dos une fois en haut. Le buste reste rigide pendant qu'il se déplace, seuls les bras travaillent ; les avant-bras se contentent de tenir la barre. Après une seconde en contraction, inspire et descends lentement jusqu'à bras complètement tendus et dorsaux étirés. Répète le nombre de répétitions prévu.",
     "nameIt": "Trazioni alla sbarra",
-    "nameFr": "Tractions"
+    "nameFr": "Tractions",
+    "bodyweightFactor": 1.0
   },
   {
     "name": "Chin-Up",
@@ -518,7 +522,8 @@
     "descriptionIt": "Afferra la sbarra con i palmi rivolti verso di te e una presa più stretta delle spalle. Con le braccia distese sopra di te, tieni il busto il più dritto possibile inarcando leggermente la zona lombare e spingendo il petto in fuori: è la posizione di partenza. Consiglio: tenere il busto dritto massimizza il lavoro dei bicipiti e riduce quello della schiena. Espirando, tira il busto verso l'alto finché la testa non arriva più o meno all'altezza della sbarra, concentrandoti sui bicipiti e tenendo i gomiti vicini al corpo. Consiglio: il busto resta rigido, solo le braccia si muovono; gli avambracci si limitano a tenere la sbarra. Dopo un secondo di contrazione dei bicipiti, scendi lentamente fino a braccia completamente distese, inspirando. Ripeti per le ripetizioni previste.",
     "descriptionFr": "Saisis la barre paumes tournées vers toi, avec une prise plus serrée que les épaules. Bras tendus au-dessus de toi, garde le buste aussi droit que possible en creusant légèrement le bas du dos et en sortant la poitrine : c'est la position de départ. Conseil : garder le buste droit maximise le travail des biceps et limite celui du dos. En expirant, tire le buste vers le haut jusqu'à ce que la tête arrive à peu près au niveau de la barre, en te concentrant sur les biceps et en gardant les coudes près du corps. Conseil : le buste reste rigide, seuls les bras bougent ; les avant-bras se contentent de tenir la barre. Après une seconde de contraction des biceps, descends lentement jusqu'à bras complètement tendus, en inspirant. Répète le nombre de répétitions prévu.",
     "nameIt": "Trazioni a presa supina",
-    "nameFr": "Tractions en supination"
+    "nameFr": "Tractions en supination",
+    "bodyweightFactor": 1.0
   },
   {
     "name": "Weighted Pull Ups",
@@ -542,7 +547,8 @@
     "descriptionIt": "Aggancia un disco a una cintura da zavorra e allacciala in vita. Afferra la sbarra con i palmi rivolti in avanti; per una presa media le mani stanno alla larghezza delle spalle. Con entrambe le braccia distese sopra di te, porta il busto indietro di una trentina di gradi inarcando leggermente la zona lombare e spingendo il petto in fuori: è la posizione di partenza. Espira e tira il busto verso l'alto finché la testa non supera le mani, concentrandoti sul portare le scapole indietro e in basso. Dopo un attimo in contrazione, inspira e scendi lentamente fino a braccia distese e dorsali in allungamento.",
     "descriptionFr": "Accroche un disque à une ceinture de lest et attache-la à ta taille. Saisis la barre paumes vers l'avant ; pour une prise moyenne, les mains sont à largeur d'épaules. Bras tendus au-dessus de toi, recule le buste d'une trentaine de degrés en creusant légèrement le bas du dos et en sortant la poitrine : c'est la position de départ. Expire et tire le buste vers le haut jusqu'à ce que la tête dépasse les mains, en te concentrant sur le fait de ramener les omoplates vers l'arrière et le bas. Après un instant en contraction, inspire et descends lentement jusqu'à bras tendus et dorsaux étirés.",
     "nameIt": "Trazioni zavorrate",
-    "nameFr": "Tractions lestées"
+    "nameFr": "Tractions lestées",
+    "bodyweightFactor": 1.0
   },
   {
     "name": "Band Assisted Pull-Up",
@@ -567,7 +573,8 @@
     "descriptionIt": "Fissa l'elastico al centro della sbarra facendolo passare su se stesso. Elastici diversi danno assistenze diverse. Tira in basso l'estremità dell'elastico e infilaci dentro un ginocchio piegato, assicurandoti che non scivoli via. Prendi la sbarra con presa da media a larga: è la posizione di partenza. Tirati verso l'alto contraendo i dorsali mentre fletti il gomito, che va portato verso il fianco. Tira in avanti, cercando di superare la sbarra con il mento, senza slanci né strappi. Dopo una breve pausa, torna alla posizione di partenza.",
     "descriptionFr": "Fixe l'élastique au centre de la barre en le passant dans lui-même. Des élastiques différents donnent des niveaux d'assistance différents. Tire l'extrémité de l'élastique vers le bas et places-y un genou fléchi, en t'assurant qu'il ne glisse pas. Prends la barre avec une prise moyenne à large : c'est la position de départ. Tire-toi vers le haut en contractant les dorsaux tout en fléchissant le coude, qui doit être ramené vers le flanc. Tire vers l'avant, en cherchant à passer le menton au-dessus de la barre, sans balancier ni à-coups. Après une brève pause, reviens en position de départ.",
     "nameIt": "Trazioni assistite con elastico",
-    "nameFr": "Tractions assistées à l'élastique"
+    "nameFr": "Tractions assistées à l'élastique",
+    "bodyweightFactor": 1.0
   },
   {
     "name": "Wide-Grip Lat Pulldown",
@@ -985,7 +992,8 @@
     "descriptionIt": "Sistema un bilanciere in un rack all'altezza della vita; va bene anche uno Smith machine. Prendi la barra con una presa più larga delle spalle e mettiti appeso sotto di essa. Il corpo resta dritto, i talloni a terra e le braccia completamente distese: è la posizione di partenza. Fletti i gomiti tirando il petto verso la barra, retraendo le scapole durante il movimento. Fermati un attimo in cima e torna alla posizione di partenza. Ripeti per le ripetizioni volute.",
     "descriptionFr": "Installe une barre dans un rack à hauteur de taille ; une Smith machine convient aussi. Prends la barre avec une prise plus large que les épaules et suspends-toi dessous. Le corps reste droit, talons au sol et bras complètement tendus : c'est la position de départ. Fléchis les coudes en tirant la poitrine vers la barre, en rétractant les omoplates pendant le mouvement. Marque un temps d'arrêt en haut et reviens en position de départ. Répète le nombre de répétitions voulu.",
     "nameIt": "Rematore australiano",
-    "nameFr": "Rowing inversé (australien)"
+    "nameFr": "Rowing inversé (australien)",
+    "bodyweightFactor": 0.5
   },
   {
     "name": "Barbell Deadlift",
@@ -1435,7 +1443,8 @@
     "descriptionIt": "Con la schiena al muro, piegati in avanti e appoggia entrambe le mani a terra alla larghezza delle spalle. Slanciati contro il muro fino a restare a braccia distese, con il corpo capovolto e braccia e gambe completamente estese. Tieni tutto il corpo il più dritto possibile. Consiglio: se è la prima volta, fatti aiutare da qualcuno; tieni la testa rivolta verso il muro invece di guardare in basso. Abbassati lentamente inspirando, finché la testa non sfiora il pavimento. Consiglio: scendere lentamente è fondamentale per non farti male alla testa. Rispingiti verso l'alto lentamente espirando, fin quasi a bloccare i gomiti. Ripeti per le ripetizioni consigliate.",
     "descriptionFr": "Dos au mur, penche-toi en avant et pose les deux mains au sol à largeur d'épaules. Lance-toi contre le mur jusqu'à te retrouver bras tendus, corps à l'envers, bras et jambes complètement étendus. Garde tout le corps aussi droit que possible. Conseil : si c'est ta première fois, fais-toi aider par quelqu'un ; garde la tête tournée vers le mur plutôt que de regarder vers le bas. Descends lentement en inspirant, jusqu'à ce que la tête effleure le sol. Conseil : descendre lentement est essentiel pour ne pas te blesser à la tête. Repousse-toi vers le haut lentement en expirant, jusqu'à presque verrouiller les coudes. Répète le nombre de répétitions conseillé.",
     "nameIt": "Piegamenti in verticale",
-    "nameFr": "Pompes en équilibre sur les mains"
+    "nameFr": "Pompes en équilibre sur les mains",
+    "bodyweightFactor": 0.9
   },
   {
     "name": "Side Lateral Raise",
@@ -2270,7 +2279,8 @@
     "descriptionIt": "Per metterti in posizione di partenza, sostieni il corpo a braccia quasi bloccate sopra le parallele. Inspira e scendi lentamente tenendo il busto verticale e i gomiti vicini al corpo: così i tricipiti lavorano di più. Scendi finché fra braccio e avambraccio non si forma un angolo di 90 gradi. Poi espira e rispingi il busto verso l'alto usando i tricipiti, fino alla posizione di partenza. Ripeti per le ripetizioni previste.",
     "descriptionFr": "Pour te mettre en position de départ, soutiens ton corps bras presque verrouillés au-dessus des barres parallèles. Inspire et descends lentement en gardant le buste vertical et les coudes près du corps : les triceps travaillent ainsi davantage. Descends jusqu'à former un angle de 90 degrés entre bras et avant-bras. Puis expire et repousse le buste vers le haut avec les triceps, jusqu'à la position de départ. Répète le nombre de répétitions prévu.",
     "nameIt": "Dip alle parallele - versione tricipiti",
-    "nameFr": "Dips - version triceps"
+    "nameFr": "Dips - version triceps",
+    "bodyweightFactor": 1.0
   },
   {
     "name": "Parallel Bar Dip",
@@ -2318,7 +2328,8 @@
     "descriptionIt": "Ti serve una panca dietro la schiena. Con la panca perpendicolare al corpo e dandole le spalle, appoggia le mani sul bordo a braccia distese, larghe quanto le spalle. Le gambe restano distese in avanti, con il corpo flesso alle anche e perpendicolare al busto: è la posizione di partenza. Abbassa lentamente il corpo inspirando, flettendo i gomiti finché fra braccio e avambraccio non si forma un angolo poco inferiore ai 90 gradi. Consiglio: tieni i gomiti il più stretti possibile per tutto il movimento; gli avambracci devono sempre puntare verso il basso. Usa i tricipiti per risalire fino alla posizione di partenza. Ripeti per le ripetizioni consigliate.",
     "descriptionFr": "Il te faut un banc derrière le dos. Le banc perpendiculaire à ton corps et en lui tournant le dos, pose les mains sur le bord, bras tendus, à largeur d'épaules. Les jambes restent tendues devant, le corps fléchi aux hanches et perpendiculaire au buste : c'est la position de départ. Descends lentement le corps en inspirant, en fléchissant les coudes jusqu'à former un angle un peu inférieur à 90 degrés entre bras et avant-bras. Conseil : garde les coudes aussi serrés que possible pendant tout le mouvement ; les avant-bras doivent toujours pointer vers le bas. Utilise les triceps pour remonter jusqu'à la position de départ. Répète le nombre de répétitions conseillé.",
     "nameIt": "Dip fra due panche",
-    "nameFr": "Dips sur banc"
+    "nameFr": "Dips sur banc",
+    "bodyweightFactor": 0.4
   },
   {
     "name": "Cable Rope Overhead Triceps Extension",
@@ -2575,7 +2586,8 @@
     "descriptionIt": "In piedi con i piedi alla larghezza delle spalle, puoi mettere le mani dietro la testa: è la posizione di partenza. Inizia il movimento flettendo ginocchia e anche e portando indietro il bacino. Se ci arrivi, scendi fino in fondo, poi inverti rapidamente il movimento fino a tornare alla posizione di partenza. Mentre scendi, tieni testa e petto alti e spingi le ginocchia verso l'esterno.",
     "descriptionFr": "Debout, pieds à largeur d'épaules, tu peux placer les mains derrière la tête : c'est la position de départ. Amorce le mouvement en fléchissant genoux et hanches et en reculant le bassin. Si tu y arrives, descends jusqu'en bas, puis inverse rapidement le mouvement jusqu'à revenir en position de départ. Pendant la descente, garde la tête et la poitrine hautes et pousse les genoux vers l'extérieur.",
     "nameIt": "Squat a corpo libero",
-    "nameFr": "Squat au poids du corps"
+    "nameFr": "Squat au poids du corps",
+    "bodyweightFactor": 0.6
   },
   {
     "name": "Box Squat",
@@ -2903,7 +2915,8 @@
     "descriptionIt": "Parti in piedi con i piedi alla larghezza delle spalle e le mani sui fianchi. Fai un passo avanti con una gamba, flettendo le ginocchia per abbassare il bacino. Scendi finché il ginocchio posteriore non sfiora il pavimento. Il busto resta eretto e il ginocchio anteriore sopra il piede. Spingi con il tallone della gamba avanti ed estendi entrambe le ginocchia per risalire. Porta avanti il piede posteriore e ripeti l'affondo con l'altra gamba.",
     "descriptionFr": "Commence debout, pieds à largeur d'épaules et mains sur les hanches. Fais un pas en avant avec une jambe, en fléchissant les genoux pour descendre le bassin. Descends jusqu'à ce que le genou arrière effleure le sol. Le buste reste droit et le genou avant au-dessus du pied. Pousse avec le talon de la jambe avant et étends les deux genoux pour remonter. Avance le pied arrière et répète la fente avec l'autre jambe.",
     "nameIt": "Affondi camminati a corpo libero",
-    "nameFr": "Fentes marchées au poids du corps"
+    "nameFr": "Fentes marchées au poids du corps",
+    "bodyweightFactor": 0.6
   },
   {
     "name": "Split Squat with Dumbbells",
@@ -3027,7 +3040,8 @@
     "descriptionIt": "Incrocia le braccia sul petto. Con la testa alta e la schiena dritta, porta i piedi alla larghezza delle spalle. Tenendo schiena dritta e petto alto, scendi in accosciata inspirando finché le cosce non sono parallele al pavimento o più in basso. Da lì, spingendo soprattutto con l'avampiede, salta più in alto che puoi usando le cosce come molle, espirando durante il salto. Appena tocchi terra, riscendi subito in accosciata e salta di nuovo. Ripeti per le ripetizioni consigliate.",
     "descriptionFr": "Croise les bras sur la poitrine. Tête haute et dos droit, place les pieds à largeur d'épaules. En gardant le dos droit et la poitrine haute, descends en squat en inspirant jusqu'à ce que les cuisses soient parallèles au sol ou plus bas. De là, en poussant surtout avec l'avant du pied, saute aussi haut que possible en utilisant les cuisses comme des ressorts, en expirant pendant le saut. Dès que tu touches le sol, redescends aussitôt en squat et saute à nouveau. Répète le nombre de répétitions conseillé.",
     "nameIt": "Squat con salto",
-    "nameFr": "Squat sauté"
+    "nameFr": "Squat sauté",
+    "bodyweightFactor": 0.6
   },
   {
     "name": "Mountain Climbers",
@@ -3052,7 +3066,8 @@
     "descriptionIt": "Parti in posizione di push-up, con il peso sostenuto da mani e punte dei piedi. Flettendo ginocchio e anca, porta una gamba avanti finché il ginocchio non arriva più o meno sotto l'anca: è la posizione di partenza. Inverti in modo esplosivo la posizione delle gambe, estendendo quella piegata fino a distenderla in appoggio sulla punta e portando avanti l'altro piede con anca e ginocchio flessi. Continua alternando per 20-30 secondi.",
     "descriptionFr": "Commence en position de pompe, poids soutenu par les mains et les pointes de pieds. En fléchissant genou et hanche, ramène une jambe vers l'avant jusqu'à ce que le genou arrive à peu près sous la hanche : c'est la position de départ. Inverse de façon explosive la position des jambes, en étendant celle qui était fléchie jusqu'à la tendre en appui sur la pointe et en amenant l'autre pied vers l'avant, hanche et genou fléchis. Continue en alternant pendant 20 à 30 secondes.",
     "nameIt": "Mountain climber",
-    "nameFr": "Mountain climbers"
+    "nameFr": "Mountain climbers",
+    "bodyweightFactor": 0.0
   },
   {
     "name": "Romanian Deadlift",
@@ -3361,7 +3376,8 @@
     "descriptionIt": "Sdraiati a terra con i piedi appoggiati e le ginocchia piegate. Solleva una gamba portando il ginocchio verso il petto: è la posizione di partenza. Esegui il movimento spingendo sul tallone, estendendo l'anca verso l'alto e staccando i glutei da terra. Estendi il più possibile, fermati e torna alla posizione di partenza.",
     "descriptionFr": "Allonge-toi au sol, pieds posés et genoux fléchis. Lève une jambe en ramenant le genou vers la poitrine : c'est la position de départ. Exécute le mouvement en poussant dans le talon, en étendant la hanche vers le haut et en décollant les fessiers du sol. Étends au maximum, marque un temps d'arrêt et reviens en position de départ.",
     "nameIt": "Ponte per glutei su una gamba",
-    "nameFr": "Pont fessier unijambiste"
+    "nameFr": "Pont fessier unijambiste",
+    "bodyweightFactor": 0.35
   },
   {
     "name": "Butt Lift (Bridge)",
@@ -3384,7 +3400,8 @@
     "descriptionIt": "Sdraiati supino a terra con le mani lungo i fianchi e le ginocchia piegate, i piedi circa alla larghezza delle spalle: è la posizione di partenza. Spingendo soprattutto con i talloni, stacca le anche da terra tenendo la schiena dritta. Espira durante questa fase e tieni un secondo in alto. Torna lentamente alla posizione di partenza inspirando.",
     "descriptionFr": "Allonge-toi sur le dos, mains le long du corps et genoux fléchis, pieds à environ largeur d'épaules : c'est la position de départ. En poussant surtout avec les talons, décolle les hanches du sol en gardant le dos droit. Expire pendant cette phase et tiens une seconde en haut. Reviens lentement en position de départ en inspirant.",
     "nameIt": "Ponte per glutei a corpo libero",
-    "nameFr": "Pont fessier au poids du corps"
+    "nameFr": "Pont fessier au poids du corps",
+    "bodyweightFactor": 0.3
   },
   {
     "name": "Glute Kickback",
@@ -3407,7 +3424,8 @@
     "descriptionIt": "Mettiti in ginocchio a terra o su un tappetino e piegati in avanti con le braccia distese davanti a te, perpendicolari al busto, come in un push-up in ginocchio ma con le braccia alla larghezza delle spalle. Guarda in avanti e tieni le ginocchia piegate a 90 gradi fra femorali e polpacci: è la posizione di partenza. Espirando, solleva la gamba destra finché i femorali non sono in linea con la schiena, mantenendo l'angolo di 90 gradi. Contrai i glutei per tutto il movimento e tieni la contrazione un secondo in cima. Consiglio: a fine movimento la coscia è parallela al pavimento e il polpaccio perpendicolare. Torna alla posizione iniziale inspirando e ripeti con la gamba sinistra. Continua ad alternare fino a completare le ripetizioni consigliate.",
     "descriptionFr": "Mets-toi à genoux au sol ou sur un tapis et penche-toi en avant, bras tendus devant toi et perpendiculaires au buste, comme pour une pompe à genoux mais bras à largeur d'épaules. Regarde devant et garde les genoux fléchis à 90 degrés entre ischio-jambiers et mollets : c'est la position de départ. En expirant, lève la jambe droite jusqu'à ce que les ischio-jambiers soient alignés avec le dos, en gardant l'angle de 90 degrés. Contracte les fessiers pendant tout le mouvement et tiens la contraction une seconde en haut. Conseil : en fin de mouvement, la cuisse est parallèle au sol et le mollet perpendiculaire. Reviens en position initiale en inspirant et répète avec la jambe gauche. Continue en alternant jusqu'à compléter le nombre de répétitions conseillé.",
     "nameIt": "Slanci per glutei a terra",
-    "nameFr": "Kickback fessiers au sol"
+    "nameFr": "Kickback fessiers au sol",
+    "bodyweightFactor": 0.0
   },
   {
     "name": "One-Legged Cable Kickback",
@@ -3478,7 +3496,8 @@
     "descriptionIt": "Mettiti di fronte a un box o a una panca dell'altezza giusta, con i piedi uniti: è la posizione di partenza. Inizia salendo, appoggiando il piede sinistro sulla panca. Estendi anca e ginocchio della gamba avanti per arrivare in piedi sul box. Una volta sopra con la gamba sinistra, fletti ginocchio e anca destri portando il ginocchio più in alto che puoi. Inverti il movimento per scendere dal box, poi ripeti la sequenza con l'altra gamba.",
     "descriptionFr": "Place-toi face à un box ou un banc à la bonne hauteur, pieds joints : c'est la position de départ. Commence par monter, en posant le pied gauche sur le banc. Étends hanche et genou de la jambe avant pour te redresser sur le box. Une fois dessus avec la jambe gauche, fléchis genou et hanche droits en montant le genou aussi haut que possible. Inverse le mouvement pour redescendre du box, puis répète la séquence avec l'autre jambe.",
     "nameIt": "Step up con richiamo del ginocchio",
-    "nameFr": "Montée sur banc avec relevé de genou"
+    "nameFr": "Montée sur banc avec relevé de genou",
+    "bodyweightFactor": 0.6
   },
   {
     "name": "Thigh Adductor",
@@ -3693,7 +3712,8 @@
     "descriptionIt": "Sdraiati supino con i piedi a terra, oppure appoggiati a una panca con le ginocchia a 90 gradi. Se appoggi i piedi su una panca, tienili a una decina di centimetri l'uno dall'altro con le punte rivolte verso l'interno, a toccarsi. Appoggia le mani ai lati della testa tenendo i gomiti stretti. Consiglio: non intrecciare le dita dietro la testa. Premendo la zona lombare contro il pavimento per isolare meglio gli addominali, comincia a staccare le spalle da terra. Continua a premere con la zona lombare più forte che puoi mentre contrai gli addominali ed espiri. Le spalle si sollevano di una decina di centimetri, la zona lombare resta a terra. In cima contrai forte gli addominali e tieni la contrazione un secondo. Consiglio: movimento lento e controllato, senza barare con lo slancio. Dopo il secondo di contrazione, torna lentamente alla posizione di partenza inspirando. Ripeti per le ripetizioni consigliate.",
     "descriptionFr": "Allonge-toi sur le dos, pieds au sol, ou posés sur un banc avec les genoux à 90 degrés. Si tu poses les pieds sur un banc, garde-les à une dizaine de centimètres l'un de l'autre, pointes tournées vers l'intérieur et en contact. Pose les mains sur les côtés de la tête en gardant les coudes serrés. Conseil : n'entrelace pas les doigts derrière la tête. En pressant le bas du dos contre le sol pour mieux isoler les abdominaux, commence à décoller les épaules du sol. Continue à presser avec le bas du dos aussi fort que possible en contractant les abdominaux et en expirant. Les épaules se soulèvent d'une dizaine de centimètres, le bas du dos reste au sol. En haut, contracte fort les abdominaux et tiens la contraction une seconde. Conseil : mouvement lent et contrôlé, sans tricher avec l'élan. Après la seconde de contraction, reviens lentement en position de départ en inspirant. Répète le nombre de répétitions conseillé.",
     "nameIt": "Crunch",
-    "nameFr": "Crunch"
+    "nameFr": "Crunch",
+    "bodyweightFactor": 0.0
   },
   {
     "name": "Weighted Crunches",
@@ -3714,7 +3734,8 @@
     "descriptionIt": "Sdraiati supino con i piedi a terra, oppure appoggiati a una panca con le ginocchia a 90 gradi. Tieni un peso sul petto, oppure distendilo sopra il busto: è la posizione di partenza. Espira e comincia lentamente a staccare le spalle da terra. Le spalle si sollevano di una decina di centimetri mentre la zona lombare resta a terra. In cima contrai gli addominali e tieni un attimo. Poi inspira e torna lentamente alla posizione di partenza.",
     "descriptionFr": "Allonge-toi sur le dos, pieds au sol, ou posés sur un banc avec les genoux à 90 degrés. Tiens une charge sur la poitrine, ou tends-la au-dessus du buste : c'est la position de départ. Expire et commence lentement à décoller les épaules du sol. Les épaules se soulèvent d'une dizaine de centimètres pendant que le bas du dos reste au sol. En haut, contracte les abdominaux et tiens un instant. Puis inspire et reviens lentement en position de départ.",
     "nameIt": "Crunch con sovraccarico",
-    "nameFr": "Crunch lesté"
+    "nameFr": "Crunch lesté",
+    "bodyweightFactor": 0.0
   },
   {
     "name": "Decline Crunch",
@@ -3735,7 +3756,8 @@
     "descriptionIt": "Blocca le gambe all'estremità della panca declinata e sdraiati. Appoggia le mani ai lati della testa tenendo i gomiti stretti. Consiglio: non intrecciare le dita dietro la testa. Premendo la zona lombare contro la panca per isolare meglio gli addominali, comincia a staccare le spalle. Continua a premere con la zona lombare più forte che puoi mentre contrai gli addominali ed espiri. Le spalle si sollevano di una decina di centimetri, la zona lombare resta appoggiata. In cima contrai forte gli addominali e tieni la contrazione un secondo. Consiglio: movimento lento e controllato, senza barare con lo slancio. Dopo il secondo di contrazione, torna lentamente alla posizione di partenza inspirando. Ripeti per le ripetizioni consigliate.",
     "descriptionFr": "Bloque tes jambes à l'extrémité du banc décliné et allonge-toi. Pose les mains sur les côtés de la tête en gardant les coudes serrés. Conseil : n'entrelace pas les doigts derrière la tête. En pressant le bas du dos contre le banc pour mieux isoler les abdominaux, commence à décoller les épaules. Continue à presser avec le bas du dos aussi fort que possible en contractant les abdominaux et en expirant. Les épaules se soulèvent d'une dizaine de centimètres, le bas du dos reste en appui. En haut, contracte fort les abdominaux et tiens la contraction une seconde. Conseil : mouvement lent et contrôlé, sans tricher avec l'élan. Après la seconde de contraction, reviens lentement en position de départ en inspirant. Répète le nombre de répétitions conseillé.",
     "nameIt": "Crunch su panca declinata",
-    "nameFr": "Crunch décliné"
+    "nameFr": "Crunch décliné",
+    "bodyweightFactor": 0.0
   },
   {
     "name": "Reverse Crunch",
@@ -3756,7 +3778,8 @@
     "descriptionIt": "Sdraiati a terra con le gambe distese e le braccia lungo il busto, palmi a terra; le braccia restano ferme per tutto l'esercizio. Solleva le gambe finché le cosce non sono perpendicolari al pavimento, con i piedi uniti e paralleli al terreno: è la posizione di partenza. Inspirando, porta le gambe verso il busto arrotolando il bacino all'indietro e staccando le anche da terra. A fine movimento le ginocchia toccano il petto. Tieni la contrazione un secondo e riporta le gambe alla posizione di partenza espirando. Ripeti per le ripetizioni consigliate.",
     "descriptionFr": "Allonge-toi au sol, jambes tendues et bras le long du buste, paumes au sol ; les bras restent immobiles pendant tout l'exercice. Monte les jambes jusqu'à ce que les cuisses soient perpendiculaires au sol, pieds joints et parallèles au sol : c'est la position de départ. En inspirant, amène les jambes vers le buste en enroulant le bassin vers l'arrière et en décollant les hanches du sol. En fin de mouvement, les genoux touchent la poitrine. Tiens la contraction une seconde et ramène les jambes en position de départ en expirant. Répète le nombre de répétitions conseillé.",
     "nameIt": "Crunch inverso",
-    "nameFr": "Crunch inversé"
+    "nameFr": "Crunch inversé",
+    "bodyweightFactor": 0.0
   },
   {
     "name": "Cable Crunch",
@@ -3840,7 +3863,8 @@
     "descriptionIt": "Sdraiati a terra bloccando i piedi sotto qualcosa di stabile o facendoteli tenere da qualcuno, con le ginocchia piegate. Metti le mani dietro la testa intrecciando le dita: è la posizione di partenza. Solleva il busto fino a formare una V immaginaria con le cosce, espirando durante questa fase. Sentita la contrazione per un secondo, riabbassa il busto alla posizione di partenza inspirando. Ripeti per le ripetizioni consigliate.",
     "descriptionFr": "Allonge-toi au sol en bloquant les pieds sous quelque chose de stable ou en te les faisant tenir par quelqu'un, genoux fléchis. Place les mains derrière la tête en entrelaçant les doigts : c'est la position de départ. Monte le buste jusqu'à former un V imaginaire avec les cuisses, en expirant pendant cette phase. Une fois la contraction ressentie pendant une seconde, redescends le buste en position de départ en inspirant. Répète le nombre de répétitions conseillé.",
     "nameIt": "Sit-up",
-    "nameFr": "Redressement assis (sit-up)"
+    "nameFr": "Redressement assis (sit-up)",
+    "bodyweightFactor": 0.0
   },
   {
     "name": "Air Bike",
@@ -3861,7 +3885,8 @@
     "descriptionIt": "Sdraiati a terra con la zona lombare premuta contro il pavimento e le mani ai lati della testa, senza tirare sul collo. Solleva le spalle in posizione di crunch e porta le ginocchia in modo che le cosce siano perpendicolari al pavimento e le gambe parallele: è la posizione di partenza. Simula lentamente una pedalata, distendendo in avanti la gamba destra e richiamando il ginocchio sinistro. Porta il gomito destro verso il ginocchio sinistro con una torsione, espirando. Torna alla posizione iniziale inspirando. Ruota dal lato opposto continuando a pedalare, portando il gomito sinistro verso il ginocchio destro ed espirando. Continua ad alternare fino a completare le ripetizioni consigliate per lato.",
     "descriptionFr": "Allonge-toi au sol, bas du dos plaqué contre le sol et mains sur les côtés de la tête, sans tirer sur la nuque. Décolle les épaules en position de crunch et amène les genoux de façon que les cuisses soient perpendiculaires au sol et les jambes parallèles : c'est la position de départ. Simule lentement un pédalage, en tendant la jambe droite vers l'avant et en ramenant le genou gauche. Amène le coude droit vers le genou gauche avec une rotation, en expirant. Reviens en position initiale en inspirant. Tourne de l'autre côté en continuant à pédaler, en amenant le coude gauche vers le genou droit et en expirant. Continue en alternant jusqu'à compléter le nombre de répétitions conseillé de chaque côté.",
     "nameIt": "Bicicletta a terra",
-    "nameFr": "Bicyclette au sol"
+    "nameFr": "Bicyclette au sol",
+    "bodyweightFactor": 0.0
   },
   {
     "name": "Dead Bug",
@@ -3882,7 +3907,8 @@
     "descriptionIt": "Sdraiati supino con le braccia distese verso il soffitto. Porta piedi, ginocchia e anche a 90 gradi. Espira con forza per abbassare la gabbia toracica e appiattire la schiena a terra, ruotando il bacino verso l'alto e contraendo i glutei. Mantieni questa posizione per tutto il movimento: è la posizione di partenza. Inizia l'esercizio distendendo una gamba, estendendo ginocchio e anca fino a portarla appena sopra il pavimento. Mantieni la posizione di zona lombare e bacino mentre lo fai, perché la schiena tenderà a inarcarsi. Resta in tensione e riporta la gamba alla posizione di partenza. Ripeti dal lato opposto, alternando fino a completare la serie.",
     "descriptionFr": "Allonge-toi sur le dos, bras tendus vers le plafond. Amène pieds, genoux et hanches à 90 degrés. Expire avec force pour abaisser la cage thoracique et plaquer le dos au sol, en basculant le bassin vers le haut et en contractant les fessiers. Garde cette position pendant tout le mouvement : c'est la position de départ. Commence l'exercice en tendant une jambe, en étendant genou et hanche jusqu'à l'amener juste au-dessus du sol. Maintiens la position du bas du dos et du bassin pendant l'exécution, car le dos va vouloir se cambrer. Reste gainé et ramène la jambe en position de départ. Répète de l'autre côté, en alternant jusqu'à compléter la série.",
     "nameIt": "Dead bug",
-    "nameFr": "Dead bug"
+    "nameFr": "Dead bug",
+    "bodyweightFactor": 0.0
   },
   {
     "name": "Hanging Leg Raise",
@@ -3903,7 +3929,8 @@
     "descriptionIt": "Appenditi a una sbarra a braccia distese sopra di te, con presa larga o media. Le gambe scendono dritte con il bacino leggermente arrotolato all'indietro: è la posizione di partenza. Solleva le gambe finché il busto non forma un angolo di 90 gradi con esse. Espira durante il movimento e tieni la contrazione un secondo circa. Torna lentamente alla posizione di partenza inspirando. Ripeti per le ripetizioni consigliate.",
     "descriptionFr": "Suspends-toi à une barre, bras tendus au-dessus de toi, en prise large ou moyenne. Les jambes descendent droites, bassin légèrement enroulé vers l'arrière : c'est la position de départ. Monte les jambes jusqu'à ce que le buste forme un angle de 90 degrés avec elles. Expire pendant le mouvement et tiens la contraction environ une seconde. Reviens lentement en position de départ en inspirant. Répète le nombre de répétitions conseillé.",
     "nameIt": "Sollevamento gambe alla sbarra",
-    "nameFr": "Relevé de jambes suspendu"
+    "nameFr": "Relevé de jambes suspendu",
+    "bodyweightFactor": 0.0
   },
   {
     "name": "Knee/Hip Raise On Parallel Bars",
@@ -3945,7 +3972,8 @@
     "descriptionIt": "Sdraiati con la schiena appoggiata a una panca e le gambe distese oltre il bordo. Metti le mani sotto i glutei con i palmi in giù, oppure ai lati aggrappate alla panca: è la posizione di partenza. Tenendo le gambe distese, con le ginocchia appena flesse ma bloccate, sollevale finché non formano un angolo di 90 gradi con il pavimento. Espira durante questa fase e tieni la contrazione un secondo in cima. Poi, inspirando, riabbassa lentamente le gambe alla posizione di partenza.",
     "descriptionFr": "Allonge-toi, dos sur un banc et jambes tendues au-delà du bord. Place les mains sous les fessiers, paumes vers le bas, ou sur les côtés en t'agrippant au banc : c'est la position de départ. En gardant les jambes tendues, genoux à peine fléchis mais verrouillés, monte-les jusqu'à former un angle de 90 degrés avec le sol. Expire pendant cette phase et tiens la contraction une seconde en haut. Puis, en inspirant, redescends lentement les jambes en position de départ.",
     "nameIt": "Sollevamento gambe su panca piana",
-    "nameFr": "Relevé de jambes allongé sur banc"
+    "nameFr": "Relevé de jambes allongé sur banc",
+    "bodyweightFactor": 0.0
   },
   {
     "name": "Plank",
@@ -3966,7 +3994,8 @@
     "descriptionIt": "Mettiti a terra a pancia in giù, sostenendo il peso sulle punte dei piedi e sugli avambracci. Le braccia sono flesse con i gomiti esattamente sotto le spalle. Tieni il corpo sempre in linea e mantieni la posizione il più a lungo possibile. Per aumentare la difficoltà puoi sollevare un braccio o una gamba.",
     "descriptionFr": "Mets-toi au sol face contre terre, en soutenant le poids sur les pointes de pieds et les avant-bras. Les bras sont fléchis, coudes exactement sous les épaules. Garde le corps toujours aligné et tiens la position aussi longtemps que possible. Pour augmenter la difficulté, tu peux lever un bras ou une jambe.",
     "nameIt": "Plank",
-    "nameFr": "Planche (gainage)"
+    "nameFr": "Planche (gainage)",
+    "bodyweightFactor": 0.0
   },
   {
     "name": "Side Bridge",
@@ -3989,7 +4018,8 @@
     "descriptionIt": "Sdraiati su un fianco con le gambe sovrapposte e l'avambraccio a terra, il gomito esattamente sotto la spalla. Attiva il core e stacca le anche da terra finché il corpo non forma una linea retta dalla testa ai piedi. Tieni il collo in linea ed evita che l'anca alta ruoti in avanti o che quella bassa si abbassi. Mantieni la posizione per il tempo previsto, poi scendi in controllo e cambia lato.",
     "descriptionFr": "Allonge-toi sur le côté, jambes superposées et avant-bras au sol, coude exactement sous l'épaule. Gaine le tronc et décolle les hanches du sol jusqu'à ce que le corps forme une ligne droite de la tête aux pieds. Garde la nuque alignée et évite que la hanche du haut pivote vers l'avant ou que celle du bas s'affaisse. Tiens la position pendant la durée prévue, puis redescends en contrôle et change de côté.",
     "nameIt": "Plank laterale",
-    "nameFr": "Gainage latéral"
+    "nameFr": "Gainage latéral",
+    "bodyweightFactor": 0.0
   },
   {
     "name": "Russian Twist",
@@ -4012,7 +4042,8 @@
     "descriptionIt": "Sdraiati a terra bloccando i piedi sotto qualcosa di stabile o facendoteli tenere da qualcuno, con le ginocchia piegate. Solleva il busto fino a formare una V immaginaria con le cosce. Le braccia sono distese davanti a te, perpendicolari al busto, con le mani unite: è la posizione di partenza. Ruota il busto verso destra finché le braccia non sono parallele al pavimento, espirando. Tieni la contrazione un secondo e torna alla posizione di partenza. Poi ruota dal lato opposto con la stessa tecnica. Ripeti per le ripetizioni consigliate.",
     "descriptionFr": "Allonge-toi au sol en bloquant les pieds sous quelque chose de stable ou en te les faisant tenir par quelqu'un, genoux fléchis. Monte le buste jusqu'à former un V imaginaire avec les cuisses. Les bras sont tendus devant toi, perpendiculaires au buste, mains jointes : c'est la position de départ. Fais pivoter le buste vers la droite jusqu'à ce que les bras soient parallèles au sol, en expirant. Tiens la contraction une seconde et reviens en position de départ. Puis tourne de l'autre côté avec la même technique. Répète le nombre de répétitions conseillé.",
     "nameIt": "Russian twist",
-    "nameFr": "Russian twist"
+    "nameFr": "Russian twist",
+    "bodyweightFactor": 0.0
   },
   {
     "name": "Cable Russian Twists",

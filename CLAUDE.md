@@ -137,6 +137,8 @@ data class ExerciseEntity(
     val loggingInstructions: String,   // vuota per la libreria: la frase viene da weightType
                                        // via strings.xml. La riempie solo un esercizio custom.
     val weightType: WeightType,
+    val bodyweightFactor: Double = 1.0,        // Fase 23b (DB v5, MIGRATION_4_5): quota di peso
+                                               // corporeo davvero sollevata. 1 = trazioni, 0 = crunch
     val muscleGroupsPrimary: List<String>,     // TypeConverter: JSON string
     val muscleGroupsSecondary: List<String>,   // TypeConverter: JSON string
     val equipment: String? = null,
@@ -249,17 +251,20 @@ fun isNewPR(
     }
 }
 
-fun volumeForSet(weightType: WeightType, set: SetEntryEntity): Double {
+fun volumeForSet(weightType: WeightType, set: SetEntryEntity, bodyweightFactor: Double = 1.0): Double {
     val reps = set.actualReps ?: 0
+    // Il peso corporeo conta solo per la quota che l'esercizio solleva davvero: le trazioni
+    // (fattore 1) entrano nel volume, i crunch (fattore 0) no.
+    val liftedBodyweight = (set.bodyweightSnapshotKg ?: 0.0) * bodyweightFactor
     return when (weightType) {
         WeightType.FREE_WEIGHT, WeightType.MACHINE_STACK ->
             (set.weight ?: 0.0) * reps
         WeightType.BODYWEIGHT ->
-            (set.bodyweightSnapshotKg ?: 0.0) * reps
+            liftedBodyweight * reps
         WeightType.BODYWEIGHT_PLUS_LOAD ->
-            ((set.bodyweightSnapshotKg ?: 0.0) + (set.weight ?: 0.0)) * reps
+            (liftedBodyweight + (set.weight ?: 0.0)) * reps
         WeightType.ASSISTED ->
-            ((set.bodyweightSnapshotKg ?: 0.0) - (set.weight ?: 0.0)).coerceAtLeast(0.0) * reps
+            (liftedBodyweight - (set.weight ?: 0.0)).coerceAtLeast(0.0) * reps
         WeightType.TIME_BASED ->
             0.0 // il "volume" per esercizi a tempo non è in kg; escludi dal totale kg sollevati
     }
@@ -468,6 +473,19 @@ cambierebbe il ritmo. A 720px il lossless costerebbe ~950 KB a file, quindi la c
 è lossy q90. `--no-upscale` torna alla pipeline delle Fasi 19-21. `mediaUri` non cambia
 (stessi `anim.webp`), quindi CATALOG_VERSION resta 5. `assets/media` da 45,2 a 67,1 MB,
 APK di release da 47,6 a 69,5 MB.
+
+**Fase 23b — Volume solo di quel che si solleva davvero** *(fatta)*
+DoD: gli esercizi a corpo libero non contano più tutti allo stesso modo nel volume della
+sessione. `weightType` non bastava a distinguerli — trazioni e crunch sono entrambi
+`BODYWEIGHT` — quindi ogni esercizio porta `bodyweightFactor`, la quota di peso corporeo che
+il movimento solleva davvero: 1 per trazioni e dip, 0,64 per i piegamenti, 0 per addominali,
+plank e glute kickback, che quindi non aggiungono nulla al totale per quante ripetizioni si
+facciano. I valori stanno in `tools/bodyweight_factors.json` e `curate_exercises.py` si ferma
+se un esercizio a corpo libero non è elencato. DB alla versione 5 con `MIGRATION_4_5` (colonna
+a 1 per tutti, poi il seeder porta gli altri al loro valore), CATALOG_VERSION 6. Il volume
+storico non è salvato da nessuna parte, si ricalcola dalle set: i totali passati si correggono
+da soli. Nota: il volume a corpo libero resta 0 finché non si registra il peso in Progressi →
+Peso corporeo, perché `bodyweightSnapshotKg` nasce da lì.
 
 **Fase 9 — Rifinitura** *(fatta)*
 DoD: R8 + shrinkResources attivi sulla release (20,5 MB → 2,2 MB), regole in

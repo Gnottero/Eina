@@ -23,6 +23,7 @@ private fun row(
     reps: Int? = 10,
     weight: Double? = 50.0,
     bodyweight: Double? = null,
+    bodyweightFactor: Double = 1.0,
     isWarmup: Boolean = false,
     isPR: Boolean = false,
     endHour: Int? = 11,
@@ -36,6 +37,7 @@ private fun row(
     exerciseId = exerciseId,
     exerciseName = ExerciseName(exerciseName),
     weightType = weightType,
+    bodyweightFactor = bodyweightFactor,
     setIndex = setIndex,
     actualReps = reps,
     weight = weight,
@@ -152,12 +154,16 @@ class StatsTest {
     }
 
     @Test
-    fun `volume a corpo libero usa lo snapshot del peso`() {
+    fun `volume a corpo libero scala col fattore dell'esercizio`() {
         val rows = listOf(
+            // Trazioni: il corpo sale tutto, contano.
             row(1, today, weightType = WeightType.BODYWEIGHT, reps = 10, weight = null, bodyweight = 72.0),
-            row(1, today, weightType = WeightType.BODYWEIGHT_PLUS_LOAD, setIndex = 1,
+            // Crunch: il corpo non si alza, fattore 0, non gonfiano il totale.
+            row(1, today, weightType = WeightType.BODYWEIGHT, setIndex = 1, reps = 30,
+                weight = null, bodyweight = 72.0, bodyweightFactor = 0.0),
+            row(1, today, weightType = WeightType.BODYWEIGHT_PLUS_LOAD, setIndex = 2,
                 reps = 5, weight = 10.0, bodyweight = 72.0)
         )
-        assertEquals(720.0 + 410.0, totalVolume(rows), 0.001)
+        assertEquals(720.0 + 0.0 + 410.0, totalVolume(rows), 0.001)
     }
 }

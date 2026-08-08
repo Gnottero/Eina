@@ -30,7 +30,12 @@ SOURCE = ROOT / "eina_exercises_seed.json"
 WHITELIST = ROOT / "tools" / "common_exercises.txt"
 TRANSLATIONS_DIR = ROOT / "tools" / "translations"
 NAMES_FILE = ROOT / "tools" / "exercise_names.json"
+FACTORS_FILE = ROOT / "tools" / "bodyweight_factors.json"
 OUTPUT = ROOT / "app" / "src" / "main" / "assets" / "seed" / "exercises.json"
+
+# Solo per questi il peso corporeo entra nel conto del volume, quindi solo per questi
+# serve sapere quanta parte di quel peso viene davvero sollevata.
+BODYWEIGHT_TYPES = ("BODYWEIGHT", "BODYWEIGHT_PLUS_LOAD", "ASSISTED")
 
 DROPPED_FIELDS = ("loggingInstructions", "needsReview", "_originalCategory")
 
@@ -72,6 +77,15 @@ def main():
     if unknown_names:
         sys.exit("Nomi tradotti fuori dal dataset:\n  " + "\n  ".join(unknown_names))
 
+    factors = {k: v for k, v in json.loads(FACTORS_FILE.read_text(encoding="utf-8")).items()
+               if not k.startswith("_")}
+    unknown_factors = [n for n in factors if n not in catalog]
+    if unknown_factors:
+        sys.exit("Fattori di peso corporeo fuori dal dataset:\n  " + "\n  ".join(unknown_factors))
+    senza_fattore = [n for n in wanted if catalog[n]["weightType"] in BODYWEIGHT_TYPES and n not in factors]
+    if senza_fattore:
+        sys.exit("Manca il fattore di peso corporeo in bodyweight_factors.json:\n  " + "\n  ".join(senza_fattore))
+
     curated = []
     for name in wanted:
         entry = {k: v for k, v in catalog[name].items() if k not in DROPPED_FIELDS}
@@ -89,6 +103,8 @@ def main():
             entry["nameIt"] = translated_name["it"]
         if translated_name.get("fr"):
             entry["nameFr"] = translated_name["fr"]
+        if entry["weightType"] in BODYWEIGHT_TYPES:
+            entry["bodyweightFactor"] = factors[name]
         curated.append(entry)
 
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)

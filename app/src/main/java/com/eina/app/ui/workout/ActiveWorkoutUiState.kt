@@ -35,6 +35,8 @@ data class SessionExerciseUi(
     val exerciseId: Long,
     val name: ExerciseName,
     val weightType: WeightType,
+    /** Vedi ExerciseEntity.bodyweightFactor: serve al volume mostrato nell'header. */
+    val bodyweightFactor: Double = 1.0,
     val order: Int,
     val restSeconds: Int = 90,
     /** Nota dell'esercizio in questa sessione: ereditata dalla routine, modificabile qui. */
