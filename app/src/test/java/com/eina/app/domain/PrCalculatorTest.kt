@@ -1,6 +1,7 @@
 package com.eina.app.domain
 
 import com.eina.app.data.db.SetEntryEntity
+import com.eina.app.data.db.SetType
 import com.eina.app.data.db.WeightType
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -12,7 +13,7 @@ class PrCalculatorTest {
     private fun set(
         weight: Double? = null,
         actualReps: Int? = null,
-        isWarmup: Boolean = false,
+        setType: SetType = SetType.NORMAL,
         bodyweightSnapshotKg: Double? = null
     ) = SetEntryEntity(
         workoutExerciseId = 1,
@@ -20,13 +21,13 @@ class PrCalculatorTest {
         actualReps = actualReps,
         weight = weight,
         restSecondsPlanned = 60,
-        isWarmup = isWarmup,
+        setType = setType,
         bodyweightSnapshotKg = bodyweightSnapshotKg
     )
 
     @Test
     fun `warmup set is never a PR`() {
-        val newSet = set(weight = 100.0, isWarmup = true)
+        val newSet = set(weight = 100.0, setType = SetType.WARMUP)
         assertFalse(isNewPR(WeightType.FREE_WEIGHT, newSet, emptyList()))
     }
 

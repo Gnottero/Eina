@@ -16,7 +16,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         SetEntryEntity::class,
         BodyMetricEntity::class
     ],
-    version = 5,
+    version = 6,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -77,6 +77,52 @@ abstract class EinaDatabase : RoomDatabase() {
         val MIGRATION_4_5 = object : Migration(4, 5) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE exercises ADD COLUMN bodyweightFactor REAL NOT NULL DEFAULT 1.0")
+            }
+        }
+
+        /**
+         * `isWarmup` diventa `setType` (vedi [SetType]): il booleano sapeva dire solo
+         * riscaldamento si'/no, e cedimento e drop set non ci entravano. La colonna va sostituita,
+         * non aggiunta, quindi la tabella si ricrea: SQLite sotto API 30 non sa togliere colonne.
+         * Le serie gia' registrate diventano WARMUP o NORMAL, senza perdere nulla.
+         */
+        val MIGRATION_5_6 = object : Migration(5, 6) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE set_entries_new (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        workoutExerciseId INTEGER NOT NULL,
+                        setIndex INTEGER NOT NULL,
+                        targetReps INTEGER,
+                        actualReps INTEGER,
+                        weight REAL,
+                        restSecondsPlanned INTEGER NOT NULL,
+                        setType TEXT NOT NULL,
+                        completedAt INTEGER,
+                        isPR INTEGER NOT NULL,
+                        bodyweightSnapshotKg REAL,
+                        FOREIGN KEY(workoutExerciseId) REFERENCES workout_exercises(id)
+                            ON UPDATE NO ACTION ON DELETE CASCADE
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL(
+                    """
+                    INSERT INTO set_entries_new (
+                        id, workoutExerciseId, setIndex, targetReps, actualReps, weight,
+                        restSecondsPlanned, setType, completedAt, isPR, bodyweightSnapshotKg
+                    )
+                    SELECT id, workoutExerciseId, setIndex, targetReps, actualReps, weight,
+                        restSecondsPlanned,
+                        CASE isWarmup WHEN 1 THEN 'WARMUP' ELSE 'NORMAL' END,
+                        completedAt, isPR, bodyweightSnapshotKg
+                    FROM set_entries
+                    """.trimIndent()
+                )
+                db.execSQL("DROP TABLE set_entries")
+                db.execSQL("ALTER TABLE set_entries_new RENAME TO set_entries")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_set_entries_workoutExerciseId ON set_entries (workoutExerciseId)")
             }
         }
     }

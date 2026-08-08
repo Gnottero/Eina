@@ -4,6 +4,7 @@ import com.eina.app.data.db.ExerciseEntity
 import com.eina.app.data.db.ExerciseName
 import com.eina.app.data.db.PlaylistType
 import com.eina.app.data.db.SetEntryEntity
+import com.eina.app.data.db.SetType
 import com.eina.app.data.db.WeightType
 
 data class SessionSetUi(
@@ -13,7 +14,7 @@ data class SessionSetUi(
     val actualReps: Int? = null,
     val weight: Double? = null,
     val restSecondsPlanned: Int,
-    val isWarmup: Boolean = false,
+    val setType: SetType = SetType.NORMAL,
     val completedAt: Long? = null,
     val isPR: Boolean = false,
     val bodyweightSnapshotKg: Double? = null,

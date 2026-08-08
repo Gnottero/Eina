@@ -156,6 +156,18 @@
     <string name="table_reps">Reps</string>
     <string name="table_seconds">Sec</string>
 
+    <!-- Tipo di serie -->
+    <string name="set_type_title">Set type</string>
+    <string name="set_type_cd">Change set type</string>
+    <string name="set_type_warmup">Warm-up</string>
+    <string name="set_type_warmup_description">Out of volume, PRs and rest timer.</string>
+    <string name="set_type_normal">Normal</string>
+    <string name="set_type_normal_description">A working set, numbered.</string>
+    <string name="set_type_failure">To failure</string>
+    <string name="set_type_failure_description">Taken to the last rep you could do.</string>
+    <string name="set_type_drop">Drop set</string>
+    <string name="set_type_drop_description">Load dropped, reps carried on without rest.</string>
+
     <!-- Timer di recupero -->
     <string name="timer_rest">Rest</string>
     <string name="timer_minus_15" translatable="false">-15s</string>
@@ -190,7 +202,6 @@
         <item quantity="one">%d week streak</item>
         <item quantity="other">%d weeks streak</item>
     </plurals>
-    <string name="badge_warmup">Warm-up</string>
     <string name="badge_pr" translatable="false">PR</string>
     <string name="session_preview_cd">Workout summary</string>
     <string name="share_chooser_title">Share workout</string>

@@ -65,6 +65,7 @@ import com.eina.app.R
 import com.eina.app.data.db.ExerciseEntity
 import com.eina.app.data.db.PlaylistType
 import com.eina.app.data.db.WeightType
+import com.eina.app.data.db.countsAsWorking
 import com.eina.app.data.db.exerciseName
 import com.eina.app.data.db.matchesQuery
 import com.eina.app.data.db.usesDuration
@@ -81,6 +82,8 @@ import com.eina.app.ui.components.IslandSecondaryButton
 import com.eina.app.ui.components.IslandSurface
 import com.eina.app.ui.components.IslandTextField
 import com.eina.app.ui.components.RestTimeSheet
+import com.eina.app.ui.components.SetTypeIndicator
+import com.eina.app.ui.components.SetTypeSheet
 import com.eina.app.ui.components.SheetActionRow
 import com.eina.app.ui.components.sanitizeWeightInput
 import com.eina.app.ui.feedback.LocalHapticTap
@@ -115,6 +118,7 @@ fun ActiveWorkoutScreen(
     var actionsSheetFor by remember { mutableStateOf<Long?>(null) }
     var notesSheetFor by remember { mutableStateOf<Long?>(null) }
     var setActionsFor by remember { mutableStateOf<SetRef?>(null) }
+    var setTypeFor by remember { mutableStateOf<SetRef?>(null) }
     var confirmFinish by remember { mutableStateOf(false) }
     var confirmCancel by remember { mutableStateOf(false) }
 
@@ -172,6 +176,9 @@ fun ActiveWorkoutScreen(
                         onOpenExercise = { onOpenExercise(exercise.exerciseId) },
                         onOpenSetActions = { setId ->
                             setActionsFor = SetRef(exercise.workoutExerciseId, setId)
+                        },
+                        onOpenSetType = { setId ->
+                            setTypeFor = SetRef(exercise.workoutExerciseId, setId)
                         },
                         onEditRest = { restSheetFor = exercise.workoutExerciseId },
                         onAddSet = { viewModel.addSet(exercise.workoutExerciseId) },
@@ -267,14 +274,36 @@ fun ActiveWorkoutScreen(
         )
     }
 
-    setActionsFor?.let { ref ->
-        val setIndex = state.exercises
+    setTypeFor?.let { ref ->
+        val current = state.exercises
             .find { it.workoutExerciseId == ref.workoutExerciseId }
-            ?.sets?.indexOfFirst { it.id == ref.setId } ?: -1
+            ?.sets?.find { it.id == ref.setId }
+        if (current == null) {
+            setTypeFor = null
+        } else {
+            SetTypeSheet(
+                current = current.setType,
+                onSelect = { type -> viewModel.setSetType(ref.workoutExerciseId, ref.setId, type) },
+                onDismiss = { setTypeFor = null }
+            )
+        }
+    }
+
+    setActionsFor?.let { ref ->
+        // Titolo col numero che la serie porta in tabella: le warmup non hanno numero, quindi
+        // per loro resta il titolo generico.
+        val sets = state.exercises.find { it.workoutExerciseId == ref.workoutExerciseId }?.sets.orEmpty()
+        val target = sets.find { it.id == ref.setId }
+        val number = sets
+            .takeWhile { it.id != ref.setId }
+            .count { it.setType.countsAsWorking } + 1
         IslandBottomSheet(
             onDismiss = { setActionsFor = null },
-            title = if (setIndex >= 0) stringResource(R.string.active_set_sheet_title, setIndex + 1)
-            else stringResource(R.string.active_set_sheet_title_generic)
+            title = if (target != null && target.setType.countsAsWorking) {
+                stringResource(R.string.active_set_sheet_title, number)
+            } else {
+                stringResource(R.string.active_set_sheet_title_generic)
+            }
         ) {
             SheetActionRow(
                 icon = Icons.Outlined.Delete,
@@ -522,6 +551,7 @@ private fun ExerciseCard(
     onOpenActions: () -> Unit,
     onOpenExercise: () -> Unit,
     onOpenSetActions: (Long) -> Unit,
+    onOpenSetType: (Long) -> Unit,
     onEditRest: () -> Unit,
     onAddSet: () -> Unit,
     onRemoveSet: (Long) -> Unit,
@@ -594,10 +624,16 @@ private fun ExerciseCard(
 
         Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
             SetTableHeader(weightType = exercise.weightType)
+            // Il numero conta solo le serie di lavoro: un riscaldamento in mezzo porta la W, non
+            // ruba il numero alla serie dopo.
+            var workingNumber = 0
             exercise.sets.forEach { set ->
+                if (set.setType.countsAsWorking) workingNumber++
                 SetRow(
                     set = set,
+                    number = workingNumber,
                     weightType = exercise.weightType,
+                    onTypeClick = { onOpenSetType(set.id) },
                     onValuesChange = { reps, weight -> onSetValuesChange(set.id, reps, weight) },
                     onToggle = { onToggleSet(set.id, set.completedAt != null) },
                     onLongClick = { onOpenSetActions(set.id) }
@@ -660,9 +696,11 @@ private fun TableLabel(text: String, modifier: Modifier = Modifier) {
 @Composable
 private fun SetRow(
     set: SessionSetUi,
+    number: Int,
     weightType: WeightType,
     onValuesChange: (Int?, Double?) -> Unit,
     onToggle: () -> Unit,
+    onTypeClick: () -> Unit,
     onLongClick: () -> Unit
 ) {
     val island = EinaTheme.island
@@ -686,25 +724,14 @@ private fun SetRow(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
     ) {
-        Box(modifier = Modifier.width(40.dp), contentAlignment = Alignment.Center) {
-            if (set.isPR) {
-                Text(
-                    text = stringResource(R.string.badge_pr),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = Color.White,
-                    modifier = Modifier
-                        .background(MaterialTheme.colorScheme.primary, PillShape)
-                        .padding(horizontal = 7.dp, vertical = 3.dp)
-                )
-            } else {
-                Text(
-                    "${set.setIndex + 1}",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = island.textSecondary,
-                    modifier = Modifier.padding(horizontal = Spacing.sm, vertical = 2.dp)
-                )
-            }
-        }
+        // Il segno della serie e' anche il comando: un tocco apre la scelta W / numero / F / D.
+        SetTypeIndicator(
+            type = set.setType,
+            number = number,
+            isPR = set.isPR,
+            onClick = onTypeClick,
+            modifier = Modifier.width(40.dp)
+        )
 
         Text(
             text = set.previous?.let { formatPrevious(it, weightType) } ?: "—",

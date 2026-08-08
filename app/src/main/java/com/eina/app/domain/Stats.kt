@@ -4,6 +4,7 @@ import com.eina.app.data.db.CompletedSetRow
 import com.eina.app.data.db.ExerciseName
 import com.eina.app.data.db.SetEntryEntity
 import com.eina.app.data.db.WeightType
+import com.eina.app.data.db.countsAsWorking
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -47,7 +48,7 @@ private fun volumeOf(row: CompletedSetRow): Double = volumeForSet(
         actualReps = row.actualReps,
         weight = row.weight,
         restSecondsPlanned = 0,
-        isWarmup = row.isWarmup,
+        setType = row.setType,
         bodyweightSnapshotKg = row.bodyweightSnapshotKg
     ),
     row.bodyweightFactor
@@ -55,13 +56,13 @@ private fun volumeOf(row: CompletedSetRow): Double = volumeForSet(
 
 /** Volume in kg di una lista di set (le warmup non contano nel totale sollevato). */
 fun totalVolume(rows: List<CompletedSetRow>): Double =
-    rows.filter { !it.isWarmup }.sumOf { volumeOf(it) }
+    rows.filter { it.setType.countsAsWorking }.sumOf { volumeOf(it) }
 
 /** Riepiloghi di sessione ordinati dal piu' recente. */
 fun summarizeSessions(rows: List<CompletedSetRow>): List<SessionSummary> =
     rows.groupBy { it.sessionId }
         .map { (sessionId, sessionRows) ->
-            val working = sessionRows.filter { !it.isWarmup }
+            val working = sessionRows.filter { it.setType.countsAsWorking }
             SessionSummary(
                 sessionId = sessionId,
                 startTime = sessionRows.first().sessionStart,
@@ -87,7 +88,7 @@ fun volumeByDay(
     rows: List<CompletedSetRow>,
     zone: ZoneId = ZoneId.systemDefault()
 ): Map<LocalDate, Double> =
-    rows.filter { !it.isWarmup }
+    rows.filter { it.setType.countsAsWorking }
         .groupBy { epochMillisToLocalDate(it.sessionStart, zone) }
         .mapValues { (_, dayRows) -> dayRows.sumOf { volumeOf(it) } }
 
@@ -96,7 +97,7 @@ fun setsByDay(
     rows: List<CompletedSetRow>,
     zone: ZoneId = ZoneId.systemDefault()
 ): Map<LocalDate, Int> =
-    rows.filter { !it.isWarmup }
+    rows.filter { it.setType.countsAsWorking }
         .groupBy { epochMillisToLocalDate(it.sessionStart, zone) }
         .mapValues { (_, dayRows) -> dayRows.size }
 
@@ -138,7 +139,7 @@ private fun startOfWeek(date: LocalDate): LocalDate =
  * [isNewPR] al momento del salvataggio: qui si tiene solo la piu' recente per esercizio.
  */
 fun personalRecords(rows: List<CompletedSetRow>): List<PrRecord> =
-    rows.filter { it.isPR && !it.isWarmup }
+    rows.filter { it.isPR && it.setType.countsAsWorking }
         .groupBy { it.exerciseId }
         .map { (_, prRows) ->
             val best = prRows.maxBy { it.completedAt }

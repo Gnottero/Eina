@@ -5,8 +5,10 @@ import androidx.lifecycle.viewModelScope
 import com.eina.app.data.db.ExerciseEntity
 import com.eina.app.data.db.RoutineExerciseEntity
 import com.eina.app.data.db.SetEntryEntity
+import com.eina.app.data.db.SetType
 import com.eina.app.data.db.WeightType
 import com.eina.app.data.db.WorkoutExerciseEntity
+import com.eina.app.data.db.countsAsWorking
 import com.eina.app.data.db.exerciseName
 import com.eina.app.data.db.usesWeight
 import com.eina.app.data.repository.WorkoutRepository
@@ -134,7 +136,7 @@ class ActiveWorkoutViewModel(
     private fun recomputeVolume() {
         _uiState.update { state ->
             val volume = state.exercises.sumOf { ex ->
-                ex.sets.filter { it.completedAt != null && !it.isWarmup }
+                ex.sets.filter { it.completedAt != null && it.setType.countsAsWorking }
                     .sumOf { volumeForSet(ex.weightType, it.toEntity(ex.workoutExerciseId), ex.bodyweightFactor) }
             }
             state.copy(volumeKg = volume)
@@ -148,7 +150,7 @@ class ActiveWorkoutViewModel(
         actualReps = actualReps,
         weight = weight,
         restSecondsPlanned = restSecondsPlanned,
-        isWarmup = isWarmup,
+        setType = setType,
         completedAt = completedAt,
         isPR = isPR,
         bodyweightSnapshotKg = bodyweightSnapshotKg,
@@ -281,6 +283,28 @@ class ActiveWorkoutViewModel(
         }
     }
 
+    /**
+     * Tipo della serie (riscaldamento, normale, cedimento, drop set). Cambiarlo su una serie gia'
+     * segnata la fa entrare o uscire dal volume, quindi il totale si ricalcola subito; il record
+     * gia' assegnato resta com'e' — passando a riscaldamento pero' decade, perche' un
+     * riscaldamento non fa PR.
+     */
+    fun setSetType(workoutExerciseId: Long, setId: Long, type: SetType) {
+        val exercise = _uiState.value.exercises.find { it.workoutExerciseId == workoutExerciseId } ?: return
+        val set = exercise.sets.find { it.id == setId } ?: return
+        val updated = set.copy(setType = type, isPR = set.isPR && type.countsAsWorking)
+        _uiState.update { state ->
+            state.copy(
+                exercises = state.exercises.map { ex ->
+                    if (ex.workoutExerciseId != workoutExerciseId) ex
+                    else ex.copy(sets = ex.sets.map { if (it.id == setId) updated else it })
+                }
+            )
+        }
+        recomputeVolume()
+        viewModelScope.launch { repository.updateSet(updated.toEntity(workoutExerciseId)) }
+    }
+
     fun updateSetValues(workoutExerciseId: Long, setId: Long, actualReps: Int?, weight: Double?) {
         val exercise = _uiState.value.exercises.find { it.workoutExerciseId == workoutExerciseId } ?: return
         val set = exercise.sets.find { it.id == setId } ?: return
@@ -321,7 +345,7 @@ class ActiveWorkoutViewModel(
             val completed = repository.completeSet(filled.toEntity(workoutExerciseId), exercise.exerciseId, exercise.weightType)
             refreshSets(workoutExerciseId)
             feedback.haptic()
-            if (!completed.isWarmup) startRestTimer(completed.restSecondsPlanned)
+            if (completed.setType.countsAsWorking) startRestTimer(completed.restSecondsPlanned)
         }
     }
 
@@ -420,7 +444,7 @@ private fun SessionSetUi.toEntity(workoutExerciseId: Long) = SetEntryEntity(
     actualReps = actualReps,
     weight = weight,
     restSecondsPlanned = restSecondsPlanned,
-    isWarmup = isWarmup,
+    setType = setType,
     completedAt = completedAt,
     isPR = isPR,
     bodyweightSnapshotKg = bodyweightSnapshotKg

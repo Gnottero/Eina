@@ -16,6 +16,12 @@ class Converters {
     fun toWeightType(value: String): WeightType = WeightType.valueOf(value)
 
     @TypeConverter
+    fun fromSetType(value: SetType): String = value.name
+
+    @TypeConverter
+    fun toSetType(value: String): SetType = SetType.valueOf(value)
+
+    @TypeConverter
     fun fromPlaylistType(value: PlaylistType?): String? = value?.name
 
     @TypeConverter

@@ -1,6 +1,7 @@
 package com.eina.app.domain
 
 import com.eina.app.data.db.CompletedSetRow
+import com.eina.app.data.db.SetType
 import com.eina.app.data.db.ExerciseName
 import com.eina.app.data.db.WeightType
 import org.junit.Assert.assertEquals
@@ -24,7 +25,7 @@ private fun row(
     weight: Double? = 50.0,
     bodyweight: Double? = null,
     bodyweightFactor: Double = 1.0,
-    isWarmup: Boolean = false,
+    setType: SetType = SetType.NORMAL,
     isPR: Boolean = false,
     endHour: Int? = 11,
     workoutExerciseId: Long = exerciseId
@@ -42,7 +43,7 @@ private fun row(
     actualReps = reps,
     weight = weight,
     bodyweightSnapshotKg = bodyweight,
-    isWarmup = isWarmup,
+    setType = setType,
     isPR = isPR,
     completedAt = millisOf(date, 10) + setIndex * 60_000L
 )
@@ -56,9 +57,20 @@ class StatsTest {
         val rows = listOf(
             row(1, today, setIndex = 0, reps = 10, weight = 50.0),
             row(1, today, setIndex = 1, reps = 8, weight = 60.0),
-            row(1, today, setIndex = 2, reps = 15, weight = 20.0, isWarmup = true)
+            row(1, today, setIndex = 2, reps = 15, weight = 20.0, setType = SetType.WARMUP)
         )
         assertEquals(980.0, totalVolume(rows), 0.001)
+    }
+
+    @Test
+    fun `cedimento e drop set contano come serie di lavoro`() {
+        val rows = listOf(
+            row(1, today, setIndex = 0, reps = 10, weight = 50.0, setType = SetType.FAILURE),
+            row(1, today, setIndex = 1, reps = 8, weight = 30.0, setType = SetType.DROP),
+            row(1, today, setIndex = 2, reps = 15, weight = 20.0, setType = SetType.WARMUP)
+        )
+        assertEquals(740.0, totalVolume(rows), 0.001)
+        assertEquals(2, summarizeSessions(rows).first().setCount)
     }
 
     @Test

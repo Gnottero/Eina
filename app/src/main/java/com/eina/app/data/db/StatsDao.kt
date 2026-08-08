@@ -29,7 +29,7 @@ data class CompletedSetRow(
     val actualReps: Int?,
     val weight: Double?,
     val bodyweightSnapshotKg: Double?,
-    val isWarmup: Boolean,
+    val setType: SetType,
     val isPR: Boolean,
     val completedAt: Long
 )
@@ -45,7 +45,7 @@ interface StatsDao {
                e.bodyweightFactor AS bodyweightFactor,
                e.name AS nameEn, e.nameIt AS nameIt, e.nameFr AS nameFr,
                se.setIndex AS setIndex, se.actualReps AS actualReps, se.weight AS weight,
-               se.bodyweightSnapshotKg AS bodyweightSnapshotKg, se.isWarmup AS isWarmup,
+               se.bodyweightSnapshotKg AS bodyweightSnapshotKg, se.setType AS setType,
                se.isPR AS isPR, se.completedAt AS completedAt
         FROM set_entries se
         INNER JOIN workout_exercises we ON se.workoutExerciseId = we.id
@@ -67,7 +67,7 @@ interface StatsDao {
                e.bodyweightFactor AS bodyweightFactor,
                e.name AS nameEn, e.nameIt AS nameIt, e.nameFr AS nameFr,
                se.setIndex AS setIndex, se.actualReps AS actualReps, se.weight AS weight,
-               se.bodyweightSnapshotKg AS bodyweightSnapshotKg, se.isWarmup AS isWarmup,
+               se.bodyweightSnapshotKg AS bodyweightSnapshotKg, se.setType AS setType,
                se.isPR AS isPR, se.completedAt AS completedAt
         FROM set_entries se
         INNER JOIN workout_exercises we ON se.workoutExerciseId = we.id

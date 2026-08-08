@@ -3,6 +3,7 @@ package com.eina.app.ui.history
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.eina.app.data.db.CompletedSetRow
+import com.eina.app.data.db.countsAsWorking
 import com.eina.app.data.db.ExerciseName
 import com.eina.app.data.repository.StatsRepository
 import com.eina.app.data.repository.WorkoutRepository
@@ -48,7 +49,7 @@ data class SessionExerciseDetail(
     val exerciseName: ExerciseName,
     val sets: List<CompletedSetRow>
 ) {
-    val workingSets: List<CompletedSetRow> get() = sets.filter { !it.isWarmup }
+    val workingSets: List<CompletedSetRow> get() = sets.filter { it.setType.countsAsWorking }
 }
 
 data class SessionDetailUiState(

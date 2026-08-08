@@ -53,7 +53,9 @@ import androidx.compose.ui.window.Dialog
 import androidx.core.content.ContextCompat
 import com.eina.app.R
 import com.eina.app.data.db.CompletedSetRow
+import com.eina.app.data.db.SetType
 import com.eina.app.data.db.WeightType
+import com.eina.app.data.db.countsAsWorking
 import com.eina.app.domain.totalVolume
 import com.eina.app.ui.components.EinaBadge
 import com.eina.app.ui.components.IslandButton
@@ -63,6 +65,9 @@ import com.eina.app.ui.components.IslandIconButton
 import com.eina.app.ui.components.IslandScreen
 import com.eina.app.ui.components.IslandSecondaryButton
 import com.eina.app.ui.components.ScreenHeader
+import com.eina.app.ui.components.SetTypeIndicator
+import com.eina.app.ui.components.setTypeAccent
+import com.eina.app.ui.components.setTypeLabel
 import com.eina.app.ui.components.StatTile
 import com.eina.app.ui.components.formatDayMonth
 import com.eina.app.ui.components.formatDecimal
@@ -290,8 +295,11 @@ private fun ExerciseSummaryCard(position: Int, exercise: SessionExerciseDetail) 
                 .background(island.sunken)
                 .padding(vertical = Spacing.xs)
         ) {
-            exercise.sets.forEachIndexed { index, set ->
-                SetRow(number = index + 1, set = set)
+            // Come in sessione: il numero segue le sole serie di lavoro, i riscaldamenti portano W.
+            var workingNumber = 0
+            exercise.sets.forEach { set ->
+                if (set.setType.countsAsWorking) workingNumber++
+                SetRow(number = workingNumber, set = set)
             }
         }
     }
@@ -300,7 +308,6 @@ private fun ExerciseSummaryCard(position: Int, exercise: SessionExerciseDetail) 
 /** Riga serie: numero progressivo, valori allineati, badge solo quando dicono qualcosa. */
 @Composable
 private fun SetRow(number: Int, set: CompletedSetRow) {
-    val island = EinaTheme.island
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -308,22 +315,20 @@ private fun SetRow(number: Int, set: CompletedSetRow) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(Spacing.md)
     ) {
-        // Stesso stile e stessa linea di base del valore: con labelMedium dentro una size fissa
-        // il numero risultava piccolo e disallineato rispetto a "kg × rip".
-        Text(
-            text = number.toString(),
-            style = MaterialTheme.typography.bodyLarge,
-            color = island.textSecondary,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.width(24.dp)
+        // Numero o sigla del tipo, lo stesso segno della tabella in sessione.
+        SetTypeIndicator(
+            type = set.setType,
+            number = number,
+            isPR = false,
+            modifier = Modifier.width(32.dp)
         )
         Text(
             text = LocalContext.current.setLabel(set),
             style = MaterialTheme.typography.bodyLarge,
             modifier = Modifier.weight(1f)
         )
-        if (set.isWarmup) {
-            EinaBadge(text = stringResource(R.string.badge_warmup), color = island.textSecondary)
+        if (set.setType != SetType.NORMAL) {
+            EinaBadge(text = setTypeLabel(set.setType), color = setTypeAccent(set.setType))
         }
         if (set.isPR) {
             EinaBadge(text = stringResource(R.string.badge_pr), color = MaterialTheme.colorScheme.primary)

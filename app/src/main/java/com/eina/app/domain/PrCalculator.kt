@@ -2,13 +2,14 @@ package com.eina.app.domain
 
 import com.eina.app.data.db.SetEntryEntity
 import com.eina.app.data.db.WeightType
+import com.eina.app.data.db.countsAsWorking
 
 fun isNewPR(
     weightType: WeightType,
     newSet: SetEntryEntity,
     historicalSets: List<SetEntryEntity> // tutte le set non-warmup gia' completate per lo stesso exerciseId
 ): Boolean {
-    if (newSet.isWarmup) return false
+    if (!newSet.setType.countsAsWorking) return false
     return when (weightType) {
         WeightType.FREE_WEIGHT, WeightType.MACHINE_STACK, WeightType.ASSISTED ->
             (newSet.weight ?: 0.0) > (historicalSets.maxOfOrNull { it.weight ?: 0.0 } ?: 0.0)

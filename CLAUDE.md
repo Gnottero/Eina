@@ -123,6 +123,9 @@ enum class WeightType {
     FREE_WEIGHT, BODYWEIGHT, BODYWEIGHT_PLUS_LOAD, ASSISTED, MACHINE_STACK, TIME_BASED
 }
 
+// Fase 24: il riscaldamento non basta piu' come booleano.
+enum class SetType { WARMUP, NORMAL, FAILURE, DROP }
+
 enum class PlaylistType { SPOTIFY, YOUTUBE_MUSIC }
 
 @Entity(tableName = "exercises")
@@ -205,7 +208,7 @@ data class SetEntryEntity(
     val actualReps: Int? = null,        // per TIME_BASED: durata in secondi
     val weight: Double? = null,
     val restSecondsPlanned: Int,
-    val isWarmup: Boolean = false,
+    val setType: SetType = SetType.NORMAL,   // Fase 24 (DB v6, MIGRATION_5_6): sostituisce isWarmup
     val completedAt: Long? = null,
     val isPR: Boolean = false,
     val bodyweightSnapshotKg: Double? = null   // salvato al momento del set SOLO per BODYWEIGHT/BODYWEIGHT_PLUS_LOAD/ASSISTED,
@@ -232,7 +235,7 @@ fun isNewPR(
     newSet: SetEntryEntity,
     historicalSets: List<SetEntryEntity> // tutte le set non-warmup già completate per lo stesso exerciseId
 ): Boolean {
-    if (newSet.isWarmup) return false
+    if (newSet.setType == SetType.WARMUP) return false
     return when (weightType) {
         WeightType.FREE_WEIGHT, WeightType.MACHINE_STACK, WeightType.ASSISTED ->
             (newSet.weight ?: 0.0) > (historicalSets.maxOfOrNull { it.weight ?: 0.0 } ?: 0.0)
@@ -486,6 +489,20 @@ a 1 per tutti, poi il seeder porta gli altri al loro valore), CATALOG_VERSION 6.
 storico non è salvato da nessuna parte, si ricalcola dalle set: i totali passati si correggono
 da soli. Nota: il volume a corpo libero resta 0 finché non si registra il peso in Progressi →
 Peso corporeo, perché `bodyweightSnapshotKg` nasce da lì.
+
+**Fase 24 — Tipo di serie: riscaldamento, cedimento, drop set** *(fatta)*
+DoD: ogni serie porta un `SetType` (WARMUP / NORMAL / FAILURE / DROP) al posto del booleano
+`isWarmup`, che sapeva dire solo riscaldamento si'/no. Il segno in testa alla riga e' anche il
+comando: un tocco apre il foglio con le quattro voci (`ui/components/SetTypeIndicator.kt`).
+Sigle W / F / D uguali in tutte le lingue, colorate (giallo, rosso, blu); la serie normale tiene
+il numero, e il numero conta solo le serie di lavoro — un riscaldamento in mezzo non ruba il
+numero alla serie dopo. Cedimento e drop set sono lavoro a tutti gli effetti (volume, PR,
+recupero); solo il riscaldamento resta fuori, come prima. Cambiare tipo su una serie gia'
+segnata ricalcola subito il volume e toglie il PR se diventa riscaldamento. DB alla versione 6
+con `MIGRATION_5_6`: la colonna va sostituita, non aggiunta, quindi la tabella `set_entries` si
+ricrea (SQLite sotto API 30 non sa togliere colonne) e le serie gia' registrate diventano
+WARMUP o NORMAL. Lo stesso segno compare nel dettaglio dello storico, col nome esteso del tipo
+come badge.
 
 **Fase 9 — Rifinitura** *(fatta)*
 DoD: R8 + shrinkResources attivi sulla release (20,5 MB → 2,2 MB), regole in
