@@ -1,4 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.Eina" parent="android:Theme.Material.Light.NoActionBar" />
+    <!--
+      windowBackground bianco: e' il primo fotogramma che il sistema disegna prima della
+      composizione, e deve coincidere col fondo della splash (ui/splash/SplashScreen.kt),
+      altrimenti all'avvio si vede un lampo grigio.
+    -->
+    <style name="Theme.Eina" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@android:color/white</item>
+    </style>
 </resources>

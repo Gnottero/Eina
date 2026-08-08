@@ -1,21 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Solo le barre del marchio: l'icona adattiva mette il viola nel layer di sfondo, quindi qui
-  la tessera non va disegnata. Il marchio completo (tessera + barre) vive in ic_eina_logo.xml,
-  che e' quello usato in-app e nell'immagine condivisibile: le barre vanno tenute allineate.
+  Solo la lettera del marchio: l'icona adattiva mette l'arancio nel layer di sfondo, quindi qui
+  la tessera non va disegnata. Il marchio completo (tessera + lettera) vive in ic_eina_logo.xml,
+  che e' quello usato in-app e nell'immagine condivisibile: la lettera va tenuta identica.
+  Il group rimpicciolisce e ricentra la lettera nella zona sicura (66dp su 108) dell'adaptive icon.
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M31.86,28.08 H76.14 A5.94,5.94 0 0 1 76.14,39.96 H31.86 A5.94,5.94 0 0 1 31.86,28.08 Z" />
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M31.86,48.06 H58.86 A5.94,5.94 0 0 1 58.86,59.94 H31.86 A5.94,5.94 0 0 1 31.86,48.06 Z" />
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M31.86,68.04 H76.14 A5.94,5.94 0 0 1 76.14,79.92 H31.86 A5.94,5.94 0 0 1 31.86,68.04 Z" />
+    <group
+        android:pivotX="55"
+        android:pivotY="54"
+        android:scaleX="0.85"
+        android:scaleY="0.85"
+        android:translateX="-1">
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M30,32 A6,6 0 0 1 36,26 L74,26 A6,6 0 0 1 80,32 L80,34 A6,6 0 0 1 74,40 L47,40 A3,3 0 0 0 44,43 L44,44 A3,3 0 0 0 47,47 L62,47 A6,6 0 0 1 68,53 L68,55 A6,6 0 0 1 62,61 L47,61 A3,3 0 0 0 44,64 L44,65 A3,3 0 0 0 47,68 L74,68 A6,6 0 0 1 80,74 L80,76 A6,6 0 0 1 74,82 L36,82 A6,6 0 0 1 30,76 Z" />
+    </group>
 </vector>

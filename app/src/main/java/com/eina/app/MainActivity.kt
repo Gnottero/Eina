@@ -7,17 +7,25 @@ import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.eina.app.data.prefs.AppLocale
 import com.eina.app.ui.feedback.LocalHapticTap
 import com.eina.app.ui.feedback.WorkoutFeedback
+import com.eina.app.ui.splash.SPLASH_DURATION_MS
+import com.eina.app.ui.splash.SplashOverlay
 import com.eina.app.ui.theme.EinaTheme
+import kotlinx.coroutines.delay
 import org.koin.compose.koinInject
 
 class MainActivity : ComponentActivity() {
@@ -45,14 +53,23 @@ class MainActivity : ComponentActivity() {
 private fun EinaApp() {
     val feedback: WorkoutFeedback = koinInject()
     val hapticTap = remember(feedback) { { feedback.haptic() } }
+    // La splash copre il contenuto per il tempo che serve a comporlo, poi sfuma.
+    var splashVisible by remember { mutableStateOf(true) }
+    LaunchedEffect(Unit) {
+        delay(SPLASH_DURATION_MS)
+        splashVisible = false
+    }
 
     EinaTheme {
         CompositionLocalProvider(LocalHapticTap provides hapticTap) {
-            Surface(
-                modifier = Modifier.fillMaxSize(),
-                color = MaterialTheme.colorScheme.background
-            ) {
-                EinaNavHost()
+            Box(modifier = Modifier.fillMaxSize()) {
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    EinaNavHost()
+                }
+                SplashOverlay(visible = splashVisible)
             }
         }
     }

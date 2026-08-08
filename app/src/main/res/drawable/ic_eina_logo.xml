@@ -1,24 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Marchio Eina completo: tessera arancio con tre barre bianche, che si leggono come una "E".
-  Unica sorgente del logo: l'icona adattiva (ic_launcher_foreground) ne riusa le stesse barre e
-  l'immagine condivisibile (ui/share/ShareCard.kt) disegna proprio questo drawable.
+  Marchio Eina, stile Hevy: tessera squircle arancio piena e una sola lettera bianca compatta,
+  una "E" geometrica con lo stelo attaccato ai bracci (prima erano tre barre staccate).
+  Unica sorgente del logo: l'icona adattiva (ic_launcher_foreground) riusa la stessa lettera
+  e l'immagine condivisibile (ui/share/ShareCard.kt) disegna proprio questo drawable.
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
+    <!-- Squircle: curve continue con bezier, non archi di cerchio (il raccordo si vede). -->
     <path
         android:fillColor="#F97348"
-        android:pathData="M32.4,0 H75.6 A32.4,32.4 0 0 1 108,32.4 V75.6 A32.4,32.4 0 0 1 75.6,108 H32.4 A32.4,32.4 0 0 1 0,75.6 V32.4 A32.4,32.4 0 0 1 32.4,0 Z" />
+        android:pathData="M36,0 L72,0 C96,0 108,12 108,36 L108,72 C108,96 96,108 72,108 L36,108 C12,108 0,96 0,72 L0,36 C0,12 12,0 36,0 Z" />
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M31.86,28.08 H76.14 A5.94,5.94 0 0 1 76.14,39.96 H31.86 A5.94,5.94 0 0 1 31.86,28.08 Z" />
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M31.86,48.06 H58.86 A5.94,5.94 0 0 1 58.86,59.94 H31.86 A5.94,5.94 0 0 1 31.86,48.06 Z" />
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M31.86,68.04 H76.14 A5.94,5.94 0 0 1 76.14,79.92 H31.86 A5.94,5.94 0 0 1 31.86,68.04 Z" />
+        android:pathData="M30,32 A6,6 0 0 1 36,26 L74,26 A6,6 0 0 1 80,32 L80,34 A6,6 0 0 1 74,40 L47,40 A3,3 0 0 0 44,43 L44,44 A3,3 0 0 0 47,47 L62,47 A6,6 0 0 1 68,53 L68,55 A6,6 0 0 1 62,61 L47,61 A3,3 0 0 0 44,64 L44,65 A3,3 0 0 0 47,68 L74,68 A6,6 0 0 1 80,74 L80,76 A6,6 0 0 1 74,82 L36,82 A6,6 0 0 1 30,76 Z" />
 </vector>
