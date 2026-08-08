@@ -358,4 +358,14 @@
     <string name="routine_import">Importa routine</string>
     <string name="routine_import_done">Routine importata</string>
     <string name="routine_import_failed">Questo file non è una routine Eina</string>
+    <string name="history_session_sheet_title">Allenamento</string>
+    <string name="history_delete_session">Elimina allenamento</string>
+    <string name="history_delete_session_description">Lo toglie dallo storico con le sue serie</string>
+    <string name="history_delete_confirm_title">Eliminare questo allenamento?</string>
+    <string name="history_delete_confirm_text">L\'allenamento e le serie registrate spariscono per sempre.</string>
+    <string name="library_delete_exercise">Elimina esercizio</string>
+    <string name="library_delete_exercise_description">Solo gli esercizi aggiunti o importati da te</string>
+    <string name="library_delete_confirm_title">Eliminare \"%1$s\"?</string>
+    <string name="library_delete_confirm_text">L\'esercizio esce dalla libreria per sempre.</string>
+    <string name="library_delete_blocked">Questo esercizio è ancora usato da una routine o da un allenamento registrato</string>
 </resources>

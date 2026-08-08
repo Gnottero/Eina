@@ -402,7 +402,11 @@ in libreria) e schema anatomico fronte/retro per regione muscolare al posto dei 
 con molti secondari; esportazione e importazione routine come file JSON
 (`data/transfer/RoutineTransfer.kt`, formato `eina.routine` v1) — esporta dal foglio del tocco
 lungo sulla routine, importa dall'icona in "Allena"; gli esercizi si riagganciano per nome
-inglese e quelli sconosciuti diventano custom.
+inglese e quelli sconosciuti diventano custom; eliminazione del singolo allenamento dallo
+storico e del singolo esercizio custom dalla libreria (entrambe col tocco lungo, la seconda
+bloccata se l'esercizio e' ancora usato da una routine o dallo storico) — servivano a poter
+tornare indietro da un import. Verificata sul dispositivo: avvio a freddo della release
+470-520 ms, invariato rispetto alla Fase 9.
 
 **Fase 9 — Rifinitura** *(fatta)*
 DoD: R8 + shrinkResources attivi sulla release (20,5 MB → 2,2 MB), regole in

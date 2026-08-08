@@ -375,4 +375,14 @@
     <string name="routine_import">Import routine</string>
     <string name="routine_import_done">Routine imported</string>
     <string name="routine_import_failed">This file is not an Eina routine</string>
+    <string name="history_session_sheet_title">Workout</string>
+    <string name="history_delete_session">Delete workout</string>
+    <string name="history_delete_session_description">Removes it from history along with its sets</string>
+    <string name="history_delete_confirm_title">Delete this workout?</string>
+    <string name="history_delete_confirm_text">The workout and its recorded sets will be gone for good.</string>
+    <string name="library_delete_exercise">Delete exercise</string>
+    <string name="library_delete_exercise_description">Only exercises you added or imported</string>
+    <string name="library_delete_confirm_title">Delete \"%1$s\"?</string>
+    <string name="library_delete_confirm_text">The exercise leaves the library for good.</string>
+    <string name="library_delete_blocked">This exercise is still used by a routine or a recorded workout</string>
 </resources>

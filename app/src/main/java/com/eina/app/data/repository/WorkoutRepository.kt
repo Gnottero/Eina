@@ -37,6 +37,18 @@ class WorkoutRepository(
 
     suspend fun deleteExercise(exercise: ExerciseEntity) = exerciseDao.delete(exercise)
 
+    /**
+     * Elimina un esercizio custom, se non lo usa nessuno. Ritorna false quando compare in una
+     * routine o in un allenamento gia' registrato: li' il nome serve ancora.
+     * Gli esercizi di libreria non si toccano: li riscriverebbe il seeder al primo avvio utile.
+     */
+    suspend fun deleteCustomExercise(exercise: ExerciseEntity): Boolean {
+        if (!exercise.isCustom) return false
+        if (exerciseDao.countUsages(exercise.id) > 0) return false
+        exerciseDao.delete(exercise)
+        return true
+    }
+
     /** Sessione ancora aperta, se esiste: alimenta il banner "Riprendi" e blocca nuovi avvii. */
     fun observeActiveSession(): Flow<WorkoutSessionEntity?> = workoutSessionDao.observeActive()
 
@@ -109,6 +121,14 @@ class WorkoutRepository(
      * Serve per l'allenamento aperto per sbaglio, che altrimenti resterebbe nello storico.
      */
     suspend fun cancelSession(sessionId: Long) {
+        workoutSessionDao.deleteById(sessionId)
+    }
+
+    /**
+     * Elimina un allenamento gia' registrato, con le sue serie. Stessa cancellazione di
+     * [cancelSession], ma parte dallo storico: si conferma prima, e' irreversibile.
+     */
+    suspend fun deleteSession(sessionId: Long) {
         workoutSessionDao.deleteById(sessionId)
     }
 

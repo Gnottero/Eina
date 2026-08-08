@@ -13,30 +13,40 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.ChevronRight
+import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import android.widget.Toast
 import com.eina.app.R
 import com.eina.app.data.db.ExerciseEntity
 import com.eina.app.data.db.exerciseName
 import com.eina.app.ui.components.EinaBadge
 import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import coil.compose.AsyncImage
+import com.eina.app.ui.components.DestructiveRed
+import com.eina.app.ui.components.IslandBottomSheet
 import com.eina.app.ui.components.IslandCard
+import com.eina.app.ui.components.SheetActionRow
 import com.eina.app.ui.components.hasExerciseMedia
-import com.eina.app.ui.theme.TileShape
 import com.eina.app.ui.components.IslandChip
 import com.eina.app.ui.components.IslandEmptyState
 import com.eina.app.ui.components.IslandIconButton
@@ -45,6 +55,7 @@ import com.eina.app.ui.components.IslandTextField
 import com.eina.app.ui.components.ScreenHeader
 import com.eina.app.ui.components.islandListContentPadding
 import com.eina.app.ui.theme.EinaTheme
+import com.eina.app.ui.theme.IslandShape
 import com.eina.app.ui.theme.MuscleGroupCategory
 import com.eina.app.ui.theme.Spacing
 import com.eina.app.ui.theme.label
@@ -62,6 +73,12 @@ fun LibraryScreen(
     val uiState by viewModel.uiState.collectAsState()
     val island = EinaTheme.island
     val locale = currentLocale()
+    val context = LocalContext.current
+    // Solo gli esercizi custom (creati a mano o arrivati con una routine importata) si possono
+    // togliere: quelli di libreria li riscriverebbe comunque il seeder.
+    var actionsFor by remember { mutableStateOf<ExerciseEntity?>(null) }
+    var confirmDeleteFor by remember { mutableStateOf<ExerciseEntity?>(null) }
+    val deleteBlocked = stringResource(R.string.library_delete_blocked)
     // Ordine alfabetico nella lingua attiva: il database li tiene ordinati per nome inglese.
     val exercises = remember(uiState.exercises, locale) {
         uiState.exercises.sortedBy { it.exerciseName().localized(locale).lowercase(locale) }
@@ -125,11 +142,62 @@ fun LibraryScreen(
                     ExerciseListItem(
                         exercise = exercise,
                         onClick = { onExerciseClick(exercise.id) },
+                        onLongClick = if (exercise.isCustom) {
+                            { actionsFor = exercise }
+                        } else {
+                            null
+                        },
                         secondaryColor = island.textSecondary
                     )
                 }
             }
         }
+    }
+
+    actionsFor?.let { exercise ->
+        IslandBottomSheet(onDismiss = { actionsFor = null }, title = exercise.localizedName()) {
+            SheetActionRow(
+                icon = Icons.Outlined.Delete,
+                label = stringResource(R.string.library_delete_exercise),
+                description = stringResource(R.string.library_delete_exercise_description),
+                destructive = true,
+                onClick = { actionsFor = null; confirmDeleteFor = exercise }
+            )
+        }
+    }
+
+    confirmDeleteFor?.let { exercise ->
+        AlertDialog(
+            onDismissRequest = { confirmDeleteFor = null },
+            shape = IslandShape,
+            containerColor = MaterialTheme.colorScheme.surface,
+            title = {
+                Text(
+                    stringResource(R.string.library_delete_confirm_title, exercise.localizedName()),
+                    style = MaterialTheme.typography.titleLarge
+                )
+            },
+            text = { Text(stringResource(R.string.library_delete_confirm_text)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        confirmDeleteFor = null
+                        viewModel.deleteCustomExercise(exercise) { deleted ->
+                            // Un esercizio ancora citato da una routine o dallo storico resta:
+                            // dirlo e' meglio di un tocco che non fa niente.
+                            if (!deleted) Toast.makeText(context, deleteBlocked, Toast.LENGTH_LONG).show()
+                        }
+                    }
+                ) {
+                    Text(stringResource(R.string.action_delete), color = DestructiveRed)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmDeleteFor = null }) {
+                    Text(stringResource(R.string.action_cancel), color = island.textSecondary)
+                }
+            }
+        )
     }
 }
 
@@ -137,13 +205,15 @@ fun LibraryScreen(
 private fun ExerciseListItem(
     exercise: ExerciseEntity,
     onClick: () -> Unit,
-    secondaryColor: androidx.compose.ui.graphics.Color
+    secondaryColor: androidx.compose.ui.graphics.Color,
+    onLongClick: (() -> Unit)? = null
 ) {
     val category = primaryCategoryFor(exercise.muscleGroupsPrimary)
     IslandCard(
         modifier = Modifier.fillMaxWidth(),
         contentPadding = PaddingValues(Spacing.lg),
-        onClick = onClick
+        onClick = onClick,
+        onLongClick = onLongClick
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -158,7 +228,9 @@ private fun ExerciseListItem(
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
                         .size(52.dp)
-                        .clip(TileShape)
+                        // Raggio esplicito e non TileShape: su 52dp i 24dp della tile
+                        // arrotondano fino a farla diventare un cerchio.
+                        .clip(RoundedCornerShape(16.dp))
                         .background(EinaTheme.island.sunken)
                 )
             }

@@ -39,7 +39,8 @@ import com.eina.app.ui.theme.Spacing
 fun SessionSummaryCard(
     summary: SessionSummary,
     modifier: Modifier = Modifier,
-    onClick: (() -> Unit)? = null
+    onClick: (() -> Unit)? = null,
+    onLongClick: (() -> Unit)? = null
 ) {
     val island = EinaTheme.island
     val locale = currentLocale()
@@ -48,7 +49,8 @@ fun SessionSummaryCard(
         modifier = modifier.fillMaxWidth(),
         contentPadding = PaddingValues(horizontal = Spacing.lg, vertical = Spacing.lg),
         verticalArrangement = Arrangement.spacedBy(Spacing.lg),
-        onClick = onClick
+        onClick = onClick,
+        onLongClick = onLongClick
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),

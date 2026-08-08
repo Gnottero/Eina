@@ -35,6 +35,18 @@ interface ExerciseDao {
     @Query("SELECT * FROM exercises WHERE name = :name LIMIT 1")
     suspend fun getByName(name: String): ExerciseEntity?
 
+    /**
+     * Quante volte l'esercizio e' referenziato da routine e allenamenti: sopra zero non si
+     * cancella, altrimenti la foreign key salterebbe e lo storico perderebbe il suo nome.
+     */
+    @Query(
+        """
+        SELECT (SELECT COUNT(*) FROM routine_exercises WHERE exerciseId = :id)
+             + (SELECT COUNT(*) FROM workout_exercises WHERE exerciseId = :id)
+        """
+    )
+    suspend fun countUsages(id: Long): Int
+
     @Query("SELECT COUNT(*) FROM exercises")
     suspend fun getCount(): Int
 

@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.eina.app.data.db.CompletedSetRow
 import com.eina.app.data.db.ExerciseName
 import com.eina.app.data.repository.StatsRepository
+import com.eina.app.data.repository.WorkoutRepository
 import com.eina.app.domain.SessionSummary
 import com.eina.app.domain.currentStreak
 import com.eina.app.domain.summarizeSessions
@@ -14,11 +15,23 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
-class HistoryViewModel(repository: StatsRepository) : ViewModel() {
+class HistoryViewModel(
+    repository: StatsRepository,
+    private val workoutRepository: WorkoutRepository
+) : ViewModel() {
     val sessions: StateFlow<List<SessionSummary>> = repository.observeCompletedSets()
         .map { summarizeSessions(it) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    /**
+     * Elimina un singolo allenamento. Finora si poteva solo svuotare tutto lo storico, il che
+     * rendeva impossibile togliere una sessione sbagliata senza perdere anche le altre.
+     */
+    fun deleteSession(sessionId: Long) {
+        viewModelScope.launch { workoutRepository.deleteSession(sessionId) }
+    }
 }
 
 /**
