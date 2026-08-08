@@ -3,7 +3,6 @@ package com.eina.app.ui.workout
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.eina.app.data.db.ExerciseEntity
-import com.eina.app.data.db.RoutineExerciseEntity
 import com.eina.app.data.db.SetEntryEntity
 import com.eina.app.data.db.SetType
 import com.eina.app.data.db.WeightType
@@ -11,6 +10,7 @@ import com.eina.app.data.db.WorkoutExerciseEntity
 import com.eina.app.data.db.countsAsWorking
 import com.eina.app.data.db.exerciseName
 import com.eina.app.data.db.usesWeight
+import com.eina.app.data.repository.RoutineTarget
 import com.eina.app.data.repository.WorkoutRepository
 import com.eina.app.domain.Superset
 import com.eina.app.domain.volumeForSet
@@ -39,7 +39,7 @@ class ActiveWorkoutViewModel(
     private var timerJob: Job? = null
 
     /** Target della routine di partenza, per exerciseId: alimentano i segnaposto dei campi. */
-    private var routineTargets: Map<Long, RoutineExerciseEntity> = emptyMap()
+    private var routineTargets: Map<Long, RoutineTarget> = emptyMap()
 
     init {
         repository.observeExercises()

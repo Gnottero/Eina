@@ -209,7 +209,6 @@
 
     <!-- Bibliothèque d\'exercices -->
     <string name="library_title">Exercices</string>
-    <string name="library_pick_title">Choisir un exercice</string>
     <string name="library_new_exercise">Nouvel exercice</string>
     <string name="library_search">Chercher un exercice</string>
     <string name="library_empty_title">Aucun exercice trouvé</string>

@@ -77,7 +77,10 @@ import com.eina.app.ui.components.DestructiveRed
 import com.eina.app.ui.components.IslandBottomSheet
 import com.eina.app.ui.components.IslandButton
 import com.eina.app.ui.components.IslandCard
+import com.eina.app.ui.components.ExercisePickerSheet
 import com.eina.app.ui.components.IslandChip
+import com.eina.app.ui.components.SetTableHeader
+import com.eina.app.ui.components.SetValueField
 import com.eina.app.ui.components.IslandEmptyState
 import com.eina.app.ui.components.IslandIconButton
 import com.eina.app.ui.components.IslandSecondaryButton
@@ -726,39 +729,6 @@ private fun ExerciseCard(
     }
 }
 
-@Composable
-private fun SetTableHeader(weightType: WeightType) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
-    ) {
-        TableLabel(stringResource(R.string.table_set), Modifier.width(40.dp))
-        TableLabel(stringResource(R.string.table_previous), Modifier.weight(1.1f))
-        // Senza carico da digitare la colonna kg non compare: lo spazio va alle ripetizioni.
-        if (weightType.usesWeight) {
-            TableLabel(stringResource(R.string.table_kg), Modifier.weight(1f))
-        }
-        TableLabel(
-            stringResource(if (weightType.usesDuration) R.string.table_seconds else R.string.table_reps),
-            Modifier.weight(1f)
-        )
-        Box(Modifier.size(42.dp))
-    }
-}
-
-@Composable
-private fun TableLabel(text: String, modifier: Modifier = Modifier) {
-    Text(
-        text = text.uppercase(),
-        style = MaterialTheme.typography.labelSmall,
-        color = EinaTheme.island.textSecondary,
-        textAlign = TextAlign.Center,
-        maxLines = 1,
-        modifier = modifier
-    )
-}
-
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun SetRow(
@@ -870,48 +840,6 @@ private fun SetCheckButton(completed: Boolean, onClick: () -> Unit) {
     }
 }
 
-/**
- * Campo numerico della tabella serie: nessuna etichetta, segnaposto grigio col valore target o
- * dell'ultima volta (che resta un suggerimento, non un dato registrato).
- */
-@Composable
-private fun SetValueField(
-    value: String,
-    placeholder: String?,
-    onValueChange: (String) -> Unit,
-    keyboardType: KeyboardType,
-    modifier: Modifier = Modifier
-) {
-    val island = EinaTheme.island
-    BasicTextField(
-        value = value,
-        onValueChange = onValueChange,
-        singleLine = true,
-        keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
-        textStyle = MaterialTheme.typography.titleMedium.copy(
-            color = MaterialTheme.colorScheme.onSurface,
-            textAlign = TextAlign.Center
-        ),
-        cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-        modifier = modifier
-            .clip(PillShape)
-            .background(island.sunken)
-            .padding(vertical = Spacing.md, horizontal = Spacing.xs),
-        decorationBox = { inner ->
-            Box(contentAlignment = Alignment.Center) {
-                if (value.isEmpty()) {
-                    Text(
-                        text = placeholder ?: "–",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = island.textSecondary
-                    )
-                }
-                inner()
-            }
-        }
-    )
-}
-
 /** Azioni sull'esercizio in corso: righe grandi con icona, al posto del menu a tendina minuscolo. */
 @Composable
 private fun ExerciseActionsSheet(
@@ -1021,96 +949,6 @@ private fun HapticTextButton(
     val hapticTap = LocalHapticTap.current
     TextButton(onClick = { hapticTap(); onClick() }) {
         Text(text, color = color)
-    }
-}
-
-/**
- * Scelta dell'esercizio da aggiungere alla sessione: ricerca per nome e filtro per gruppo
- * muscolare, come nella libreria. Con centinaia di esercizi in elenco, scorrere non basta.
- */
-@Composable
-private fun ExercisePickerSheet(
-    exercises: List<ExerciseEntity>,
-    onPick: (ExerciseEntity) -> Unit,
-    onDismiss: () -> Unit
-) {
-    val island = EinaTheme.island
-    var query by remember { mutableStateOf("") }
-    var category by remember { mutableStateOf<MuscleGroupCategory?>(null) }
-
-    val locale = currentLocale()
-    // Ordine alfabetico nella lingua attiva: il database li tiene ordinati per nome inglese.
-    val filtered = remember(exercises, query, category, locale) {
-        exercises.sortedBy { it.exerciseName().localized(locale).lowercase(locale) }.filter { exercise ->
-            val matchesQuery = query.isBlank() || exercise.matchesQuery(query)
-            val matchesCategory = category == null ||
-                primaryCategoryFor(exercise.muscleGroupsPrimary) == category
-            matchesQuery && matchesCategory
-        }
-    }
-
-    IslandBottomSheet(onDismiss = onDismiss, title = stringResource(R.string.active_add_exercise_sheet_title)) {
-        IslandTextField(
-            value = query,
-            onValueChange = { query = it },
-            label = stringResource(R.string.library_search),
-            labelAsPlaceholder = true,
-            leadingIcon = Icons.Outlined.Search,
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        LazyRow(
-            horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
-            contentPadding = PaddingValues(vertical = Spacing.sm)
-        ) {
-            items(MuscleGroupCategory.entries) { entry ->
-                IslandChip(
-                    text = entry.label(),
-                    selected = category == entry,
-                    accentColor = entry.color,
-                    onClick = { category = if (category == entry) null else entry }
-                )
-            }
-        }
-
-        if (filtered.isEmpty()) {
-            Text(
-                text = if (exercises.isEmpty()) {
-                    stringResource(R.string.active_library_empty)
-                } else {
-                    stringResource(R.string.active_search_empty)
-                },
-                style = MaterialTheme.typography.bodyMedium,
-                color = island.textSecondary,
-                modifier = Modifier.padding(vertical = Spacing.lg)
-            )
-        } else {
-            LazyColumn(
-                modifier = Modifier.height(380.dp),
-                verticalArrangement = Arrangement.spacedBy(Spacing.sm)
-            ) {
-                items(filtered, key = { it.id }) { exercise ->
-                    val exerciseCategory = primaryCategoryFor(exercise.muscleGroupsPrimary)
-                    IslandCard(
-                        modifier = Modifier.fillMaxWidth(),
-                        contentPadding = PaddingValues(Spacing.md),
-                        elevation = 0.dp,
-                        color = island.sunken,
-                        onClick = { onPick(exercise) }
-                    ) {
-                        Text(exercise.localizedName(), style = MaterialTheme.typography.titleSmall)
-                        Text(
-                            text = listOfNotNull(
-                                exerciseCategory.label(),
-                                exercise.equipment?.takeIf { it.isNotBlank() }?.let { equipmentLabel(it) }
-                            ).joinToString(" · "),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = island.textSecondary
-                        )
-                    }
-                }
-            }
-        }
     }
 }
 

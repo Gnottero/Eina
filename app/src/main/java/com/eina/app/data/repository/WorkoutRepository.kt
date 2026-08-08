@@ -6,7 +6,8 @@ import com.eina.app.data.db.ExerciseEntity
 import com.eina.app.data.db.RoutineDao
 import com.eina.app.data.db.RoutineEntity
 import com.eina.app.data.db.RoutineExerciseDao
-import com.eina.app.data.db.RoutineExerciseEntity
+import com.eina.app.data.db.RoutineSetDao
+import com.eina.app.data.db.countsAsWorking
 import com.eina.app.data.db.SetEntryDao
 import com.eina.app.data.db.SetEntryEntity
 import com.eina.app.data.db.WeightType
@@ -25,6 +26,7 @@ class WorkoutRepository(
     private val exerciseDao: ExerciseDao,
     private val bodyMetricDao: BodyMetricDao,
     private val routineExerciseDao: RoutineExerciseDao,
+    private val routineSetDao: RoutineSetDao,
     private val routineDao: RoutineDao
 ) {
     fun observeExercises(): Flow<List<ExerciseEntity>> = exerciseDao.getAll()
@@ -81,13 +83,16 @@ class WorkoutRepository(
                     supersetGroup = routineExercise.supersetGroup
                 )
             )
-            repeat(routineExercise.targetSets) { setIndex ->
+            // Una serie della sessione per ogni serie della scheda, col suo tipo: il
+            // riscaldamento scritto in routine e' gia' segnato come tale in palestra.
+            routineSetDao.getForRoutineExercise(routineExercise.id).forEachIndexed { setIndex, routineSet ->
                 setEntryDao.insert(
                     SetEntryEntity(
                         workoutExerciseId = workoutExerciseId,
                         setIndex = setIndex,
-                        targetReps = routineExercise.targetReps,
-                        restSecondsPlanned = routineExercise.restSeconds
+                        targetReps = routineSet.targetReps,
+                        restSecondsPlanned = routineExercise.restSeconds,
+                        setType = routineSet.setType
                     )
                 )
             }
@@ -148,9 +153,22 @@ class WorkoutRepository(
     /** Routine di partenza della sessione: serve il link playlist durante l'allenamento. */
     suspend fun getRoutine(routineId: Long): RoutineEntity? = routineDao.getById(routineId)
 
-    /** Target della routine per exerciseId: servono alla UI come segnaposto, non come valori registrati. */
-    suspend fun getRoutineTargets(routineId: Long): Map<Long, RoutineExerciseEntity> =
-        routineExerciseDao.getForRoutine(routineId).first().associateBy { it.exerciseId }
+    /**
+     * Target della routine per exerciseId: servono alla UI come segnaposto, non come valori
+     * registrati. Peso e ripetizioni arrivano dalla prima serie di lavoro della scheda — le
+     * serie hanno ognuna i propri valori, ma a una serie aggiunta a mano in palestra serve un
+     * numero solo da proporre.
+     */
+    suspend fun getRoutineTargets(routineId: Long): Map<Long, RoutineTarget> =
+        routineExerciseDao.getForRoutine(routineId).first().associate { routineExercise ->
+            val sets = routineSetDao.getForRoutineExercise(routineExercise.id)
+            val reference = sets.firstOrNull { it.setType.countsAsWorking } ?: sets.firstOrNull()
+            routineExercise.exerciseId to RoutineTarget(
+                restSeconds = routineExercise.restSeconds,
+                targetReps = reference?.targetReps,
+                targetWeight = reference?.targetWeight
+            )
+        }
 
     suspend fun getSessionExercises(sessionId: Long): List<WorkoutExerciseEntity> =
         workoutExerciseDao.getForSessionOnce(sessionId)
@@ -239,3 +257,10 @@ class WorkoutRepository(
         return finalSet
     }
 }
+
+/** Valori della routine proposti in sessione: recupero dell'esercizio e target della prima serie. */
+data class RoutineTarget(
+    val restSeconds: Int,
+    val targetReps: Int?,
+    val targetWeight: Double?
+)

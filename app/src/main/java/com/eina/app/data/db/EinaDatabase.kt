@@ -11,12 +11,13 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         ExerciseEntity::class,
         RoutineEntity::class,
         RoutineExerciseEntity::class,
+        RoutineSetEntity::class,
         WorkoutSessionEntity::class,
         WorkoutExerciseEntity::class,
         SetEntryEntity::class,
         BodyMetricEntity::class
     ],
-    version = 7,
+    version = 8,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -24,6 +25,7 @@ abstract class EinaDatabase : RoomDatabase() {
     abstract fun exerciseDao(): ExerciseDao
     abstract fun routineDao(): RoutineDao
     abstract fun routineExerciseDao(): RoutineExerciseDao
+    abstract fun routineSetDao(): RoutineSetDao
     abstract fun workoutSessionDao(): WorkoutSessionDao
     abstract fun workoutExerciseDao(): WorkoutExerciseDao
     abstract fun setEntryDao(): SetEntryDao
@@ -135,6 +137,80 @@ abstract class EinaDatabase : RoomDatabase() {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE routine_exercises ADD COLUMN supersetGroup INTEGER")
                 db.execSQL("ALTER TABLE workout_exercises ADD COLUMN supersetGroup INTEGER")
+            }
+        }
+
+        /**
+         * Le serie della routine diventano righe (`routine_sets`), una per serie, col loro tipo:
+         * la scheda puo' finalmente dire "un riscaldamento e due serie a cedimento" invece del
+         * solo numero di serie. Le tre colonne target sulla routine non servono piu' e vanno
+         * tolte, quindi `routine_exercises` si ricrea — SQLite sotto API 30 non sa togliere
+         * colonne. Ogni esercizio gia' salvato produce le sue `targetSets` righe NORMAL coi
+         * valori che aveva: nessuna scheda cambia forma.
+         */
+        val MIGRATION_7_8 = object : Migration(7, 8) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS routine_sets (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        routineExerciseId INTEGER NOT NULL,
+                        setIndex INTEGER NOT NULL,
+                        targetReps INTEGER,
+                        targetWeight REAL,
+                        setType TEXT NOT NULL,
+                        FOREIGN KEY(routineExerciseId) REFERENCES routine_exercises(id)
+                            ON UPDATE NO ACTION ON DELETE CASCADE
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL(
+                    "CREATE INDEX IF NOT EXISTS index_routine_sets_routineExerciseId ON routine_sets (routineExerciseId)"
+                )
+                // Una riga per serie pianificata: la CTE ricorsiva conta da 0 a targetSets-1.
+                db.execSQL(
+                    """
+                    INSERT INTO routine_sets (routineExerciseId, setIndex, targetReps, targetWeight, setType)
+                    SELECT re.id, seq.n, re.targetReps, re.targetWeight, 'NORMAL'
+                    FROM routine_exercises re
+                    JOIN (
+                        WITH RECURSIVE seq(n) AS (
+                            SELECT 0 UNION ALL SELECT n + 1 FROM seq WHERE n < 99
+                        )
+                        SELECT n FROM seq
+                    ) seq ON seq.n < re.targetSets
+                    """.trimIndent()
+                )
+                db.execSQL(
+                    """
+                    CREATE TABLE routine_exercises_new (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        routineId INTEGER NOT NULL,
+                        exerciseId INTEGER NOT NULL,
+                        `order` INTEGER NOT NULL,
+                        restSeconds INTEGER NOT NULL,
+                        notes TEXT,
+                        supersetGroup INTEGER,
+                        FOREIGN KEY(routineId) REFERENCES routines(id)
+                            ON UPDATE NO ACTION ON DELETE CASCADE,
+                        FOREIGN KEY(exerciseId) REFERENCES exercises(id)
+                            ON UPDATE NO ACTION ON DELETE NO ACTION
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL(
+                    """
+                    INSERT INTO routine_exercises_new (
+                        id, routineId, exerciseId, `order`, restSeconds, notes, supersetGroup
+                    )
+                    SELECT id, routineId, exerciseId, `order`, restSeconds, notes, supersetGroup
+                    FROM routine_exercises
+                    """.trimIndent()
+                )
+                db.execSQL("DROP TABLE routine_exercises")
+                db.execSQL("ALTER TABLE routine_exercises_new RENAME TO routine_exercises")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_routine_exercises_routineId ON routine_exercises (routineId)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_routine_exercises_exerciseId ON routine_exercises (exerciseId)")
             }
         }
     }

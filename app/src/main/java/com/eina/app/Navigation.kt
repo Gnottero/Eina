@@ -14,7 +14,6 @@ import androidx.compose.material.icons.outlined.BarChart
 import androidx.compose.material.icons.outlined.FitnessCenter
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -100,35 +99,17 @@ fun EinaNavHost() {
                 arguments = listOf(navArgument("routineId") { type = NavType.LongType })
             ) { backStackEntry ->
                 val routineId = backStackEntry.arguments?.getLong("routineId") ?: 0L
-                val pickedExerciseId by backStackEntry.savedStateHandle
-                    .getStateFlow<Long?>("pickedExerciseId", null)
-                    .collectAsState()
                 RoutineEditorScreen(
                     routineId = routineId,
-                    pickedExerciseId = pickedExerciseId,
-                    onExercisePickedConsumed = { backStackEntry.savedStateHandle["pickedExerciseId"] = null },
-                    onPickExercise = {
-                        navController.navigate("routines/edit/$routineId/pick-exercise")
-                    },
                     onBack = { navController.popBackStack() },
+                    // Il nome dell'esercizio apre la sua scheda, come nell'allenamento.
+                    onOpenExercise = { exerciseId -> navController.navigate("library/exercise/$exerciseId") },
                     // Salvata la routine si torna ad "Allena": l'editor e' un passaggio, non una destinazione.
                     onSaved = {
                         if (!navController.popBackStack(EinaDestination.Workout.route, inclusive = false)) {
                             navController.navigate(EinaDestination.Workout.route)
                         }
                     }
-                )
-            }
-            composable("routines/edit/{routineId}/pick-exercise") {
-                LibraryScreen(
-                    title = stringResource(R.string.library_pick_title),
-                    onExerciseClick = { exerciseId ->
-                        navController.previousBackStackEntry
-                            ?.savedStateHandle
-                            ?.set("pickedExerciseId", exerciseId)
-                        navController.popBackStack()
-                    },
-                    onBack = { navController.popBackStack() }
                 )
             }
             composable(

@@ -9,11 +9,10 @@ import androidx.room.Query
 import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
 
-/** Riga per l'anteprima di una routine nell'elenco: nome esercizio e serie pianificate. */
+/** Riga per l'anteprima di una routine nell'elenco: nome dell'esercizio in scheda. */
 data class RoutineExercisePreviewRow(
     val routineId: Long,
-    @Embedded val exerciseName: ExerciseName,
-    val targetSets: Int
+    @Embedded val exerciseName: ExerciseName
 )
 
 @Dao
@@ -32,7 +31,7 @@ interface RoutineExerciseDao {
 
     @Query(
         """
-        SELECT re.routineId AS routineId, re.targetSets AS targetSets,
+        SELECT re.routineId AS routineId,
                e.name AS nameEn, e.nameIt AS nameIt, e.nameFr AS nameFr
         FROM routine_exercises re
         INNER JOIN exercises e ON re.exerciseId = e.id

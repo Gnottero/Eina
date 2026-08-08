@@ -219,7 +219,6 @@
 
     <!-- Libreria esercizi -->
     <string name="library_title">Exercises</string>
-    <string name="library_pick_title">Choose exercise</string>
     <string name="library_new_exercise">New exercise</string>
     <string name="library_search">Search exercise</string>
     <string name="library_empty_title">No exercise found</string>

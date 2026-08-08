@@ -34,7 +34,8 @@ val appModule = module {
                 EinaDatabase.MIGRATION_3_4,
                 EinaDatabase.MIGRATION_4_5,
                 EinaDatabase.MIGRATION_5_6,
-                EinaDatabase.MIGRATION_6_7
+                EinaDatabase.MIGRATION_6_7,
+                EinaDatabase.MIGRATION_7_8
             )
             .build()
     }
@@ -42,6 +43,7 @@ val appModule = module {
     single { get<EinaDatabase>().exerciseDao() }
     single { get<EinaDatabase>().routineDao() }
     single { get<EinaDatabase>().routineExerciseDao() }
+    single { get<EinaDatabase>().routineSetDao() }
     single { get<EinaDatabase>().workoutSessionDao() }
     single { get<EinaDatabase>().workoutExerciseDao() }
     single { get<EinaDatabase>().setEntryDao() }
@@ -56,11 +58,12 @@ val appModule = module {
             exerciseDao = get(),
             bodyMetricDao = get(),
             routineExerciseDao = get(),
+            routineSetDao = get(),
             routineDao = get()
         )
     }
 
-    single { RoutineRepository(routineDao = get(), routineExerciseDao = get(), exerciseDao = get()) }
+    single { RoutineRepository(routineDao = get(), routineExerciseDao = get(), routineSetDao = get(), exerciseDao = get()) }
 
     single { StatsRepository(statsDao = get(), bodyMetricDao = get()) }
 

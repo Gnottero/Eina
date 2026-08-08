@@ -27,15 +27,19 @@ class RoutineListViewModel(
 ) : ViewModel() {
     val routines: StateFlow<List<RoutineCardUi>> = combine(
         routineRepository.observeRoutines(),
-        routineRepository.observeRoutinePreviews()
-    ) { routines, previews ->
+        routineRepository.observeRoutinePreviews(),
+        routineRepository.observeRoutineSetCounts()
+    ) { routines, previews, setCounts ->
         val byRoutine = previews.groupBy { it.routineId }
+        // Le serie si contano dalle righe di routine_sets: una scheda puo' avere esercizi con
+        // numeri di serie diversi, quindi non c'e' piu' un numero da moltiplicare.
+        val setsByRoutine = setCounts.associate { it.routineId to it.setCount }
         routines.map { routine ->
             val rows = byRoutine[routine.id].orEmpty()
             RoutineCardUi(
                 routine = routine,
                 exerciseNames = rows.map { it.exerciseName },
-                setCount = rows.sumOf { it.targetSets }
+                setCount = setsByRoutine[routine.id] ?: 0
             )
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())

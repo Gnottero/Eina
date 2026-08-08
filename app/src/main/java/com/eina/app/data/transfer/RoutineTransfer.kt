@@ -4,6 +4,8 @@ import com.eina.app.data.db.ExerciseEntity
 import com.eina.app.data.db.PlaylistType
 import com.eina.app.data.db.RoutineEntity
 import com.eina.app.data.db.RoutineExerciseEntity
+import com.eina.app.data.db.RoutineSetEntity
+import com.eina.app.data.db.SetType
 import com.eina.app.data.db.WeightType
 import org.json.JSONArray
 import org.json.JSONObject
@@ -23,7 +25,9 @@ import org.json.JSONObject
 object RoutineTransfer {
 
     const val FORMAT = "eina.routine"
-    const val VERSION = 1
+    // v2: le serie sono un elenco ("sets") invece delle tre colonne target. Un file v1 si legge
+    // ancora, le sue targetSets diventano altrettante serie normali.
+    const val VERSION = 2
     const val MIME_TYPE = "application/json"
     const val FILE_EXTENSION = "json"
 
@@ -34,13 +38,17 @@ object RoutineTransfer {
         val muscleGroupsSecondary: List<String>,
         val equipment: String?,
         val description: String,
-        val targetSets: Int,
-        val targetReps: Int,
-        val targetWeight: Double?,
+        val sets: List<SetPayload>,
         val restSeconds: Int,
         val notes: String?,
         /** Superset di appartenenza, come numero di gruppo. null = esercizio a se'. */
         val supersetGroup: Int?
+    )
+
+    data class SetPayload(
+        val targetReps: Int?,
+        val targetWeight: Double?,
+        val setType: SetType
     )
 
     data class RoutinePayload(
@@ -54,6 +62,7 @@ object RoutineTransfer {
     fun encode(
         routine: RoutineEntity,
         routineExercises: List<RoutineExerciseEntity>,
+        setsByRoutineExercise: Map<Long, List<RoutineSetEntity>>,
         exercisesById: Map<Long, ExerciseEntity>
     ): String {
         val exercises = JSONArray()
@@ -67,9 +76,22 @@ object RoutineTransfer {
                     put("muscleGroupsSecondary", JSONArray(exercise.muscleGroupsSecondary))
                     put("equipment", exercise.equipment ?: JSONObject.NULL)
                     put("description", exercise.description)
-                    put("targetSets", routineExercise.targetSets)
-                    put("targetReps", routineExercise.targetReps)
-                    put("targetWeight", routineExercise.targetWeight ?: JSONObject.NULL)
+                    put(
+                        "sets",
+                        JSONArray().apply {
+                            setsByRoutineExercise[routineExercise.id].orEmpty()
+                                .sortedBy { it.setIndex }
+                                .forEach { set ->
+                                    put(
+                                        JSONObject().apply {
+                                            put("targetReps", set.targetReps ?: JSONObject.NULL)
+                                            put("targetWeight", set.targetWeight ?: JSONObject.NULL)
+                                            put("setType", set.setType.name)
+                                        }
+                                    )
+                                }
+                        }
+                    )
                     put("restSeconds", routineExercise.restSeconds)
                     put("notes", routineExercise.notes ?: JSONObject.NULL)
                     put("supersetGroup", routineExercise.supersetGroup ?: JSONObject.NULL)
@@ -115,9 +137,7 @@ object RoutineTransfer {
                 muscleGroupsSecondary = item.optJSONArray("muscleGroupsSecondary").toStringList(),
                 equipment = item.optNullableString("equipment"),
                 description = item.optString("description"),
-                targetSets = item.optInt("targetSets", 3).coerceIn(1, 20),
-                targetReps = item.optInt("targetReps", 10).coerceIn(1, 999),
-                targetWeight = item.optNullableDouble("targetWeight"),
+                sets = item.readSets(),
                 restSeconds = item.optInt("restSeconds", 90).coerceIn(0, 3600),
                 notes = item.optNullableString("notes"),
                 // Campo nato dopo il formato v1: un file piu' vecchio semplicemente non ha superset.
@@ -133,6 +153,29 @@ object RoutineTransfer {
                 ?.let { type -> runCatching { PlaylistType.valueOf(type) }.getOrNull() },
             exercises = payloads
         )
+    }
+
+    /**
+     * Serie dell'esercizio. Dal formato v2 sono un elenco; un file v1 porta solo targetSets/
+     * targetReps/targetWeight e diventa quel numero di serie normali tutte uguali.
+     */
+    private fun JSONObject.readSets(): List<SetPayload> {
+        val array = optJSONArray("sets")
+        if (array != null) {
+            return (0 until array.length()).mapNotNull { index ->
+                val set = array.optJSONObject(index) ?: return@mapNotNull null
+                SetPayload(
+                    targetReps = set.optNullableInt("targetReps")?.coerceIn(1, 999),
+                    targetWeight = set.optNullableDouble("targetWeight"),
+                    setType = runCatching { SetType.valueOf(set.optString("setType")) }
+                        .getOrDefault(SetType.NORMAL)
+                )
+            }
+        }
+        val count = optInt("targetSets", 3).coerceIn(1, 20)
+        val reps = optInt("targetReps", 10).coerceIn(1, 999)
+        val weight = optNullableDouble("targetWeight")
+        return List(count) { SetPayload(targetReps = reps, targetWeight = weight, setType = SetType.NORMAL) }
     }
 
     private fun JSONArray?.toStringList(): List<String> =

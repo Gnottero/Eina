@@ -171,12 +171,25 @@ data class RoutineExerciseEntity(
     val routineId: Long,
     val exerciseId: Long,
     val order: Int,
-    val targetSets: Int,
-    val targetReps: Int,
-    val targetWeight: Double? = null,
+    // Fase 26 (DB v8, MIGRATION_7_8): serie/ripetizioni/peso non stanno piu' qui, ogni serie
+    // pianificata e' una riga di routine_sets col suo tipo.
     val restSeconds: Int,
+    val notes: String? = null,
     val supersetGroup: Int? = null   // Fase 25 (DB v7, MIGRATION_6_7): esercizi con lo stesso
                                      // numero si eseguono a giro. null = esercizio a se'
+)
+
+@Entity(
+    tableName = "routine_sets",
+    foreignKeys = [ForeignKey(entity = RoutineExerciseEntity::class, parentColumns = ["id"], childColumns = ["routineExerciseId"], onDelete = ForeignKey.CASCADE)]
+)
+data class RoutineSetEntity(                       // Fase 26 (DB v8, MIGRATION_7_8)
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val routineExerciseId: Long,
+    val setIndex: Int,
+    val targetReps: Int? = null,                   // per TIME_BASED: secondi
+    val targetWeight: Double? = null,
+    val setType: SetType = SetType.NORMAL
 )
 
 @Entity(tableName = "workout_sessions")
@@ -525,6 +538,26 @@ di pari indice (i compagni con meno serie non bloccano il giro). La logica pura 
 come opzionale, quindi i file vecchi restano leggibili. Verificata sul dispositivo: giro composto
 in routine, ereditato all'avvio della sessione, recupero partito solo alla chiusura del secondo
 esercizio.
+
+**Fase 26 — Routine con la stessa tabella dell'allenamento** *(fatta)*
+DoD: si aggiungono esercizi alla routine con lo stesso foglio dell'allenamento
+(`ui/components/ExercisePickerSheet.kt`, condiviso: ricerca, chip dei gruppi muscolari e
+miniatura del primo fotogramma dell'animazione) invece di saltare su una schermata di libreria —
+la rotta `routines/edit/{id}/pick-exercise` e il parametro `title` di `LibraryScreen` sono
+spariti. La miniatura vive solo nel foglio di scelta: nelle liste di allenamento e routine il
+nome resta da solo. La card dell'esercizio in routine e' quella dell'allenamento: nome che apre
+la scheda, chip del recupero, tabella delle serie e "Aggiungi serie", azioni col tocco lungo. Ogni
+serie e' una riga con il suo tipo (W / F / D), scelto dallo stesso `SetTypeSheet`: la scheda puo'
+dire "un riscaldamento e due serie a cedimento", che con le vecchie `targetSets`/`targetReps` non
+si poteva scrivere. Quelle tre colonne sono uscite da `routine_exercises` (la tabella si ricrea,
+SQLite sotto API 30 non sa togliere colonne) e ogni esercizio gia' salvato ha prodotto le sue
+righe NORMAL coi valori che aveva. DB alla versione 8 con `MIGRATION_7_8`; l'avvio della sessione
+copia una serie per riga, tipo compreso; il file di scambio `eina.routine` passa a v2 con
+l'elenco "sets" e continua a leggere i v1 (targetSets diventa quel numero di serie normali).
+Intestazione tabella e campo numerico condivisi in `ui/components/SetTable.kt`. Verificata sul
+dispositivo: migrazione di una routine esistente, tipo di serie cambiato in W con rinumerazione,
+serie aggiunta che eredita le ripetizioni, e sessione avviata dalla routine che riceve una serie
+per riga con lo stesso tipo (F / W / D) e le ripetizioni come segnaposto.
 
 **Fase 9 — Rifinitura** *(fatta)*
 DoD: R8 + shrinkResources attivi sulla release (20,5 MB → 2,2 MB), regole in

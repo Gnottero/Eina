@@ -7,6 +7,10 @@ import com.eina.app.data.db.RoutineEntity
 import com.eina.app.data.db.RoutineExerciseDao
 import com.eina.app.data.db.RoutineExerciseEntity
 import com.eina.app.data.db.RoutineExercisePreviewRow
+import com.eina.app.data.db.RoutineSetDao
+import com.eina.app.data.db.RoutineSetEntity
+import com.eina.app.data.db.RoutineSetCountRow
+import com.eina.app.data.db.countsAsWorking
 import com.eina.app.data.transfer.RoutineTransfer
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -14,16 +18,27 @@ import kotlinx.coroutines.flow.first
 class RoutineRepository(
     private val routineDao: RoutineDao,
     private val routineExerciseDao: RoutineExerciseDao,
+    private val routineSetDao: RoutineSetDao,
     private val exerciseDao: ExerciseDao
 ) {
     fun observeRoutines(): Flow<List<RoutineEntity>> = routineDao.getAll()
 
     suspend fun getExercise(exerciseId: Long): ExerciseEntity? = exerciseDao.getById(exerciseId)
 
+    /** Libreria intera: il foglio di scelta dell'editor routine filtra in memoria come in sessione. */
+    fun observeExercises(): Flow<List<ExerciseEntity>> = exerciseDao.getAll()
+
     suspend fun getRoutine(id: Long): RoutineEntity? = routineDao.getById(id)
 
     fun observeRoutineExercises(routineId: Long): Flow<List<RoutineExerciseEntity>> =
         routineExerciseDao.getForRoutine(routineId)
+
+    /** Serie pianificate della routine, in ordine di esercizio e di serie. */
+    fun observeRoutineSets(routineId: Long): Flow<List<RoutineSetEntity>> =
+        routineSetDao.observeForRoutine(routineId)
+
+    /** Serie pianificate per routine: il conteggio delle card dell'elenco. */
+    fun observeRoutineSetCounts(): Flow<List<RoutineSetCountRow>> = routineSetDao.observeSetCounts()
 
     /** Anteprime di tutte le routine in un colpo solo: alimenta le card dell'elenco. */
     fun observeRoutinePreviews(): Flow<List<RoutineExercisePreviewRow>> =
@@ -42,18 +57,46 @@ class RoutineRepository(
 
     suspend fun deleteRoutine(routine: RoutineEntity) = routineDao.delete(routine)
 
-    suspend fun addExerciseToRoutine(routineId: Long, exerciseId: Long, order: Int): Long =
-        routineExerciseDao.insert(
+    /** Esercizio aggiunto alla scheda con tre serie normali vuote, come in allenamento. */
+    suspend fun addExerciseToRoutine(routineId: Long, exerciseId: Long, order: Int): Long {
+        val routineExerciseId = routineExerciseDao.insert(
             RoutineExerciseEntity(
                 routineId = routineId,
                 exerciseId = exerciseId,
                 order = order,
-                targetSets = 3,
-                targetReps = 10,
-                targetWeight = null,
-                restSeconds = 90
+                restSeconds = DEFAULT_REST_SECONDS
             )
         )
+        repeat(DEFAULT_SET_COUNT) { index ->
+            routineSetDao.insert(RoutineSetEntity(routineExerciseId = routineExerciseId, setIndex = index))
+        }
+        return routineExerciseId
+    }
+
+    /** Serie in coda all'esercizio: eredita i valori dell'ultima, come farebbe in palestra. */
+    suspend fun addSetToRoutineExercise(routineExerciseId: Long) {
+        val existing = routineSetDao.getForRoutineExercise(routineExerciseId)
+        val last = existing.lastOrNull { it.setType.countsAsWorking } ?: existing.lastOrNull()
+        routineSetDao.insert(
+            RoutineSetEntity(
+                routineExerciseId = routineExerciseId,
+                setIndex = existing.size,
+                targetReps = last?.targetReps,
+                targetWeight = last?.targetWeight
+            )
+        )
+    }
+
+    suspend fun updateRoutineSet(set: RoutineSetEntity) = routineSetDao.update(set)
+
+    /** Toglie la serie e ricompatta gli indici: `setIndex` resta la posizione in tabella. */
+    suspend fun removeRoutineSet(set: RoutineSetEntity) {
+        routineSetDao.delete(set)
+        routineSetDao.getForRoutineExercise(set.routineExerciseId)
+            .forEachIndexed { index, item ->
+                if (item.setIndex != index) routineSetDao.update(item.copy(setIndex = index))
+            }
+    }
 
     suspend fun updateRoutineExercise(routineExercise: RoutineExerciseEntity) =
         routineExerciseDao.update(routineExercise)
@@ -68,12 +111,13 @@ class RoutineRepository(
     suspend fun exportRoutine(routineId: Long): String? {
         val routine = routineDao.getById(routineId) ?: return null
         val routineExercises = routineExerciseDao.getForRoutine(routineId).first()
+        val sets = routineExercises.associate { it.id to routineSetDao.getForRoutineExercise(it.id) }
         val exercises = routineExercises
             .map { it.exerciseId }
             .distinct()
             .mapNotNull { id -> exerciseDao.getById(id)?.let { id to it } }
             .toMap()
-        return RoutineTransfer.encode(routine, routineExercises, exercises)
+        return RoutineTransfer.encode(routine, routineExercises, sets, exercises)
     }
 
     /**
@@ -107,20 +151,33 @@ class RoutineRepository(
                     source = RoutineTransfer.FORMAT
                 )
             )
-            routineExerciseDao.insert(
+            val routineExerciseId = routineExerciseDao.insert(
                 RoutineExerciseEntity(
                     routineId = routineId,
                     exerciseId = exerciseId,
                     order = index,
-                    targetSets = item.targetSets,
-                    targetReps = item.targetReps,
-                    targetWeight = item.targetWeight,
                     restSeconds = item.restSeconds,
                     notes = item.notes,
                     supersetGroup = item.supersetGroup
                 )
             )
+            item.sets.forEachIndexed { setIndex, set ->
+                routineSetDao.insert(
+                    RoutineSetEntity(
+                        routineExerciseId = routineExerciseId,
+                        setIndex = setIndex,
+                        targetReps = set.targetReps,
+                        targetWeight = set.targetWeight,
+                        setType = set.setType
+                    )
+                )
+            }
         }
         return routineId
+    }
+
+    private companion object {
+        const val DEFAULT_SET_COUNT = 3
+        const val DEFAULT_REST_SECONDS = 90
     }
 }

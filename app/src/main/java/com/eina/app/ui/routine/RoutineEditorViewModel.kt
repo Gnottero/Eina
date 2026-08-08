@@ -8,6 +8,8 @@ import com.eina.app.data.db.ExerciseEntity
 import com.eina.app.data.db.PlaylistType
 import com.eina.app.data.db.RoutineEntity
 import com.eina.app.data.db.RoutineExerciseEntity
+import com.eina.app.data.db.RoutineSetEntity
+import com.eina.app.data.db.SetType
 import com.eina.app.data.repository.RoutineRepository
 import com.eina.app.domain.Superset
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -41,6 +43,16 @@ class RoutineEditorViewModel(
 
     val routineExercises: StateFlow<List<RoutineExerciseEntity>> = routineIdFlow
         .flatMapLatest { id -> if (id == 0L) flowOf(emptyList()) else repository.observeRoutineExercises(id) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    /** Serie pianificate, raggruppate per esercizio della scheda: una riga per serie in tabella. */
+    val routineSets: StateFlow<Map<Long, List<RoutineSetEntity>>> = routineIdFlow
+        .flatMapLatest { id -> if (id == 0L) flowOf(emptyList()) else repository.observeRoutineSets(id) }
+        .map { sets -> sets.groupBy { it.routineExerciseId } }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
+
+    /** Tutta la libreria: alimenta il foglio di scelta dell'esercizio da aggiungere. */
+    val availableExercises: StateFlow<List<ExerciseEntity>> = repository.observeExercises()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     /** Esercizi referenziati dalla routine: servono nome tradotto e tipo di carico (campo kg). */
@@ -174,16 +186,27 @@ class RoutineEditorViewModel(
         }
     }
 
-    fun updateTargets(routineExercise: RoutineExerciseEntity, targetSets: Int, targetReps: Int, targetWeight: Double?, restSeconds: Int) {
+    fun addSet(routineExercise: RoutineExerciseEntity) {
+        viewModelScope.launch { repository.addSetToRoutineExercise(routineExercise.id) }
+    }
+
+    fun removeSet(set: RoutineSetEntity) {
+        viewModelScope.launch { repository.removeRoutineSet(set) }
+    }
+
+    fun updateSetValues(set: RoutineSetEntity, targetReps: Int?, targetWeight: Double?) {
         viewModelScope.launch {
-            repository.updateRoutineExercise(
-                routineExercise.copy(
-                    targetSets = targetSets,
-                    targetReps = targetReps,
-                    targetWeight = targetWeight,
-                    restSeconds = restSeconds
-                )
-            )
+            repository.updateRoutineSet(set.copy(targetReps = targetReps, targetWeight = targetWeight))
+        }
+    }
+
+    fun setSetType(set: RoutineSetEntity, type: SetType) {
+        viewModelScope.launch { repository.updateRoutineSet(set.copy(setType = type)) }
+    }
+
+    fun updateRestSeconds(routineExercise: RoutineExerciseEntity, restSeconds: Int) {
+        viewModelScope.launch {
+            repository.updateRoutineExercise(routineExercise.copy(restSeconds = restSeconds))
             // Il recupero di un superset e' del giro: cambiarlo su un esercizio lo cambia a tutti,
             // altrimenti la pausa dipenderebbe da chi chiude il giro.
             val group = routineExercise.supersetGroup ?: return@launch

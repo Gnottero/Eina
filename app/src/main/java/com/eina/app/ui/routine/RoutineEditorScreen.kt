@@ -25,7 +25,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -43,6 +42,21 @@ import com.eina.app.data.db.RoutineExerciseEntity
 import com.eina.app.data.db.WeightType
 import com.eina.app.data.db.usesDuration
 import com.eina.app.data.db.usesWeight
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import com.eina.app.data.db.RoutineSetEntity
+import com.eina.app.data.db.SetType
+import com.eina.app.data.db.countsAsWorking
+import com.eina.app.ui.components.SetTableHeader
+import com.eina.app.ui.components.SetTypeIndicator
+import com.eina.app.ui.components.SetTypeSheet
+import com.eina.app.ui.components.SetValueField
+import com.eina.app.ui.theme.IslandShape
+import com.eina.app.ui.components.ExercisePickerSheet
 import com.eina.app.ui.components.IslandBottomSheet
 import com.eina.app.ui.components.IslandButton
 import com.eina.app.ui.components.IslandCard
@@ -74,23 +88,19 @@ import org.koin.core.parameter.parametersOf
 @Composable
 fun RoutineEditorScreen(
     routineId: Long,
-    onPickExercise: () -> Unit,
-    pickedExerciseId: Long? = null,
-    onExercisePickedConsumed: () -> Unit = {},
     onBack: (() -> Unit)? = null,
+    onOpenExercise: (Long) -> Unit = {},
     onSaved: () -> Unit = {},
     viewModel: RoutineEditorViewModel = koinViewModel(parameters = { parametersOf(routineId) })
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val routineExercises by viewModel.routineExercises.collectAsState()
     val exercises by viewModel.exercises.collectAsState()
-
-    LaunchedEffect(pickedExerciseId) {
-        if (pickedExerciseId != null) {
-            viewModel.addExercise(pickedExerciseId)
-            onExercisePickedConsumed()
-        }
-    }
+    val availableExercises by viewModel.availableExercises.collectAsState()
+    val routineSets by viewModel.routineSets.collectAsState()
+    // Stesso foglio dell'allenamento: aggiungere un esercizio si fa allo stesso modo ovunque,
+    // senza saltare su una schermata a parte.
+    var showPicker by remember { mutableStateOf(false) }
 
     IslandScreen(
         header = {
@@ -162,17 +172,21 @@ fun RoutineEditorScreen(
                 .sortedBy { it.letter }
 
             routineExercises.forEach { routineExercise ->
-                RoutineExerciseRow(
+                RoutineExerciseCard(
                     routineExercise = routineExercise,
+                    sets = routineSets[routineExercise.id].orEmpty(),
                     exerciseName = exercises[routineExercise.exerciseId]?.localizedName() ?: "…",
                     weightType = exercises[routineExercise.exerciseId]?.weightType ?: WeightType.FREE_WEIGHT,
                     supersetLetter = routineExercise.supersetGroup?.let { supersetLetters[it] },
                     supersetOptions = supersetOptions,
+                    onOpenExercise = { onOpenExercise(routineExercise.exerciseId) },
                     onSupersetChange = { group -> viewModel.setSupersetGroup(routineExercise, group) },
                     onNewSuperset = { viewModel.setSupersetGroup(routineExercise, viewModel.nextSupersetGroup()) },
-                    onUpdate = { sets, reps, weight, rest ->
-                        viewModel.updateTargets(routineExercise, sets, reps, weight, rest)
-                    },
+                    onRestChange = { seconds -> viewModel.updateRestSeconds(routineExercise, seconds) },
+                    onAddSet = { viewModel.addSet(routineExercise) },
+                    onRemoveSet = { set -> viewModel.removeSet(set) },
+                    onSetValuesChange = { set, reps, weight -> viewModel.updateSetValues(set, reps, weight) },
+                    onSetTypeChange = { set, type -> viewModel.setSetType(set, type) },
                     onNotesChange = { notes -> viewModel.updateNotes(routineExercise, notes) },
                     onRemove = { viewModel.removeExercise(routineExercise) }
                 )
@@ -182,7 +196,7 @@ fun RoutineEditorScreen(
         IslandSecondaryButton(
             text = stringResource(R.string.action_add_exercise),
             icon = Icons.Outlined.Add,
-            onClick = onPickExercise,
+            onClick = { showPicker = true },
             modifier = Modifier.fillMaxWidth()
         )
 
@@ -192,90 +206,85 @@ fun RoutineEditorScreen(
             modifier = Modifier.fillMaxWidth()
         )
     }
+
+    if (showPicker) {
+        ExercisePickerSheet(
+            exercises = availableExercises,
+            onPick = {
+                viewModel.addExercise(it.id)
+                showPicker = false
+            },
+            onDismiss = { showPicker = false }
+        )
+    }
 }
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun RoutineExerciseRow(
+private fun RoutineExerciseCard(
     routineExercise: RoutineExerciseEntity,
+    sets: List<RoutineSetEntity>,
     exerciseName: String,
     weightType: WeightType,
     supersetLetter: String?,
     supersetOptions: List<SupersetOption>,
+    onOpenExercise: () -> Unit,
     onSupersetChange: (Int?) -> Unit,
     onNewSuperset: () -> Unit,
-    onUpdate: (Int, Int, Double?, Int) -> Unit,
+    onRestChange: (Int) -> Unit,
+    onAddSet: () -> Unit,
+    onRemoveSet: (RoutineSetEntity) -> Unit,
+    onSetValuesChange: (RoutineSetEntity, Int?, Double?) -> Unit,
+    onSetTypeChange: (RoutineSetEntity, SetType) -> Unit,
     onNotesChange: (String?) -> Unit,
     onRemove: () -> Unit
 ) {
     val island = EinaTheme.island
     val hapticTap = LocalHapticTap.current
     val supersetTint = supersetLetter?.let { supersetColor(it) }
-    var sets by remember(routineExercise.id) { mutableStateOf(routineExercise.targetSets.toString()) }
-    var reps by remember(routineExercise.id) { mutableStateOf(routineExercise.targetReps.toString()) }
-    var weight by remember(routineExercise.id) { mutableStateOf(routineExercise.targetWeight?.toString() ?: "") }
     var actionsOpen by remember { mutableStateOf(false) }
     var restSheetOpen by remember { mutableStateOf(false) }
     var notesSheetOpen by remember { mutableStateOf(false) }
     var supersetSheetOpen by remember { mutableStateOf(false) }
+    var setActionsFor by remember { mutableStateOf<Long?>(null) }
+    var setTypeFor by remember { mutableStateOf<Long?>(null) }
 
-    fun commit(restSeconds: Int = routineExercise.restSeconds) {
-        onUpdate(
-            sets.toIntOrNull() ?: routineExercise.targetSets,
-            reps.toIntOrNull() ?: routineExercise.targetReps,
-            weight.toDoubleOrNull(),
-            restSeconds
-        )
-    }
-
-    // Come nell'allenamento: nessun tasto di servizio sulla card, le azioni stanno nel foglio
-    // che si apre col tocco lungo.
+    // Stessa card dell'allenamento: nessun tasto di servizio, le azioni stanno nel foglio che si
+    // apre col tocco lungo.
     IslandCard(
-        // Contorno colorato: dice a colpo d'occhio quali esercizi stanno nello stesso giro.
         modifier = Modifier
             .fillMaxWidth()
             .then(
                 if (supersetTint == null) Modifier
-                else Modifier.border(2.dp, supersetTint, TileShape)
+                else Modifier.border(2.dp, supersetTint, IslandShape)
             ),
+        shape = IslandShape,
+        contentPadding = PaddingValues(horizontal = Spacing.lg, vertical = Spacing.xl),
+        verticalArrangement = Arrangement.spacedBy(Spacing.lg),
         onLongClick = { actionsOpen = true }
     ) {
         if (supersetLetter != null) {
             SupersetBadge(letter = supersetLetter)
         }
 
-        Text(exerciseName, style = MaterialTheme.typography.titleMedium)
+        Text(
+            exerciseName,
+            style = MaterialTheme.typography.titleLarge,
+            color = MaterialTheme.colorScheme.primary,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(8.dp))
+                .combinedClickable(
+                    onLongClick = { hapticTap(); actionsOpen = true },
+                    onClick = { hapticTap(); onOpenExercise() }
+                )
+                .padding(vertical = Spacing.xs)
+        )
 
         routineExercise.notes?.takeIf { it.isNotBlank() }?.let { notes ->
             Text(notes, style = MaterialTheme.typography.bodyMedium, color = island.textSecondary)
-        }
-
-        Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
-            IslandNumberField(
-                value = sets,
-                onValueChange = { sets = it; commit() },
-                label = stringResource(R.string.field_sets),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.weight(1f)
-            )
-            IslandNumberField(
-                value = reps,
-                onValueChange = { reps = it; commit() },
-                label = stringResource(if (weightType.usesDuration) R.string.field_seconds else R.string.field_reps),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.weight(1f)
-            )
-            // Nessun carico da pianificare a corpo libero o a tempo: il campo sparisce come
-            // nella tabella dell'allenamento.
-            if (weightType.usesWeight) {
-                IslandNumberField(
-                    value = weight,
-                    onValueChange = { weight = sanitizeWeightInput(weight, it); commit() },
-                    label = stringResource(R.string.field_kg),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    modifier = Modifier.weight(1f)
-                )
-            }
         }
 
         // Il recupero non e' un numero da digitare: si sceglie coi rulli, come una sveglia.
@@ -285,7 +294,6 @@ private fun RoutineExerciseRow(
             modifier = Modifier
                 .clip(PillShape)
                 .background(island.sunken)
-                // Come sulla card: il tocco lungo apre le azioni anche partendo dal chip.
                 .combinedClickable(
                     onLongClick = { hapticTap(); actionsOpen = true },
                     onClick = { hapticTap(); restSheetOpen = true }
@@ -304,6 +312,39 @@ private fun RoutineExerciseRow(
                 color = island.textSecondary
             )
         }
+
+        Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+            // Niente colonna "precedente" e niente spunta: qui si pianifica, non si registra.
+            SetTableHeader(weightType = weightType, showPrevious = false, trailingSlot = false)
+            var workingNumber = 0
+            sets.forEach { set ->
+                if (set.setType.countsAsWorking) workingNumber++
+                RoutineSetRow(
+                    set = set,
+                    number = workingNumber,
+                    weightType = weightType,
+                    onValuesChange = { reps, weight -> onSetValuesChange(set, reps, weight) },
+                    onTypeClick = { setTypeFor = set.id },
+                    onLongClick = { setActionsFor = set.id }
+                )
+            }
+        }
+
+        Text(
+            text = stringResource(R.string.active_add_set),
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.primary,
+            textAlign = TextAlign.Center,
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(PillShape)
+                .background(island.sunken)
+                .combinedClickable(
+                    onLongClick = { hapticTap(); actionsOpen = true },
+                    onClick = { hapticTap(); onAddSet() }
+                )
+                .padding(vertical = Spacing.md)
+        )
     }
 
     if (actionsOpen) {
@@ -321,6 +362,11 @@ private fun RoutineExerciseRow(
                 onClick = { actionsOpen = false; restSheetOpen = true }
             )
             SheetActionRow(
+                icon = Icons.Outlined.Add,
+                label = stringResource(R.string.active_add_set),
+                onClick = { actionsOpen = false; onAddSet() }
+            )
+            SheetActionRow(
                 icon = Icons.Outlined.Repeat,
                 label = stringResource(R.string.superset_action),
                 description = supersetLetter?.let { stringResource(R.string.superset_badge, it) }
@@ -336,10 +382,48 @@ private fun RoutineExerciseRow(
         }
     }
 
+    setTypeFor?.let { setId ->
+        val current = sets.find { it.id == setId }
+        if (current == null) {
+            setTypeFor = null
+        } else {
+            SetTypeSheet(
+                current = current.setType,
+                onSelect = { type -> onSetTypeChange(current, type) },
+                onDismiss = { setTypeFor = null }
+            )
+        }
+    }
+
+    setActionsFor?.let { setId ->
+        val target = sets.find { it.id == setId }
+        // Titolo col numero che la serie porta in tabella: le warmup non hanno numero, quindi
+        // per loro resta il titolo generico.
+        val number = sets.takeWhile { it.id != setId }.count { it.setType.countsAsWorking } + 1
+        IslandBottomSheet(
+            onDismiss = { setActionsFor = null },
+            title = if (target != null && target.setType.countsAsWorking) {
+                stringResource(R.string.active_set_sheet_title, number)
+            } else {
+                stringResource(R.string.active_set_sheet_title_generic)
+            }
+        ) {
+            SheetActionRow(
+                icon = Icons.Outlined.Delete,
+                label = stringResource(R.string.active_delete_set),
+                destructive = true,
+                onClick = {
+                    target?.let(onRemoveSet)
+                    setActionsFor = null
+                }
+            )
+        }
+    }
+
     if (restSheetOpen) {
         RestTimeSheet(
             currentSeconds = routineExercise.restSeconds,
-            onConfirm = { seconds -> commit(restSeconds = seconds) },
+            onConfirm = onRestChange,
             onDismiss = { restSheetOpen = false },
             description = if (supersetLetter != null) {
                 stringResource(R.string.superset_rest_description)
@@ -369,6 +453,73 @@ private fun RoutineExerciseRow(
         )
     }
 }
+
+/**
+ * Riga di una serie pianificata: stessa tabella dell'allenamento senza "precedente" e senza
+ * spunta. Il segno in testa e' il comando che apre la scelta del tipo.
+ */
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun RoutineSetRow(
+    set: RoutineSetEntity,
+    number: Int,
+    weightType: WeightType,
+    onValuesChange: (Int?, Double?) -> Unit,
+    onTypeClick: () -> Unit,
+    onLongClick: () -> Unit
+) {
+    val hapticTap = LocalHapticTap.current
+    // Il testo digitato vive nella UI, non nel modello: passando ogni tasto per Double
+    // "52." diventerebbe "52.0" e il decimale successivo sarebbe impossibile da scrivere.
+    var weightText by remember(set.id) { mutableStateOf(set.targetWeight?.let { formatTargetWeight(it) } ?: "") }
+    var repsText by remember(set.id) { mutableStateOf(set.targetReps?.toString() ?: "") }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(TileShape)
+            .combinedClickable(onLongClick = { hapticTap(); onLongClick() }, onClick = {})
+            .padding(vertical = Spacing.sm, horizontal = Spacing.xs),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
+    ) {
+        SetTypeIndicator(
+            type = set.setType,
+            number = number,
+            isPR = false,
+            onClick = onTypeClick,
+            modifier = Modifier.width(40.dp)
+        )
+
+        if (weightType.usesWeight) {
+            SetValueField(
+                value = weightText,
+                placeholder = null,
+                onValueChange = { typed ->
+                    weightText = sanitizeWeightInput(weightText, typed)
+                    onValuesChange(repsText.toIntOrNull(), weightText.toDoubleOrNull())
+                },
+                keyboardType = KeyboardType.Decimal,
+                modifier = Modifier.weight(1f)
+            )
+        }
+
+        SetValueField(
+            value = repsText,
+            placeholder = null,
+            onValueChange = { typed ->
+                repsText = typed.filter { it.isDigit() }.take(4)
+                onValuesChange(repsText.toIntOrNull(), weightText.toDoubleOrNull())
+            },
+            keyboardType = KeyboardType.Number,
+            modifier = Modifier.weight(1f)
+        )
+    }
+}
+
+/** Target di peso: intero senza decimale inutile, cosi' il campo non nasce con "60.0". */
+private fun formatTargetWeight(value: Double): String =
+    if (value % 1.0 == 0.0) value.toInt().toString() else value.toString()
 
 /** Nota della routine: promemoria sull'esecuzione, ereditata da ogni allenamento che la avvia. */
 @Composable

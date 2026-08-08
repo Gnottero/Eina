@@ -67,7 +67,6 @@ fun LibraryScreen(
     onExerciseClick: (Long) -> Unit = {},
     onCreateExerciseClick: (() -> Unit)? = null,
     onBack: (() -> Unit)? = null,
-    title: String? = null,
     viewModel: LibraryViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -87,7 +86,7 @@ fun LibraryScreen(
     IslandListScreen(
         header = {
             ScreenHeader(
-                title = title ?: stringResource(R.string.library_title),
+                title = stringResource(R.string.library_title),
                 subtitle = pluralStringResource(R.plurals.exercise_count, exercises.size, exercises.size),
                 onBack = onBack,
                 trailing = {
