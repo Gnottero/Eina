@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   Solo la lettera del marchio: l'icona adattiva mette l'arancio nel layer di sfondo, quindi qui
-  la tessera non va disegnata. Il marchio completo (tessera + lettera) vive in ic_eina_logo.xml,
-  che e' quello usato in-app e nell'immagine condivisibile: la lettera va tenuta identica.
-  Il group rimpicciolisce e ricentra la lettera nella zona sicura (66dp su 108) dell'adaptive icon.
+  la tessera non va disegnata. Il marchio completo (tessera + lettera) vive in ic_eina_logo.xml:
+  la lettera va tenuta identica. Il group la rimpicciolisce e ricentra nella zona sicura
+  (66dp su 108) dell'adaptive icon.
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
@@ -11,13 +11,20 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
     <group
-        android:pivotX="55"
+        android:pivotX="54"
         android:pivotY="54"
-        android:scaleX="0.85"
-        android:scaleY="0.85"
-        android:translateX="-1">
+        android:scaleX="0.88"
+        android:scaleY="0.88">
         <path
-            android:fillColor="#FFFFFF"
-            android:pathData="M30,32 A6,6 0 0 1 36,26 L74,26 A6,6 0 0 1 80,32 L80,34 A6,6 0 0 1 74,40 L47,40 A3,3 0 0 0 44,43 L44,44 A3,3 0 0 0 47,47 L62,47 A6,6 0 0 1 68,53 L68,55 A6,6 0 0 1 62,61 L47,61 A3,3 0 0 0 44,64 L44,65 A3,3 0 0 0 47,68 L74,68 A6,6 0 0 1 80,74 L80,76 A6,6 0 0 1 74,82 L36,82 A6,6 0 0 1 30,76 Z" />
+            android:strokeColor="#FFFFFF"
+            android:strokeWidth="12"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round"
+            android:pathData="M72,30 L36,30 L36,78 L72,78" />
+        <path
+            android:strokeColor="#FFFFFF"
+            android:strokeWidth="12"
+            android:strokeLineCap="round"
+            android:pathData="M36,54 L62,54" />
     </group>
 </vector>

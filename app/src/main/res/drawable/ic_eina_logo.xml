@@ -1,20 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Marchio Eina, stile Hevy: tessera squircle arancio piena e una sola lettera bianca compatta,
-  una "E" geometrica con lo stelo attaccato ai bracci (prima erano tre barre staccate).
-  Unica sorgente del logo: l'icona adattiva (ic_launcher_foreground) riusa la stessa lettera
-  e l'immagine condivisibile (ui/share/ShareCard.kt) disegna proprio questo drawable.
+  Marchio Eina: tessera squircle arancio (curve continue con bezier, non archi di cerchio) e una
+  "E" monolinea bianca, tratto unico di spessore costante con estremi tondi.
+  Unica sorgente del logo: l'icona adattiva (ic_launcher_foreground) riusa la stessa lettera,
+  l'immagine condivisibile (ui/share/ShareCard.kt) e la splash (ic_eina_splash_mark) disegnano
+  questa tessera. Se cambia il tratto, va cambiato in tutti e tre.
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- Squircle: curve continue con bezier, non archi di cerchio (il raccordo si vede). -->
     <path
         android:fillColor="#F97348"
         android:pathData="M36,0 L72,0 C96,0 108,12 108,36 L108,72 C108,96 96,108 72,108 L36,108 C12,108 0,96 0,72 L0,36 C0,12 12,0 36,0 Z" />
     <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M30,32 A6,6 0 0 1 36,26 L74,26 A6,6 0 0 1 80,32 L80,34 A6,6 0 0 1 74,40 L47,40 A3,3 0 0 0 44,43 L44,44 A3,3 0 0 0 47,47 L62,47 A6,6 0 0 1 68,53 L68,55 A6,6 0 0 1 62,61 L47,61 A3,3 0 0 0 44,64 L44,65 A3,3 0 0 0 47,68 L74,68 A6,6 0 0 1 80,74 L80,76 A6,6 0 0 1 74,82 L36,82 A6,6 0 0 1 30,76 Z" />
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="12"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M72,30 L36,30 L36,78 L72,78" />
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="12"
+        android:strokeLineCap="round"
+        android:pathData="M36,54 L62,54" />
 </vector>

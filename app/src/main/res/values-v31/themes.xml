@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Da Android 12 il windowBackground non si vede piu' all'avvio: il sistema disegna la sua
+  splash, fondo pieno + icona al centro. Qui la si porta sul bianco e sulla tessera del marchio,
+  cosi' combacia con quella di values/themes.xml (usata sotto Android 12) e con SplashOverlay.
+-->
+<resources>
+    <style name="Theme.Eina" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@drawable/splash_screen</item>
+        <item name="android:windowSplashScreenBackground">@android:color/white</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_eina_splash_icon</item>
+    </style>
+</resources>

@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Blocco della splash: tessera del marchio e sotto il nome "EINA".
+  Il nome e' disegnato a tratti (stesso stile monolinea della lettera nel logo) e non come testo:
+  serve al windowBackground (@drawable/splash_screen), che il sistema disegna prima che esista
+  una Compose e quindi non puo' usare un font. La stessa immagine la ridisegna SplashOverlay,
+  cosi' fra il primo fotogramma di sistema e la composizione non si vede nessun salto.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="200dp"
+    android:height="164dp"
+    android:viewportWidth="200"
+    android:viewportHeight="164">
+
+    <!-- Tessera del marchio, identica a ic_eina_logo.xml, centrata in orizzontale. -->
+    <group android:translateX="46">
+        <path
+            android:fillColor="#F97348"
+            android:pathData="M36,0 L72,0 C96,0 108,12 108,36 L108,72 C108,96 96,108 72,108 L36,108 C12,108 0,96 0,72 L0,36 C0,12 12,0 36,0 Z" />
+        <path
+            android:strokeColor="#FFFFFF"
+            android:strokeWidth="12"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round"
+            android:pathData="M72,30 L36,30 L36,78 L72,78" />
+        <path
+            android:strokeColor="#FFFFFF"
+            android:strokeWidth="12"
+            android:strokeLineCap="round"
+            android:pathData="M36,54 L62,54" />
+    </group>
+
+    <!-- EINA: quattro lettere a tratto, altezza 30, spessore 7, spaziate larghe. -->
+    <group>
+        <path
+            android:strokeColor="#2A1B14"
+            android:strokeWidth="7"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round"
+            android:pathData="M62,130 L36,130 L36,160 L62,160" />
+        <path
+            android:strokeColor="#2A1B14"
+            android:strokeWidth="7"
+            android:strokeLineCap="round"
+            android:pathData="M36,145 L56,145" />
+        <path
+            android:strokeColor="#2A1B14"
+            android:strokeWidth="7"
+            android:strokeLineCap="round"
+            android:pathData="M78,130 L78,160" />
+        <path
+            android:strokeColor="#2A1B14"
+            android:strokeWidth="7"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round"
+            android:pathData="M94,160 L94,130 L120,160 L120,130" />
+        <path
+            android:strokeColor="#2A1B14"
+            android:strokeWidth="7"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round"
+            android:pathData="M136,160 L150,130 L164,160" />
+        <path
+            android:strokeColor="#2A1B14"
+            android:strokeWidth="7"
+            android:strokeLineCap="round"
+            android:pathData="M141,150 L159,150" />
+    </group>
+</vector>

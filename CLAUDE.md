@@ -441,6 +441,19 @@ perche' la sorgente ha 256 colori: `assets/media` da 22,6 a 45,2 MB, APK di rele
 a 47,6 MB. `mediaUri` non cambia (stessi `anim.webp`), quindi CATALOG_VERSION resta 5. Titolo
 della Dashboard "Dashboard" in tutte e tre le lingue (era Oggi / Today / Aujourd'hui).
 
+**Fase 22 — Logo monolinea e splash** *(fatta)*
+DoD: marchio rifatto in stile Hevy — tessera squircle arancio a curve continue (bezier, non
+archi) con una "E" monolinea bianca a tratto tondo, al posto delle tre barre staccate; resta in
+`res/drawable/ic_eina_logo.xml`, riusato da `EinaLogo`, da `ShareCard` e — solo la lettera,
+riscalata nella zona sicura — da `ic_launcher_foreground.xml`. Splash con marchio e nome "EINA"
+visibili dal primo fotogramma: `res/drawable/ic_eina_splash_mark.xml` (tessera + nome disegnato a
+tratti, perche' il windowBackground non puo' usare un font) montato in `splash_screen.xml` come
+`android:windowBackground` sotto Android 12, e da Android 12 in su
+`windowSplashScreenBackground` bianco + `windowSplashScreenAnimatedIcon` con la sola tessera
+(`values-v31/themes.xml`), dato che la splash di sistema disegna solo l'icona. Appena Compose e'
+pronta `SplashOverlay` ridisegna lo stesso vettoriale con la tessera nel centro esatto dello
+schermo (scarto di 28dp) e sfuma dopo 600 ms, cosi' fra sistema e app la tessera non si muove.
+
 **Fase 9 — Rifinitura** *(fatta)*
 DoD: R8 + shrinkResources attivi sulla release (20,5 MB → 2,2 MB), regole in
 `app/proguard-rules.pro`; release firmata con la chiave di debug finché non esiste un

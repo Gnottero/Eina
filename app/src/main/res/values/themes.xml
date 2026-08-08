@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!--
-      windowBackground bianco: e' il primo fotogramma che il sistema disegna prima della
-      composizione, e deve coincidere col fondo della splash (ui/splash/SplashScreen.kt),
-      altrimenti all'avvio si vede un lampo grigio.
+      windowBackground = splash: il sistema lo disegna prima della composizione, cosi' marchio e
+      nome ci sono da subito. SplashOverlay (ui/splash/SplashScreen.kt) ridisegna la stessa
+      immagine nella stessa posizione, quindi il passaggio a Compose non si vede.
     -->
     <style name="Theme.Eina" parent="android:Theme.Material.Light.NoActionBar">
-        <item name="android:windowBackground">@android:color/white</item>
+        <item name="android:windowBackground">@drawable/splash_screen</item>
     </style>
 </resources>
