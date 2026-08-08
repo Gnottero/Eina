@@ -82,7 +82,6 @@ import com.eina.app.ui.share.saveImageToGallery
 import com.eina.app.ui.share.saveShareImage
 import com.eina.app.ui.share.shareCardDataOf
 import com.eina.app.ui.share.shareImage
-import com.eina.app.ui.share.shareToInstagramStory
 import com.eina.app.ui.theme.EinaTheme
 import com.eina.app.ui.theme.IslandShape
 import com.eina.app.ui.theme.Spacing
@@ -238,8 +237,10 @@ private fun StreakCard(weeks: Int) {
 @Composable
 private fun ExerciseSummaryCard(position: Int, exercise: SessionExerciseDetail) {
     val island = EinaTheme.island
-    val working = exercise.workingSets
-    val volume = totalVolume(exercise.sets)
+    // workingSets e totalVolume riscorrono la lista a ogni chiamata: le serie di un allenamento
+    // gia' registrato non cambiano piu', quindi si calcolano una volta sola.
+    val working = remember(exercise) { exercise.workingSets }
+    val volume = remember(exercise) { totalVolume(exercise.sets) }
 
     IslandCard(
         modifier = Modifier.fillMaxWidth(),

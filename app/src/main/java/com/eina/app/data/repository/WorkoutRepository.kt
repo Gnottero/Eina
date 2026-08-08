@@ -33,10 +33,6 @@ class WorkoutRepository(
 
     suspend fun insertExercise(exercise: ExerciseEntity): Long = exerciseDao.insert(exercise)
 
-    suspend fun updateExercise(exercise: ExerciseEntity) = exerciseDao.update(exercise)
-
-    suspend fun deleteExercise(exercise: ExerciseEntity) = exerciseDao.delete(exercise)
-
     /**
      * Elimina un esercizio custom, se non lo usa nessuno. Ritorna false quando compare in una
      * routine o in un allenamento gia' registrato: li' il nome serve ancora.

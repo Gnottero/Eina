@@ -9,8 +9,10 @@ import com.eina.app.domain.epochMillisToLocalDate
 import com.eina.app.domain.summarizeSessions
 import com.eina.app.domain.trainingDays
 import com.eina.app.domain.volumeByDay
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import java.time.LocalDate
@@ -47,5 +49,8 @@ class DashboardViewModel(repository: StatsRepository) : ViewModel() {
                 recentSessions = sessions.take(5)
             )
         }
+        // Il riepilogo si ricalcola su tutto lo storico a ogni emissione: fuori dal thread
+        // della UI, altrimenti con molte sessioni l'aggiornamento si sente.
+        .flowOn(Dispatchers.Default)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DashboardUiState())
 }

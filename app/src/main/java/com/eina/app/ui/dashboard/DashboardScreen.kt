@@ -34,8 +34,6 @@ import com.eina.app.ui.components.weekDayInitials
 import com.eina.app.ui.theme.EinaTheme
 import com.eina.app.ui.theme.Spacing
 import java.time.LocalDate
-import java.time.format.DateTimeFormatter
-import java.util.Locale
 import org.koin.androidx.compose.koinViewModel
 
 

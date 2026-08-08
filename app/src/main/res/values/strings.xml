@@ -19,14 +19,12 @@
     <string name="action_save">Save</string>
     <string name="action_done">Done</string>
     <string name="action_continue">Continue</string>
-    <string name="action_share">Share</string>
     <string name="action_more">More</string>
     <string name="action_add_exercise">Add exercise</string>
     <string name="action_remove_exercise">Remove exercise</string>
     <string name="loading">Loading…</string>
-    <string name="unit_kg">kg</string>
+    <string name="unit_kg" translatable="false">kg</string>
     <string name="unit_reps_value">%1$d reps</string>
-    <string name="unit_kg_reps">%1$s kg × %2$d</string>
 
     <!-- Etichette metriche condivise -->
     <string name="stat_duration">Duration</string>
@@ -122,8 +120,6 @@
     <string name="rest_description_routine">Rest suggested between sets of this exercise.</string>
     <string name="playlist_service">Service</string>
     <string name="playlist_none">No playlist</string>
-    <string name="playlist_spotify" translatable="false">Spotify</string>
-    <string name="playlist_youtube_music" translatable="false">YouTube Music</string>
 
     <!-- Allenamento in corso -->
     <string name="active_title">Workout in progress</string>
@@ -196,7 +192,6 @@
     </plurals>
     <string name="badge_warmup">Warm-up</string>
     <string name="badge_pr" translatable="false">PR</string>
-    <string name="session_preview">Preview</string>
     <string name="session_preview_cd">Workout summary</string>
     <string name="share_chooser_title">Share workout</string>
 
@@ -302,7 +297,6 @@
     <string name="bodyweight_subtitle_none">No measurement recorded</string>
     <string name="bodyweight_new">New measurement</string>
     <string name="bodyweight_trend">Trend</string>
-    <string name="bodyweight_delta">%1$s kg since last measurement</string>
     <string name="bodyweight_first">First measurement recorded</string>
     <string name="bodyweight_history">Measurement history</string>
     <string name="bodyweight_empty_title">No measurements</string>
@@ -354,8 +348,6 @@
     <string name="share_transparent_toggle">Transparent background</string>
     <string name="share_transparent_hint">1. Save the overlay. 2. Open Instagram Stories and pick your background photo. 3. Add the saved image as a sticker, or paste it if you copied it.</string>
     <string name="share_save_and_open">Save and open Instagram</string>
-    <string name="share_save_to_gallery">Save to gallery</string>
-    <string name="share_copy">Copy</string>
     <string name="share_saved">Saved to Pictures/Eina</string>
     <string name="share_save_failed">Could not save the image</string>
     <string name="share_copied">Image copied to the clipboard</string>

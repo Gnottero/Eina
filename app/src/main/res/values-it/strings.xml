@@ -13,7 +13,6 @@
     <string name="action_save">Salva</string>
     <string name="action_done">Fatto</string>
     <string name="action_continue">Continua</string>
-    <string name="action_share">Condividi</string>
     <string name="action_more">Altro</string>
     <string name="action_add_exercise">Aggiungi esercizio</string>
     <string name="action_remove_exercise">Rimuovi esercizio</string>
@@ -183,7 +182,6 @@
         <item quantity="other">%d settimane di fila</item>
     </plurals>
     <string name="badge_warmup">Risc.</string>
-    <string name="session_preview">Anteprima</string>
     <string name="session_preview_cd">Riepilogo allenamento</string>
     <string name="share_chooser_title">Condividi allenamento</string>
 
@@ -289,7 +287,6 @@
     <string name="bodyweight_subtitle_none">Nessuna misura registrata</string>
     <string name="bodyweight_new">Nuova misura</string>
     <string name="bodyweight_trend">Andamento</string>
-    <string name="bodyweight_delta">%1$s kg dall\'ultima misura</string>
     <string name="bodyweight_first">Prima misura registrata</string>
     <string name="bodyweight_history">Storico misure</string>
     <string name="bodyweight_empty_title">Nessuna misura</string>
@@ -337,8 +334,6 @@
     <string name="share_transparent_toggle">Sfondo trasparente</string>
     <string name="share_transparent_hint">1. Salva l\'overlay. 2. Apri le storie di Instagram e scegli la tua foto di sfondo. 3. Aggiungi l\'immagine salvata come adesivo, o incollala se l\'hai copiata.</string>
     <string name="share_save_and_open">Salva e apri Instagram</string>
-    <string name="share_save_to_gallery">Salva in galleria</string>
-    <string name="share_copy">Copia</string>
     <string name="share_saved">Salvata in Immagini/Eina</string>
     <string name="share_save_failed">Non sono riuscito a salvare l\'immagine</string>
     <string name="share_copied">Immagine copiata negli appunti</string>

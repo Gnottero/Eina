@@ -13,7 +13,6 @@
     <string name="action_save">Enregistrer</string>
     <string name="action_done">Terminé</string>
     <string name="action_continue">Continuer</string>
-    <string name="action_share">Partager</string>
     <string name="action_more">Autre</string>
     <string name="action_add_exercise">Ajouter un exercice</string>
     <string name="action_remove_exercise">Retirer l\'exercice</string>
@@ -183,7 +182,6 @@
         <item quantity="other">%d semaines d\'affilée</item>
     </plurals>
     <string name="badge_warmup">Éch.</string>
-    <string name="session_preview">Aperçu</string>
     <string name="session_preview_cd">Résumé de la séance</string>
     <string name="share_chooser_title">Partager la séance</string>
 
@@ -289,7 +287,6 @@
     <string name="bodyweight_subtitle_none">Aucune mesure enregistrée</string>
     <string name="bodyweight_new">Nouvelle mesure</string>
     <string name="bodyweight_trend">Évolution</string>
-    <string name="bodyweight_delta">%1$s kg depuis la dernière mesure</string>
     <string name="bodyweight_first">Première mesure enregistrée</string>
     <string name="bodyweight_history">Historique des mesures</string>
     <string name="bodyweight_empty_title">Aucune mesure</string>
@@ -337,8 +334,6 @@
     <string name="share_transparent_toggle">Fond transparent</string>
     <string name="share_transparent_hint">1. Enregistre l\'overlay. 2. Ouvre les stories Instagram et choisis ta photo de fond. 3. Ajoute l\'image enregistrée comme sticker, ou colle-la si tu l\'as copiée.</string>
     <string name="share_save_and_open">Enregistrer et ouvrir Instagram</string>
-    <string name="share_save_to_gallery">Enregistrer dans la galerie</string>
-    <string name="share_copy">Copier</string>
     <string name="share_saved">Enregistrée dans Images/Eina</string>
     <string name="share_save_failed">Impossible d\'enregistrer l\'image</string>
     <string name="share_copied">Image copiée dans le presse-papiers</string>

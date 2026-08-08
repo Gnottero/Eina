@@ -10,9 +10,11 @@ import com.eina.app.domain.SessionSummary
 import com.eina.app.domain.currentStreak
 import com.eina.app.domain.summarizeSessions
 import com.eina.app.domain.trainingDays
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -23,6 +25,8 @@ class HistoryViewModel(
 ) : ViewModel() {
     val sessions: StateFlow<List<SessionSummary>> = repository.observeCompletedSets()
         .map { summarizeSessions(it) }
+        // Riepilogare tutto lo storico non e' lavoro da thread della UI.
+        .flowOn(Dispatchers.Default)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     /**
@@ -77,5 +81,6 @@ class SessionDetailViewModel(
                 },
             streakWeeks = currentStreak(trainingDays(allRows))
         )
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SessionDetailUiState())
+    }.flowOn(Dispatchers.Default)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SessionDetailUiState())
 }

@@ -20,7 +20,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
 import com.eina.app.ui.theme.Spacing
 
 /** Spazio da lasciare in fondo al contenuto perche' la nav flottante non copra l'ultima isola. */

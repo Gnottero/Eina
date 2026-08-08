@@ -122,12 +122,4 @@ class RoutineRepository(
         }
         return routineId
     }
-
-    suspend fun reorderRoutineExercises(ordered: List<RoutineExerciseEntity>) {
-        ordered.forEachIndexed { index, routineExercise ->
-            if (routineExercise.order != index) {
-                routineExerciseDao.update(routineExercise.copy(order = index))
-            }
-        }
-    }
 }

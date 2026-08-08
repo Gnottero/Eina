@@ -17,6 +17,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
@@ -222,6 +223,9 @@ private fun WheelColumn(
     val initialIndex = remember { values.indexOf(selected).coerceAtLeast(0) }
     val listState = rememberLazyListState(initialFirstVisibleItemIndex = initialIndex)
     val edgeItems = VISIBLE_ITEMS / 2
+    // Letto direttamente, firstVisibleItemIndex ricomporrebbe ogni riga a ogni fotogramma di
+    // scorrimento: cosi' invece le righe si ricompongono solo quando il valore incorniciato cambia.
+    val selectedIndex by remember { derivedStateOf { listState.firstVisibleItemIndex } }
 
     LaunchedEffect(listState, values) {
         snapshotFlow { listState.firstVisibleItemIndex }
@@ -242,7 +246,7 @@ private fun WheelColumn(
         modifier = modifier.height(ITEM_HEIGHT * VISIBLE_ITEMS)
     ) {
         itemsIndexed(values) { index, value ->
-            val isSelected = index == listState.firstVisibleItemIndex
+            val isSelected = index == selectedIndex
             Box(
                 modifier = Modifier
                     .fillMaxWidth()

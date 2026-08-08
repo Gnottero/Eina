@@ -9,10 +9,12 @@ import com.eina.app.domain.personalRecords
 import com.eina.app.domain.setsByDay
 import com.eina.app.domain.trainingDays
 import com.eina.app.domain.volumeByDay
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 import java.time.LocalDate
 
@@ -59,7 +61,8 @@ class ProgressViewModel(repository: StatsRepository) : ViewModel() {
             totalVolumeKg = volumePerDay.values.sum(),
             totalSessions = rows.map { it.sessionId }.distinct().size
         )
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ProgressUiState())
+    }.flowOn(Dispatchers.Default)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ProgressUiState())
 
     fun selectDay(index: Int) {
         selectedDayIndex.value = index
