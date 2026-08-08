@@ -100,13 +100,20 @@ class WorkoutRepository(
     /**
      * Chiude la sessione. `startTime` ed `endTime` arrivano dalla conferma di fine allenamento,
      * dove sono correggibili: un allenamento fatto ieri va nello storico di ieri.
+     *
+     * Una sessione senza nemmeno un esercizio non ha niente da raccontare: invece di salvarla
+     * viene eliminata, come se fosse stata annullata. Ritorna `false` in quel caso.
      */
     suspend fun finishSession(
         sessionId: Long,
         startTime: Long? = null,
         endTime: Long? = null
-    ) {
-        val session = workoutSessionDao.getById(sessionId) ?: return
+    ): Boolean {
+        val session = workoutSessionDao.getById(sessionId) ?: return false
+        if (workoutExerciseDao.getForSessionOnce(sessionId).isEmpty()) {
+            workoutSessionDao.deleteById(sessionId)
+            return false
+        }
         val start = startTime ?: session.startTime
         workoutSessionDao.update(
             session.copy(
@@ -114,6 +121,7 @@ class WorkoutRepository(
                 endTime = endTime ?: System.currentTimeMillis()
             )
         )
+        return true
     }
 
     /**

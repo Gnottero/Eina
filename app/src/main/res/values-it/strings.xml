@@ -126,6 +126,7 @@
     <string name="active_cancel">Annulla allenamento</string>
     <string name="active_finish_confirm_title">Terminare l\'allenamento?</string>
     <string name="active_finish_confirm_text">La sessione verrà chiusa e salvata nello storico.</string>
+    <string name="active_finish_confirm_text_empty">La sessione non ha esercizi: verrà eliminata invece che salvata nello storico.</string>
     <string name="active_finish_confirm_action">Termina</string>
     <string name="active_cancel_confirm_title">Annullare l\'allenamento?</string>
     <string name="active_cancel_confirm_text">La sessione e le serie registrate finora verranno eliminate. Non finirà nello storico.</string>

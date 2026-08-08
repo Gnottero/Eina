@@ -423,6 +423,16 @@ giorni tondi, oggi a contorno, selezione a pastiglia arancio, settimana che part
 giorno della lingua attiva) aperto dentro lo stesso foglio invece del `DatePicker` Material in
 un dialog. APK di release da 8,2 a 12,0 MB.
 
+**Fase 20 — Animazioni nitide e sessioni vuote** *(fatta)*
+DoD: animazioni degli esercizi riconvertite alla risoluzione nativa della sorgente (360px, era
+288px con upscaling a schermo) e a qualita' 85 invece di 60 — `tools/fetch_exercise_gifs.py`
+usa `scale='min(iw,360)'` cosi' non ingrandisce mai la sorgente; `assets/media` da 11 a 22,6 MB,
+APK di release da 12,0 a 25,0 MB, avvio a freddo invariato (500-650 ms); un allenamento
+terminato senza nemmeno un esercizio non finisce nello storico ma viene eliminato
+(`WorkoutRepository.finishSession` ritorna `false` e la navigazione si comporta come
+"Annulla"), e il foglio di conferma lo dice e nasconde data e durata, che non verrebbero
+salvate da nessuna parte.
+
 **Fase 9 — Rifinitura** *(fatta)*
 DoD: R8 + shrinkResources attivi sulla release (20,5 MB → 2,2 MB), regole in
 `app/proguard-rules.pro`; release firmata con la chiave di debug finché non esiste un

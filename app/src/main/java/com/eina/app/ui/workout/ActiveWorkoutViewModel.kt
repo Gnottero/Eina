@@ -372,17 +372,20 @@ class ActiveWorkoutViewModel(
      * Chiude la sessione con la data e la durata confermate a fine allenamento: la fine si
      * ricalcola dall'inizio scelto, cosi' storico e statistiche vedono l'allenamento nel giorno
      * in cui e' stato fatto davvero.
+     *
+     * `onFinished` riceve `false` quando la sessione era senza esercizi: in quel caso e' stata
+     * eliminata e non c'e' nessun riepilogo da aprire.
      */
-    fun finishWorkout(startTime: Long, durationSeconds: Int, onFinished: () -> Unit) {
+    fun finishWorkout(startTime: Long, durationSeconds: Int, onFinished: (saved: Boolean) -> Unit) {
         viewModelScope.launch {
             skipTimer()
-            repository.finishSession(
+            val saved = repository.finishSession(
                 sessionId = sessionId,
                 startTime = startTime,
                 endTime = startTime + durationSeconds.coerceAtLeast(0) * 1000L
             )
             _uiState.update { it.copy(isFinished = true) }
-            onFinished()
+            onFinished(saved)
         }
     }
 

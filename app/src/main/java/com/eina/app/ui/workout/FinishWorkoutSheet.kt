@@ -41,12 +41,16 @@ import java.util.Date
  *
  * La data sposta solo il giorno: l'ora di inizio resta quella registrata, e la fine si ricalcola
  * dalla durata scelta.
+ *
+ * Se la sessione e' senza esercizi non finisce nello storico ma viene eliminata: il foglio lo
+ * dice e nasconde data e durata, che non verrebbero salvate da nessuna parte.
  */
 @OptIn(ExperimentalLayoutApi::class, ExperimentalFoundationApi::class)
 @Composable
 fun FinishWorkoutSheet(
     startTime: Long,
     elapsedSeconds: Int,
+    isEmpty: Boolean,
     onConfirm: (startTime: Long, durationSeconds: Int) -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -66,58 +70,63 @@ fun FinishWorkoutSheet(
         scrollable = true
     ) {
         Text(
-            text = stringResource(R.string.active_finish_confirm_text),
+            text = stringResource(
+                if (isEmpty) R.string.active_finish_confirm_text_empty
+                else R.string.active_finish_confirm_text
+            ),
             style = MaterialTheme.typography.bodyMedium,
             color = island.textSecondary
         )
 
-        SectionHeader(title = stringResource(R.string.finish_date))
-        IslandCard(modifier = Modifier.fillMaxWidth()) {
-            Text(dateFormat.format(Date(start)), style = MaterialTheme.typography.titleMedium)
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
-                verticalArrangement = Arrangement.spacedBy(Spacing.sm),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                IslandChip(
-                    text = stringResource(R.string.finish_date_today),
-                    selected = daysBetween(start, System.currentTimeMillis()) == 0,
-                    onClick = { start = shiftToDaysAgo(start, 0) }
-                )
-                IslandChip(
-                    text = stringResource(R.string.finish_date_yesterday),
-                    selected = daysBetween(start, System.currentTimeMillis()) == 1,
-                    onClick = { start = shiftToDaysAgo(start, 1) }
-                )
-                IslandChip(
-                    text = stringResource(R.string.finish_date_pick),
-                    selected = datePickerOpen,
-                    onClick = { datePickerOpen = !datePickerOpen }
-                )
-            }
-            // Calendario nello stesso foglio e non in un secondo foglio sopra: due ModalBottomSheet
-            // sovrapposti si rubano il gesto di chiusura.
-            if (datePickerOpen) {
-                IslandCalendar(
-                    selected = Instant.ofEpochMilli(start).atZone(zone).toLocalDate(),
-                    onSelect = { picked ->
-                        // Mezzogiorno e non mezzanotte: withDateOf rimette comunque l'ora vera,
-                        // e cosi' uno scarto di fuso non fa scivolare il giorno.
-                        val millis = picked.atTime(12, 0).atZone(zone).toInstant().toEpochMilli()
-                        start = withDateOf(millis, start)
-                    },
-                    locale = locale,
+        if (!isEmpty) {
+            SectionHeader(title = stringResource(R.string.finish_date))
+            IslandCard(modifier = Modifier.fillMaxWidth()) {
+                Text(dateFormat.format(Date(start)), style = MaterialTheme.typography.titleMedium)
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
+                    verticalArrangement = Arrangement.spacedBy(Spacing.sm),
                     modifier = Modifier.fillMaxWidth()
-                )
+                ) {
+                    IslandChip(
+                        text = stringResource(R.string.finish_date_today),
+                        selected = daysBetween(start, System.currentTimeMillis()) == 0,
+                        onClick = { start = shiftToDaysAgo(start, 0) }
+                    )
+                    IslandChip(
+                        text = stringResource(R.string.finish_date_yesterday),
+                        selected = daysBetween(start, System.currentTimeMillis()) == 1,
+                        onClick = { start = shiftToDaysAgo(start, 1) }
+                    )
+                    IslandChip(
+                        text = stringResource(R.string.finish_date_pick),
+                        selected = datePickerOpen,
+                        onClick = { datePickerOpen = !datePickerOpen }
+                    )
+                }
+                // Calendario nello stesso foglio e non in un secondo foglio sopra: due
+                // ModalBottomSheet sovrapposti si rubano il gesto di chiusura.
+                if (datePickerOpen) {
+                    IslandCalendar(
+                        selected = Instant.ofEpochMilli(start).atZone(zone).toLocalDate(),
+                        onSelect = { picked ->
+                            // Mezzogiorno e non mezzanotte: withDateOf rimette comunque l'ora vera,
+                            // e cosi' uno scarto di fuso non fa scivolare il giorno.
+                            val millis = picked.atTime(12, 0).atZone(zone).toInstant().toEpochMilli()
+                            start = withDateOf(millis, start)
+                        },
+                        locale = locale,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
             }
-        }
 
-        SectionHeader(title = stringResource(R.string.finish_duration))
-        HourMinuteWheelPicker(
-            seconds = duration,
-            onSecondsChange = { duration = it },
-            modifier = Modifier.padding(vertical = Spacing.sm)
-        )
+            SectionHeader(title = stringResource(R.string.finish_duration))
+            HourMinuteWheelPicker(
+                seconds = duration,
+                onSecondsChange = { duration = it },
+                modifier = Modifier.padding(vertical = Spacing.sm)
+            )
+        }
 
         IslandButton(
             text = stringResource(R.string.active_finish_confirm_action),

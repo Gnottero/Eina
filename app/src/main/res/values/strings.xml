@@ -136,6 +136,7 @@
     <string name="active_cancel">Cancel workout</string>
     <string name="active_finish_confirm_title">Finish the workout?</string>
     <string name="active_finish_confirm_text">The session will be closed and saved to your history.</string>
+    <string name="active_finish_confirm_text_empty">This session has no exercises, so it will be discarded instead of saved to your history.</string>
     <string name="active_finish_confirm_action">Finish</string>
     <string name="active_cancel_confirm_title">Cancel the workout?</string>
     <string name="active_cancel_confirm_text">The session and every set logged so far will be deleted. It won\'t reach your history.</string>

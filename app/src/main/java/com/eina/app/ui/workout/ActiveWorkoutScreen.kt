@@ -294,8 +294,13 @@ fun ActiveWorkoutScreen(
         FinishWorkoutSheet(
             startTime = state.startTime,
             elapsedSeconds = state.elapsedSeconds,
+            isEmpty = state.exercises.isEmpty(),
             onConfirm = { startTime, duration ->
-                viewModel.finishWorkout(startTime, duration, onFinished)
+                // Senza esercizi la sessione viene eliminata invece che salvata: si esce come da
+                // "Annulla", perche' non c'e' nessun riepilogo da mostrare.
+                viewModel.finishWorkout(startTime, duration) { saved ->
+                    if (saved) onFinished() else onCancelled()
+                }
             },
             onDismiss = { confirmFinish = false }
         )

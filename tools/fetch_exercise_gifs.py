@@ -10,8 +10,12 @@ Per ogni esercizio mappato scrive app/src/main/assets/media/<cartella>/anim.webp
 i due fotogrammi fotografici (0.webp / 1.webp) di free-exercise-db, che l'animazione
 sostituisce. Gli esercizi senza mappatura (valore null) restano com'erano.
 
+Le GIF di partenza sono 360x360: la conversione tiene quella risoluzione (non si ingrandisce,
+non ci sarebbe dettaglio in piu') e una qualita' alta, altrimenti la figura arriva sgranata
+sullo schermo, dove il riquadro e' largo quanto la card.
+
 Uso:
-    python3 tools/fetch_exercise_gifs.py [--width 288] [--quality 60] [--force]
+    python3 tools/fetch_exercise_gifs.py [--width 360] [--quality 85] [--force]
 
 Serve ffmpeg con libwebp. Rilancialo solo se cambia il catalogo o la mappatura (salta i
 file gia' presenti); poi alza CATALOG_VERSION in ExerciseSeeder.
@@ -43,7 +47,8 @@ def convert(gif_bytes, dest, width, quality):
             [
                 "ffmpeg", "-v", "error", "-y",
                 "-i", source.name,
-                "-vf", f"scale={width}:-1:flags=lanczos",
+                # min(iw,width): la sorgente non si ingrandisce mai, si sfocherebbe e basta.
+                "-vf", f"scale='min(iw,{width})':-1:flags=lanczos",
                 "-loop", "0",
                 "-c:v", "libwebp_anim",
                 "-lossless", "0",
@@ -57,8 +62,8 @@ def convert(gif_bytes, dest, width, quality):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--width", type=int, default=288)
-    parser.add_argument("--quality", type=int, default=60)
+    parser.add_argument("--width", type=int, default=360)
+    parser.add_argument("--quality", type=int, default=85)
     parser.add_argument("--force", action="store_true", help="riconverte anche cio' che c'e' gia'")
     args = parser.parse_args()
 

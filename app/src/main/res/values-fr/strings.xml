@@ -126,6 +126,7 @@
     <string name="active_cancel">Annuler la séance</string>
     <string name="active_finish_confirm_title">Terminer la séance ?</string>
     <string name="active_finish_confirm_text">La séance sera clôturée et enregistrée dans l\'historique.</string>
+    <string name="active_finish_confirm_text_empty">La séance n\'a aucun exercice : elle sera supprimée au lieu d\'être enregistrée dans l\'historique.</string>
     <string name="active_finish_confirm_action">Terminer</string>
     <string name="active_cancel_confirm_title">Annuler la séance ?</string>
     <string name="active_cancel_confirm_text">La séance et toutes les séries enregistrées jusqu\'ici seront supprimées. Elle n\'ira pas dans l\'historique.</string>
