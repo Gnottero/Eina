@@ -161,6 +161,17 @@
     <string name="set_type_drop">Drop set</string>
     <string name="set_type_drop_description">Charge baissée, répétitions poursuivies sans repos.</string>
 
+    <!-- Superset -->
+    <string name="superset_title">Superset</string>
+    <string name="superset_badge">Superset %1$s</string>
+    <string name="superset_description">%1$s s\'enchaîne avec les autres exercices du superset. La récupération ne démarre qu\'une fois le tour fini.</string>
+    <string name="superset_new">Nouveau superset</string>
+    <string name="superset_new_description">Ouvre un tour avec cet exercice. Ajoutes-en un autre.</string>
+    <string name="superset_leave">Hors du superset</string>
+    <string name="superset_action">Superset</string>
+    <string name="superset_action_none">Hors de tout superset</string>
+    <string name="superset_rest_description">Vaut pour tous les exercices du superset.</string>
+
     <!-- Minuteur de repos -->
     <string name="timer_rest">Repos</string>
     <string name="timer_skip">Passer le repos</string>

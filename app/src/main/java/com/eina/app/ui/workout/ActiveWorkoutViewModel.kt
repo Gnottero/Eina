@@ -12,6 +12,7 @@ import com.eina.app.data.db.countsAsWorking
 import com.eina.app.data.db.exerciseName
 import com.eina.app.data.db.usesWeight
 import com.eina.app.data.repository.WorkoutRepository
+import com.eina.app.domain.Superset
 import com.eina.app.domain.volumeForSet
 import com.eina.app.ui.components.MAX_WEIGHT_KG
 import com.eina.app.ui.feedback.WorkoutFeedback
@@ -99,6 +100,7 @@ class ActiveWorkoutViewModel(
             bodyweightFactor = exercise.bodyweightFactor,
             order = workoutExercise.order,
             notes = workoutExercise.notes,
+            supersetGroup = workoutExercise.supersetGroup,
             restSeconds = sets.firstOrNull()?.restSecondsPlanned
                 ?: routineTargets[exercise.id]?.restSeconds
                 ?: DEFAULT_REST_SECONDS,
@@ -197,7 +199,10 @@ class ActiveWorkoutViewModel(
     fun removeExercise(workoutExerciseId: Long) {
         viewModelScope.launch {
             repository.removeExercise(workoutExerciseId)
-            val remaining = _uiState.value.exercises.filterNot { it.workoutExerciseId == workoutExerciseId }
+            // Tolto un compagno, un superset rimasto da solo non e' piu' un superset.
+            val remaining = dissolveOrphanSupersets(
+                _uiState.value.exercises.filterNot { it.workoutExerciseId == workoutExerciseId }
+            )
             _uiState.update { it.copy(exercises = remaining) }
             persistExerciseOrder(remaining)
             recomputeVolume()
@@ -207,10 +212,15 @@ class ActiveWorkoutViewModel(
     fun moveExercise(workoutExerciseId: Long, delta: Int) {
         viewModelScope.launch {
             val current = _uiState.value.exercises
-            val index = current.indexOfFirst { it.workoutExerciseId == workoutExerciseId }
-            val targetIndex = index + delta
-            if (index < 0 || targetIndex !in current.indices) return@launch
-            val reordered = current.toMutableList().apply { add(targetIndex, removeAt(index)) }
+            // Un superset si sposta tutto insieme: vedi Superset.moveBlock.
+            val moved = Superset.moveBlock(
+                current.map { Superset.Member(it.workoutExerciseId, it.supersetGroup) },
+                workoutExerciseId,
+                delta
+            )
+            val byId = current.associateBy { it.workoutExerciseId }
+            val reordered = moved.mapNotNull { byId[it.id] }
+            if (reordered.map { it.workoutExerciseId } == current.map { it.workoutExerciseId }) return@launch
             _uiState.update { it.copy(exercises = reordered) }
             persistExerciseOrder(reordered)
         }
@@ -224,7 +234,8 @@ class ActiveWorkoutViewModel(
                 sessionId = sessionId,
                 exerciseId = ex.exerciseId,
                 order = index,
-                notes = ex.notes
+                notes = ex.notes,
+                supersetGroup = ex.supersetGroup
             )
         }
         repository.reorderExercises(entities)
@@ -261,14 +272,19 @@ class ActiveWorkoutViewModel(
         }
     }
 
-    /** Il recupero si imposta per esercizio e si propaga a tutte le sue serie non ancora svolte. */
+    /**
+     * Il recupero si imposta per esercizio e si propaga a tutte le sue serie non ancora svolte.
+     * Dentro un superset il recupero e' del giro, non del singolo esercizio: si scrive su tutti i
+     * compagni, altrimenti la durata dipenderebbe da chi chiude il giro.
+     */
     fun setRestSeconds(workoutExerciseId: Long, seconds: Int) {
         val exercise = _uiState.value.exercises.find { it.workoutExerciseId == workoutExerciseId } ?: return
         val safeSeconds = seconds.coerceIn(0, 600)
+        val targets = _uiState.value.exercises.filter { it.sharesRound(exercise) }
         _uiState.update { state ->
             state.copy(
                 exercises = state.exercises.map { ex ->
-                    if (ex.workoutExerciseId != workoutExerciseId) ex
+                    if (targets.none { it.workoutExerciseId == ex.workoutExerciseId }) ex
                     else ex.copy(
                         restSeconds = safeSeconds,
                         sets = ex.sets.map { if (it.completedAt == null) it.copy(restSecondsPlanned = safeSeconds) else it }
@@ -277,10 +293,50 @@ class ActiveWorkoutViewModel(
             )
         }
         viewModelScope.launch {
-            exercise.sets.filter { it.completedAt == null }.forEach { set ->
-                repository.updateSet(set.copy(restSecondsPlanned = safeSeconds).toEntity(workoutExerciseId))
+            targets.forEach { target ->
+                target.sets.filter { it.completedAt == null }.forEach { set ->
+                    repository.updateSet(
+                        set.copy(restSecondsPlanned = safeSeconds).toEntity(target.workoutExerciseId)
+                    )
+                }
             }
         }
+    }
+
+    /**
+     * Superset dell'esercizio: `group` null lo tira fuori dal giro. L'esercizio che entra in un
+     * giro si sposta accanto ai compagni e ne eredita il recupero — vedi [Superset.regroup].
+     */
+    fun setSupersetGroup(workoutExerciseId: Long, group: Int?) {
+        viewModelScope.launch {
+            val current = _uiState.value.exercises
+            val regrouped = Superset.regroup(
+                current.map { Superset.Member(it.workoutExerciseId, it.supersetGroup) },
+                workoutExerciseId,
+                group
+            )
+            val byId = current.associateBy { it.workoutExerciseId }
+            val reordered = regrouped.mapNotNull { member ->
+                byId[member.id]?.copy(supersetGroup = member.group)
+            }
+            _uiState.update { it.copy(exercises = reordered) }
+            persistExerciseOrder(reordered)
+            // Il giro ha un recupero solo: chi entra prende quello dei compagni.
+            if (group != null) {
+                reordered.firstOrNull { it.supersetGroup == group && it.workoutExerciseId != workoutExerciseId }
+                    ?.let { companion -> setRestSeconds(workoutExerciseId, companion.restSeconds) }
+            }
+        }
+    }
+
+    /** Numero di gruppo libero per un superset nuovo. */
+    fun nextSupersetGroup(): Int = Superset.nextGroup(_uiState.value.exercises.map { it.supersetGroup })
+
+    private fun dissolveOrphanSupersets(exercises: List<SessionExerciseUi>): List<SessionExerciseUi> {
+        val cleaned = Superset.dissolveOrphans(
+            exercises.map { Superset.Member(it.workoutExerciseId, it.supersetGroup) }
+        ).associateBy({ it.id }, { it.group })
+        return exercises.map { ex -> ex.copy(supersetGroup = cleaned[ex.workoutExerciseId]) }
     }
 
     /**
@@ -345,7 +401,11 @@ class ActiveWorkoutViewModel(
             val completed = repository.completeSet(filled.toEntity(workoutExerciseId), exercise.exerciseId, exercise.weightType)
             refreshSets(workoutExerciseId)
             feedback.haptic()
-            if (completed.setType.countsAsWorking) startRestTimer(completed.restSecondsPlanned)
+            // In un superset il recupero non spetta alla singola serie ma al giro: parte solo
+            // quando ogni compagno ha chiuso la sua serie di pari indice.
+            if (completed.setType.countsAsWorking && isRoundComplete(workoutExerciseId, set.setIndex)) {
+                startRestTimer(completed.restSecondsPlanned)
+            }
         }
     }
 
@@ -357,6 +417,22 @@ class ActiveWorkoutViewModel(
             repository.updateSet(set.copy(completedAt = null, isPR = false).toEntity(workoutExerciseId))
             refreshSets(workoutExerciseId)
         }
+    }
+
+    /**
+     * Il giro e' finito quando ogni esercizio del superset ha chiuso la serie di pari indice.
+     * I compagni con meno serie non lo bloccano: chi non ha quella serie non deve farla.
+     * Fuori da un superset il "giro" e' la singola serie, quindi e' sempre finito.
+     */
+    private fun isRoundComplete(workoutExerciseId: Long, setIndex: Int): Boolean {
+        val exercise = _uiState.value.exercises.find { it.workoutExerciseId == workoutExerciseId } ?: return true
+        if (exercise.supersetGroup == null) return true
+        return _uiState.value.exercises
+            .filter { it.supersetGroup == exercise.supersetGroup }
+            .all { companion ->
+                val set = companion.sets.getOrNull(setIndex) ?: return@all true
+                set.completedAt != null
+            }
     }
 
     private fun startRestTimer(totalSeconds: Int) {
@@ -435,6 +511,14 @@ class ActiveWorkoutViewModel(
         const val DEFAULT_REST_SECONDS = 90
     }
 }
+
+/**
+ * Esercizi che condividono il recupero: i compagni di superset, o il solo esercizio stesso se
+ * non e' in un giro.
+ */
+private fun SessionExerciseUi.sharesRound(other: SessionExerciseUi): Boolean =
+    if (other.supersetGroup == null) workoutExerciseId == other.workoutExerciseId
+    else supersetGroup == other.supersetGroup
 
 private fun SessionSetUi.toEntity(workoutExerciseId: Long) = SetEntryEntity(
     id = id,

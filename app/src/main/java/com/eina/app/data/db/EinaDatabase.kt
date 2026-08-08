@@ -16,7 +16,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         SetEntryEntity::class,
         BodyMetricEntity::class
     ],
-    version = 6,
+    version = 7,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -123,6 +123,18 @@ abstract class EinaDatabase : RoomDatabase() {
                 db.execSQL("DROP TABLE set_entries")
                 db.execSQL("ALTER TABLE set_entries_new RENAME TO set_entries")
                 db.execSQL("CREATE INDEX IF NOT EXISTS index_set_entries_workoutExerciseId ON set_entries (workoutExerciseId)")
+            }
+        }
+
+        /**
+         * Superset: un numero di gruppo sul template e sulla sessione, cosi' il giro si puo'
+         * comporre nella routine e ritoccare durante l'allenamento. Nasce a null — nessun
+         * esercizio gia' salvato entra in un superset senza che glielo si chieda.
+         */
+        val MIGRATION_6_7 = object : Migration(6, 7) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE routine_exercises ADD COLUMN supersetGroup INTEGER")
+                db.execSQL("ALTER TABLE workout_exercises ADD COLUMN supersetGroup INTEGER")
             }
         }
     }

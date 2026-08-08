@@ -174,7 +174,9 @@ data class RoutineExerciseEntity(
     val targetSets: Int,
     val targetReps: Int,
     val targetWeight: Double? = null,
-    val restSeconds: Int
+    val restSeconds: Int,
+    val supersetGroup: Int? = null   // Fase 25 (DB v7, MIGRATION_6_7): esercizi con lo stesso
+                                     // numero si eseguono a giro. null = esercizio a se'
 )
 
 @Entity(tableName = "workout_sessions")
@@ -193,7 +195,8 @@ data class WorkoutExerciseEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val sessionId: Long,
     val exerciseId: Long,
-    val order: Int
+    val order: Int,
+    val supersetGroup: Int? = null   // Fase 25: ereditato dalla routine, ritoccabile in palestra
 )
 
 @Entity(
@@ -503,6 +506,25 @@ con `MIGRATION_5_6`: la colonna va sostituita, non aggiunta, quindi la tabella `
 ricrea (SQLite sotto API 30 non sa togliere colonne) e le serie gia' registrate diventano
 WARMUP o NORMAL. Lo stesso segno compare nel dettaglio dello storico, col nome esteso del tipo
 come badge.
+
+**Fase 25 — Superset** *(fatta)*
+DoD: due o piu' esercizi si legano in un giro, in routine e in allenamento, e si possono avere
+piu' superset diversi nello stesso allenamento. Il legame e' `supersetGroup`, un numero uguale
+per i membri del giro, su `routine_exercises` e `workout_exercises` (DB v7, `MIGRATION_6_7`,
+colonne a null: nessun esercizio gia' salvato entra in un giro da solo). A schermo il numero non
+si vede mai: il giro si legge come lettera (A, B, C…) assegnata nell'ordine in cui compare nella
+lista, con badge "Superset A" e contorno colorato sulla card — colori presi dalla palette dei
+gruppi muscolari, non una tavolozza nuova. Si compone dal foglio del tocco lungo, voce
+"Superset": giro nuovo, uno di quelli aperti, o fuori dal giro. Chi entra si sposta accanto ai
+compagni (un superset e' una sequenza, non un insieme sparso) e ne eredita il recupero, che nel
+superset e' del giro: cambiarlo su un esercizio lo cambia a tutti. Un giro rimasto con un solo
+esercizio si scioglie da se'. "Sposta su/giu'" muove tutto il blocco, e le frecce guardano dove
+comincia e dove finisce il giro. Il recupero parte solo quando ogni compagno ha chiuso la serie
+di pari indice (i compagni con meno serie non bloccano il giro). La logica pura sta in
+`domain/Superset.kt` con i suoi test; l'export/import routine (`eina.routine` v1) porta il campo
+come opzionale, quindi i file vecchi restano leggibili. Verificata sul dispositivo: giro composto
+in routine, ereditato all'avvio della sessione, recupero partito solo alla chiusura del secondo
+esercizio.
 
 **Fase 9 — Rifinitura** *(fatta)*
 DoD: R8 + shrinkResources attivi sulla release (20,5 MB → 2,2 MB), regole in

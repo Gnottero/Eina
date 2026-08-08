@@ -16,5 +16,8 @@ data class WorkoutExerciseEntity(
     val exerciseId: Long,
     val order: Int,
     /** Nota dell'esercizio in questa sessione: parte da quella della routine ed e' modificabile. */
-    val notes: String? = null
+    val notes: String? = null,
+    /** Superset di questa sessione: parte da quello della routine ed e' modificabile qui. Vedi
+     *  [RoutineExerciseEntity.supersetGroup]. */
+    val supersetGroup: Int? = null
 )

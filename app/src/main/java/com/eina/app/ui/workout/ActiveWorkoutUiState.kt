@@ -42,6 +42,8 @@ data class SessionExerciseUi(
     val restSeconds: Int = 90,
     /** Nota dell'esercizio in questa sessione: ereditata dalla routine, modificabile qui. */
     val notes: String? = null,
+    /** Superset di appartenenza: vedi [com.eina.app.domain.Superset]. null = esercizio a se'. */
+    val supersetGroup: Int? = null,
     val sets: List<SessionSetUi> = emptyList(),
     val lastTimeSets: List<SetEntryEntity> = emptyList(),
     /** Ultimi valori registrati per questo esercizio, ovunque: ultimo anello dei segnaposto. */

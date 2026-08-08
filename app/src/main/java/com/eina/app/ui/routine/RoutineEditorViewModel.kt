@@ -9,6 +9,7 @@ import com.eina.app.data.db.PlaylistType
 import com.eina.app.data.db.RoutineEntity
 import com.eina.app.data.db.RoutineExerciseEntity
 import com.eina.app.data.repository.RoutineRepository
+import com.eina.app.domain.Superset
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -120,8 +121,49 @@ class RoutineEditorViewModel(
     }
 
     fun removeExercise(routineExercise: RoutineExerciseEntity) {
-        viewModelScope.launch { repository.removeRoutineExercise(routineExercise) }
+        viewModelScope.launch {
+            repository.removeRoutineExercise(routineExercise)
+            // Tolto un compagno, un superset rimasto da solo non e' piu' un superset.
+            val remaining = routineExercises.value.filterNot { it.id == routineExercise.id }
+            val cleaned = Superset.dissolveOrphans(remaining.map { Superset.Member(it.id, it.supersetGroup) })
+                .associateBy({ it.id }, { it.group })
+            remaining.forEach { item ->
+                val group = cleaned[item.id]
+                if (group != item.supersetGroup) {
+                    repository.updateRoutineExercise(item.copy(supersetGroup = group))
+                }
+            }
+        }
     }
+
+    /**
+     * Superset dell'esercizio nella scheda: `group` null lo tira fuori dal giro. Chi entra si
+     * sposta accanto ai compagni (vedi [Superset.regroup]) e ne prende il recupero, che nel
+     * superset e' del giro e non del singolo esercizio.
+     */
+    fun setSupersetGroup(routineExercise: RoutineExerciseEntity, group: Int?) {
+        viewModelScope.launch {
+            val current = routineExercises.value
+            val regrouped = Superset.regroup(
+                current.map { Superset.Member(it.id, it.supersetGroup) },
+                routineExercise.id,
+                group
+            )
+            val byId = current.associateBy { it.id }
+            val companionRest = current
+                .firstOrNull { it.supersetGroup == group && it.id != routineExercise.id }
+                ?.restSeconds
+            regrouped.forEachIndexed { index, member ->
+                val item = byId[member.id] ?: return@forEachIndexed
+                val rest = if (member.id == routineExercise.id && companionRest != null) companionRest else item.restSeconds
+                val updated = item.copy(order = index, supersetGroup = member.group, restSeconds = rest)
+                if (updated != item) repository.updateRoutineExercise(updated)
+            }
+        }
+    }
+
+    /** Numero di gruppo libero per un superset nuovo. */
+    fun nextSupersetGroup(): Int = Superset.nextGroup(routineExercises.value.map { it.supersetGroup })
 
     /** Nota dell'esercizio nella routine: viene copiata nella sessione a ogni avvio. */
     fun updateNotes(routineExercise: RoutineExerciseEntity, notes: String?) {
@@ -142,6 +184,12 @@ class RoutineEditorViewModel(
                     restSeconds = restSeconds
                 )
             )
+            // Il recupero di un superset e' del giro: cambiarlo su un esercizio lo cambia a tutti,
+            // altrimenti la pausa dipenderebbe da chi chiude il giro.
+            val group = routineExercise.supersetGroup ?: return@launch
+            routineExercises.value
+                .filter { it.supersetGroup == group && it.id != routineExercise.id && it.restSeconds != restSeconds }
+                .forEach { repository.updateRoutineExercise(it.copy(restSeconds = restSeconds)) }
         }
     }
 }

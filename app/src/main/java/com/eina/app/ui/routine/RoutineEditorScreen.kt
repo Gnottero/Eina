@@ -2,6 +2,7 @@ package com.eina.app.ui.routine
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -13,6 +14,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Notes
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.Repeat
 import androidx.compose.material.icons.outlined.Timer
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -53,13 +55,19 @@ import com.eina.app.ui.components.RestTimeSheet
 import com.eina.app.ui.components.ScreenHeader
 import com.eina.app.ui.components.SectionHeader
 import com.eina.app.ui.components.SheetActionRow
+import com.eina.app.ui.components.SupersetBadge
+import com.eina.app.ui.components.SupersetOption
+import com.eina.app.ui.components.SupersetSheet
+import com.eina.app.ui.components.supersetColor
 import com.eina.app.ui.components.formatClock
 import com.eina.app.ui.components.sanitizeWeightInput
+import com.eina.app.domain.Superset
 import com.eina.app.ui.feedback.LocalHapticTap
 import com.eina.app.ui.library.localizedName
 import com.eina.app.ui.theme.EinaTheme
 import com.eina.app.ui.theme.PillShape
 import com.eina.app.ui.theme.Spacing
+import com.eina.app.ui.theme.TileShape
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
 
@@ -139,11 +147,29 @@ fun RoutineEditorScreen(
                 description = stringResource(R.string.routine_editor_empty_description)
             )
         } else {
+            // Lettera del superset: segue l'ordine in cui i giri compaiono nella scheda.
+            val supersetLetters = Superset.letters(routineExercises.map { it.supersetGroup })
+            val supersetOptions = routineExercises
+                .filter { it.supersetGroup != null }
+                .groupBy { it.supersetGroup!! }
+                .map { (group, members) ->
+                    SupersetOption(
+                        group = group,
+                        letter = supersetLetters[group].orEmpty(),
+                        members = members.map { exercises[it.exerciseId]?.localizedName() ?: "…" }
+                    )
+                }
+                .sortedBy { it.letter }
+
             routineExercises.forEach { routineExercise ->
                 RoutineExerciseRow(
                     routineExercise = routineExercise,
                     exerciseName = exercises[routineExercise.exerciseId]?.localizedName() ?: "…",
                     weightType = exercises[routineExercise.exerciseId]?.weightType ?: WeightType.FREE_WEIGHT,
+                    supersetLetter = routineExercise.supersetGroup?.let { supersetLetters[it] },
+                    supersetOptions = supersetOptions,
+                    onSupersetChange = { group -> viewModel.setSupersetGroup(routineExercise, group) },
+                    onNewSuperset = { viewModel.setSupersetGroup(routineExercise, viewModel.nextSupersetGroup()) },
                     onUpdate = { sets, reps, weight, rest ->
                         viewModel.updateTargets(routineExercise, sets, reps, weight, rest)
                     },
@@ -174,18 +200,24 @@ private fun RoutineExerciseRow(
     routineExercise: RoutineExerciseEntity,
     exerciseName: String,
     weightType: WeightType,
+    supersetLetter: String?,
+    supersetOptions: List<SupersetOption>,
+    onSupersetChange: (Int?) -> Unit,
+    onNewSuperset: () -> Unit,
     onUpdate: (Int, Int, Double?, Int) -> Unit,
     onNotesChange: (String?) -> Unit,
     onRemove: () -> Unit
 ) {
     val island = EinaTheme.island
     val hapticTap = LocalHapticTap.current
+    val supersetTint = supersetLetter?.let { supersetColor(it) }
     var sets by remember(routineExercise.id) { mutableStateOf(routineExercise.targetSets.toString()) }
     var reps by remember(routineExercise.id) { mutableStateOf(routineExercise.targetReps.toString()) }
     var weight by remember(routineExercise.id) { mutableStateOf(routineExercise.targetWeight?.toString() ?: "") }
     var actionsOpen by remember { mutableStateOf(false) }
     var restSheetOpen by remember { mutableStateOf(false) }
     var notesSheetOpen by remember { mutableStateOf(false) }
+    var supersetSheetOpen by remember { mutableStateOf(false) }
 
     fun commit(restSeconds: Int = routineExercise.restSeconds) {
         onUpdate(
@@ -199,9 +231,19 @@ private fun RoutineExerciseRow(
     // Come nell'allenamento: nessun tasto di servizio sulla card, le azioni stanno nel foglio
     // che si apre col tocco lungo.
     IslandCard(
-        modifier = Modifier.fillMaxWidth(),
+        // Contorno colorato: dice a colpo d'occhio quali esercizi stanno nello stesso giro.
+        modifier = Modifier
+            .fillMaxWidth()
+            .then(
+                if (supersetTint == null) Modifier
+                else Modifier.border(2.dp, supersetTint, TileShape)
+            ),
         onLongClick = { actionsOpen = true }
     ) {
+        if (supersetLetter != null) {
+            SupersetBadge(letter = supersetLetter)
+        }
+
         Text(exerciseName, style = MaterialTheme.typography.titleMedium)
 
         routineExercise.notes?.takeIf { it.isNotBlank() }?.let { notes ->
@@ -279,6 +321,13 @@ private fun RoutineExerciseRow(
                 onClick = { actionsOpen = false; restSheetOpen = true }
             )
             SheetActionRow(
+                icon = Icons.Outlined.Repeat,
+                label = stringResource(R.string.superset_action),
+                description = supersetLetter?.let { stringResource(R.string.superset_badge, it) }
+                    ?: stringResource(R.string.superset_action_none),
+                onClick = { actionsOpen = false; supersetSheetOpen = true }
+            )
+            SheetActionRow(
                 icon = Icons.Outlined.Delete,
                 label = stringResource(R.string.action_remove_exercise),
                 destructive = true,
@@ -292,7 +341,22 @@ private fun RoutineExerciseRow(
             currentSeconds = routineExercise.restSeconds,
             onConfirm = { seconds -> commit(restSeconds = seconds) },
             onDismiss = { restSheetOpen = false },
-            description = stringResource(R.string.rest_description_routine)
+            description = if (supersetLetter != null) {
+                stringResource(R.string.superset_rest_description)
+            } else {
+                stringResource(R.string.rest_description_routine)
+            }
+        )
+    }
+
+    if (supersetSheetOpen) {
+        SupersetSheet(
+            exerciseName = exerciseName,
+            current = routineExercise.supersetGroup,
+            options = supersetOptions,
+            onSelect = onSupersetChange,
+            onNewGroup = onNewSuperset,
+            onDismiss = { supersetSheetOpen = false }
         )
     }
 

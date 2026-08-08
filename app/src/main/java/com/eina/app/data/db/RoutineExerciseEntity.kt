@@ -23,5 +23,11 @@ data class RoutineExerciseEntity(
     val targetWeight: Double? = null,
     val restSeconds: Int,
     /** Nota libera sull'esercizio nella routine: viene copiata nella sessione all'avvio. */
-    val notes: String? = null
+    val notes: String? = null,
+    /**
+     * Superset: esercizi con lo stesso numero si eseguono a giro, uno dopo l'altro, e il recupero
+     * parte solo quando il giro e' finito. null = esercizio a se'. I membri di un gruppo stanno
+     * sempre uno di seguito all'altro in `order`.
+     */
+    val supersetGroup: Int? = null
 )

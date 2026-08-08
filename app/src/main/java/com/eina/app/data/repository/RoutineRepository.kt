@@ -116,7 +116,8 @@ class RoutineRepository(
                     targetReps = item.targetReps,
                     targetWeight = item.targetWeight,
                     restSeconds = item.restSeconds,
-                    notes = item.notes
+                    notes = item.notes,
+                    supersetGroup = item.supersetGroup
                 )
             )
         }

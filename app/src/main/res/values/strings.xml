@@ -168,6 +168,17 @@
     <string name="set_type_drop">Drop set</string>
     <string name="set_type_drop_description">Load dropped, reps carried on without rest.</string>
 
+    <!-- Superset -->
+    <string name="superset_title">Superset</string>
+    <string name="superset_badge">Superset %1$s</string>
+    <string name="superset_description">%1$s runs in a round with the other exercises of the superset. Rest starts only once the whole round is done.</string>
+    <string name="superset_new">New superset</string>
+    <string name="superset_new_description">Starts a round with this exercise. Add another one to it.</string>
+    <string name="superset_leave">Out of the superset</string>
+    <string name="superset_action">Superset</string>
+    <string name="superset_action_none">Not in a superset</string>
+    <string name="superset_rest_description">Applies to every exercise of the superset.</string>
+
     <!-- Timer di recupero -->
     <string name="timer_rest">Rest</string>
     <string name="timer_minus_15" translatable="false">-15s</string>

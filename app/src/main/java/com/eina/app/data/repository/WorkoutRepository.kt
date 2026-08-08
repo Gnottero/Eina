@@ -75,8 +75,10 @@ class WorkoutRepository(
                     exerciseId = routineExercise.exerciseId,
                     order = index,
                     // La nota della routine parte come nota della sessione: modificarla durante
-                    // l'allenamento non deve riscrivere il template.
-                    notes = routineExercise.notes
+                    // l'allenamento non deve riscrivere il template. Stessa storia per il
+                    // superset: il giro della scheda si puo' rifare in palestra senza toccarla.
+                    notes = routineExercise.notes,
+                    supersetGroup = routineExercise.supersetGroup
                 )
             )
             repeat(routineExercise.targetSets) { setIndex ->

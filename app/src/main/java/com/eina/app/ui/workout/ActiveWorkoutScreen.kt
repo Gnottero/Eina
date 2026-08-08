@@ -37,6 +37,7 @@ import androidx.compose.material.icons.outlined.FitnessCenter
 import androidx.compose.material.icons.outlined.KeyboardArrowDown
 import androidx.compose.material.icons.outlined.KeyboardArrowUp
 import androidx.compose.material.icons.outlined.MusicNote
+import androidx.compose.material.icons.outlined.Repeat
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Timer
 import androidx.compose.material3.AlertDialog
@@ -85,7 +86,12 @@ import com.eina.app.ui.components.RestTimeSheet
 import com.eina.app.ui.components.SetTypeIndicator
 import com.eina.app.ui.components.SetTypeSheet
 import com.eina.app.ui.components.SheetActionRow
+import com.eina.app.ui.components.SupersetBadge
+import com.eina.app.ui.components.SupersetOption
+import com.eina.app.ui.components.SupersetSheet
+import com.eina.app.ui.components.supersetColor
 import com.eina.app.ui.components.sanitizeWeightInput
+import com.eina.app.domain.Superset
 import com.eina.app.ui.feedback.LocalHapticTap
 import com.eina.app.ui.library.currentLocale
 import com.eina.app.ui.library.equipmentLabel
@@ -119,6 +125,7 @@ fun ActiveWorkoutScreen(
     var notesSheetFor by remember { mutableStateOf<Long?>(null) }
     var setActionsFor by remember { mutableStateOf<SetRef?>(null) }
     var setTypeFor by remember { mutableStateOf<SetRef?>(null) }
+    var supersetSheetFor by remember { mutableStateOf<Long?>(null) }
     var confirmFinish by remember { mutableStateOf(false) }
     var confirmCancel by remember { mutableStateOf(false) }
 
@@ -127,6 +134,11 @@ fun ActiveWorkoutScreen(
     val restSheetExercise = state.exercises.find { it.workoutExerciseId == restSheetFor }
     val actionsSheetExercise = state.exercises.find { it.workoutExerciseId == actionsSheetFor }
     val notesSheetExercise = state.exercises.find { it.workoutExerciseId == notesSheetFor }
+    val supersetSheetExercise = state.exercises.find { it.workoutExerciseId == supersetSheetFor }
+
+    // Lettera del superset: assegnata dall'ordine in cui i giri compaiono nella lista, cosi' il
+    // primo superset dall'alto e' sempre A.
+    val supersetLetters = Superset.letters(state.exercises.map { it.supersetGroup })
 
     Box(
         modifier = Modifier
@@ -181,6 +193,7 @@ fun ActiveWorkoutScreen(
                             setTypeFor = SetRef(exercise.workoutExerciseId, setId)
                         },
                         onEditRest = { restSheetFor = exercise.workoutExerciseId },
+                        supersetLetter = exercise.supersetGroup?.let { supersetLetters[it] },
                         onAddSet = { viewModel.addSet(exercise.workoutExerciseId) },
                         onRemoveSet = { setId -> viewModel.removeSet(exercise.workoutExerciseId, setId) },
                         onSetValuesChange = { setId, reps, weight ->
@@ -233,10 +246,15 @@ fun ActiveWorkoutScreen(
 
     if (actionsSheetExercise != null) {
         val index = state.exercises.indexOf(actionsSheetExercise)
+        // Un superset si sposta a blocco: le frecce guardano dove comincia e dove finisce il giro,
+        // non la singola card, altrimenti l'ultimo membro avrebbe una freccia che non muove nulla.
+        val group = actionsSheetExercise.supersetGroup
+        val blockFirst = if (group == null) index else state.exercises.indexOfFirst { it.supersetGroup == group }
+        val blockLast = if (group == null) index else state.exercises.indexOfLast { it.supersetGroup == group }
         ExerciseActionsSheet(
             exercise = actionsSheetExercise,
-            canMoveUp = index > 0,
-            canMoveDown = index < state.exercises.size - 1,
+            canMoveUp = blockFirst > 0,
+            canMoveDown = blockLast < state.exercises.size - 1,
             onOpenExercise = {
                 onOpenExercise(actionsSheetExercise.exerciseId)
                 actionsSheetFor = null
@@ -251,6 +269,11 @@ fun ActiveWorkoutScreen(
                 restSheetFor = actionsSheetExercise.workoutExerciseId
                 actionsSheetFor = null
             },
+            onEditSuperset = {
+                supersetSheetFor = actionsSheetExercise.workoutExerciseId
+                actionsSheetFor = null
+            },
+            supersetLetter = actionsSheetExercise.supersetGroup?.let { supersetLetters[it] },
             onAddSet = { viewModel.addSet(actionsSheetExercise.workoutExerciseId); actionsSheetFor = null },
             onRemove = { viewModel.removeExercise(actionsSheetExercise.workoutExerciseId); actionsSheetFor = null },
             onDismiss = { actionsSheetFor = null }
@@ -262,7 +285,11 @@ fun ActiveWorkoutScreen(
             currentSeconds = restSheetExercise.restSeconds,
             onConfirm = { seconds -> viewModel.setRestSeconds(restSheetExercise.workoutExerciseId, seconds) },
             onDismiss = { restSheetFor = null },
-            description = stringResource(R.string.active_rest_apply_description)
+            description = if (restSheetExercise.supersetGroup != null) {
+                stringResource(R.string.superset_rest_description)
+            } else {
+                stringResource(R.string.active_rest_apply_description)
+            }
         )
     }
 
@@ -271,6 +298,29 @@ fun ActiveWorkoutScreen(
             exercise = notesSheetExercise,
             onSave = { notes -> viewModel.setExerciseNotes(notesSheetExercise.workoutExerciseId, notes) },
             onDismiss = { notesSheetFor = null }
+        )
+    }
+
+    if (supersetSheetExercise != null) {
+        SupersetSheet(
+            exerciseName = supersetSheetExercise.name.localized(),
+            current = supersetSheetExercise.supersetGroup,
+            options = state.exercises
+                .filter { it.supersetGroup != null }
+                .groupBy { it.supersetGroup!! }
+                .map { (group, members) ->
+                    SupersetOption(
+                        group = group,
+                        letter = supersetLetters[group].orEmpty(),
+                        members = members.map { it.name.localized() }
+                    )
+                }
+                .sortedBy { it.letter },
+            onSelect = { group -> viewModel.setSupersetGroup(supersetSheetExercise.workoutExerciseId, group) },
+            onNewGroup = {
+                viewModel.setSupersetGroup(supersetSheetExercise.workoutExerciseId, viewModel.nextSupersetGroup())
+            },
+            onDismiss = { supersetSheetFor = null }
         )
     }
 
@@ -553,6 +603,7 @@ private fun ExerciseCard(
     onOpenSetActions: (Long) -> Unit,
     onOpenSetType: (Long) -> Unit,
     onEditRest: () -> Unit,
+    supersetLetter: String?,
     onAddSet: () -> Unit,
     onRemoveSet: (Long) -> Unit,
     onSetValuesChange: (Long, Int?, Double?) -> Unit,
@@ -560,15 +611,26 @@ private fun ExerciseCard(
 ) {
     val island = EinaTheme.island
     val hapticTap = LocalHapticTap.current
+    val supersetTint = supersetLetter?.let { supersetColor(it) }
 
     IslandCard(
-        modifier = Modifier.fillMaxWidth(),
+        // Il contorno colorato dice a colpo d'occhio quali card fanno parte dello stesso giro.
+        modifier = Modifier
+            .fillMaxWidth()
+            .then(
+                if (supersetTint == null) Modifier
+                else Modifier.border(2.dp, supersetTint, IslandShape)
+            ),
         shape = IslandShape,
         contentPadding = PaddingValues(horizontal = Spacing.lg, vertical = Spacing.xl),
         verticalArrangement = Arrangement.spacedBy(Spacing.lg),
         // Niente tre puntini: le azioni si aprono col tocco lungo sulla card.
         onLongClick = onOpenActions
     ) {
+        if (supersetLetter != null) {
+            SupersetBadge(letter = supersetLetter)
+        }
+
         // Il nome porta alla scheda dell'esercizio: durante una serie serve rileggere
         // l'esecuzione, non ricercarlo in libreria.
         Text(
@@ -856,6 +918,8 @@ private fun ExerciseActionsSheet(
     onMoveUp: () -> Unit,
     onMoveDown: () -> Unit,
     onEditRest: () -> Unit,
+    onEditSuperset: () -> Unit,
+    supersetLetter: String?,
     onAddSet: () -> Unit,
     onRemove: () -> Unit,
     onDismiss: () -> Unit
@@ -877,6 +941,13 @@ private fun ExerciseActionsSheet(
             label = stringResource(R.string.rest_time_title),
             description = formatDuration(exercise.restSeconds),
             onClick = onEditRest
+        )
+        SheetActionRow(
+            icon = Icons.Outlined.Repeat,
+            label = stringResource(R.string.superset_action),
+            description = supersetLetter?.let { stringResource(R.string.superset_badge, it) }
+                ?: stringResource(R.string.superset_action_none),
+            onClick = onEditSuperset
         )
         SheetActionRow(
             icon = Icons.Outlined.Add,

@@ -38,7 +38,9 @@ object RoutineTransfer {
         val targetReps: Int,
         val targetWeight: Double?,
         val restSeconds: Int,
-        val notes: String?
+        val notes: String?,
+        /** Superset di appartenenza, come numero di gruppo. null = esercizio a se'. */
+        val supersetGroup: Int?
     )
 
     data class RoutinePayload(
@@ -70,6 +72,7 @@ object RoutineTransfer {
                     put("targetWeight", routineExercise.targetWeight ?: JSONObject.NULL)
                     put("restSeconds", routineExercise.restSeconds)
                     put("notes", routineExercise.notes ?: JSONObject.NULL)
+                    put("supersetGroup", routineExercise.supersetGroup ?: JSONObject.NULL)
                 }
             )
         }
@@ -116,7 +119,9 @@ object RoutineTransfer {
                 targetReps = item.optInt("targetReps", 10).coerceIn(1, 999),
                 targetWeight = item.optNullableDouble("targetWeight"),
                 restSeconds = item.optInt("restSeconds", 90).coerceIn(0, 3600),
-                notes = item.optNullableString("notes")
+                notes = item.optNullableString("notes"),
+                // Campo nato dopo il formato v1: un file piu' vecchio semplicemente non ha superset.
+                supersetGroup = item.optNullableInt("supersetGroup")
             )
         }
 
@@ -138,4 +143,7 @@ object RoutineTransfer {
 
     private fun JSONObject.optNullableDouble(name: String): Double? =
         if (has(name) && !isNull(name)) getDouble(name) else null
+
+    private fun JSONObject.optNullableInt(name: String): Int? =
+        if (has(name) && !isNull(name)) getInt(name) else null
 }
