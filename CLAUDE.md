@@ -454,6 +454,21 @@ tratti, perche' il windowBackground non puo' usare un font) montato in `splash_s
 pronta `SplashOverlay` ridisegna lo stesso vettoriale con la tessera nel centro esatto dello
 schermo (scarto di 28dp) e sfuma dopo 600 ms, cosi' fra sistema e app la tessera non si muove.
 
+**Fase 23 — Animazioni raddoppiate con upscale AI** *(fatta)*
+DoD: le animazioni degli esercizi non sono più sgranate. La causa non era la compressione
+(dalla Fase 21 erano lossless, identiche alla sorgente) ma la risoluzione: le GIF di
+omercotkd sono 360x360 e la scheda esercizio le disegna a tutta larghezza, ~1050px su un
+telefono a densità 3, cioè quasi 3x di ingrandimento fatto da Android in bilineare.
+`tools/fetch_exercise_gifs.py` ora passa ogni fotogramma per `realesrgan-ncnn-vulkan`
+(modello `realesrgan-x4plus`, 4x, poi giù a 720px: il sovracampionamento smussa gli
+artefatti meglio di un 2x diretto) e rimonta l'animazione con Pillow invece che con ffmpeg,
+perché serve riscrivere la durata di ogni singolo fotogramma — queste GIF non hanno frame
+rate costante (1000 ms sulla posa iniziale, 100 ms sulle intermedie) e un fps fisso ne
+cambierebbe il ritmo. A 720px il lossless costerebbe ~950 KB a file, quindi la conversione
+è lossy q90. `--no-upscale` torna alla pipeline delle Fasi 19-21. `mediaUri` non cambia
+(stessi `anim.webp`), quindi CATALOG_VERSION resta 5. `assets/media` da 45,2 a 67,1 MB,
+APK di release da 47,6 a 69,5 MB.
+
 **Fase 9 — Rifinitura** *(fatta)*
 DoD: R8 + shrinkResources attivi sulla release (20,5 MB → 2,2 MB), regole in
 `app/proguard-rules.pro`; release firmata con la chiave di debug finché non esiste un

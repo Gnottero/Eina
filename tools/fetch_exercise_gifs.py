@@ -10,22 +10,33 @@ Per ogni esercizio mappato scrive app/src/main/assets/media/<cartella>/anim.webp
 i due fotogrammi fotografici (0.webp / 1.webp) di free-exercise-db, che l'animazione
 sostituisce. Gli esercizi senza mappatura (valore null) restano com'erano.
 
-Le GIF di partenza sono 360x360: la conversione tiene quella risoluzione (non si ingrandisce,
-non ci sarebbe dettaglio in piu') e di default e' lossless, cioe' l'animazione nell'app e'
-identica alla GIF di GitHub. Lossless costa meno della GIF stessa (la GIF ha 256 colori:
-WebP lossless li tiene tutti e comprime meglio), quindi non c'e' motivo di degradarla.
-Con --quality N si torna a una conversione lossy (era q85 fino alla Fase 20).
+Le GIF di partenza sono 360x360, l'unica risoluzione che quella raccolta ha. La scheda
+esercizio pero' le disegna a tutta larghezza (~1050px su un telefono a densita' 3), quindi
+Android le ingrandisce di quasi 3x e si vedono i pixel. Per questo la conversione di default
+(Fase 23) passa da un upscale AI con realesrgan-ncnn-vulkan (realesrgan-x4plus 4x, poi giu' a
+720px) prima di ricomprimere: sono render 3D a tinte piatte, il modello ricostruisce i bordi
+invece di sfocarli. Conta ~5 s a esercizio.
+
+  --no-upscale   torna alla conversione diretta delle Fasi 19-21 (nessun ingrandimento).
+  --quality N    forza la qualita' lossy; senza upscale e senza -q la conversione e' lossless
+                 (l'animazione resta identica alla GIF di GitHub, come in Fase 21).
+
+A 720px il lossless costerebbe ~950 KB a file (assets oltre 250 MB), quindi con l'upscale la
+qualita' di default e' 90: ~180 KB a file, in linea col lossless a 360px di prima.
 
 Uso:
-    python3 tools/fetch_exercise_gifs.py [--width 360] [--quality N] [--force]
+    python3 tools/fetch_exercise_gifs.py [--no-upscale] [--width N] [--quality N] [--force]
 
-Serve ffmpeg con libwebp. Rilancialo solo se cambia il catalogo o la mappatura (salta i
-file gia' presenti); poi alza CATALOG_VERSION in ExerciseSeeder.
+Serve ffmpeg con libwebp, Pillow e — salvo --no-upscale — realesrgan-ncnn-vulkan.
+Rilancialo solo se cambia il catalogo o la mappatura (salta i file gia' presenti); poi alza
+CATALOG_VERSION in ExerciseSeeder.
 """
 
 import argparse
+import io
 import json
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -37,6 +48,7 @@ CATALOG = os.path.join(ROOT, "app/src/main/assets/seed/exercises.json")
 MAPPING = os.path.join(ROOT, "tools/exercise_gifs.json")
 OUT_DIR = os.path.join(ROOT, "app/src/main/assets/media")
 BASE_URL = "https://raw.githubusercontent.com/omercotkd/exercises-gifs/main/assets/"
+UPSCALER = "realesrgan-ncnn-vulkan"
 
 
 def convert(gif_bytes, dest, width, quality):
@@ -63,12 +75,71 @@ def convert(gif_bytes, dest, width, quality):
         )
 
 
+def upscale_convert(gif_bytes, dest, width, quality, model, scale):
+    """Come convert(), ma passa i fotogrammi per realesrgan prima di ricomprimerli.
+
+    L'upscaler lavora su PNG in una cartella, non su una GIF: i fotogrammi si estraggono e si
+    rimontano con Pillow, che e' anche l'unico modo di riscrivere le durate per fotogramma —
+    queste GIF non hanno un frame rate costante (tengono 1000 ms sulla posa iniziale e 100 ms
+    sulle intermedie), e passare per un fps fisso ne cambierebbe il ritmo.
+    """
+    from PIL import Image
+
+    os.makedirs(os.path.dirname(dest), exist_ok=True)
+    source = Image.open(io.BytesIO(gif_bytes))
+    durations = []
+    with tempfile.TemporaryDirectory() as work:
+        raw, big = os.path.join(work, "raw"), os.path.join(work, "big")
+        os.makedirs(raw)
+        os.makedirs(big)
+        for index in range(source.n_frames):
+            source.seek(index)
+            durations.append(source.info.get("duration", 100))
+            # Fondo bianco appiattito: l'upscaler ignora il canale alfa e lascerebbe aloni.
+            source.convert("RGB").save(os.path.join(raw, f"{index:04d}.png"))
+        subprocess.run(
+            [UPSCALER, "-i", raw, "-o", big, "-n", model, "-s", str(scale), "-f", "png"],
+            check=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        frames = []
+        for index in range(source.n_frames):
+            frame = Image.open(os.path.join(big, f"{index:04d}.png")).convert("RGB")
+            if frame.width != width:
+                frame = frame.resize((width, width * frame.height // frame.width), Image.LANCZOS)
+            frames.append(frame)
+        frames[0].save(
+            dest,
+            format="WEBP",
+            save_all=True,
+            append_images=frames[1:],
+            duration=durations,
+            loop=0,
+            lossless=quality is None,
+            quality=quality if quality is not None else 100,
+            method=6,
+        )
+
+
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--width", type=int, default=360)
-    parser.add_argument("--quality", type=int, default=None, help="conversione lossy a questa qualita' (default: lossless)")
+    parser.add_argument("--width", type=int, default=None, help="larghezza in uscita (720 con upscale, 360 senza)")
+    parser.add_argument("--quality", type=int, default=None, help="conversione lossy a questa qualita' (default: 90 con upscale, lossless senza)")
+    parser.add_argument("--no-upscale", dest="upscale", action="store_false", help="conversione diretta, senza realesrgan")
+    # x4plus ingrandisce 4x e poi si scende a 720: il sovracampionamento smussa gli artefatti
+    # meglio di un 2x diretto. realesr-animevideov3 con --scale 2 e' ~9x piu' veloce ma marca
+    # di piu' i contorni; realesrgan-x4plus-anime li annerisce proprio, cambia lo stile.
+    parser.add_argument("--model", default="realesrgan-x4plus", help="modello realesrgan")
+    parser.add_argument("--scale", type=int, default=4, help="fattore di ingrandimento del modello")
     parser.add_argument("--force", action="store_true", help="riconverte anche cio' che c'e' gia'")
     args = parser.parse_args()
+    if args.width is None:
+        args.width = 720 if args.upscale else 360
+    if args.quality is None and args.upscale:
+        args.quality = 90
+    if args.upscale and not shutil.which(UPSCALER):
+        sys.exit(f"{UPSCALER} non trovato: installalo (AUR realesrgan-ncnn-vulkan-bin) o usa --no-upscale")
 
     with open(CATALOG, encoding="utf-8") as handle:
         folders = {
@@ -96,7 +167,10 @@ def main():
             print(f"! {name} ({gif_id}): {error}", file=sys.stderr)
             failed.append(name)
             continue
-        convert(data, dest, args.width, args.quality)
+        if args.upscale:
+            upscale_convert(data, dest, args.width, args.quality, args.model, args.scale)
+        else:
+            convert(data, dest, args.width, args.quality)
         written += 1
         if index % 20 == 0:
             print(f"  {index}/{len(mapping)}")
