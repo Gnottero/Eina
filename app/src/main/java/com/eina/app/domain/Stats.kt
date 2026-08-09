@@ -1,8 +1,10 @@
 package com.eina.app.domain
 
 import com.eina.app.data.db.CompletedSetRow
+import com.eina.app.data.db.ExerciseName
 import com.eina.app.data.db.SetEntryEntity
 import com.eina.app.data.db.WeightType
+import com.eina.app.data.db.countsAsWorking
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -12,7 +14,9 @@ data class SessionSummary(
     val sessionId: Long,
     val startTime: Long,
     val endTime: Long?,
-    val exerciseNames: List<String>,
+    /** Nome della routine seguita, se la sessione non era un allenamento libero. */
+    val routineName: String? = null,
+    val exerciseNames: List<ExerciseName>,
     val setCount: Int,
     val totalReps: Int,
     val volumeKg: Double,
@@ -25,7 +29,7 @@ data class SessionSummary(
 /** Un record personale, con il valore gia' formattato secondo il weightType. */
 data class PrRecord(
     val exerciseId: Long,
-    val exerciseName: String,
+    val exerciseName: ExerciseName,
     val weightType: WeightType,
     val achievedAt: Long,
     val weight: Double?,
@@ -44,25 +48,33 @@ private fun volumeOf(row: CompletedSetRow): Double = volumeForSet(
         actualReps = row.actualReps,
         weight = row.weight,
         restSecondsPlanned = 0,
-        isWarmup = row.isWarmup,
+        setType = row.setType,
         bodyweightSnapshotKg = row.bodyweightSnapshotKg
-    )
+    ),
+    row.bodyweightFactor
 )
 
 /** Volume in kg di una lista di set (le warmup non contano nel totale sollevato). */
 fun totalVolume(rows: List<CompletedSetRow>): Double =
-    rows.filter { !it.isWarmup }.sumOf { volumeOf(it) }
+    rows.filter { it.setType.countsAsWorking }.sumOf { volumeOf(it) }
 
 /** Riepiloghi di sessione ordinati dal piu' recente. */
 fun summarizeSessions(rows: List<CompletedSetRow>): List<SessionSummary> =
     rows.groupBy { it.sessionId }
         .map { (sessionId, sessionRows) ->
-            val working = sessionRows.filter { !it.isWarmup }
+            val working = sessionRows.filter { it.setType.countsAsWorking }
             SessionSummary(
                 sessionId = sessionId,
                 startTime = sessionRows.first().sessionStart,
                 endTime = sessionRows.first().sessionEnd,
-                exerciseNames = sessionRows.map { it.exerciseName }.distinct(),
+                routineName = sessionRows.first().routineName,
+                // Un esercizio ripetuto nella stessa sessione compare due volte: sono due blocchi
+                // di lavoro distinti, non un duplicato da collassare.
+                exerciseNames = sessionRows
+                    .sortedBy { it.exerciseOrder }
+                    .groupBy { it.workoutExerciseId }
+                    .values
+                    .map { it.first().exerciseName },
                 setCount = working.size,
                 totalReps = working.sumOf { it.actualReps ?: 0 },
                 volumeKg = working.sumOf { volumeOf(it) },
@@ -76,7 +88,7 @@ fun volumeByDay(
     rows: List<CompletedSetRow>,
     zone: ZoneId = ZoneId.systemDefault()
 ): Map<LocalDate, Double> =
-    rows.filter { !it.isWarmup }
+    rows.filter { it.setType.countsAsWorking }
         .groupBy { epochMillisToLocalDate(it.sessionStart, zone) }
         .mapValues { (_, dayRows) -> dayRows.sumOf { volumeOf(it) } }
 
@@ -85,7 +97,7 @@ fun setsByDay(
     rows: List<CompletedSetRow>,
     zone: ZoneId = ZoneId.systemDefault()
 ): Map<LocalDate, Int> =
-    rows.filter { !it.isWarmup }
+    rows.filter { it.setType.countsAsWorking }
         .groupBy { epochMillisToLocalDate(it.sessionStart, zone) }
         .mapValues { (_, dayRows) -> dayRows.size }
 
@@ -96,30 +108,38 @@ fun trainingDays(
 ): Set<LocalDate> = rows.map { epochMillisToLocalDate(it.sessionStart, zone) }.toSet()
 
 /**
- * Streak = giorni consecutivi di allenamento che arrivano fino a oggi (o a ieri, cosi' la
- * striscia non si azzera prima che la giornata sia finita).
+ * Streak = settimane consecutive con almeno un allenamento, fino alla settimana in corso (o a
+ * quella scorsa, cosi' lo streak non si azzera prima che la settimana sia finita).
+ * DECISIONE: unita' settimanale invece che giornaliera — allenarsi ogni giorno non e' l'obiettivo,
+ * la costanza si misura sulla settimana.
  */
 fun currentStreak(days: Set<LocalDate>, today: LocalDate = LocalDate.now()): Int {
     if (days.isEmpty()) return 0
+    val weeks = days.map { startOfWeek(it) }.toSet()
+    val thisWeek = startOfWeek(today)
     var cursor = when {
-        days.contains(today) -> today
-        days.contains(today.minusDays(1)) -> today.minusDays(1)
+        weeks.contains(thisWeek) -> thisWeek
+        weeks.contains(thisWeek.minusWeeks(1)) -> thisWeek.minusWeeks(1)
         else -> return 0
     }
     var streak = 0
-    while (days.contains(cursor)) {
+    while (weeks.contains(cursor)) {
         streak++
-        cursor = cursor.minusDays(1)
+        cursor = cursor.minusWeeks(1)
     }
     return streak
 }
+
+/** Lunedi' della settimana a cui appartiene la data. */
+private fun startOfWeek(date: LocalDate): LocalDate =
+    date.minusDays((date.dayOfWeek.value - 1).toLong())
 
 /**
  * Ultimo PR per esercizio, dal piu' recente. Le set marcate isPR sono gia' state validate da
  * [isNewPR] al momento del salvataggio: qui si tiene solo la piu' recente per esercizio.
  */
 fun personalRecords(rows: List<CompletedSetRow>): List<PrRecord> =
-    rows.filter { it.isPR && !it.isWarmup }
+    rows.filter { it.isPR && it.setType.countsAsWorking }
         .groupBy { it.exerciseId }
         .map { (_, prRows) ->
             val best = prRows.maxBy { it.completedAt }

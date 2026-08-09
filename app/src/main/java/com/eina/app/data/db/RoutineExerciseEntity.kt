@@ -18,8 +18,17 @@ data class RoutineExerciseEntity(
     val routineId: Long,
     val exerciseId: Long,
     val order: Int,
-    val targetSets: Int,
-    val targetReps: Int,
-    val targetWeight: Double? = null,
-    val restSeconds: Int
+    /**
+     * Serie e ripetizioni non stanno piu' qui: ogni serie e' una riga di `routine_sets`, col suo
+     * tipo (vedi [RoutineSetEntity]). Qui restano i dati che valgono per l'esercizio intero.
+     */
+    val restSeconds: Int,
+    /** Nota libera sull'esercizio nella routine: viene copiata nella sessione all'avvio. */
+    val notes: String? = null,
+    /**
+     * Superset: esercizi con lo stesso numero si eseguono a giro, uno dopo l'altro, e il recupero
+     * parte solo quando il giro e' finito. null = esercizio a se'. I membri di un gruppo stanno
+     * sempre uno di seguito all'altro in `order`.
+     */
+    val supersetGroup: Int? = null
 )

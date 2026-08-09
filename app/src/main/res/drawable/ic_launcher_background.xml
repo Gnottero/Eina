@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Sfondo dell'icona adattiva: la stessa rampa della tessera del marchio (ic_eina_logo.xml).
+  Il layer di sfondo di un'adaptive icon viene ritagliato dal sistema in forme diverse, quindi
+  qui c'e' solo il colore: la diagonale della rampa regge in tondo come in squircle.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path android:pathData="M0,0 L108,0 L108,108 L0,108 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:type="linear"
+                android:startX="6"
+                android:startY="0"
+                android:endX="102"
+                android:endY="108">
+                <item android:offset="0" android:color="#FFA23A" />
+                <item android:offset="0.5" android:color="#F97348" />
+                <item android:offset="1" android:color="#F9436B" />
+            </gradient>
+        </aapt:attr>
+    </path>
+</vector>

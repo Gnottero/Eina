@@ -21,10 +21,14 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -34,7 +38,15 @@ import com.eina.app.ui.theme.EinaTheme
 import com.eina.app.ui.theme.PillShape
 import com.eina.app.ui.theme.Spacing
 
-/** Azione primaria: pill piena accento. */
+/**
+ * Forma dei bottoni nel contesto corrente. In pagina restano pastiglie; dentro un foglio
+ * (vedi IslandBottomSheet) diventano squircle a raggio piccolo, che e' la forma dei bottoni
+ * larghi di un foglio di sistema — una pastiglia alta 52dp larga tutto lo schermo si legge
+ * come un'etichetta, non come un tasto.
+ */
+val LocalButtonShape = compositionLocalOf<Shape> { PillShape }
+
+/** Azione primaria: piena accento, pill in pagina e squircle nei fogli. */
 @Composable
 fun IslandButton(
     text: String,
@@ -43,17 +55,40 @@ fun IslandButton(
     icon: ImageVector? = null,
     enabled: Boolean = true,
     containerColor: Color = MaterialTheme.colorScheme.primary,
-    contentColor: Color = Color.White
+    contentColor: Color = Color.White,
+    shape: Shape = LocalButtonShape.current
 ) {
     val hapticTap = LocalHapticTap.current
+    val accent = MaterialTheme.colorScheme.primary
+    // L'azione primaria porta la rampa e una sua ombra colorata: e' l'unico elemento della
+    // pagina che deve chiamare il tocco, e un arancio piatto non lo faceva.
+    val ramped = enabled && containerColor == accent
+    val fill = EinaTheme.island.accentRamp
     Button(
         onClick = { hapticTap(); onClick() },
         enabled = enabled,
-        shape = PillShape,
-        modifier = modifier.defaultMinSize(minHeight = 52.dp),
+        shape = shape,
+        modifier = modifier
+            .defaultMinSize(minHeight = 52.dp)
+            .then(
+                if (ramped) {
+                    Modifier
+                        .shadow(
+                            elevation = 14.dp,
+                            shape = shape,
+                            clip = false,
+                            ambientColor = accent.copy(alpha = 0.35f),
+                            spotColor = accent.copy(alpha = 0.45f)
+                        )
+                        .clip(shape)
+                        .background(Brush.horizontalGradient(fill))
+                } else {
+                    Modifier
+                }
+            ),
         elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp, pressedElevation = 0.dp),
         colors = ButtonDefaults.buttonColors(
-            containerColor = containerColor,
+            containerColor = if (ramped) Color.Transparent else containerColor,
             contentColor = contentColor,
             disabledContainerColor = EinaTheme.island.sunken,
             disabledContentColor = EinaTheme.island.textSecondary
@@ -83,7 +118,8 @@ fun IslandSecondaryButton(
     modifier: Modifier = Modifier,
     icon: ImageVector? = null,
     enabled: Boolean = true,
-    contentColor: Color = MaterialTheme.colorScheme.onSurface
+    contentColor: Color = MaterialTheme.colorScheme.onSurface,
+    shape: Shape = LocalButtonShape.current
 ) {
     IslandButton(
         text = text,
@@ -92,7 +128,8 @@ fun IslandSecondaryButton(
         icon = icon,
         enabled = enabled,
         containerColor = EinaTheme.island.sunken,
-        contentColor = contentColor
+        contentColor = contentColor,
+        shape = shape
     )
 }
 
@@ -105,15 +142,17 @@ fun IslandChip(
     modifier: Modifier = Modifier,
     accentColor: Color = MaterialTheme.colorScheme.primary
 ) {
-    val island = EinaTheme.island
     val hapticTap = LocalHapticTap.current
+    // Anche da spenta la chip porta il suo colore, tenue: la fila dei gruppi muscolari era una
+    // sequenza di pastiglie grigie tutte uguali, e il colore compariva solo dopo aver scelto.
+    // Selezionata diventa piena, cosi' la differenza fra scelto e non scelto resta netta.
     Text(
         text = text,
         style = MaterialTheme.typography.labelLarge,
-        color = if (selected) accentColor else island.textSecondary,
+        color = if (selected) Color.White else accentColor,
         modifier = modifier
             .clip(PillShape)
-            .background(if (selected) accentColor.copy(alpha = 0.14f) else island.sunken)
+            .background(if (selected) accentColor else accentColor.copy(alpha = 0.13f))
             .clickable { hapticTap(); onClick() }
             .padding(horizontal = Spacing.lg, vertical = Spacing.sm)
     )
@@ -130,17 +169,28 @@ fun IslandTextField(
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     leadingIcon: ImageVector? = null,
     trailingIcon: @Composable (() -> Unit)? = null,
-    readOnly: Boolean = false
+    readOnly: Boolean = false,
+    // Nei campi di ricerca l'etichetta non deve restare: appena si scrive sparisce e il testo
+    // digitato si prende tutta l'altezza della barra, invece di stringersi sotto l'etichetta.
+    labelAsPlaceholder: Boolean = false
 ) {
     val island = EinaTheme.island
+    val labelText: @Composable () -> Unit = {
+        Text(
+            label,
+            style = MaterialTheme.typography.bodyMedium,
+            color = if (labelAsPlaceholder) island.textSecondary else Color.Unspecified
+        )
+    }
     TextField(
         value = value,
         onValueChange = onValueChange,
-        label = { Text(label, style = MaterialTheme.typography.bodyMedium) },
+        label = if (labelAsPlaceholder) null else labelText,
+        placeholder = if (labelAsPlaceholder) labelText else null,
         singleLine = singleLine,
         readOnly = readOnly,
         keyboardOptions = keyboardOptions,
-        shape = androidx.compose.foundation.shape.RoundedCornerShape(18.dp),
+        shape = com.eina.app.ui.theme.squircle(18.dp),
         leadingIcon = leadingIcon?.let { { Icon(it, contentDescription = null, tint = island.textSecondary) } },
         trailingIcon = trailingIcon,
         colors = TextFieldDefaults.colors(
@@ -193,7 +243,7 @@ fun IslandNumberField(
             cursorBrush = androidx.compose.ui.graphics.SolidColor(MaterialTheme.colorScheme.primary),
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(androidx.compose.foundation.shape.RoundedCornerShape(14.dp))
+                .clip(com.eina.app.ui.theme.squircle(14.dp))
                 .background(island.sunken)
                 .padding(vertical = Spacing.md, horizontal = Spacing.sm),
             decorationBox = { inner ->
@@ -228,7 +278,7 @@ fun IslandSegmentedRow(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .clip(androidx.compose.foundation.shape.RoundedCornerShape(22.dp))
+            .clip(com.eina.app.ui.theme.squircle(22.dp))
             .background(island.sunken)
             .padding(Spacing.xs),
         horizontalArrangement = Arrangement.spacedBy(Spacing.xs)
@@ -256,7 +306,7 @@ private fun RowScope.SegmentedItem(
 ) {
     val island = EinaTheme.island
     val hapticTap = LocalHapticTap.current
-    val shape = androidx.compose.foundation.shape.RoundedCornerShape(18.dp)
+    val shape = com.eina.app.ui.theme.squircle(18.dp)
     val base = modifier
         .clip(shape)
         .clickable { hapticTap(); onClick() }

@@ -1,6 +1,5 @@
 package com.eina.app.ui.components
 
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -21,6 +20,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
@@ -55,13 +55,21 @@ fun IslandNavBar(
             .fillMaxWidth()
             .padding(horizontal = Spacing.xl, vertical = Spacing.md),
         shape = PillShape,
-        elevation = 16.dp
+        // Non del tutto opaca: il contenuto che le scorre sotto si intravede appena, cosi' la
+        // barra galleggia sulla pagina invece di tagliarla in due.
+        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.97f),
+        elevation = 18.dp,
+        outlined = true
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(Spacing.sm),
-            horizontalArrangement = Arrangement.spacedBy(Spacing.xs, Alignment.CenterHorizontally),
+            // SpaceBetween, non un gruppo centrato: la pastiglia colorata deve stare sempre alla
+            // stessa distanza dal bordo del contenitore (8dp, come sopra e sotto). Centrando, il
+            // margine laterale dipendeva dalla lunghezza dell'etichetta attiva — con "Dashboard"
+            // acceso restavano 13dp, con "Progressi" 18dp, e lo scarto si vedeva.
+            horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Le voci si dimensionano sul contenuto: con un weight fisso l'etichetta della voce
@@ -73,12 +81,14 @@ fun IslandNavBar(
 
 @Composable
 private fun IslandNavBarItem(item: IslandNavItem) {
-    val accent = MaterialTheme.colorScheme.primary
     val island = EinaTheme.island
-    val contentColor by animateColorAsState(
-        targetValue = if (item.selected) accent else island.textSecondary,
-        label = "navItemColor"
-    )
+    // La voce attiva e' una pastiglia piena con la rampa dell'accento e contenuto bianco: a
+    // colpo d'occhio si vede dove si e', anche in uno screenshot rimpicciolito.
+    // Senza animazione: la pastiglia colorata compare di colpo, mentre il colore animato partiva
+    // dal grigio e ci metteva il tempo della transizione ad arrivare al bianco — l'etichetta
+    // appena comparsa si leggeva grigia sull'arancio.
+    val contentColor = if (item.selected) Color.White else island.textSecondary
+    val fill = remember(island.accentRamp) { Brush.horizontalGradient(island.accentRamp) }
     val horizontalPadding by animateDpAsState(
         targetValue = if (item.selected) Spacing.lg else Spacing.md,
         label = "navItemPadding"
@@ -89,7 +99,7 @@ private fun IslandNavBarItem(item: IslandNavItem) {
     Row(
         modifier = Modifier
             .clip(PillShape)
-            .background(if (item.selected) accent.copy(alpha = 0.12f) else Color.Transparent)
+            .then(if (item.selected) Modifier.background(fill) else Modifier)
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,

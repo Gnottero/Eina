@@ -9,12 +9,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material.icons.outlined.BarChart
 import androidx.compose.material.icons.outlined.FitnessCenter
 import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -27,6 +26,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.eina.app.R
 import com.eina.app.ui.components.IslandNavBar
 import com.eina.app.ui.components.IslandNavItem
 import com.eina.app.ui.dashboard.DashboardScreen
@@ -99,35 +99,17 @@ fun EinaNavHost() {
                 arguments = listOf(navArgument("routineId") { type = NavType.LongType })
             ) { backStackEntry ->
                 val routineId = backStackEntry.arguments?.getLong("routineId") ?: 0L
-                val pickedExerciseId by backStackEntry.savedStateHandle
-                    .getStateFlow<Long?>("pickedExerciseId", null)
-                    .collectAsState()
                 RoutineEditorScreen(
                     routineId = routineId,
-                    pickedExerciseId = pickedExerciseId,
-                    onExercisePickedConsumed = { backStackEntry.savedStateHandle["pickedExerciseId"] = null },
-                    onPickExercise = {
-                        navController.navigate("routines/edit/$routineId/pick-exercise")
-                    },
                     onBack = { navController.popBackStack() },
+                    // Il nome dell'esercizio apre la sua scheda, come nell'allenamento.
+                    onOpenExercise = { exerciseId -> navController.navigate("library/exercise/$exerciseId") },
                     // Salvata la routine si torna ad "Allena": l'editor e' un passaggio, non una destinazione.
                     onSaved = {
                         if (!navController.popBackStack(EinaDestination.Workout.route, inclusive = false)) {
                             navController.navigate(EinaDestination.Workout.route)
                         }
                     }
-                )
-            }
-            composable("routines/edit/{routineId}/pick-exercise") {
-                LibraryScreen(
-                    title = "Scegli esercizio",
-                    onExerciseClick = { exerciseId ->
-                        navController.previousBackStackEntry
-                            ?.savedStateHandle
-                            ?.set("pickedExerciseId", exerciseId)
-                        navController.popBackStack()
-                    },
-                    onBack = { navController.popBackStack() }
                 )
             }
             composable(
@@ -139,10 +121,20 @@ fun EinaNavHost() {
                     sessionId = sessionId,
                     // Uscire non chiude la sessione: resta aperta e si rientra da "Allena".
                     onExit = { navController.popBackStack() },
+                    // Annullata, la sessione non esiste piu': si torna ad "Allena", non al riepilogo.
+                    onCancelled = {
+                        if (!navController.popBackStack(EinaDestination.Workout.route, inclusive = false)) {
+                            navController.navigate(EinaDestination.Workout.route)
+                        }
+                    },
+                    onOpenExercise = { exerciseId ->
+                        navController.navigate("library/exercise/$exerciseId")
+                    },
                     onFinished = {
-                        // A fine allenamento si atterra sul riepilogo, da cui si puo' condividere l'immagine.
+                        // A fine allenamento si atterra sul riepilogo, con lo streak in evidenza
+                        // e l'immagine da condividere a portata di header.
                         navController.popBackStack(EinaDestination.Workout.route, inclusive = false)
-                        navController.navigate("history/session/$sessionId")
+                        navController.navigate("history/session/$sessionId?justFinished=true")
                     }
                 )
             }
@@ -179,17 +171,27 @@ fun EinaNavHost() {
                 )
             }
             composable(
-                route = "history/session/{sessionId}",
-                arguments = listOf(navArgument("sessionId") { type = NavType.LongType })
+                route = "history/session/{sessionId}?justFinished={justFinished}",
+                arguments = listOf(
+                    navArgument("sessionId") { type = NavType.LongType },
+                    navArgument("justFinished") {
+                        type = NavType.BoolType
+                        defaultValue = false
+                    }
+                )
             ) { backStackEntry ->
                 val sessionId = backStackEntry.arguments?.getLong("sessionId") ?: return@composable
                 SessionDetailScreen(
                     sessionId = sessionId,
+                    justFinished = backStackEntry.arguments?.getBoolean("justFinished") == true,
                     onBack = { navController.popBackStack() }
                 )
             }
             composable(EinaDestination.Progress.route) {
-                ProgressScreen(onBodyWeightClick = { navController.navigate("progress/bodyweight") })
+                ProgressScreen(
+                    onBodyWeightClick = { navController.navigate("progress/bodyweight") },
+                    onExerciseClick = { exerciseId -> navController.navigate("library/exercise/$exerciseId") }
+                )
             }
             composable("settings") {
                 SettingsScreen(onBack = { navController.popBackStack() })
@@ -214,6 +216,9 @@ fun EinaNavHost() {
                         icon = iconFor(destination),
                         selected = currentDestination?.hierarchy?.any { it.route == destination.route } == true,
                         onClick = {
+                            // saveState/restoreState tengono in vita ViewModel e stato dei tab:
+                            // senza, ogni tocco ricostruiva la schermata da zero (nuova query
+                            // Room, scroll perso) e il cambio tab si sentiva lento.
                             navController.navigate(destination.route) {
                                 popUpTo(navController.graph.findStartDestination().id) {
                                     saveState = true
@@ -221,6 +226,11 @@ fun EinaNavHost() {
                                 launchSingleTop = true
                                 restoreState = true
                             }
+                            // Lo stato ripristinato puo' avere in cima un dettaglio aperto da quel
+                            // tab (Impostazioni, Storico): era il motivo per cui in Fase 15 il
+                            // salvataggio era stato tolto — il tab sembrava irraggiungibile.
+                            // Si conserva lo stato della radice e si buttano le schermate sopra.
+                            navController.popBackStack(destination.route, inclusive = false)
                         }
                     )
                 }

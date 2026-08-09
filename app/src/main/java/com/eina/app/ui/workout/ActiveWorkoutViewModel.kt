@@ -3,14 +3,19 @@ package com.eina.app.ui.workout
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.eina.app.data.db.ExerciseEntity
-import com.eina.app.data.db.RoutineExerciseEntity
 import com.eina.app.data.db.SetEntryEntity
+import com.eina.app.data.db.SetType
+import com.eina.app.data.db.WeightType
 import com.eina.app.data.db.WorkoutExerciseEntity
+import com.eina.app.data.db.countsAsWorking
+import com.eina.app.data.db.exerciseName
+import com.eina.app.data.db.usesDecimalField
+import com.eina.app.data.repository.RoutineTarget
 import com.eina.app.data.repository.WorkoutRepository
+import com.eina.app.domain.Superset
 import com.eina.app.domain.volumeForSet
 import com.eina.app.ui.components.MAX_WEIGHT_KG
 import com.eina.app.ui.feedback.WorkoutFeedback
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -24,20 +29,28 @@ import kotlinx.coroutines.launch
 class ActiveWorkoutViewModel(
     private val repository: WorkoutRepository,
     private val feedback: WorkoutFeedback,
+    private val restTimer: RestTimerController,
     private val sessionId: Long
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ActiveWorkoutUiState(sessionId = sessionId))
     val uiState: StateFlow<ActiveWorkoutUiState> = _uiState.asStateFlow()
 
-    private var timerJob: Job? = null
-
     /** Target della routine di partenza, per exerciseId: alimentano i segnaposto dei campi. */
-    private var routineTargets: Map<Long, RoutineExerciseEntity> = emptyMap()
+    private var routineTargets: Map<Long, RoutineTarget> = emptyMap()
 
     init {
         repository.observeExercises()
             .onEach { list -> _uiState.update { it.copy(availableExercises = list) } }
+            .launchIn(viewModelScope)
+        // Il recupero vive nel controller condiviso (vedi RestTimerController): qui si rispecchia
+        // soltanto, cosi' rientrando nella schermata si ritrova il conto alla rovescia in corso.
+        restTimer.state
+            .onEach { timer ->
+                _uiState.update {
+                    it.copy(timer = timer?.let { t -> TimerUi(t.totalSeconds, t.remainingSeconds) })
+                }
+            }
             .launchIn(viewModelScope)
         loadSession()
         startElapsedTicker()
@@ -48,7 +61,16 @@ class ActiveWorkoutViewModel(
             val session = repository.getSession(sessionId)
             if (session != null) {
                 _uiState.update { it.copy(startTime = session.startTime) }
-                session.routineId?.let { routineTargets = repository.getRoutineTargets(it) }
+                session.routineId?.let { routineId ->
+                    routineTargets = repository.getRoutineTargets(routineId)
+                    val routine = repository.getRoutine(routineId)
+                    _uiState.update {
+                        it.copy(
+                            playlistUri = routine?.linkedPlaylistUri,
+                            playlistType = routine?.linkedPlaylistType
+                        )
+                    }
+                }
             }
             repository.getSessionExercises(sessionId).forEach { we ->
                 val exercise = repository.getExercise(we.exerciseId) ?: return@forEach
@@ -74,14 +96,18 @@ class ActiveWorkoutViewModel(
         val sets = withSuggestions(
             repository.getSetsForWorkoutExercise(workoutExercise.id).map { it.toUi(exercise.id, lastTimeSets) },
             lastWeight,
-            lastReps
+            lastReps,
+            exercise.weightType
         )
         val exerciseUi = SessionExerciseUi(
             workoutExerciseId = workoutExercise.id,
             exerciseId = exercise.id,
-            name = exercise.name,
+            name = exercise.exerciseName(),
             weightType = exercise.weightType,
+            bodyweightFactor = exercise.bodyweightFactor,
             order = workoutExercise.order,
+            notes = workoutExercise.notes,
+            supersetGroup = workoutExercise.supersetGroup,
             restSeconds = sets.firstOrNull()?.restSecondsPlanned
                 ?: routineTargets[exercise.id]?.restSeconds
                 ?: DEFAULT_REST_SECONDS,
@@ -103,7 +129,8 @@ class ActiveWorkoutViewModel(
             repository.getSetsForWorkoutExercise(workoutExerciseId)
                 .map { it.toUi(exercise.exerciseId, exercise.lastTimeSets) },
             exercise.lastRecordedWeight,
-            exercise.lastRecordedReps
+            exercise.lastRecordedReps,
+            exercise.weightType
         )
         _uiState.update { state ->
             state.copy(
@@ -118,8 +145,8 @@ class ActiveWorkoutViewModel(
     private fun recomputeVolume() {
         _uiState.update { state ->
             val volume = state.exercises.sumOf { ex ->
-                ex.sets.filter { it.completedAt != null && !it.isWarmup }
-                    .sumOf { volumeForSet(ex.weightType, it.toEntity(ex.workoutExerciseId)) }
+                ex.sets.filter { it.completedAt != null && it.setType.countsAsWorking }
+                    .sumOf { volumeForSet(ex.weightType, it.toEntity(ex.workoutExerciseId), ex.bodyweightFactor) }
             }
             state.copy(volumeKg = volume)
         }
@@ -132,7 +159,7 @@ class ActiveWorkoutViewModel(
         actualReps = actualReps,
         weight = weight,
         restSecondsPlanned = restSecondsPlanned,
-        isWarmup = isWarmup,
+        setType = setType,
         completedAt = completedAt,
         isPR = isPR,
         bodyweightSnapshotKg = bodyweightSnapshotKg,
@@ -149,12 +176,17 @@ class ActiveWorkoutViewModel(
     private fun withSuggestions(
         sets: List<SessionSetUi>,
         fallbackWeight: Double?,
-        fallbackReps: Int?
+        fallbackReps: Int?,
+        weightType: WeightType
     ): List<SessionSetUi> {
-        var lastWeight: Double? = fallbackWeight
+        var lastWeight: Double? = if (weightType.usesDecimalField) fallbackWeight else null
         var lastReps: Int? = fallbackReps
         return sets.map { set ->
-            val suggestedWeight = set.previous?.weight ?: set.targetWeight ?: lastWeight
+            // Senza campo decimale in tabella non si propone nemmeno un carico: completare la
+            // serie scriverebbe un valore che l'utente non ha mai visto ne' potuto correggere.
+            // Sulla distanza il campo c'e', e quel che si propone sono i chilometri.
+            val suggestedWeight = if (!weightType.usesDecimalField) null
+            else set.previous?.weight ?: set.targetWeight ?: lastWeight
             val suggestedReps = set.previous?.actualReps ?: set.targetReps ?: lastReps
             lastWeight = set.weight ?: suggestedWeight ?: lastWeight
             lastReps = set.actualReps ?: suggestedReps ?: lastReps
@@ -175,7 +207,10 @@ class ActiveWorkoutViewModel(
     fun removeExercise(workoutExerciseId: Long) {
         viewModelScope.launch {
             repository.removeExercise(workoutExerciseId)
-            val remaining = _uiState.value.exercises.filterNot { it.workoutExerciseId == workoutExerciseId }
+            // Tolto un compagno, un superset rimasto da solo non e' piu' un superset.
+            val remaining = dissolveOrphanSupersets(
+                _uiState.value.exercises.filterNot { it.workoutExerciseId == workoutExerciseId }
+            )
             _uiState.update { it.copy(exercises = remaining) }
             persistExerciseOrder(remaining)
             recomputeVolume()
@@ -185,10 +220,15 @@ class ActiveWorkoutViewModel(
     fun moveExercise(workoutExerciseId: Long, delta: Int) {
         viewModelScope.launch {
             val current = _uiState.value.exercises
-            val index = current.indexOfFirst { it.workoutExerciseId == workoutExerciseId }
-            val targetIndex = index + delta
-            if (index < 0 || targetIndex !in current.indices) return@launch
-            val reordered = current.toMutableList().apply { add(targetIndex, removeAt(index)) }
+            // Un superset si sposta tutto insieme: vedi Superset.moveBlock.
+            val moved = Superset.moveBlock(
+                current.map { Superset.Member(it.workoutExerciseId, it.supersetGroup) },
+                workoutExerciseId,
+                delta
+            )
+            val byId = current.associateBy { it.workoutExerciseId }
+            val reordered = moved.mapNotNull { byId[it.id] }
+            if (reordered.map { it.workoutExerciseId } == current.map { it.workoutExerciseId }) return@launch
             _uiState.update { it.copy(exercises = reordered) }
             persistExerciseOrder(reordered)
         }
@@ -196,12 +236,33 @@ class ActiveWorkoutViewModel(
 
     private suspend fun persistExerciseOrder(exercises: List<SessionExerciseUi>) {
         val entities = exercises.mapIndexed { index, ex ->
-            WorkoutExerciseEntity(id = ex.workoutExerciseId, sessionId = sessionId, exerciseId = ex.exerciseId, order = index)
+            // La nota va riportata: qui si riscrive la riga intera, ometterla la cancellerebbe.
+            WorkoutExerciseEntity(
+                id = ex.workoutExerciseId,
+                sessionId = sessionId,
+                exerciseId = ex.exerciseId,
+                order = index,
+                notes = ex.notes,
+                supersetGroup = ex.supersetGroup
+            )
         }
         repository.reorderExercises(entities)
         _uiState.update { state ->
             state.copy(exercises = state.exercises.mapIndexed { index, ex -> ex.copy(order = index) })
         }
+    }
+
+    /** Nota dell'esercizio in sessione: tocca solo questo allenamento, non la routine. */
+    fun setExerciseNotes(workoutExerciseId: Long, notes: String?) {
+        val clean = notes?.trim()?.ifBlank { null }
+        _uiState.update { state ->
+            state.copy(
+                exercises = state.exercises.map { ex ->
+                    if (ex.workoutExerciseId == workoutExerciseId) ex.copy(notes = clean) else ex
+                }
+            )
+        }
+        viewModelScope.launch { repository.setExerciseNotes(workoutExerciseId, clean) }
     }
 
     fun addSet(workoutExerciseId: Long) {
@@ -219,14 +280,19 @@ class ActiveWorkoutViewModel(
         }
     }
 
-    /** Il recupero si imposta per esercizio e si propaga a tutte le sue serie non ancora svolte. */
+    /**
+     * Il recupero si imposta per esercizio e si propaga a tutte le sue serie non ancora svolte.
+     * Dentro un superset il recupero e' del giro, non del singolo esercizio: si scrive su tutti i
+     * compagni, altrimenti la durata dipenderebbe da chi chiude il giro.
+     */
     fun setRestSeconds(workoutExerciseId: Long, seconds: Int) {
         val exercise = _uiState.value.exercises.find { it.workoutExerciseId == workoutExerciseId } ?: return
         val safeSeconds = seconds.coerceIn(0, 600)
+        val targets = _uiState.value.exercises.filter { it.sharesRound(exercise) }
         _uiState.update { state ->
             state.copy(
                 exercises = state.exercises.map { ex ->
-                    if (ex.workoutExerciseId != workoutExerciseId) ex
+                    if (targets.none { it.workoutExerciseId == ex.workoutExerciseId }) ex
                     else ex.copy(
                         restSeconds = safeSeconds,
                         sets = ex.sets.map { if (it.completedAt == null) it.copy(restSecondsPlanned = safeSeconds) else it }
@@ -235,10 +301,72 @@ class ActiveWorkoutViewModel(
             )
         }
         viewModelScope.launch {
-            exercise.sets.filter { it.completedAt == null }.forEach { set ->
-                repository.updateSet(set.copy(restSecondsPlanned = safeSeconds).toEntity(workoutExerciseId))
+            targets.forEach { target ->
+                target.sets.filter { it.completedAt == null }.forEach { set ->
+                    repository.updateSet(
+                        set.copy(restSecondsPlanned = safeSeconds).toEntity(target.workoutExerciseId)
+                    )
+                }
             }
         }
+    }
+
+    /**
+     * Superset dell'esercizio: `group` null lo tira fuori dal giro. L'esercizio che entra in un
+     * giro si sposta accanto ai compagni e ne eredita il recupero — vedi [Superset.regroup].
+     */
+    fun setSupersetGroup(workoutExerciseId: Long, group: Int?) {
+        viewModelScope.launch {
+            val current = _uiState.value.exercises
+            val regrouped = Superset.regroup(
+                current.map { Superset.Member(it.workoutExerciseId, it.supersetGroup) },
+                workoutExerciseId,
+                group
+            )
+            val byId = current.associateBy { it.workoutExerciseId }
+            val reordered = regrouped.mapNotNull { member ->
+                byId[member.id]?.copy(supersetGroup = member.group)
+            }
+            _uiState.update { it.copy(exercises = reordered) }
+            persistExerciseOrder(reordered)
+            // Il giro ha un recupero solo: chi entra prende quello dei compagni.
+            if (group != null) {
+                reordered.firstOrNull { it.supersetGroup == group && it.workoutExerciseId != workoutExerciseId }
+                    ?.let { companion -> setRestSeconds(workoutExerciseId, companion.restSeconds) }
+            }
+        }
+    }
+
+    /** Numero di gruppo libero per un superset nuovo. */
+    fun nextSupersetGroup(): Int = Superset.nextGroup(_uiState.value.exercises.map { it.supersetGroup })
+
+    private fun dissolveOrphanSupersets(exercises: List<SessionExerciseUi>): List<SessionExerciseUi> {
+        val cleaned = Superset.dissolveOrphans(
+            exercises.map { Superset.Member(it.workoutExerciseId, it.supersetGroup) }
+        ).associateBy({ it.id }, { it.group })
+        return exercises.map { ex -> ex.copy(supersetGroup = cleaned[ex.workoutExerciseId]) }
+    }
+
+    /**
+     * Tipo della serie (riscaldamento, normale, cedimento, drop set). Cambiarlo su una serie gia'
+     * segnata la fa entrare o uscire dal volume, quindi il totale si ricalcola subito; il record
+     * gia' assegnato resta com'e' — passando a riscaldamento pero' decade, perche' un
+     * riscaldamento non fa PR.
+     */
+    fun setSetType(workoutExerciseId: Long, setId: Long, type: SetType) {
+        val exercise = _uiState.value.exercises.find { it.workoutExerciseId == workoutExerciseId } ?: return
+        val set = exercise.sets.find { it.id == setId } ?: return
+        val updated = set.copy(setType = type, isPR = set.isPR && type.countsAsWorking)
+        _uiState.update { state ->
+            state.copy(
+                exercises = state.exercises.map { ex ->
+                    if (ex.workoutExerciseId != workoutExerciseId) ex
+                    else ex.copy(sets = ex.sets.map { if (it.id == setId) updated else it })
+                }
+            )
+        }
+        recomputeVolume()
+        viewModelScope.launch { repository.updateSet(updated.toEntity(workoutExerciseId)) }
     }
 
     fun updateSetValues(workoutExerciseId: Long, setId: Long, actualReps: Int?, weight: Double?) {
@@ -255,7 +383,8 @@ class ActiveWorkoutViewModel(
                         sets = withSuggestions(
                             ex.sets.map { if (it.id == setId) updated else it },
                             ex.lastRecordedWeight,
-                            ex.lastRecordedReps
+                            ex.lastRecordedReps,
+                            ex.weightType
                         )
                     )
                 }
@@ -280,7 +409,11 @@ class ActiveWorkoutViewModel(
             val completed = repository.completeSet(filled.toEntity(workoutExerciseId), exercise.exerciseId, exercise.weightType)
             refreshSets(workoutExerciseId)
             feedback.haptic()
-            if (!completed.isWarmup) startRestTimer(completed.restSecondsPlanned)
+            // In un superset il recupero non spetta alla singola serie ma al giro: parte solo
+            // quando ogni compagno ha chiuso la sua serie di pari indice.
+            if (completed.setType.countsAsWorking && isRoundComplete(workoutExerciseId, set.setIndex)) {
+                startRestTimer(completed.restSecondsPlanned)
+            }
         }
     }
 
@@ -289,63 +422,90 @@ class ActiveWorkoutViewModel(
         viewModelScope.launch {
             val exercise = _uiState.value.exercises.find { it.workoutExerciseId == workoutExerciseId } ?: return@launch
             val set = exercise.sets.find { it.id == setId } ?: return@launch
-            repository.updateSet(set.copy(completedAt = null, isPR = false).toEntity(workoutExerciseId))
+            // Il recupero pianificato torna a quello dell'esercizio: setRestSeconds tocca solo le
+            // serie ancora da fare, quindi una serie riaperta si teneva il recupero di prima e
+            // rimarcandola faceva partire il timer con la durata vecchia.
+            repository.updateSet(
+                set.copy(
+                    completedAt = null,
+                    isPR = false,
+                    restSecondsPlanned = exercise.restSeconds
+                ).toEntity(workoutExerciseId)
+            )
             refreshSets(workoutExerciseId)
         }
     }
 
-    private fun startRestTimer(totalSeconds: Int) {
-        if (totalSeconds <= 0) return
-        timerJob?.cancel()
-        _uiState.update { it.copy(timer = TimerUi(totalSeconds, totalSeconds)) }
-        timerJob = viewModelScope.launch {
-            while (isActive) {
-                delay(1000)
-                val current = _uiState.value.timer ?: break
-                val next = current.remainingSeconds - 1
-                if (next <= 0) {
-                    _uiState.update { it.copy(timer = null) }
-                    feedback.restTimerFinished()
-                    break
-                }
-                _uiState.update { it.copy(timer = current.copy(remainingSeconds = next)) }
+    /**
+     * Il giro e' finito quando ogni esercizio del superset ha chiuso la serie di pari indice.
+     * I compagni con meno serie non lo bloccano: chi non ha quella serie non deve farla.
+     * Fuori da un superset il "giro" e' la singola serie, quindi e' sempre finito.
+     */
+    private fun isRoundComplete(workoutExerciseId: Long, setIndex: Int): Boolean {
+        val exercise = _uiState.value.exercises.find { it.workoutExerciseId == workoutExerciseId } ?: return true
+        if (exercise.supersetGroup == null) return true
+        return _uiState.value.exercises
+            .filter { it.supersetGroup == exercise.supersetGroup }
+            .all { companion ->
+                val set = companion.sets.getOrNull(setIndex) ?: return@all true
+                set.completedAt != null
             }
-        }
     }
 
-    fun adjustTimer(deltaSeconds: Int) {
-        val current = _uiState.value.timer ?: return
-        val next = current.remainingSeconds + deltaSeconds
-        if (next <= 0) {
-            skipTimer()
-        } else {
-            _uiState.update { it.copy(timer = current.copy(remainingSeconds = next, totalSeconds = maxOf(current.totalSeconds, next))) }
-        }
-    }
+    private fun startRestTimer(totalSeconds: Int) = restTimer.start(totalSeconds)
 
-    fun skipTimer() {
-        timerJob?.cancel()
-        _uiState.update { it.copy(timer = null) }
-    }
+    fun adjustTimer(deltaSeconds: Int) = restTimer.adjust(deltaSeconds)
 
-    fun finishWorkout(onFinished: () -> Unit) {
+    fun skipTimer() = restTimer.skip()
+
+    /**
+     * Chiude la sessione con la data e la durata confermate a fine allenamento: la fine si
+     * ricalcola dall'inizio scelto, cosi' storico e statistiche vedono l'allenamento nel giorno
+     * in cui e' stato fatto davvero.
+     *
+     * `onFinished` riceve `false` quando la sessione era senza esercizi: in quel caso e' stata
+     * eliminata e non c'e' nessun riepilogo da aprire.
+     */
+    fun finishWorkout(startTime: Long, durationSeconds: Int, onFinished: (saved: Boolean) -> Unit) {
         viewModelScope.launch {
             skipTimer()
-            repository.finishSession(sessionId)
+            val saved = repository.finishSession(
+                sessionId = sessionId,
+                startTime = startTime,
+                endTime = startTime + durationSeconds.coerceAtLeast(0) * 1000L
+            )
             _uiState.update { it.copy(isFinished = true) }
-            onFinished()
+            onFinished(saved)
         }
     }
 
-    override fun onCleared() {
-        timerJob?.cancel()
-        super.onCleared()
+    /**
+     * Annulla l'allenamento: la sessione viene eliminata, con le serie gia' registrate.
+     * E' l'uscita per l'allenamento aperto per sbaglio, distinta da "Termina" che invece salva.
+     */
+    fun cancelWorkout(onCancelled: () -> Unit) {
+        viewModelScope.launch {
+            skipTimer()
+            repository.cancelSession(sessionId)
+            onCancelled()
+        }
     }
+
+    // Niente onCleared che fermi il recupero: uscire dalla schermata lascia l'allenamento in
+    // corso, e il conto alla rovescia deve sopravvivere fino a "Termina" o "Annulla".
 
     private companion object {
         const val DEFAULT_REST_SECONDS = 90
     }
 }
+
+/**
+ * Esercizi che condividono il recupero: i compagni di superset, o il solo esercizio stesso se
+ * non e' in un giro.
+ */
+private fun SessionExerciseUi.sharesRound(other: SessionExerciseUi): Boolean =
+    if (other.supersetGroup == null) workoutExerciseId == other.workoutExerciseId
+    else supersetGroup == other.supersetGroup
 
 private fun SessionSetUi.toEntity(workoutExerciseId: Long) = SetEntryEntity(
     id = id,
@@ -355,7 +515,7 @@ private fun SessionSetUi.toEntity(workoutExerciseId: Long) = SetEntryEntity(
     actualReps = actualReps,
     weight = weight,
     restSecondsPlanned = restSecondsPlanned,
-    isWarmup = isWarmup,
+    setType = setType,
     completedAt = completedAt,
     isPR = isPR,
     bodyweightSnapshotKg = bodyweightSnapshotKg

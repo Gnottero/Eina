@@ -23,7 +23,7 @@ interface SetEntryDao {
         """
         SELECT se.* FROM set_entries se
         INNER JOIN workout_exercises we ON se.workoutExerciseId = we.id
-        WHERE we.exerciseId = :exerciseId AND se.isWarmup = 0 AND se.completedAt IS NOT NULL
+        WHERE we.exerciseId = :exerciseId AND se.setType != 'WARMUP' AND se.completedAt IS NOT NULL
         """
     )
     suspend fun getHistoricalSets(exerciseId: Long): List<SetEntryEntity>

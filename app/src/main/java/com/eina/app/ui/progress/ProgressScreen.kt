@@ -5,7 +5,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.BarChart
+import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.EmojiEvents
+import androidx.compose.material.icons.outlined.FitnessCenter
+import androidx.compose.material.icons.outlined.Repeat
 import androidx.compose.material.icons.outlined.MonitorWeight
 import androidx.compose.material.icons.outlined.Whatshot
 import androidx.compose.material3.MaterialTheme
@@ -15,9 +19,14 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
+import com.eina.app.R
 import com.eina.app.domain.PrRecord
 import com.eina.app.ui.components.HeatmapCalendar
 import com.eina.app.ui.components.IslandCard
+import com.eina.app.ui.components.IslandCardHeader
 import com.eina.app.ui.components.IslandEmptyState
 import com.eina.app.ui.components.IslandScreen
 import com.eina.app.ui.components.IslandSegmentedRow
@@ -29,36 +38,44 @@ import com.eina.app.ui.components.formatDecimal
 import com.eina.app.ui.components.formatPrValue
 import com.eina.app.ui.components.formatRelativeDay
 import com.eina.app.ui.components.formatVolume
+import com.eina.app.ui.components.weekDayInitials
+import com.eina.app.ui.library.localized
 import com.eina.app.ui.theme.EinaTheme
+import com.eina.app.ui.theme.MetricColors
 import com.eina.app.ui.theme.Spacing
 import org.koin.androidx.compose.koinViewModel
 
-private val dayInitials = listOf("L", "M", "M", "G", "V", "S", "D")
 
 @Composable
 fun ProgressScreen(
     onBodyWeightClick: () -> Unit = {},
+    onExerciseClick: (Long) -> Unit = {},
     viewModel: ProgressViewModel = koinViewModel()
 ) {
     val island = EinaTheme.island
+    val context = LocalContext.current
     val state by viewModel.uiState.collectAsState()
     val hasWeekVolume = state.weekVolumeByDay.any { it > 0f }
 
     IslandScreen(
         header = {
             ScreenHeader(
-                title = "Progressi",
+                title = stringResource(R.string.progress_title),
                 subtitle = if (state.totalSessions > 0) {
-                    "${state.totalSessions} sessioni · ${formatVolume(state.totalVolumeKg)} kg totali"
+                    stringResource(
+                        R.string.progress_subtitle,
+                        pluralStringResource(R.plurals.session_count, state.totalSessions, state.totalSessions),
+                        formatVolume(state.totalVolumeKg)
+                    )
                 } else {
-                    "Settimana corrente"
+                    stringResource(R.string.progress_current_week)
                 }
             )
         },
         verticalArrangement = Arrangement.spacedBy(Spacing.md)
     ) {
         IslandSegmentedRow(
-            items = dayInitials,
+            items = weekDayInitials(),
             secondaryLabels = state.weekDates.map { it.dayOfMonth.toString() },
             selectedIndex = state.selectedDayIndex,
             onSelect = viewModel::selectDay
@@ -69,39 +86,45 @@ fun ProgressScreen(
             horizontalArrangement = Arrangement.spacedBy(Spacing.md)
         ) {
             StatTile(
-                label = "Volume",
+                label = stringResource(R.string.stat_volume),
                 value = formatVolume(state.selectedDayVolumeKg),
-                unit = "kg",
+                unit = stringResource(R.string.unit_kg),
+                icon = Icons.Outlined.FitnessCenter,
+                tint = MetricColors.Volume,
                 modifier = Modifier.weight(1f)
             )
             StatTile(
-                label = "Serie",
+                label = stringResource(R.string.stat_sets),
                 value = state.selectedDaySets.toString(),
+                icon = Icons.Outlined.Repeat,
+                tint = MetricColors.Sets,
                 modifier = Modifier.weight(1f)
             )
         }
 
         IslandCard(modifier = Modifier.fillMaxWidth()) {
-            Text("Volume per giorno", style = MaterialTheme.typography.titleMedium)
-            Text(
-                text = if (hasWeekVolume) "Settimana corrente" else "Nessun dato ancora",
-                style = MaterialTheme.typography.bodyMedium,
-                color = island.textSecondary
+            IslandCardHeader(
+                title = stringResource(R.string.progress_volume_per_day),
+                icon = Icons.Outlined.BarChart,
+                tint = MetricColors.Volume,
+                subtitle = stringResource(
+                    if (hasWeekVolume) R.string.progress_current_week else R.string.dashboard_no_data
+                )
             )
             MiniBarChart(
                 values = state.weekVolumeByDay,
-                labels = dayInitials,
+                labels = weekDayInitials(),
                 highlightIndex = state.selectedDayIndex,
                 modifier = Modifier.fillMaxWidth()
             )
         }
 
         IslandCard(modifier = Modifier.fillMaxWidth()) {
-            Text("Costanza", style = MaterialTheme.typography.titleMedium)
-            Text(
-                text = "Ultime 18 settimane",
-                style = MaterialTheme.typography.bodyMedium,
-                color = island.textSecondary
+            IslandCardHeader(
+                title = stringResource(R.string.progress_consistency),
+                icon = Icons.Outlined.CalendarMonth,
+                tint = MetricColors.Streak,
+                subtitle = stringResource(R.string.progress_last_weeks, 18)
             )
             HeatmapCalendar(
                 valuesByDay = state.volumeByDay,
@@ -109,39 +132,43 @@ fun ProgressScreen(
             )
         }
 
-        SectionHeader(title = "Record personali")
+        SectionHeader(title = stringResource(R.string.progress_prs), tint = MetricColors.Records)
 
         if (state.personalRecords.isEmpty()) {
             IslandEmptyState(
-                title = "Ancora nessun PR",
-                description = "Completa le serie durante un allenamento: i nuovi record compaiono qui.",
+                title = stringResource(R.string.progress_pr_empty_title),
+                description = stringResource(R.string.progress_pr_empty_description),
                 icon = Icons.Outlined.EmojiEvents
             )
         } else {
             state.personalRecords.take(8).forEach { record ->
-                PrRow(record = record)
+                // Il record porta alla scheda dell'esercizio, dove c'e' il grafico della sua
+                // progressione: e' la domanda che viene subito dopo "quanto ho alzato".
+                PrRow(record = record, onClick = { onExerciseClick(record.exerciseId) })
             }
         }
 
-        SectionHeader(title = "Corpo")
+        SectionHeader(title = stringResource(R.string.progress_body), tint = MetricColors.Bodyweight)
 
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(Spacing.md)
         ) {
             StatTile(
-                label = "Peso",
+                label = stringResource(R.string.stat_weight),
                 value = state.latestBodyweightKg?.let { formatDecimal(it) } ?: "–",
-                unit = "kg",
+                unit = stringResource(R.string.unit_kg),
                 icon = Icons.Outlined.MonitorWeight,
+                tint = MetricColors.Bodyweight,
                 onClick = onBodyWeightClick,
                 modifier = Modifier.weight(1f)
             )
             StatTile(
-                label = "Streak",
-                value = state.streakDays.toString(),
-                unit = if (state.streakDays == 1) "giorno" else "giorni",
+                label = stringResource(R.string.stat_streak),
+                value = state.streakWeeks.toString(),
+                unit = pluralStringResource(R.plurals.week_count, state.streakWeeks, state.streakWeeks).substringAfter(' '),
                 icon = Icons.Outlined.Whatshot,
+                tint = MetricColors.Streak,
                 modifier = Modifier.weight(1f)
             )
         }
@@ -149,24 +176,25 @@ fun ProgressScreen(
 }
 
 @Composable
-private fun PrRow(record: PrRecord) {
+private fun PrRow(record: PrRecord, onClick: () -> Unit) {
     val island = EinaTheme.island
-    IslandCard(modifier = Modifier.fillMaxWidth()) {
+    val context = LocalContext.current
+    IslandCard(modifier = Modifier.fillMaxWidth(), onClick = onClick) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(Spacing.md)
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text(record.exerciseName, style = MaterialTheme.typography.titleSmall)
+                Text(record.exerciseName.localized(), style = MaterialTheme.typography.titleSmall)
                 Text(
-                    text = formatRelativeDay(record.achievedAt),
+                    text = context.formatRelativeDay(record.achievedAt),
                     style = MaterialTheme.typography.bodySmall,
                     color = island.textSecondary
                 )
             }
             Text(
-                text = formatPrValue(record),
+                text = context.formatPrValue(record),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.primary
             )

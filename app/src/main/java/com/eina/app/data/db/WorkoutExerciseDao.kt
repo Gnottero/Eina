@@ -5,7 +5,6 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
-import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface WorkoutExerciseDao {
@@ -15,11 +14,11 @@ interface WorkoutExerciseDao {
     @Update
     suspend fun update(workoutExercise: WorkoutExerciseEntity)
 
+    @Query("SELECT * FROM workout_exercises WHERE id = :workoutExerciseId")
+    suspend fun getById(workoutExerciseId: Long): WorkoutExerciseEntity?
+
     @Query("DELETE FROM workout_exercises WHERE id = :workoutExerciseId")
     suspend fun deleteById(workoutExerciseId: Long)
-
-    @Query("SELECT * FROM workout_exercises WHERE sessionId = :sessionId ORDER BY `order` ASC")
-    fun getForSession(sessionId: Long): Flow<List<WorkoutExerciseEntity>>
 
     @Query("SELECT * FROM workout_exercises WHERE sessionId = :sessionId ORDER BY `order` ASC")
     suspend fun getForSessionOnce(sessionId: Long): List<WorkoutExerciseEntity>

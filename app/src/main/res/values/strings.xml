@@ -1,8 +1,430 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  Lingua di default: inglese. L'italiano vive in values-it, il francese in values-fr.
+  Un dispositivo con una lingua non coperta ricade qui invece che su una traduzione a caso.
+-->
 <resources>
-    <string name="app_name">Eina</string>
+    <string name="app_name" translatable="false">Eina</string>
+
+    <!-- Navigazione -->
     <string name="nav_dashboard">Dashboard</string>
-    <string name="nav_workout">Allena</string>
-    <string name="nav_library">Esercizi</string>
-    <string name="nav_progress">Progressi</string>
+    <string name="nav_workout">Train</string>
+    <string name="nav_library">Exercises</string>
+    <string name="nav_progress">Progress</string>
+
+    <!-- Azioni ricorrenti -->
+    <string name="action_back">Back</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_save">Save</string>
+    <string name="action_done">Done</string>
+    <string name="action_continue">Continue</string>
+    <string name="action_more">More</string>
+    <string name="action_add_exercise">Add exercise</string>
+    <string name="action_remove_exercise">Remove exercise</string>
+    <string name="loading">Loading…</string>
+    <string name="unit_kg" translatable="false">kg</string>
+    <string name="unit_reps_value">%1$d reps</string>
+
+    <!-- Etichette metriche condivise -->
+    <string name="stat_duration">Duration</string>
+    <string name="stat_volume">Volume</string>
+    <string name="stat_sets">Sets</string>
+    <string name="stat_weight">Weight</string>
+    <string name="stat_streak">Streak</string>
+
+    <!-- Date relative -->
+    <string name="date_today">Today</string>
+    <string name="date_yesterday">Yesterday</string>
+
+    <!-- Dashboard -->
+    <string name="dashboard_title">Dashboard</string>
+    <string name="dashboard_settings">Settings</string>
+    <string name="dashboard_week">Week</string>
+    <string name="dashboard_ring_label">Days trained</string>
+    <string name="dashboard_ring_total">of 7</string>
+    <string name="dashboard_hero_week">This week</string>
+    <string name="dashboard_weekly_volume">Weekly volume</string>
+    <string name="dashboard_weekly_volume_value">%1$s kg lifted this week</string>
+    <string name="dashboard_no_data">No data yet</string>
+    <string name="dashboard_recent">Recent workouts</string>
+    <string name="dashboard_history">History</string>
+    <string name="dashboard_empty_title">No workouts recorded</string>
+    <string name="dashboard_empty_description">Start a session: the summary of your last one will show up here, with sets, volume and PRs.</string>
+    <string name="dashboard_start_workout">Start workout</string>
+
+    <!-- Allena -->
+    <string name="workout_title">Train</string>
+    <string name="workout_subtitle">Go freestyle or follow a routine</string>
+    <string name="workout_new_routine">New routine</string>
+    <string name="workout_in_progress_title">Workout in progress</string>
+    <string name="workout_in_progress_description">You have an open session. Resume it or finish it to start a new one.</string>
+    <string name="workout_resume">Resume workout</string>
+    <string name="workout_free_title">Free workout</string>
+    <string name="workout_free_description">Add exercises as you go, no planning needed.</string>
+    <string name="workout_start_now">Start now</string>
+    <string name="workout_your_routines">Your routines</string>
+    <string name="workout_free_name">Free workout</string>
+
+    <!-- Routine -->
+    <string name="routine_empty_title">No routines</string>
+    <string name="routine_empty_description">Create a routine to have sets, reps and rest ready to go.</string>
+    <string name="routine_unnamed">Unnamed routine</string>
+    <string name="routine_start_cd">Start %1$s</string>
+    <string name="routine_edit">Edit routine</string>
+    <string name="routine_delete">Delete routine</string>
+    <string name="routine_delete_description">Recorded workouts stay in your history</string>
+    <string name="routine_delete_confirm_title">Delete \"%1$s\"?</string>
+    <string name="routine_delete_confirm_text">The routine and its planned exercises will be removed.</string>
+    <string name="routine_no_exercises">No exercises</string>
+    <plurals name="exercise_count">
+        <item quantity="one">%d exercise</item>
+        <item quantity="other">%d exercises</item>
+    </plurals>
+    <plurals name="set_count">
+        <item quantity="one">%d set</item>
+        <item quantity="other">%d sets</item>
+    </plurals>
+    <plurals name="session_count">
+        <item quantity="one">%d session</item>
+        <item quantity="other">%d sessions</item>
+    </plurals>
+    <plurals name="week_count">
+        <item quantity="one">%d week</item>
+        <item quantity="other">%d weeks</item>
+    </plurals>
+    <plurals name="pr_count">
+        <item quantity="one">%d PR</item>
+        <item quantity="other">%d PRs</item>
+    </plurals>
+
+    <!-- Editor routine -->
+    <string name="routine_editor_new_title">New routine</string>
+    <string name="routine_editor_title">Routine</string>
+    <string name="field_routine_name">Routine name</string>
+    <string name="field_notes">Notes (optional)</string>
+    <string name="routine_playlist">Playlist</string>
+    <string name="field_playlist_link">Playlist link (optional)</string>
+    <string name="routine_playlist_hint">The playlist starts from the workout screen.</string>
+    <string name="section_exercises">Exercises</string>
+    <string name="routine_editor_empty_title">No exercises</string>
+    <string name="routine_editor_empty_description">Add exercises and set target sets, reps, weight and rest.</string>
+    <string name="action_save_routine">Save routine</string>
+    <string name="field_sets">Sets</string>
+    <string name="field_reps">Reps</string>
+    <string name="field_seconds">Sec</string>
+    <string name="field_kg">Kg</string>
+    <string name="rest_label">Rest %1$s</string>
+    <string name="note_add">Add note</string>
+    <string name="note_edit">Edit note</string>
+    <string name="note_sheet_title">Note on %1$s</string>
+    <string name="field_note">Note</string>
+    <string name="action_save_note">Save note</string>
+    <string name="rest_description_routine">Rest suggested between sets of this exercise.</string>
+    <string name="playlist_service">Service</string>
+    <string name="playlist_none">No playlist</string>
+
+    <!-- Allenamento in corso -->
+    <string name="active_title">Workout in progress</string>
+    <string name="active_empty_title">Empty session</string>
+    <string name="active_empty_description">Add your first exercise to start logging sets.</string>
+    <string name="active_exit_cd">Leave without finishing</string>
+    <string name="active_play_playlist_cd">Play playlist</string>
+    <string name="active_playlist_error">No app available to open the playlist.</string>
+    <string name="active_finish">Finish workout</string>
+    <string name="active_cancel">Cancel workout</string>
+    <string name="active_finish_confirm_title">Finish the workout?</string>
+    <string name="active_finish_confirm_text">The session will be closed and saved to your history.</string>
+    <string name="active_finish_confirm_text_empty">This session has no exercises, so it will be discarded instead of saved to your history.</string>
+    <string name="active_finish_confirm_action">Finish</string>
+    <string name="active_cancel_confirm_title">Cancel the workout?</string>
+    <string name="active_cancel_confirm_text">The session and every set logged so far will be deleted. It won\'t reach your history.</string>
+    <!-- Bottone del dialogo, largo mezza riga: l'etichetta lunga ci veniva tagliata. -->
+    <string name="active_cancel_confirm_action">Delete</string>
+    <string name="active_add_set">+ Add set</string>
+    <string name="active_add_set_action">Add set</string>
+    <string name="active_undo_set_cd">Undo set</string>
+    <string name="active_open_exercise">Open exercise sheet</string>
+    <string name="active_move_up">Move up</string>
+    <string name="active_move_down">Move down</string>
+    <string name="active_remove_exercise_description">Also deletes the sets logged here</string>
+    <string name="active_set_sheet_title">Set %1$d</string>
+    <string name="active_set_sheet_title_generic">Set</string>
+    <string name="active_delete_set">Delete set</string>
+    <string name="active_rest_apply_description">Applies to every set of this exercise not done yet.</string>
+    <string name="active_add_exercise_sheet_title">Add exercise</string>
+    <string name="active_library_empty">No exercises in your library.</string>
+    <string name="active_search_empty">No exercise found. Change the filter or search another name.</string>
+    <string name="table_set">Set</string>
+    <string name="table_previous">Prev.</string>
+    <string name="table_kg">Kg</string>
+    <string name="table_reps">Reps</string>
+    <string name="table_seconds">Sec</string>
+    <string name="table_km" translatable="false">Km</string>
+    <string name="table_minutes">Min</string>
+
+    <!-- Tipo di serie -->
+    <string name="set_type_title">Set type</string>
+    <string name="set_type_cd">Change set type</string>
+    <string name="set_type_warmup">Warm-up</string>
+    <string name="set_type_warmup_description">Out of volume, PRs and rest timer.</string>
+    <string name="set_type_normal">Normal</string>
+    <string name="set_type_normal_description">A working set, numbered.</string>
+    <string name="set_type_failure">To failure</string>
+    <string name="set_type_failure_description">Taken to the last rep you could do.</string>
+    <string name="set_type_drop">Drop set</string>
+    <string name="set_type_drop_description">Load dropped, reps carried on without rest.</string>
+
+    <!-- Superset -->
+    <string name="superset_title">Superset</string>
+    <string name="superset_badge">Superset %1$s</string>
+    <string name="superset_description">%1$s runs in a round with the other exercises of the superset. Rest starts only once the whole round is done.</string>
+    <string name="superset_new">New superset</string>
+    <string name="superset_new_description">Starts a round with this exercise. Add another one to it.</string>
+    <string name="superset_leave">Out of the superset</string>
+    <string name="superset_action">Superset</string>
+    <string name="superset_action_none">Not in a superset</string>
+    <string name="superset_rest_description">Applies to every exercise of the superset.</string>
+
+    <!-- Timer di recupero -->
+    <string name="timer_rest">Rest</string>
+    <string name="timer_minus_15" translatable="false">-15s</string>
+    <string name="timer_plus_15" translatable="false">+15s</string>
+    <string name="timer_skip">Skip rest</string>
+    <string name="rest_time_title">Rest time</string>
+    <string name="rest_none">No rest: the next set starts right away.</string>
+    <string name="rest_set_to">Rest set to %1$s.</string>
+    <string name="wheel_min">min</string>
+    <string name="wheel_sec">sec</string>
+
+    <!-- Storico -->
+    <string name="history_title">History</string>
+    <string name="history_none">No workouts</string>
+    <plurals name="history_count">
+        <item quantity="one">%d workout recorded</item>
+        <item quantity="other">%d workouts recorded</item>
+    </plurals>
+    <string name="history_empty_title">No workouts recorded</string>
+    <string name="history_empty_description">Completed sessions show up here, most recent first.</string>
+
+    <!-- Dettaglio sessione -->
+    <string name="session_completed">Completed</string>
+    <string name="session_fallback_title">Workout</string>
+    <string name="session_share_cd">Share workout</string>
+    <string name="session_share_text">Workout tracked with Eina</string>
+    <string name="session_empty_title">Session with no completed sets</string>
+    <string name="session_empty_description">This workout has no sets logged.</string>
+    <string name="session_streak_start">Your streak starts here: train again next week.</string>
+    <string name="session_streak_ongoing">Streak going. Come back next week to keep it.</string>
+    <plurals name="session_streak_weeks">
+        <item quantity="one">%d week streak</item>
+        <item quantity="other">%d weeks streak</item>
+    </plurals>
+    <string name="badge_pr" translatable="false">PR</string>
+    <string name="session_preview_cd">Workout summary</string>
+    <string name="share_chooser_title">Share workout</string>
+
+    <!-- Libreria esercizi -->
+    <string name="library_title">Exercises</string>
+    <string name="library_new_exercise">New exercise</string>
+    <string name="library_search">Search exercise</string>
+    <string name="library_empty_title">No exercise found</string>
+    <string name="library_empty_description">Change the filter or search another name.</string>
+    <string name="exercise_description">Description</string>
+    <string name="exercise_how_to_log">How to log it</string>
+
+    <!-- Nuovo esercizio -->
+    <string name="create_exercise_title">New exercise</string>
+    <string name="create_exercise_subtitle">It will work like any library exercise</string>
+    <string name="field_name">Name</string>
+    <string name="field_description">Description</string>
+    <string name="field_how_to_log">How to log it</string>
+    <string name="field_equipment">Equipment (optional)</string>
+    <string name="field_weight_type">Load type</string>
+    <string name="create_primary_muscles">Primary muscles</string>
+    <string name="create_secondary_muscles">Secondary muscles (optional)</string>
+    <string name="create_media">GIF / image</string>
+    <string name="create_pick_gallery">Pick from gallery</string>
+    <string name="create_save">Save exercise</string>
+    <string name="error_media_copy">Image not copied: try again or pick another one.</string>
+    <string name="error_no_gallery">No app on this phone can pick images.</string>
+
+    <!-- Tipi di carico -->
+    <string name="weight_type_free_weight">Free weight</string>
+    <string name="weight_type_bodyweight">Bodyweight</string>
+    <string name="weight_type_bodyweight_plus_load">Bodyweight + added load</string>
+    <string name="weight_type_assisted">Assisted</string>
+    <string name="weight_type_machine_stack">Weight stack machine</string>
+    <string name="weight_type_time_based">Time based</string>
+    <string name="weight_type_distance_based">Distance based</string>
+
+    <!-- Come registrare, per tipo di carico -->
+    <string name="logging_free_weight">Enter the total weight lifted (bar + plates, or the number printed on the dumbbell/kettlebell).</string>
+    <string name="logging_bodyweight">Your body is the load: nothing to enter, your last recorded body weight is used.</string>
+    <string name="logging_bodyweight_plus_load">Enter the added load only: your body weight is summed automatically.</string>
+    <string name="logging_assisted">Enter the assistance the machine or band takes off: it is subtracted from your body weight.</string>
+    <string name="logging_machine_stack">Enter the weight shown on the machine stack.</string>
+    <string name="logging_time_based">Enter the duration in seconds instead of the reps.</string>
+    <string name="logging_distance_based">Enter the distance in kilometres and the time in minutes: the record looks at both.</string>
+
+    <!-- Categorie muscolari -->
+    <string name="muscle_category_chest_push">Chest/Push</string>
+    <string name="muscle_category_back_pull">Back/Pull</string>
+    <string name="muscle_category_legs">Legs</string>
+    <string name="muscle_category_shoulders">Shoulders</string>
+    <string name="muscle_category_arms">Arms</string>
+    <string name="muscle_category_core">Core</string>
+    <string name="muscle_category_other">Other</string>
+
+    <!-- Muscoli del dataset -->
+    <string name="muscle_chest">Chest</string>
+    <string name="muscle_lats">Lats</string>
+    <string name="muscle_middle_back">Middle back</string>
+    <string name="muscle_lower_back">Lower back</string>
+    <string name="muscle_traps">Traps</string>
+    <string name="muscle_neck">Neck</string>
+    <string name="muscle_shoulders">Shoulders</string>
+    <string name="muscle_biceps">Biceps</string>
+    <string name="muscle_triceps">Triceps</string>
+    <string name="muscle_forearms">Forearms</string>
+    <string name="muscle_abdominals">Abs</string>
+    <string name="muscle_quadriceps">Quads</string>
+    <string name="muscle_hamstrings">Hamstrings</string>
+    <string name="muscle_calves">Calves</string>
+    <string name="muscle_glutes">Glutes</string>
+    <string name="muscle_adductors">Adductors</string>
+    <string name="muscle_abductors">Abductors</string>
+
+    <!-- Attrezzatura del dataset -->
+    <string name="equipment_barbell">Barbell</string>
+    <string name="equipment_dumbbell">Dumbbell</string>
+    <string name="equipment_cable">Cable</string>
+    <string name="equipment_machine">Machine</string>
+    <string name="equipment_body_only">Bodyweight</string>
+    <string name="equipment_kettlebells">Kettlebell</string>
+    <string name="equipment_bands">Bands</string>
+    <string name="equipment_medicine_ball">Medicine ball</string>
+    <string name="equipment_exercise_ball">Exercise ball</string>
+    <string name="equipment_foam_roll">Foam roller</string>
+    <string name="equipment_ez_curl_bar">EZ curl bar</string>
+    <string name="equipment_other">Other</string>
+
+    <!-- Progressi -->
+    <string name="progress_title">Progress</string>
+    <string name="progress_subtitle">%1$s · %2$s kg total</string>
+    <string name="progress_current_week">Current week</string>
+    <string name="progress_volume_per_day">Volume per day</string>
+    <string name="progress_consistency">Consistency</string>
+    <string name="progress_last_weeks">Last %1$d weeks</string>
+    <string name="progress_prs">Personal records</string>
+    <string name="progress_pr_empty_title">No PRs yet</string>
+    <string name="progress_pr_empty_description">Complete sets during a workout: new records show up here.</string>
+    <string name="progress_body">Body</string>
+
+    <!-- Peso corporeo -->
+    <string name="bodyweight_title">Body weight</string>
+    <string name="bodyweight_subtitle_last">Last measurement %1$s kg</string>
+    <string name="bodyweight_subtitle_none">No measurement recorded</string>
+    <string name="bodyweight_new">New measurement</string>
+    <string name="bodyweight_trend">Trend</string>
+    <string name="bodyweight_first">First measurement recorded</string>
+    <string name="bodyweight_history">Measurement history</string>
+    <string name="bodyweight_empty_title">No measurements</string>
+    <string name="bodyweight_empty_description">Log your weight: it is used to compute volume and PRs for bodyweight exercises.</string>
+    <string name="bodyweight_delete_cd">Delete measurement</string>
+
+    <!-- Impostazioni -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_subtitle">Language, feedback and app behaviour</string>
+    <string name="settings_section_language">Language</string>
+    <string name="settings_language_title">App language</string>
+    <string name="settings_language_description">Interface and exercise descriptions. Descriptions fall back to English where a translation is missing.</string>
+    <string name="language_system">System</string>
+    <string name="language_english" translatable="false">English</string>
+    <string name="language_italian" translatable="false">Italiano</string>
+    <string name="language_french" translatable="false">Français</string>
+    <string name="settings_section_timer">Rest timer</string>
+    <string name="settings_sound_title">Sound when rest ends</string>
+    <string name="settings_sound_description">Plays a short alert when the timer hits zero.</string>
+    <string name="settings_vibration_title">Vibration when rest ends</string>
+    <string name="settings_vibration_description">Double buzz when the timer runs out.</string>
+    <string name="settings_section_haptics">Haptic feedback</string>
+    <string name="settings_haptics_title">Vibration on controls</string>
+    <string name="settings_haptics_description">A micro-buzz on every tap: buttons, chips, menus and set checks.</string>
+    <string name="settings_section_support">Support Eina</string>
+    <string name="settings_donate_title">Buy me a coffee</string>
+    <string name="settings_donate_description">Eina stays free and account-free: donating is voluntary and unlocks nothing.</string>
+    <string name="settings_section_data">Data</string>
+    <string name="settings_clear_title">Clear your history</string>
+    <string name="settings_clear_description">Deletes every recorded workout, sets included. Routines, exercises and body weight stay.</string>
+    <string name="settings_clear_button">Clear workout history</string>
+    <string name="settings_clear_confirm_title">Clear the whole history?</string>
+    <string name="settings_clear_confirm_text">Every recorded workout will be deleted. This cannot be undone.</string>
+    <string name="settings_section_info">Info</string>
+    <string name="info_version">Version</string>
+    <string name="info_privacy">Privacy</string>
+    <string name="info_privacy_value">No account, no server, no data leaving your phone.</string>
+    <string name="info_library">Exercise library</string>
+    <string name="info_library_value">Data from free-exercise-db (Unlicense), adapted for Eina.</string>
+    <string name="info_icons">Icons</string>
+    <string name="info_icons_value">Material Symbols (Apache License 2.0).</string>
+    <string name="info_font">Font</string>
+    <string name="info_font_value">Inter by Rasmus Andersson (SIL Open Font License 1.1).</string>
+
+    <!-- Card condivisibile (disegnata su Canvas, tutta maiuscola) -->
+    <string name="share_card_duration">DURATION</string>
+    <string name="share_card_volume">VOLUME</string>
+    <string name="share_card_sets">SETS</string>
+    <string name="share_card_pr" translatable="false">PR</string>
+    <string name="share_title">Share</string>
+    <string name="share_transparent_toggle">Transparent background</string>
+    <string name="share_transparent_hint">1. Save the overlay. 2. Open Instagram Stories and pick your background photo. 3. Add the saved image as a sticker, or paste it if you copied it.</string>
+    <string name="share_save_and_open">Save and open Instagram</string>
+    <string name="share_saved">Saved to Pictures/Eina</string>
+    <string name="share_save_failed">Could not save the image</string>
+    <string name="share_copied">Image copied to the clipboard</string>
+    <string name="share_permission_needed">Allow access to your photos to save the overlay</string>
+    <string name="share_instagram_missing">Instagram is not installed</string>
+    <string name="exercise_animation_cd">Exercise movement</string>
+    <string name="wheel_hour">h</string>
+    <string name="finish_date">Date</string>
+    <string name="finish_date_today">Today</string>
+    <string name="finish_date_yesterday">Yesterday</string>
+    <string name="finish_date_pick">Another date</string>
+    <string name="calendar_previous_month">Previous month</string>
+    <string name="calendar_next_month">Next month</string>
+    <string name="finish_duration">Duration</string>
+    <string name="routine_export">Export routine</string>
+    <string name="routine_export_description">Save it as a file to send to someone</string>
+    <string name="routine_export_failed">Could not export the routine</string>
+    <string name="routine_import">Import routine</string>
+    <string name="routine_import_done">Routine imported</string>
+    <string name="routine_import_failed">This file is not an Eina routine</string>
+    <string name="history_session_sheet_title">Workout</string>
+    <string name="history_delete_session">Delete workout</string>
+    <string name="history_delete_session_description">Removes it from history along with its sets</string>
+    <string name="history_delete_confirm_title">Delete this workout?</string>
+    <string name="history_delete_confirm_text">The workout and its recorded sets will be gone for good.</string>
+    <string name="library_delete_exercise">Delete exercise</string>
+    <string name="library_delete_exercise_description">Only exercises you added or imported</string>
+    <string name="library_delete_confirm_title">Delete \"%1$s\"?</string>
+    <string name="library_delete_confirm_text">The exercise leaves the library for good.</string>
+    <string name="library_delete_blocked">This exercise is still used by a routine or a recorded workout</string>
+
+    <!-- Cronometro (Fase 27) -->
+    <string name="stopwatch_title">Stopwatch</string>
+    <string name="stopwatch_open_cd">Open the stopwatch</string>
+    <string name="stopwatch_start">Start</string>
+    <string name="stopwatch_pause">Pause</string>
+    <string name="stopwatch_resume">Resume</string>
+    <string name="stopwatch_reset">Reset</string>
+
+    <!-- Progressione dell'esercizio (Fase 27) -->
+    <string name="exercise_progress_title">Progression</string>
+    <string name="exercise_progress_empty">No set recorded yet: the chart shows up after the first workout with this exercise.</string>
+    <string name="exercise_progress_weight">Weight (kg)</string>
+    <string name="exercise_progress_reps">Reps</string>
+    <string name="exercise_progress_seconds">Seconds</string>
+    <string name="exercise_progress_distance">Distance (km)</string>
+    <string name="exercise_progress_minutes">Minutes</string>
 </resources>

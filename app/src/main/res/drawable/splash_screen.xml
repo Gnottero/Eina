@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  windowBackground dell'app. Sotto Android 12 e' il primo fotogramma, quello che il sistema
+  disegna prima ancora che l'Activity esista, quindi l'avvio mostra subito marchio e nome invece
+  di un bianco vuoto (da Android 12 lo stesso lavoro lo fa la splash di sistema, vedi
+  values-v31/themes.xml). Resta dietro al contenuto per tutta la vita dell'app, ma il contenuto
+  e' opaco e lo copre.
+-->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@android:color/white" />
+    <item
+        android:drawable="@drawable/ic_eina_splash_mark"
+        android:gravity="center"
+        android:width="200dp"
+        android:height="200dp" />
+</layer-list>

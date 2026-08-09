@@ -1,6 +1,7 @@
 package com.eina.app.domain
 
 import com.eina.app.data.db.SetEntryEntity
+import com.eina.app.data.db.SetType
 import com.eina.app.data.db.WeightType
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -12,7 +13,7 @@ class PrCalculatorTest {
     private fun set(
         weight: Double? = null,
         actualReps: Int? = null,
-        isWarmup: Boolean = false,
+        setType: SetType = SetType.NORMAL,
         bodyweightSnapshotKg: Double? = null
     ) = SetEntryEntity(
         workoutExerciseId = 1,
@@ -20,13 +21,13 @@ class PrCalculatorTest {
         actualReps = actualReps,
         weight = weight,
         restSecondsPlanned = 60,
-        isWarmup = isWarmup,
+        setType = setType,
         bodyweightSnapshotKg = bodyweightSnapshotKg
     )
 
     @Test
     fun `warmup set is never a PR`() {
-        val newSet = set(weight = 100.0, isWarmup = true)
+        val newSet = set(weight = 100.0, setType = SetType.WARMUP)
         assertFalse(isNewPR(WeightType.FREE_WEIGHT, newSet, emptyList()))
     }
 
@@ -80,7 +81,16 @@ class PrCalculatorTest {
     }
 
     @Test
-    fun `volume bodyweight plus load sums snapshot and added weight`() {
+    fun `volume bodyweight scales with the exercise factor`() {
+        val s = set(bodyweightSnapshotKg = 75.0, actualReps = 10)
+        // Crunch: il corpo non viene sollevato, quindi niente volume per quante se ne facciano.
+        assertEquals(0.0, volumeForSet(WeightType.BODYWEIGHT, s, bodyweightFactor = 0.0), 0.0)
+        // Piegamenti: sulle braccia grava circa il 64% del peso.
+        assertEquals(480.0, volumeForSet(WeightType.BODYWEIGHT, s, bodyweightFactor = 0.64), 0.0)
+    }
+
+    @Test
+    fun `volume bodyweight plus load sums lifted bodyweight and added weight`() {
         val s = set(bodyweightSnapshotKg = 75.0, weight = 10.0, actualReps = 8)
         assertEquals(680.0, volumeForSet(WeightType.BODYWEIGHT_PLUS_LOAD, s), 0.0)
     }
@@ -98,5 +108,29 @@ class PrCalculatorTest {
     fun `volume time based is always zero`() {
         val s = set(actualReps = 120)
         assertEquals(0.0, volumeForSet(WeightType.TIME_BASED, s), 0.0)
+    }
+
+    @Test
+    fun `distance PR on a longer run`() {
+        val history = listOf(set(weight = 5.0, actualReps = 30))
+        assertTrue(isNewPR(WeightType.DISTANCE_BASED, set(weight = 6.0, actualReps = 40), history))
+        assertFalse(isNewPR(WeightType.DISTANCE_BASED, set(weight = 4.0, actualReps = 30), history))
+    }
+
+    @Test
+    fun `distance PR on the same run done faster`() {
+        val history = listOf(set(weight = 5.0, actualReps = 30))
+        assertTrue(isNewPR(WeightType.DISTANCE_BASED, set(weight = 5.0, actualReps = 25), history))
+        assertFalse(isNewPR(WeightType.DISTANCE_BASED, set(weight = 5.0, actualReps = 35), history))
+    }
+
+    @Test
+    fun `distance set without distance is never a PR`() {
+        assertFalse(isNewPR(WeightType.DISTANCE_BASED, set(actualReps = 30), emptyList()))
+    }
+
+    @Test
+    fun `distance volume stays out of the kg total`() {
+        assertEquals(0.0, volumeForSet(WeightType.DISTANCE_BASED, set(weight = 5.0, actualReps = 30)), 0.0)
     }
 }

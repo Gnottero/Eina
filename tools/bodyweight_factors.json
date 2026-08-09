@@ -1,0 +1,37 @@
+{
+  "_nota": "Frazione del peso corporeo che l'esercizio solleva davvero, usata da volumeForSet per il volume in kg. 0 = il corpo non viene sollevato contro gravita' (addominali, glute kickback): quegli esercizi non devono gonfiare il totale della sessione. 1 = il corpo sale tutto (trazioni, dip). I valori intermedi sono le stime d'uso comune sulla quota di carico che grava sugli arti che spingono. Serve solo per weightType BODYWEIGHT / BODYWEIGHT_PLUS_LOAD / ASSISTED; curate_exercises.py si ferma se uno di questi esercizi non e' elencato qui.",
+
+  "Pullups": 1.0,
+  "Chin-Up": 1.0,
+  "Weighted Pull Ups": 1.0,
+  "Band Assisted Pull-Up": 1.0,
+  "Dips - Triceps Version": 1.0,
+  "Handstand Push-Ups": 0.9,
+
+  "Push-Ups With Feet Elevated": 0.75,
+  "Pushups": 0.64,
+  "Incline Push-Up": 0.55,
+  "Bodyweight Squat": 0.6,
+  "Bodyweight Walking Lunge": 0.6,
+  "Freehand Jump Squat": 0.6,
+  "Step-up with Knee Raise": 0.6,
+  "Inverted Row": 0.5,
+  "Bench Dips": 0.4,
+  "Single Leg Glute Bridge": 0.35,
+  "Butt Lift (Bridge)": 0.3,
+
+  "Crunches": 0.0,
+  "Weighted Crunches": 0.0,
+  "Decline Crunch": 0.0,
+  "Reverse Crunch": 0.0,
+  "Sit-Up": 0.0,
+  "Air Bike": 0.0,
+  "Dead Bug": 0.0,
+  "Hanging Leg Raise": 0.0,
+  "Flat Bench Lying Leg Raise": 0.0,
+  "Plank": 0.0,
+  "Side Bridge": 0.0,
+  "Russian Twist": 0.0,
+  "Mountain Climbers": 0.0,
+  "Glute Kickback": 0.0
+}

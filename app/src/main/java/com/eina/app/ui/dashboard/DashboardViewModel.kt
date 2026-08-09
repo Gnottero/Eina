@@ -9,17 +9,21 @@ import com.eina.app.domain.epochMillisToLocalDate
 import com.eina.app.domain.summarizeSessions
 import com.eina.app.domain.trainingDays
 import com.eina.app.domain.volumeByDay
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import java.time.LocalDate
 
 data class DashboardUiState(
     val weekSessions: Int = 0,
+    /** Giorni distinti allenati nella settimana in corso: e' quello che riempie l'anello. */
+    val weekDaysTrained: Int = 0,
     val weekVolumeKg: Double = 0.0,
     val weekVolumeByDay: List<Float> = List(7) { 0f },
-    val streakDays: Int = 0,
+    val streakWeeks: Int = 0,
     val lastSession: SessionSummary? = null,
     val recentSessions: List<SessionSummary> = emptyList()
 )
@@ -38,14 +42,23 @@ class DashboardViewModel(repository: StatsRepository) : ViewModel() {
 
             DashboardUiState(
                 weekSessions = weekSessions.size,
+                // Due sessioni nello stesso giorno riempiono un settore solo: l'anello conta i
+                // giorni, non gli allenamenti, altrimenti si chiuderebbe in una domenica sola.
+                weekDaysTrained = weekSessions
+                    .map { epochMillisToLocalDate(it.startTime) }
+                    .distinct()
+                    .size,
                 weekVolumeKg = weekSessions.sumOf { it.volumeKg },
                 weekVolumeByDay = (0..6).map { offset ->
                     (volumePerDay[startOfWeek.plusDays(offset.toLong())] ?: 0.0).toFloat()
                 },
-                streakDays = currentStreak(trainingDays(rows), today),
+                streakWeeks = currentStreak(trainingDays(rows), today),
                 lastSession = sessions.firstOrNull(),
                 recentSessions = sessions.take(5)
             )
         }
+        // Il riepilogo si ricalcola su tutto lo storico a ogni emissione: fuori dal thread
+        // della UI, altrimenti con molte sessioni l'aggiornamento si sente.
+        .flowOn(Dispatchers.Default)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DashboardUiState())
 }

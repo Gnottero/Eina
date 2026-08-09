@@ -18,7 +18,7 @@ data class SetEntryEntity(
     val actualReps: Int? = null,        // per TIME_BASED: durata in secondi
     val weight: Double? = null,
     val restSecondsPlanned: Int,
-    val isWarmup: Boolean = false,
+    val setType: SetType = SetType.NORMAL,
     val completedAt: Long? = null,
     val isPR: Boolean = false,
     val bodyweightSnapshotKg: Double? = null   // salvato al momento del set SOLO per BODYWEIGHT/BODYWEIGHT_PLUS_LOAD/ASSISTED,

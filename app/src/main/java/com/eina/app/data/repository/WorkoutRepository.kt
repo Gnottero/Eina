@@ -3,8 +3,11 @@ package com.eina.app.data.repository
 import com.eina.app.data.db.BodyMetricDao
 import com.eina.app.data.db.ExerciseDao
 import com.eina.app.data.db.ExerciseEntity
+import com.eina.app.data.db.RoutineDao
+import com.eina.app.data.db.RoutineEntity
 import com.eina.app.data.db.RoutineExerciseDao
-import com.eina.app.data.db.RoutineExerciseEntity
+import com.eina.app.data.db.RoutineSetDao
+import com.eina.app.data.db.countsAsWorking
 import com.eina.app.data.db.SetEntryDao
 import com.eina.app.data.db.SetEntryEntity
 import com.eina.app.data.db.WeightType
@@ -22,7 +25,9 @@ class WorkoutRepository(
     private val setEntryDao: SetEntryDao,
     private val exerciseDao: ExerciseDao,
     private val bodyMetricDao: BodyMetricDao,
-    private val routineExerciseDao: RoutineExerciseDao
+    private val routineExerciseDao: RoutineExerciseDao,
+    private val routineSetDao: RoutineSetDao,
+    private val routineDao: RoutineDao
 ) {
     fun observeExercises(): Flow<List<ExerciseEntity>> = exerciseDao.getAll()
 
@@ -30,9 +35,17 @@ class WorkoutRepository(
 
     suspend fun insertExercise(exercise: ExerciseEntity): Long = exerciseDao.insert(exercise)
 
-    suspend fun updateExercise(exercise: ExerciseEntity) = exerciseDao.update(exercise)
-
-    suspend fun deleteExercise(exercise: ExerciseEntity) = exerciseDao.delete(exercise)
+    /**
+     * Elimina un esercizio custom, se non lo usa nessuno. Ritorna false quando compare in una
+     * routine o in un allenamento gia' registrato: li' il nome serve ancora.
+     * Gli esercizi di libreria non si toccano: li riscriverebbe il seeder al primo avvio utile.
+     */
+    suspend fun deleteCustomExercise(exercise: ExerciseEntity): Boolean {
+        if (!exercise.isCustom) return false
+        if (exerciseDao.countUsages(exercise.id) > 0) return false
+        exerciseDao.delete(exercise)
+        return true
+    }
 
     /** Sessione ancora aperta, se esiste: alimenta il banner "Riprendi" e blocca nuovi avvii. */
     fun observeActiveSession(): Flow<WorkoutSessionEntity?> = workoutSessionDao.observeActive()
@@ -59,15 +72,27 @@ class WorkoutRepository(
         val routineExercises = routineExerciseDao.getForRoutine(routineId).first().sortedBy { it.order }
         routineExercises.forEachIndexed { index, routineExercise ->
             val workoutExerciseId = workoutExerciseDao.insert(
-                WorkoutExerciseEntity(sessionId = sessionId, exerciseId = routineExercise.exerciseId, order = index)
+                WorkoutExerciseEntity(
+                    sessionId = sessionId,
+                    exerciseId = routineExercise.exerciseId,
+                    order = index,
+                    // La nota della routine parte come nota della sessione: modificarla durante
+                    // l'allenamento non deve riscrivere il template. Stessa storia per il
+                    // superset: il giro della scheda si puo' rifare in palestra senza toccarla.
+                    notes = routineExercise.notes,
+                    supersetGroup = routineExercise.supersetGroup
+                )
             )
-            repeat(routineExercise.targetSets) { setIndex ->
+            // Una serie della sessione per ogni serie della scheda, col suo tipo: il
+            // riscaldamento scritto in routine e' gia' segnato come tale in palestra.
+            routineSetDao.getForRoutineExercise(routineExercise.id).forEachIndexed { setIndex, routineSet ->
                 setEntryDao.insert(
                     SetEntryEntity(
                         workoutExerciseId = workoutExerciseId,
                         setIndex = setIndex,
-                        targetReps = routineExercise.targetReps,
-                        restSecondsPlanned = routineExercise.restSeconds
+                        targetReps = routineSet.targetReps,
+                        restSecondsPlanned = routineExercise.restSeconds,
+                        setType = routineSet.setType
                     )
                 )
             }
@@ -75,16 +100,75 @@ class WorkoutRepository(
         return sessionId
     }
 
-    suspend fun finishSession(sessionId: Long) {
-        val session = workoutSessionDao.getById(sessionId) ?: return
-        workoutSessionDao.update(session.copy(endTime = System.currentTimeMillis()))
+    /**
+     * Chiude la sessione. `startTime` ed `endTime` arrivano dalla conferma di fine allenamento,
+     * dove sono correggibili: un allenamento fatto ieri va nello storico di ieri.
+     *
+     * Una sessione senza nemmeno un esercizio non ha niente da raccontare: invece di salvarla
+     * viene eliminata, come se fosse stata annullata. Ritorna `false` in quel caso.
+     */
+    suspend fun finishSession(
+        sessionId: Long,
+        startTime: Long? = null,
+        endTime: Long? = null
+    ): Boolean {
+        val session = workoutSessionDao.getById(sessionId) ?: return false
+        if (workoutExerciseDao.getForSessionOnce(sessionId).isEmpty()) {
+            workoutSessionDao.deleteById(sessionId)
+            return false
+        }
+        val start = startTime ?: session.startTime
+        workoutSessionDao.update(
+            session.copy(
+                startTime = start,
+                endTime = endTime ?: System.currentTimeMillis()
+            )
+        )
+        return true
+    }
+
+    /**
+     * Annulla la sessione: la riga sparisce e con lei, per cascade, esercizi e serie registrate.
+     * Serve per l'allenamento aperto per sbaglio, che altrimenti resterebbe nello storico.
+     */
+    suspend fun cancelSession(sessionId: Long) {
+        workoutSessionDao.deleteById(sessionId)
+    }
+
+    /**
+     * Elimina un allenamento gia' registrato, con le sue serie. Stessa cancellazione di
+     * [cancelSession], ma parte dallo storico: si conferma prima, e' irreversibile.
+     */
+    suspend fun deleteSession(sessionId: Long) {
+        workoutSessionDao.deleteById(sessionId)
+    }
+
+    /** Cancella tutto lo storico, sessione in corso compresa. Irreversibile: si conferma prima. */
+    suspend fun deleteAllSessions() {
+        workoutSessionDao.deleteAll()
     }
 
     suspend fun getSession(sessionId: Long): WorkoutSessionEntity? = workoutSessionDao.getById(sessionId)
 
-    /** Target della routine per exerciseId: servono alla UI come segnaposto, non come valori registrati. */
-    suspend fun getRoutineTargets(routineId: Long): Map<Long, RoutineExerciseEntity> =
-        routineExerciseDao.getForRoutine(routineId).first().associateBy { it.exerciseId }
+    /** Routine di partenza della sessione: serve il link playlist durante l'allenamento. */
+    suspend fun getRoutine(routineId: Long): RoutineEntity? = routineDao.getById(routineId)
+
+    /**
+     * Target della routine per exerciseId: servono alla UI come segnaposto, non come valori
+     * registrati. Peso e ripetizioni arrivano dalla prima serie di lavoro della scheda — le
+     * serie hanno ognuna i propri valori, ma a una serie aggiunta a mano in palestra serve un
+     * numero solo da proporre.
+     */
+    suspend fun getRoutineTargets(routineId: Long): Map<Long, RoutineTarget> =
+        routineExerciseDao.getForRoutine(routineId).first().associate { routineExercise ->
+            val sets = routineSetDao.getForRoutineExercise(routineExercise.id)
+            val reference = sets.firstOrNull { it.setType.countsAsWorking } ?: sets.firstOrNull()
+            routineExercise.exerciseId to RoutineTarget(
+                restSeconds = routineExercise.restSeconds,
+                targetReps = reference?.targetReps,
+                targetWeight = reference?.targetWeight
+            )
+        }
 
     suspend fun getSessionExercises(sessionId: Long): List<WorkoutExerciseEntity> =
         workoutExerciseDao.getForSessionOnce(sessionId)
@@ -111,6 +195,11 @@ class WorkoutRepository(
             )
         )
         return workoutExerciseId
+    }
+
+    suspend fun setExerciseNotes(workoutExerciseId: Long, notes: String?) {
+        val current = workoutExerciseDao.getById(workoutExerciseId) ?: return
+        workoutExerciseDao.update(current.copy(notes = notes))
     }
 
     suspend fun removeExercise(workoutExerciseId: Long) {
@@ -168,3 +257,10 @@ class WorkoutRepository(
         return finalSet
     }
 }
+
+/** Valori della routine proposti in sessione: recupero dell'esercizio e target della prima serie. */
+data class RoutineTarget(
+    val restSeconds: Int,
+    val targetReps: Int?,
+    val targetWeight: Double?
+)

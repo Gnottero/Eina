@@ -34,4 +34,11 @@ interface WorkoutSessionDao {
 
     @Query("DELETE FROM workout_sessions WHERE id = :id")
     suspend fun deleteById(id: Long)
+
+    /**
+     * Svuota lo storico. Esercizi e serie spariscono con le sessioni (ON DELETE CASCADE),
+     * routine, libreria e peso corporeo restano.
+     */
+    @Query("DELETE FROM workout_sessions")
+    suspend fun deleteAll()
 }

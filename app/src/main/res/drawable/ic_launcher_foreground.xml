@@ -1,21 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Marchio Eina: tre barre bianche di lunghezza decrescente-crescente, che si leggono come una "E".
-  Stesso segno disegnato nell'immagine di riepilogo condivisibile (ui/share/ShareCard.kt):
-  se cambia uno, va cambiato anche l'altro.
+  Solo la lettera del marchio: l'icona adattiva mette il colore nel layer di sfondo, quindi qui
+  la tessera non va disegnata. Il marchio completo (tessera + lettera) vive in ic_eina_logo.xml:
+  la lettera va tenuta identica. Il group la rimpicciolisce e ricentra nella zona sicura
+  (66dp su 108) dell'adaptive icon.
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M31.86,28.08 H76.14 A5.94,5.94 0 0 1 76.14,39.96 H31.86 A5.94,5.94 0 0 1 31.86,28.08 Z" />
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M31.86,48.06 H58.86 A5.94,5.94 0 0 1 58.86,59.94 H31.86 A5.94,5.94 0 0 1 31.86,48.06 Z" />
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M31.86,68.04 H76.14 A5.94,5.94 0 0 1 76.14,79.92 H31.86 A5.94,5.94 0 0 1 31.86,68.04 Z" />
+    <group
+        android:pivotX="54"
+        android:pivotY="54"
+        android:scaleX="0.88"
+        android:scaleY="0.88">
+        <path
+            android:strokeColor="#FFFFFF"
+            android:strokeWidth="12"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round"
+            android:pathData="M80.2,32 L35.2,32 L29,76 L75,76" />
+        <path
+            android:strokeColor="#FFFFFF"
+            android:strokeWidth="12"
+            android:strokeLineCap="round"
+            android:pathData="M32.1,54 L66.1,54" />
+    </group>
 </vector>

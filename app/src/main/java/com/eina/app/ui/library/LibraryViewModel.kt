@@ -3,6 +3,7 @@ package com.eina.app.ui.library
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.eina.app.data.db.ExerciseEntity
+import com.eina.app.data.db.matchesQuery
 import com.eina.app.data.repository.WorkoutRepository
 import com.eina.app.ui.theme.MuscleGroupCategory
 import com.eina.app.ui.theme.primaryCategoryFor
@@ -11,6 +12,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
 data class LibraryUiState(
     val query: String = "",
@@ -28,7 +30,7 @@ class LibraryViewModel(private val repository: WorkoutRepository) : ViewModel() 
         selectedCategory
     ) { exercises, q, category ->
         val filtered = exercises.filter { exercise ->
-            val matchesQuery = q.isBlank() || exercise.name.contains(q, ignoreCase = true)
+            val matchesQuery = q.isBlank() || exercise.matchesQuery(q)
             val matchesCategory = category == null || primaryCategoryFor(exercise.muscleGroupsPrimary) == category
             matchesQuery && matchesCategory
         }
@@ -41,5 +43,13 @@ class LibraryViewModel(private val repository: WorkoutRepository) : ViewModel() 
 
     fun onCategorySelected(category: MuscleGroupCategory?) {
         selectedCategory.value = if (selectedCategory.value == category) null else category
+    }
+
+    /**
+     * Elimina un esercizio creato dall'utente (o arrivato con una routine importata).
+     * `onResult` riceve false se l'esercizio e' ancora usato da una routine o dallo storico.
+     */
+    fun deleteCustomExercise(exercise: ExerciseEntity, onResult: (Boolean) -> Unit) {
+        viewModelScope.launch { onResult(repository.deleteCustomExercise(exercise)) }
     }
 }

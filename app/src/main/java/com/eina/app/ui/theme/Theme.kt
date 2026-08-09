@@ -38,15 +38,19 @@ data class EinaIslandColors(
     val textSecondary: Color,
     val outlineSubtle: Color,
     val shadow: Color,
-    val isDark: Boolean
+    val isDark: Boolean,
+    /** Rampa dell'accento (ambra -> magenta) per hero, anelli e marchio. */
+    val accentRamp: List<Color>
 )
 
 private val LightIslandColors = EinaIslandColors(
     sunken = LightSurfaceSunken,
     textSecondary = LightTextSecondary,
     outlineSubtle = LightOutlineSubtle,
-    shadow = Color(0xFF2B2050),
-    isDark = false
+    // Ombra neutra fredda: quella marrone tingeva il bianco delle isole di beige.
+    shadow = Color(0xFF1A1714),
+    isDark = false,
+    accentRamp = listOf(AccentRampStart, AccentPrimary, AccentRampEnd)
 )
 
 val LocalEinaIslandColors = staticCompositionLocalOf { LightIslandColors }

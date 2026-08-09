@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Marchio Eina, rifatto col restyle.
+  Due cose cambiano rispetto alla versione della Fase 22:
+  - la tessera non e' piu' un arancio pieno con angoli ad arco, ma una rampa ambra->magenta su un
+    angolo continuo vero (gli stessi rapporti di SquircleShape in ui/theme/Shape.kt: tre bezier
+    per angolo, nessun arco). A dimensione icona la differenza si legge come "morbidezza";
+  - la "E" monolinea e' inclinata in avanti di 8 gradi e ha il braccio inferiore piu' lungo del
+    superiore: sta ferma come lettera ma spinge a destra. L'inclinazione e' cotta nelle
+    coordinate perche' i group dei vector non sanno inclinare, solo ruotare e scalare.
+
+  Unica sorgente del logo: l'icona adattiva (ic_launcher_foreground) riusa la stessa lettera,
+  l'immagine condivisibile (ui/share/ShareCard.kt) e la splash (ic_eina_splash_mark) disegnano
+  questa tessera. Se cambia il tratto, va cambiato in tutti e tre.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path android:pathData="M62.14,0 C75.35,0 81.95,0 89.06,2.25 C96.82,6.65 101.35,11.18 105.75,18.94 C108,26.05 108,32.65 108,45.86 L108,62.14 C108,75.35 108,81.95 105.75,89.06 C101.35,96.82 96.82,101.35 89.06,105.75 C81.95,108 75.35,108 62.14,108 L45.86,108 C32.65,108 26.05,108 18.94,105.75 C11.18,101.35 6.65,96.82 2.25,89.06 C0,81.95 0,75.35 0,62.14 L0,45.86 C0,32.65 0,26.05 2.25,18.94 C6.65,11.18 11.18,6.65 18.94,2.25 C26.05,0 32.65,0 45.86,0 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:type="linear"
+                android:startX="6"
+                android:startY="0"
+                android:endX="102"
+                android:endY="108">
+                <item android:offset="0" android:color="#FFA23A" />
+                <item android:offset="0.5" android:color="#F97348" />
+                <item android:offset="1" android:color="#F9436B" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="12"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M80.2,32 L35.2,32 L29,76 L75,76" />
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="12"
+        android:strokeLineCap="round"
+        android:pathData="M32.1,54 L66.1,54" />
+</vector>

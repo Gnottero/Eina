@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
@@ -35,6 +36,13 @@ fun MiniBarChart(
 ) {
     val island = EinaTheme.island
     val trackColor = island.sunken
+    // Le barre prendono la rampa dell'accento; un colore passato a mano (per esempio quello di
+    // un gruppo muscolare) resta pieno.
+    val ramp = if (barColor == MaterialTheme.colorScheme.primary) {
+        island.accentRamp
+    } else {
+        listOf(barColor, barColor)
+    }
     val maxValue = values.maxOrNull()?.takeIf { it > 0f } ?: 1f
 
     Column(modifier = modifier.fillMaxWidth()) {
@@ -62,11 +70,20 @@ fun MiniBarChart(
 
                 val barHeight = (value / maxValue) * size.height
                 if (barHeight > 0f) {
+                    // La rampa e' verticale e calcolata sull'altezza piena del grafico, non
+                    // sulla singola barra: cosi' due barre di altezza diversa hanno lo stesso
+                    // colore alla stessa quota e il gruppo si legge come un blocco unico.
+                    val brush = Brush.verticalGradient(
+                        colors = ramp,
+                        startY = 0f,
+                        endY = size.height
+                    )
                     drawRoundRect(
-                        color = if (highlightIndex == index) barColor else barColor.copy(alpha = 0.85f),
+                        brush = brush,
                         topLeft = Offset(left, size.height - barHeight),
                         size = Size(barWidth, barHeight),
-                        cornerRadius = radius
+                        cornerRadius = radius,
+                        alpha = if (highlightIndex == null || highlightIndex == index) 1f else 0.55f
                     )
                 }
             }

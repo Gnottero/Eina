@@ -1,6 +1,8 @@
 package com.eina.app
 
 import android.app.Application
+import android.content.Context
+import com.eina.app.data.prefs.AppLocale
 import com.eina.app.data.seed.ExerciseSeeder
 import com.eina.app.di.appModule
 import kotlinx.coroutines.CoroutineScope
@@ -14,6 +16,12 @@ import org.koin.core.context.startKoin
 class EinaApplication : Application() {
     private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
+    // Anche il Context dell'applicazione va nella lingua scelta: i ViewModel leggono le
+    // stringhe da li', non dall'Activity.
+    override fun attachBaseContext(base: Context) {
+        super.attachBaseContext(AppLocale.wrap(base))
+    }
+
     override fun onCreate() {
         super.onCreate()
         startKoin {
@@ -22,7 +30,9 @@ class EinaApplication : Application() {
         }
 
         applicationScope.launch {
-            get<ExerciseSeeder>().seedIfEmpty()
+            // Il seed gira fuori dal main thread al primo avvio: se l'asset manca o e' malformato
+            // l'app resta usabile con la libreria vuota invece di crashare in partenza.
+            runCatching { get<ExerciseSeeder>().seedIfEmpty() }
         }
     }
 }

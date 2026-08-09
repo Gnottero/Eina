@@ -9,10 +9,12 @@ import com.eina.app.domain.personalRecords
 import com.eina.app.domain.setsByDay
 import com.eina.app.domain.trainingDays
 import com.eina.app.domain.volumeByDay
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 import java.time.LocalDate
 
@@ -25,7 +27,7 @@ data class ProgressUiState(
     val volumeByDay: Map<LocalDate, Double> = emptyMap(),
     val personalRecords: List<PrRecord> = emptyList(),
     val latestBodyweightKg: Double? = null,
-    val streakDays: Int = 0,
+    val streakWeeks: Int = 0,
     val totalVolumeKg: Double = 0.0,
     val totalSessions: Int = 0
 )
@@ -55,11 +57,12 @@ class ProgressViewModel(repository: StatsRepository) : ViewModel() {
             volumeByDay = volumePerDay,
             personalRecords = personalRecords(rows),
             latestBodyweightKg = bodyMetrics.firstOrNull()?.bodyweightKg,
-            streakDays = currentStreak(trainingDays(rows), today),
+            streakWeeks = currentStreak(trainingDays(rows), today),
             totalVolumeKg = volumePerDay.values.sum(),
             totalSessions = rows.map { it.sessionId }.distinct().size
         )
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ProgressUiState())
+    }.flowOn(Dispatchers.Default)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ProgressUiState())
 
     fun selectDay(index: Int) {
         selectedDayIndex.value = index

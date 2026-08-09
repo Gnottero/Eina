@@ -74,7 +74,10 @@ fun HeatmapCalendar(
                         1 -> color.copy(alpha = 0.25f)
                         2 -> color.copy(alpha = 0.45f)
                         3 -> color.copy(alpha = 0.7f)
-                        else -> color
+                        // Il giorno piu' pesante non e' un arancio piu' saturo ma la fine della
+                        // rampa: la scala sale di intensita' e poi cambia tinta, cosi' i picchi
+                        // si distinguono anche in mezzo a una settimana tutta piena.
+                        else -> island.accentRamp.last()
                     }
                     drawRoundRect(
                         color = cellColor,
@@ -108,4 +111,4 @@ fun HeatmapCalendar(
 }
 
 private fun monthLabel(date: LocalDate): String =
-    date.month.getDisplayName(TextStyle.SHORT, Locale.ITALIAN).replaceFirstChar { it.uppercase() }
+    date.month.getDisplayName(TextStyle.SHORT, Locale.getDefault()).replaceFirstChar { it.uppercase() }

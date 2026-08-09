@@ -19,6 +19,9 @@ interface ExerciseDao {
     @Update
     suspend fun update(exercise: ExerciseEntity)
 
+    @Update
+    suspend fun updateAll(exercises: List<ExerciseEntity>)
+
     @Delete
     suspend fun delete(exercise: ExerciseEntity)
 
@@ -28,6 +31,43 @@ interface ExerciseDao {
     @Query("SELECT * FROM exercises WHERE id = :id")
     suspend fun getById(id: Long): ExerciseEntity?
 
+    /** Ricerca per nome inglese: e' la chiave con cui viaggiano le routine esportate. */
+    @Query("SELECT * FROM exercises WHERE name = :name LIMIT 1")
+    suspend fun getByName(name: String): ExerciseEntity?
+
+    /**
+     * Quante volte l'esercizio e' referenziato da routine e allenamenti: sopra zero non si
+     * cancella, altrimenti la foreign key salterebbe e lo storico perderebbe il suo nome.
+     */
+    @Query(
+        """
+        SELECT (SELECT COUNT(*) FROM routine_exercises WHERE exerciseId = :id)
+             + (SELECT COUNT(*) FROM workout_exercises WHERE exerciseId = :id)
+        """
+    )
+    suspend fun countUsages(id: Long): Int
+
     @Query("SELECT COUNT(*) FROM exercises")
     suspend fun getCount(): Int
+
+    /** Esercizi di libreria (non custom): quelli che il seeder puo' riscrivere. */
+    @Query("SELECT * FROM exercises WHERE isCustom = 0")
+    suspend fun getLibraryExercises(): List<ExerciseEntity>
+
+    /**
+     * Toglie dalla libreria gli esercizi usciti dal catalogo curato, ma solo se non li
+     * usa nessuno: uno rimasto dentro una routine o dentro un allenamento gia' registrato
+     * resta al suo posto, altrimenti la foreign key salterebbe e lo storico perderebbe
+     * il nome dell'esercizio.
+     */
+    @Query(
+        """
+        DELETE FROM exercises
+        WHERE isCustom = 0
+          AND name IN (:names)
+          AND id NOT IN (SELECT exerciseId FROM routine_exercises)
+          AND id NOT IN (SELECT exerciseId FROM workout_exercises)
+        """
+    )
+    suspend fun deleteUnusedLibraryExercises(names: List<String>): Int
 }

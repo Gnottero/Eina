@@ -1,5 +1,6 @@
 package com.eina.app.ui.library
 
+import android.content.ActivityNotFoundException
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -26,9 +27,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import com.eina.app.R
 import com.eina.app.data.db.WeightType
+import com.eina.app.ui.components.DestructiveRed
 import com.eina.app.ui.components.IslandButton
 import com.eina.app.ui.components.IslandCard
 import com.eina.app.ui.components.IslandChip
@@ -39,6 +43,7 @@ import com.eina.app.ui.components.ScreenHeader
 import com.eina.app.ui.theme.MuscleGroupCategory
 import com.eina.app.ui.theme.Spacing
 import com.eina.app.ui.theme.TileShape
+import com.eina.app.ui.theme.label
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
@@ -60,8 +65,8 @@ fun CreateExerciseScreen(
     IslandScreen(
         header = {
             ScreenHeader(
-                title = "Nuovo esercizio",
-                subtitle = "Sara' utilizzabile come uno di libreria",
+                title = stringResource(R.string.create_exercise_title),
+                subtitle = stringResource(R.string.create_exercise_subtitle),
                 onBack = onBack
             )
         },
@@ -71,27 +76,27 @@ fun CreateExerciseScreen(
             IslandTextField(
                 value = uiState.name,
                 onValueChange = viewModel::onNameChange,
-                label = "Nome",
+                label = stringResource(R.string.field_name),
                 modifier = Modifier.fillMaxWidth()
             )
             IslandTextField(
                 value = uiState.description,
                 onValueChange = viewModel::onDescriptionChange,
-                label = "Descrizione",
+                label = stringResource(R.string.field_description),
                 singleLine = false,
                 modifier = Modifier.fillMaxWidth()
             )
             IslandTextField(
                 value = uiState.loggingInstructions,
                 onValueChange = viewModel::onLoggingInstructionsChange,
-                label = "Come registrare",
+                label = stringResource(R.string.field_how_to_log),
                 singleLine = false,
                 modifier = Modifier.fillMaxWidth()
             )
             IslandTextField(
                 value = uiState.equipment,
                 onValueChange = viewModel::onEquipmentChange,
-                label = "Attrezzatura (opzionale)",
+                label = stringResource(R.string.field_equipment),
                 modifier = Modifier.fillMaxWidth()
             )
             WeightTypeDropdown(
@@ -101,13 +106,13 @@ fun CreateExerciseScreen(
         }
 
         IslandCard(modifier = Modifier.fillMaxWidth()) {
-            Text("Muscoli primari", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.create_primary_muscles), style = MaterialTheme.typography.titleMedium)
             CategoryChips(
                 selected = uiState.primaryCategories,
                 onToggle = viewModel::onPrimaryCategoryToggle
             )
             Text(
-                "Muscoli secondari (opzionale)",
+                stringResource(R.string.create_secondary_muscles),
                 style = MaterialTheme.typography.titleMedium
             )
             CategoryChips(
@@ -117,7 +122,7 @@ fun CreateExerciseScreen(
         }
 
         IslandCard(modifier = Modifier.fillMaxWidth()) {
-            Text("GIF / immagine", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.create_media), style = MaterialTheme.typography.titleMedium)
             if (uiState.mediaUri != null) {
                 AsyncImage(
                     model = uiState.mediaUri,
@@ -130,15 +135,28 @@ fun CreateExerciseScreen(
                 )
             }
             IslandSecondaryButton(
-                text = "Scegli dalla galleria",
+                text = stringResource(R.string.create_pick_gallery),
                 icon = Icons.Outlined.Image,
-                onClick = { mediaPicker.launch("image/*") },
+                onClick = {
+                    try {
+                        mediaPicker.launch("image/*")
+                    } catch (e: ActivityNotFoundException) {
+                        viewModel.onMediaPickerUnavailable()
+                    }
+                },
                 modifier = Modifier.fillMaxWidth()
             )
+            uiState.mediaError?.let { error ->
+                Text(
+                    error,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = DestructiveRed
+                )
+            }
         }
 
         IslandButton(
-            text = "Salva esercizio",
+            text = stringResource(R.string.create_save),
             onClick = viewModel::save,
             enabled = uiState.canSave,
             modifier = Modifier.fillMaxWidth()
@@ -155,7 +173,7 @@ private fun WeightTypeDropdown(selected: WeightType, onSelected: (WeightType) ->
             value = selected.label(),
             onValueChange = {},
             readOnly = true,
-            label = "Tipo di carico",
+            label = stringResource(R.string.field_weight_type),
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
             modifier = Modifier
                 .fillMaxWidth()
@@ -188,7 +206,7 @@ private fun CategoryChips(
     ) {
         MuscleGroupCategory.entries.forEach { category ->
             IslandChip(
-                text = category.label,
+                text = category.label(),
                 selected = category in selected,
                 accentColor = category.color,
                 onClick = { onToggle(category) }

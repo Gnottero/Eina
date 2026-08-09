@@ -17,7 +17,7 @@
 - Leggerezza: minime dipendenze, avvio istantaneo.
 - Nessuna funzione social interna. L'unica condivisione è export immagine verso app esterne.
 - Design pulito, ispirato ad Apple Health ma con asset e font propri (mai SF Symbols/SF Pro, mai loghi Apple).
-- Donazioni volontarie (Buy Me a Coffee), nessun Play Billing, nessun vantaggio sbloccato in cambio della donazione.
+- Donazioni volontarie (Ko-fi), nessun Play Billing, nessun vantaggio sbloccato in cambio della donazione.
 
 ---
 
@@ -43,9 +43,9 @@ Spacing scale:           4 / 8 / 12 / 16 / 24 / 32 dp
 Font:                    Inter (Regular / Medium / SemiBold / Bold)
 
 App SOLO in light mode (deciso in Fase 10): niente schema scuro, niente isSystemInDarkTheme.
-Background:              #F6F5FB   surface/card: #FFFFFF
-Accento primario:        #7A5AF8   (viola, CTA e stati attivi)
-Accento scuro / soft:    #5B3FD6 / #EDE8FF
+Background:              #FBF6F2   surface/card: #FFFFFF
+Accento primario:        #F97348   (arancio tramonto, CTA e stati attivi)
+Accento scuro / soft:    #D4501F / #FFEADF
 
 Colori per categoria muscolare (badge + body diagram):
   Petto/Push:    #FF6B6B
@@ -74,8 +74,8 @@ Gutter laterale schermo:  24dp   (Spacing.xl)
 Spazio fra isole:         12dp   (Spacing.md)
 Ombra isola:              8-18dp, alpha 0.10-0.12 light / 0.6 dark (Modifier.islandShadow)
 
-Superficie incassata (campi, chip inattive, tracce grafico): #EFEDF7
-Testo secondario: #7C7A93   Bordo tenue: #E7E4F3
+Superficie incassata (campi, chip inattive, tracce grafico): #F5EDE7
+Testo secondario: #8A7D75   Bordo tenue: #F0E5DD
 ```
 
 Regole:
@@ -120,18 +120,30 @@ com.<org>.eina
 
 ```kotlin
 enum class WeightType {
-    FREE_WEIGHT, BODYWEIGHT, BODYWEIGHT_PLUS_LOAD, ASSISTED, MACHINE_STACK, TIME_BASED
+    FREE_WEIGHT, BODYWEIGHT, BODYWEIGHT_PLUS_LOAD, ASSISTED, MACHINE_STACK, TIME_BASED,
+    // Fase 27: tapis roulant e simili. `weight` = chilometri, `actualReps` = minuti.
+    DISTANCE_BASED
 }
+
+// Fase 24: il riscaldamento non basta piu' come booleano.
+enum class SetType { WARMUP, NORMAL, FAILURE, DROP }
 
 enum class PlaylistType { SPOTIFY, YOUTUBE_MUSIC }
 
 @Entity(tableName = "exercises")
 data class ExerciseEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    val name: String,
-    val description: String,
-    val loggingInstructions: String,
+    val name: String,                  // inglese: chiave con cui il seeder riconosce l'esercizio
+    val nameIt: String? = null,        // aggiunti in Fase 17 (DB v4, MIGRATION_3_4)
+    val nameFr: String? = null,
+    val description: String,           // inglese: e' anche il fallback delle altre lingue
+    val descriptionIt: String? = null, // aggiunte in Fase 16 (DB v3, MIGRATION_2_3)
+    val descriptionFr: String? = null,
+    val loggingInstructions: String,   // vuota per la libreria: la frase viene da weightType
+                                       // via strings.xml. La riempie solo un esercizio custom.
     val weightType: WeightType,
+    val bodyweightFactor: Double = 1.0,        // Fase 23b (DB v5, MIGRATION_4_5): quota di peso
+                                               // corporeo davvero sollevata. 1 = trazioni, 0 = crunch
     val muscleGroupsPrimary: List<String>,     // TypeConverter: JSON string
     val muscleGroupsSecondary: List<String>,   // TypeConverter: JSON string
     val equipment: String? = null,
@@ -161,10 +173,25 @@ data class RoutineExerciseEntity(
     val routineId: Long,
     val exerciseId: Long,
     val order: Int,
-    val targetSets: Int,
-    val targetReps: Int,
+    // Fase 26 (DB v8, MIGRATION_7_8): serie/ripetizioni/peso non stanno piu' qui, ogni serie
+    // pianificata e' una riga di routine_sets col suo tipo.
+    val restSeconds: Int,
+    val notes: String? = null,
+    val supersetGroup: Int? = null   // Fase 25 (DB v7, MIGRATION_6_7): esercizi con lo stesso
+                                     // numero si eseguono a giro. null = esercizio a se'
+)
+
+@Entity(
+    tableName = "routine_sets",
+    foreignKeys = [ForeignKey(entity = RoutineExerciseEntity::class, parentColumns = ["id"], childColumns = ["routineExerciseId"], onDelete = ForeignKey.CASCADE)]
+)
+data class RoutineSetEntity(                       // Fase 26 (DB v8, MIGRATION_7_8)
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val routineExerciseId: Long,
+    val setIndex: Int,
+    val targetReps: Int? = null,                   // per TIME_BASED: secondi
     val targetWeight: Double? = null,
-    val restSeconds: Int
+    val setType: SetType = SetType.NORMAL
 )
 
 @Entity(tableName = "workout_sessions")
@@ -183,7 +210,8 @@ data class WorkoutExerciseEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val sessionId: Long,
     val exerciseId: Long,
-    val order: Int
+    val order: Int,
+    val supersetGroup: Int? = null   // Fase 25: ereditato dalla routine, ritoccabile in palestra
 )
 
 @Entity(
@@ -198,7 +226,7 @@ data class SetEntryEntity(
     val actualReps: Int? = null,        // per TIME_BASED: durata in secondi
     val weight: Double? = null,
     val restSecondsPlanned: Int,
-    val isWarmup: Boolean = false,
+    val setType: SetType = SetType.NORMAL,   // Fase 24 (DB v6, MIGRATION_5_6): sostituisce isWarmup
     val completedAt: Long? = null,
     val isPR: Boolean = false,
     val bodyweightSnapshotKg: Double? = null   // salvato al momento del set SOLO per BODYWEIGHT/BODYWEIGHT_PLUS_LOAD/ASSISTED,
@@ -225,7 +253,7 @@ fun isNewPR(
     newSet: SetEntryEntity,
     historicalSets: List<SetEntryEntity> // tutte le set non-warmup già completate per lo stesso exerciseId
 ): Boolean {
-    if (newSet.isWarmup) return false
+    if (newSet.setType == SetType.WARMUP) return false
     return when (weightType) {
         WeightType.FREE_WEIGHT, WeightType.MACHINE_STACK, WeightType.ASSISTED ->
             (newSet.weight ?: 0.0) > (historicalSets.maxOfOrNull { it.weight ?: 0.0 } ?: 0.0)
@@ -244,17 +272,20 @@ fun isNewPR(
     }
 }
 
-fun volumeForSet(weightType: WeightType, set: SetEntryEntity): Double {
+fun volumeForSet(weightType: WeightType, set: SetEntryEntity, bodyweightFactor: Double = 1.0): Double {
     val reps = set.actualReps ?: 0
+    // Il peso corporeo conta solo per la quota che l'esercizio solleva davvero: le trazioni
+    // (fattore 1) entrano nel volume, i crunch (fattore 0) no.
+    val liftedBodyweight = (set.bodyweightSnapshotKg ?: 0.0) * bodyweightFactor
     return when (weightType) {
         WeightType.FREE_WEIGHT, WeightType.MACHINE_STACK ->
             (set.weight ?: 0.0) * reps
         WeightType.BODYWEIGHT ->
-            (set.bodyweightSnapshotKg ?: 0.0) * reps
+            liftedBodyweight * reps
         WeightType.BODYWEIGHT_PLUS_LOAD ->
-            ((set.bodyweightSnapshotKg ?: 0.0) + (set.weight ?: 0.0)) * reps
+            (liftedBodyweight + (set.weight ?: 0.0)) * reps
         WeightType.ASSISTED ->
-            ((set.bodyweightSnapshotKg ?: 0.0) - (set.weight ?: 0.0)).coerceAtLeast(0.0) * reps
+            (liftedBodyweight - (set.weight ?: 0.0)).coerceAtLeast(0.0) * reps
         WeightType.TIME_BASED ->
             0.0 // il "volume" per esercizi a tempo non è in kg; escludi dal totale kg sollevati
     }
@@ -307,11 +338,14 @@ stati vuoti (dati reali in Fase 6).
 **Fase 6 — Dashboard e progressi** *(fatta)*
 DoD: dashboard storico allenamenti; grafici volume/PR; heatmap stile GitHub; schermata peso corporeo che alimenta `bodyweightSnapshotKg` ai nuovi set.
 
-**Fase 7 — Condivisione stile Strava**
+**Fase 7 — Condivisione stile Strava** *(fatta)*
 DoD: immagine riepilogo sessione generata e condivisibile via `Intent.ACTION_SEND`.
 
-**Fase 8 — Impostazioni, tema, donazioni**
-DoD: toggle tema manuale; voce "Offrimi un caffè" apre l'URL Buy Me a Coffee in Custom Tabs.
+**Fase 8 — Impostazioni, tema, donazioni** *(fatta)*
+DoD: voce "Offrimi un caffè" apre l'URL Ko-fi (`https://ko-fi.com/gnottero`,
+`DONATION_URL` in `ui/settings/DonationLauncher.kt`) in Custom Tabs, fallback
+ACTION_VIEW; sezione Info con versione, nota privacy e licenze. Il toggle tema non serve più:
+dalla Fase 10 l'app è light-only.
 
 **Fase 10 — UX allenamento + palette viola** *(fatta)*
 DoD: salvataggio routine riporta ad "Allena" (la routine e' un template: le sue serie non
@@ -339,18 +373,276 @@ stepper e griglia di durate che si applicano subito; picker esercizi con ricerca
 gruppo muscolare; eliminazione routine con conferma; vibrazione dei tap su canale non attenuato
 (EFFECT_HEAVY_CLICK) perche' quella precedente era impercettibile.
 
-**Fase 9 — Rifinitura**
-DoD: ProGuard/R8 attivo, avvio a freddo ottimizzato, coerenza visiva su tutte le schermate, edge case gestiti (permessi galleria, app playlist assente).
+**Fase 13 — Gesti, note e recupero a rulli** *(fatta)*
+DoD: allenamento annullabile (elimina la sessione, distinta da "Termina" che salva); tocco lungo
+al posto dei tre puntini su card esercizio in sessione, riga serie, routine ed esercizio di
+routine; tempo di recupero scelto con rulli stile sveglia (`DurationWheelPicker` +
+`RestTimeSheet` condivisi fra routine e allenamento); tasto "Modifica" tolto dalla card routine,
+finito nel foglio col tocco lungo insieme a "Elimina"; "Riproduci" spostato dall'editor routine
+all'header dell'allenamento in corso; nota libera per esercizio, sulla routine (`notes` su
+`routine_exercises`) e sulla sessione (`notes` su `workout_exercises`, ereditata all'avvio e
+modificabile senza toccare il template) — DB alla versione 2 con `MIGRATION_1_2`; logo unico in
+`res/drawable/ic_eina_logo.xml`, usato da ShareCard e da `EinaLogo` in Compose; il nome
+dell'esercizio in sessione apre la sua scheda; banner "Riprendi" con durata che scorre dal vivo.
+
+**Fase 15 — Palette arancio e rifiniture di navigazione** *(fatta)*
+DoD: palette accento su arancio tramonto (#F97348) ovunque, logo e icona compresi; card dello
+storico col nome della routine come titolo e data/ora a destra; tocco sulla card routine in
+"Allena" apre la routine (il tondo la avvia); "Nuova" tolto da "Allena" e "Storico" ridotto a
+bottone tondo con icona; tab della nav senza saveState/restoreState (ripristinavano le schermate
+di dettaglio e rendevano la Dashboard irraggiungibile); condivisione come sticker di storia
+Instagram (`com.instagram.share.ADD_TO_STORY`) con fallback al chooser di sistema; Impostazioni
+con "Cancella storico allenamenti" a conferma.
+
+**Fase 16 — Multilingua e overlay di condivisione** *(fatta)*
+DoD: inglese (default, `values/`), italiano e francese; tutte le stringhe delle schermate in
+`strings.xml`, comprese le etichette di muscoli, attrezzatura e tipo di carico (nel DB restano
+chiavi inglesi, la traduzione avviene al disegno); date, iniziali dei giorni e decimali seguono
+la lingua attiva; `loggingInstructions` derivate da `weightType` invece che salvate nel seed;
+selettore lingua in Impostazioni (Sistema/English/Italiano/Français) applicato riscrivendo la
+Configuration in `attachBaseContext`, senza aggiungere appcompat; catalogo ridotto a 197
+esercizi comuni con descrizioni tradotte; DB alla versione 3 con `MIGRATION_2_3`, e
+`ExerciseSeeder` che sincronizza la libreria per nome senza toccare esercizi custom o esercizi
+ancora usati da routine e storico; condivisione con due stili — tessera opaca e overlay
+trasparente da appoggiare sulla propria foto — che si salva in galleria, finisce negli appunti e
+apre la fotocamera storie di Instagram.
+
+**Fase 17 — Nomi tradotti e condivisione a un'immagine sola** *(fatta)*
+DoD: nomi dei 197 esercizi tradotti in italiano e francese (`tools/exercise_names.json` →
+`nameIt`/`nameFr`, DB v4 con `MIGRATION_3_4`), risolti al disegno con `ExerciseName.localized`
+e ordinati alfabeticamente nella lingua attiva; ricerca esercizi che guarda tutte e tre le
+lingue; selettore lingua in Impostazioni su FlowRow, senza scorrimento laterale; foglio di
+condivisione con una sola immagine e interruttore "Sfondo trasparente" al posto delle due
+varianti "Tessera"/"Statistiche".
+
+**Fase 18 — Carichi coerenti, animazioni, scambio routine** *(fatta)*
+DoD: niente campo kg dove non c'è un carico da digitare (`WeightType.usesWeight`: BODYWEIGHT e
+TIME_BASED), in tabella serie e nei target di routine, con la colonna "precedente" ridotta alle
+sole ripetizioni e nessun peso proposto alla chiusura della serie; per gli esercizi a tempo la
+colonna ripetizioni si chiama "sec"; fine allenamento con foglio di conferma che permette di
+correggere data (oggi/ieri/calendario, cambia il giorno e non l'ora) e durata (rulli ore/minuti),
+scritte su `startTime`/`endTime` della sessione; animazione dell'esercizio a due fotogrammi in
+dissolvenza in stile Hevy (`ui/components/ExerciseAnimation.kt`, WebP bundlati, miniatura anche
+in libreria) e schema anatomico fronte/retro per regione muscolare al posto dei rettangoli
+(`ui/components/BodyDiagram.kt`); badge dei muscoli in FlowRow, non più tagliati sugli esercizi
+con molti secondari; esportazione e importazione routine come file JSON
+(`data/transfer/RoutineTransfer.kt`, formato `eina.routine` v1) — esporta dal foglio del tocco
+lungo sulla routine, importa dall'icona in "Allena"; gli esercizi si riagganciano per nome
+inglese e quelli sconosciuti diventano custom; eliminazione del singolo allenamento dallo
+storico e del singolo esercizio custom dalla libreria (entrambe col tocco lungo, la seconda
+bloccata se l'esercizio e' ancora usato da una routine o dallo storico) — servivano a poter
+tornare indietro da un import. Verificata sul dispositivo: avvio a freddo della release
+470-520 ms, invariato rispetto alla Fase 9.
+
+**Fase 19 — Animazioni anatomiche e calendario island** *(fatta)*
+DoD: la scheda esercizio mostra una figura anatomica che esegue il movimento coi muscoli
+lavorati colorati (stile Hevy) al posto dei due fotogrammi fotografici e del `BodyDiagram`
+vettoriale, che e' stato eliminato; le animazioni sono WebP animate a 288px bundlate in
+`assets/media/<cartella>/anim.webp`, generate da `tools/fetch_exercise_gifs.py` a partire dalle
+GIF di omercotkd/exercises-gifs (MIT) con la mappatura curata a mano in `tools/exercise_gifs.json`
+(186 esercizi su 197; gli 11 senza animazione adatta tengono le foto di free-exercise-db);
+i decoder animati si chiedono sulla singola richiesta Coil, cosi' le miniature della libreria
+restano ferme sul primo fotogramma; sotto API 28 (niente `ImageDecoder`) l'animazione resta
+un'immagine ferma; `ExerciseSeeder` preferisce `anim.webp` a `0.webp` (CATALOG_VERSION 5);
+scelta della data di fine allenamento con calendario proprio (`ui/components/IslandDatePicker.kt`:
+giorni tondi, oggi a contorno, selezione a pastiglia arancio, settimana che parte dal primo
+giorno della lingua attiva) aperto dentro lo stesso foglio invece del `DatePicker` Material in
+un dialog. APK di release da 8,2 a 12,0 MB.
+
+**Fase 20 — Animazioni nitide e sessioni vuote** *(fatta)*
+DoD: animazioni degli esercizi riconvertite alla risoluzione nativa della sorgente (360px, era
+288px con upscaling a schermo) e a qualita' 85 invece di 60 — `tools/fetch_exercise_gifs.py`
+usa `scale='min(iw,360)'` cosi' non ingrandisce mai la sorgente; `assets/media` da 11 a 22,6 MB,
+APK di release da 12,0 a 25,0 MB, avvio a freddo invariato (500-650 ms); un allenamento
+terminato senza nemmeno un esercizio non finisce nello storico ma viene eliminato
+(`WorkoutRepository.finishSession` ritorna `false` e la navigazione si comporta come
+"Annulla"), e il foglio di conferma lo dice e nasconde data e durata, che non verrebbero
+salvate da nessuna parte.
+
+**Fase 21 — Animazioni lossless e titolo Dashboard** *(fatta)*
+DoD: le animazioni degli esercizi sono WebP lossless, cioe' identiche alle GIF originali di
+omercotkd/exercises-gifs (`tools/fetch_exercise_gifs.py` converte in lossless di default;
+`--quality N` torna alla vecchia conversione lossy). Lossless costa meno della GIF stessa
+perche' la sorgente ha 256 colori: `assets/media` da 22,6 a 45,2 MB, APK di release da 25,0
+a 47,6 MB. `mediaUri` non cambia (stessi `anim.webp`), quindi CATALOG_VERSION resta 5. Titolo
+della Dashboard "Dashboard" in tutte e tre le lingue (era Oggi / Today / Aujourd'hui).
+
+**Fase 22 — Logo monolinea e splash** *(fatta)*
+DoD: marchio rifatto in stile Hevy — tessera squircle arancio a curve continue (bezier, non
+archi) con una "E" monolinea bianca a tratto tondo, al posto delle tre barre staccate; resta in
+`res/drawable/ic_eina_logo.xml`, riusato da `EinaLogo`, da `ShareCard` e — solo la lettera,
+riscalata nella zona sicura — da `ic_launcher_foreground.xml`. Splash con marchio e nome "EINA"
+visibili dal primo fotogramma: `res/drawable/ic_eina_splash_mark.xml` (tessera + nome disegnato a
+tratti, perche' il windowBackground non puo' usare un font) montato in `splash_screen.xml` come
+`android:windowBackground` sotto Android 12, e da Android 12 in su
+`windowSplashScreenBackground` bianco + `windowSplashScreenAnimatedIcon` con la sola tessera
+(`values-v31/themes.xml`), dato che la splash di sistema disegna solo l'icona. Appena Compose e'
+pronta `SplashOverlay` ridisegna lo stesso vettoriale con la tessera nel centro esatto dello
+schermo (scarto di 28dp) e sfuma dopo 600 ms, cosi' fra sistema e app la tessera non si muove.
+
+**Fase 23 — Animazioni raddoppiate con upscale AI** *(fatta)*
+DoD: le animazioni degli esercizi non sono più sgranate. La causa non era la compressione
+(dalla Fase 21 erano lossless, identiche alla sorgente) ma la risoluzione: le GIF di
+omercotkd sono 360x360 e la scheda esercizio le disegna a tutta larghezza, ~1050px su un
+telefono a densità 3, cioè quasi 3x di ingrandimento fatto da Android in bilineare.
+`tools/fetch_exercise_gifs.py` ora passa ogni fotogramma per `realesrgan-ncnn-vulkan`
+(modello `realesrgan-x4plus`, 4x, poi giù a 720px: il sovracampionamento smussa gli
+artefatti meglio di un 2x diretto) e rimonta l'animazione con Pillow invece che con ffmpeg,
+perché serve riscrivere la durata di ogni singolo fotogramma — queste GIF non hanno frame
+rate costante (1000 ms sulla posa iniziale, 100 ms sulle intermedie) e un fps fisso ne
+cambierebbe il ritmo. A 720px il lossless costerebbe ~950 KB a file, quindi la conversione
+è lossy q90. `--no-upscale` torna alla pipeline delle Fasi 19-21. `mediaUri` non cambia
+(stessi `anim.webp`), quindi CATALOG_VERSION resta 5. `assets/media` da 45,2 a 67,1 MB,
+APK di release da 47,6 a 69,5 MB.
+
+**Fase 23b — Volume solo di quel che si solleva davvero** *(fatta)*
+DoD: gli esercizi a corpo libero non contano più tutti allo stesso modo nel volume della
+sessione. `weightType` non bastava a distinguerli — trazioni e crunch sono entrambi
+`BODYWEIGHT` — quindi ogni esercizio porta `bodyweightFactor`, la quota di peso corporeo che
+il movimento solleva davvero: 1 per trazioni e dip, 0,64 per i piegamenti, 0 per addominali,
+plank e glute kickback, che quindi non aggiungono nulla al totale per quante ripetizioni si
+facciano. I valori stanno in `tools/bodyweight_factors.json` e `curate_exercises.py` si ferma
+se un esercizio a corpo libero non è elencato. DB alla versione 5 con `MIGRATION_4_5` (colonna
+a 1 per tutti, poi il seeder porta gli altri al loro valore), CATALOG_VERSION 6. Il volume
+storico non è salvato da nessuna parte, si ricalcola dalle set: i totali passati si correggono
+da soli. Nota: il volume a corpo libero resta 0 finché non si registra il peso in Progressi →
+Peso corporeo, perché `bodyweightSnapshotKg` nasce da lì.
+
+**Fase 24 — Tipo di serie: riscaldamento, cedimento, drop set** *(fatta)*
+DoD: ogni serie porta un `SetType` (WARMUP / NORMAL / FAILURE / DROP) al posto del booleano
+`isWarmup`, che sapeva dire solo riscaldamento si'/no. Il segno in testa alla riga e' anche il
+comando: un tocco apre il foglio con le quattro voci (`ui/components/SetTypeIndicator.kt`).
+Sigle W / F / D uguali in tutte le lingue, colorate (giallo, rosso, blu); la serie normale tiene
+il numero, e il numero conta solo le serie di lavoro — un riscaldamento in mezzo non ruba il
+numero alla serie dopo. Cedimento e drop set sono lavoro a tutti gli effetti (volume, PR,
+recupero); solo il riscaldamento resta fuori, come prima. Cambiare tipo su una serie gia'
+segnata ricalcola subito il volume e toglie il PR se diventa riscaldamento. DB alla versione 6
+con `MIGRATION_5_6`: la colonna va sostituita, non aggiunta, quindi la tabella `set_entries` si
+ricrea (SQLite sotto API 30 non sa togliere colonne) e le serie gia' registrate diventano
+WARMUP o NORMAL. Lo stesso segno compare nel dettaglio dello storico, col nome esteso del tipo
+come badge.
+
+**Fase 25 — Superset** *(fatta)*
+DoD: due o piu' esercizi si legano in un giro, in routine e in allenamento, e si possono avere
+piu' superset diversi nello stesso allenamento. Il legame e' `supersetGroup`, un numero uguale
+per i membri del giro, su `routine_exercises` e `workout_exercises` (DB v7, `MIGRATION_6_7`,
+colonne a null: nessun esercizio gia' salvato entra in un giro da solo). A schermo il numero non
+si vede mai: il giro si legge come lettera (A, B, C…) assegnata nell'ordine in cui compare nella
+lista, con badge "Superset A" e contorno colorato sulla card — colori presi dalla palette dei
+gruppi muscolari, non una tavolozza nuova. Si compone dal foglio del tocco lungo, voce
+"Superset": giro nuovo, uno di quelli aperti, o fuori dal giro. Chi entra si sposta accanto ai
+compagni (un superset e' una sequenza, non un insieme sparso) e ne eredita il recupero, che nel
+superset e' del giro: cambiarlo su un esercizio lo cambia a tutti. Un giro rimasto con un solo
+esercizio si scioglie da se'. "Sposta su/giu'" muove tutto il blocco, e le frecce guardano dove
+comincia e dove finisce il giro. Il recupero parte solo quando ogni compagno ha chiuso la serie
+di pari indice (i compagni con meno serie non bloccano il giro). La logica pura sta in
+`domain/Superset.kt` con i suoi test; l'export/import routine (`eina.routine` v1) porta il campo
+come opzionale, quindi i file vecchi restano leggibili. Verificata sul dispositivo: giro composto
+in routine, ereditato all'avvio della sessione, recupero partito solo alla chiusura del secondo
+esercizio.
+
+**Fase 26 — Routine con la stessa tabella dell'allenamento** *(fatta)*
+DoD: si aggiungono esercizi alla routine con lo stesso foglio dell'allenamento
+(`ui/components/ExercisePickerSheet.kt`, condiviso: ricerca, chip dei gruppi muscolari e
+miniatura del primo fotogramma dell'animazione) invece di saltare su una schermata di libreria —
+la rotta `routines/edit/{id}/pick-exercise` e il parametro `title` di `LibraryScreen` sono
+spariti. La miniatura vive solo nel foglio di scelta: nelle liste di allenamento e routine il
+nome resta da solo. La card dell'esercizio in routine e' quella dell'allenamento: nome che apre
+la scheda, chip del recupero, tabella delle serie e "Aggiungi serie", azioni col tocco lungo. Ogni
+serie e' una riga con il suo tipo (W / F / D), scelto dallo stesso `SetTypeSheet`: la scheda puo'
+dire "un riscaldamento e due serie a cedimento", che con le vecchie `targetSets`/`targetReps` non
+si poteva scrivere. Quelle tre colonne sono uscite da `routine_exercises` (la tabella si ricrea,
+SQLite sotto API 30 non sa togliere colonne) e ogni esercizio gia' salvato ha prodotto le sue
+righe NORMAL coi valori che aveva. DB alla versione 8 con `MIGRATION_7_8`; l'avvio della sessione
+copia una serie per riga, tipo compreso; il file di scambio `eina.routine` passa a v2 con
+l'elenco "sets" e continua a leggere i v1 (targetSets diventa quel numero di serie normali).
+Intestazione tabella e campo numerico condivisi in `ui/components/SetTable.kt`. Verificata sul
+dispositivo: migrazione di una routine esistente, tipo di serie cambiato in W con rinumerazione,
+serie aggiunta che eredita le ripetizioni, e sessione avviata dalla routine che riceve una serie
+per riga con lo stesso tipo (F / W / D) e le ripetizioni come segnaposto.
+
+**Fase 27 — Distanza, cronometro, progressione** *(fatta)*
+DoD: gli esercizi da cardio non si registrano piu' come se avessero un pacco pesi. Nuovo
+`WeightType.DISTANCE_BASED` (tapis roulant, cyclette, ellittica): in tabella al posto di kg e
+ripetizioni ci sono chilometri e minuti, e il PR scatta quando si supera la distanza massima
+**o** la velocita' media massima — correre uguale ma piu' in fretta e' un record. Nessuna
+colonna nuova sulle serie: come `actualReps` porta gia' i secondi degli esercizi a tempo, qui
+`weight` porta i km e `actualReps` i minuti (`usesDistance` / `usesDecimalField` in
+`data/db/Enums.kt`), quindi niente migrazione — DB fermo alla versione 8. I sei esercizi
+cardio del catalogo passano al tipo giusto da `tools/cardio_weight_types.json`, applicato da
+`curate_exercises.py` (Stairmaster va a TIME_BASED: non percorre una distanza),
+CATALOG_VERSION 7. Cronometro libero, distinto dal timer di recupero: `StopwatchController`
+singleton in Koin, senza job che gira per conto suo (l'istante di partenza piu' il tempo
+accumulato, la UI aperta ridisegna), col tasto tondo in testa alla Dashboard e nell'header
+dell'allenamento in corso — e' lo stesso conteggio, avviarlo prima e ritrovarlo in palestra
+funziona (`ui/components/Stopwatch.kt`). La scheda di un esercizio mostra la sua progressione
+nel tempo con le stesse spezzate del peso corporeo (`MiniLineChart`): un punto per allenamento,
+preso dalla serie migliore della sessione e non dalla media (`domain/ExerciseProgress.kt` coi
+suoi test), con le due grandezze che quell'esercizio registra davvero — carico e ripetizioni,
+secondi a tempo, km e minuti a distanza. I record personali in Progressi sono cliccabili e
+portano a quella scheda.
+
+**Fase 28 — Restyle "HIG"** *(fatta, unita a main: e' l'interfaccia ufficiale)*
+DoD: l'app ha un aspetto da vetrina senza cambiare una sola funzione. Riferimento dichiarato le
+linee guida Apple, asset tutti nostri (nessun font, simbolo o marchio Apple).
+- Font: Inter (SIL OFL 1.1) bundlato in `res/font`, licenza in `assets/licenses/inter-OFL.txt`
+  e riga in Impostazioni → Info. Prima era `FontFamily.Default`, cioe' Roboto. Il taglio
+  `InterDisplay` regge titoli e numeri grandi (come SF Pro Display sta a SF Pro Text), le cifre
+  tabulari (`tnum`) tengono ferme le colonne dei numeri che cambiano.
+- `SquircleShape` in `ui/theme/Shape.kt`: angolo continuo, tre bezier per angolo e nessun arco,
+  coi rapporti noti della curva di Apple. Su elementi bassi il raggio si riduce invece di
+  ripiegare sulla pastiglia. `EinaShapes` di Material3 resta ad angoli circolari perche' vuole
+  `CornerBasedShape`.
+- Neutri senza dominante marrone (fondo #F4F3F1, testo #1C1B19, incassato #EFEEEB) e ombra
+  dell'isola su due livelli, diffusa piu' contatto.
+- `accentRamp` (ambra #FFA23A → arancio #F97348 → magenta #F9436B) come token di tema: la usano
+  CTA, voce di nav attiva, tondi pieni, anello, barre e cella piu' calda della heatmap. Un solo
+  arancio in pagina invece di due.
+- `ActivityRing` (`ui/components/ActivityRing.kt`): la rampa e' distribuita sull'arco disegnato,
+  non sul giro intero, altrimenti la cucitura del gradiente spunta a mezzogiorno.
+- Dashboard: hero con l'anello dei giorni allenati sulla settimana (giorni distinti, non
+  sessioni) al posto delle due tile affiancate; data come riga minuscola sopra il titolo
+  (`eyebrow` di `ScreenHeader`).
+- Libreria: righe basse con punto colorato e "gruppo · attrezzo" su una riga, al posto del badge
+  che si prendeva una riga sua in un elenco di 197 voci.
+- Marchio rifatto: tessera squircle con la rampa e "E" monolinea inclinata in avanti di 8 gradi
+  (l'inclinazione e' cotta nelle coordinate, i group dei vector non sanno inclinare). Stessa
+  lettera in `ic_launcher_foreground`, sfondo dell'icona adattiva ora a gradiente
+  (`ic_launcher_background.xml`), stessa tessera nella splash. `ShareCard` disegna il testo con
+  Inter: e' l'immagine che gira fuori dall'app e usava il sans di sistema.
+
+**Fase 9 — Rifinitura** *(fatta)*
+DoD: R8 + shrinkResources attivi sulla release (20,5 MB → 2,2 MB), regole in
+`app/proguard-rules.pro`; release firmata con la chiave di debug finché non esiste un
+keystore di distribuzione; avvio a freddo 592 ms (`am start -W`); edge case gestiti
+(galleria assente e copia file fallita mostrate in `CreateExerciseScreen`,
+`launchPlaylist` ritorna `false` senza app né browser e l'allenamento mostra un toast,
+seed fallito non abbatte l'avvio).
 
 ---
 
 ## Asset da preparare TU prima di lanciare Claude Code (per non farlo bloccare a metà)
 
 - [x] Nome definitivo e package name → **Eina**, `com.<org>.eina`
-- [ ] URL Buy Me a Coffee
-- [x] Dataset esercizi arricchito → **pronto**: `seed/eina_exercises_seed.json` (873 esercizi convertiti da free-exercise-db con `weightType`/`description`/`loggingInstructions`). Copialo in `app/src/main/assets/seed/exercises.json`. **274 esercizi hanno `needsReview: true`** (classificazione `weightType` incerta, o categoria "stretching" ambigua per un tracker di forza) — filtra su questo campo per una revisione manuale mirata, non serve rivederli tutti. Le `description` sono in inglese (lingua originale del dataset): per la v1 puoi tenerle così, una traduzione IT è un'iterazione successiva non bloccante.
-- [x] Icona app → **fatta**: marchio Eina (tessera viola + tre barre bianche) come adaptive icon in `res/drawable/ic_launcher_foreground.xml`, stesso segno disegnato in `ui/share/ShareCard.kt`
-- [ ] **Decisione sulle immagini esercizio**: ogni esercizio ha in media 2 frame JPG da ~38KB l'uno → bundlare tutte le immagini di libreria (~1700 file) costerebbe ~65-70MB di APK, in conflitto col principio "leggera". Opzioni da decidere prima della Fase 3: (a) bundlare solo la prima immagine per esercizio (~33MB), (b) bundlare un sottoinsieme curato (es. i 150-200 esercizi più comuni) e usare Play Asset Delivery per il resto, (c) ricomprimere/ridimensionare le immagini prima del bundling. Lo script di conversione salva comunque tutti i path in `mediaFrames` per ogni esercizio, così qualunque opzione si scelga i dati sono già pronti.
+- [x] URL donazioni → **Ko-fi**: `https://ko-fi.com/gnottero` (`DONATION_URL` in
+  `ui/settings/DonationLauncher.kt`). Ko-fi e non Buy Me a Coffee perché BMC accetta solo
+  Stripe per i nuovi account, mentre Ko-fi incassa direttamente su PayPal.
+- [x] Dataset esercizi → **fatto**: l'export integrale resta in `eina_exercises_seed.json` (873
+  esercizi da free-exercise-db), ma il catalogo dell'app è il sottoinsieme curato di **197
+  esercizi comuni** generato da `tools/curate_exercises.py` a partire da
+  `tools/common_exercises.txt`. Ogni descrizione è tradotta in italiano e francese
+  (`tools/translations/*.json` → `descriptionIt`/`descriptionFr`). Per rigenerare
+  `app/src/main/assets/seed/exercises.json` basta rilanciare lo script; se cambiano i
+  contenuti, alza `CATALOG_VERSION` in `ExerciseSeeder`.
+- [x] Icona app → **fatta**: marchio Eina (tessera arancio + tre barre bianche) come adaptive icon in `res/drawable/ic_launcher_foreground.xml`, stesso segno disegnato in `ui/share/ShareCard.kt`
+- [x] **Decisione sulle immagini esercizio** (presa in Fase 18, rivista in Fase 19): le foto a
+  due fotogrammi di free-exercise-db (`tools/fetch_exercise_media.py`) restano solo per gli 11
+  esercizi senza animazione. Per gli altri 186 si bundla una WebP animata a 288px q60 con la
+  figura anatomica e i muscoli lavorati colorati, generata da `tools/fetch_exercise_gifs.py`
+  → `app/src/main/assets/media/<cartella>/anim.webp` (9,6 MB in assets, APK di release 12,0 MB).
+  Niente Play Asset Delivery: il catalogo è chiuso e il costo è accettabile. Rilancia lo script
+  solo se cambia il catalogo o la mappatura (salta i file già presenti) e alza `CATALOG_VERSION`
+  in `ExerciseSeeder`.
 
 ---
 
