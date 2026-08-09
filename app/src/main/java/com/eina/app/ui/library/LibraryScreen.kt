@@ -228,6 +228,10 @@ private fun ExerciseListItem(
         ) {
             // Miniatura del primo fotogramma: si riconosce il movimento senza aprire la scheda.
             if (hasExerciseMedia(exercise.mediaUri)) {
+                // Miniatura piena, senza fondo ne' cornice colorata: la figura ha il suo bianco
+                // opaco, quindi un fondo tinto non si vedrebbe e una cornice la fa sembrare un
+                // segnaposto vuoto. Il colore del gruppo muscolare sta nel punto e nel testo qui
+                // sotto, che bastano a dare ritmo alla lista.
                 AsyncImage(
                     model = exercise.mediaUri,
                     contentDescription = null,
@@ -237,10 +241,6 @@ private fun ExerciseListItem(
                         // Raggio esplicito e non TileShape: su 56dp i 24dp della tile
                         // arrotondano fino a farla diventare un cerchio.
                         .clip(squircle(18.dp))
-                        // Fondo tinto del gruppo muscolare invece del grigio: la figura
-                        // dell'esercizio e' quasi tutta bianca e in un elenco lungo le miniature
-                        // sparivano dentro la card.
-                        .background(category.color.copy(alpha = 0.12f))
                 )
             }
             androidx.compose.foundation.layout.Column(
@@ -264,13 +264,23 @@ private fun ExerciseListItem(
                             .background(category.color)
                     )
                     val equipment = exercise.equipment?.takeIf { it.isNotBlank() }?.let { equipmentLabel(it) }
+                    // Gruppo muscolare nel suo colore, attrezzo in grigio: due informazioni di
+                    // peso diverso sulla stessa riga, distinte dal colore invece che da un badge.
                     Text(
-                        text = listOfNotNull(category.label(), equipment).joinToString(" · "),
+                        text = category.label(),
                         style = MaterialTheme.typography.bodySmall,
-                        color = secondaryColor,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+                        color = category.color,
+                        maxLines = 1
                     )
+                    if (equipment != null) {
+                        Text(
+                            text = "· $equipment",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = secondaryColor,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
                 }
             }
             Icon(
