@@ -237,7 +237,10 @@ private fun ExerciseListItem(
                         // Raggio esplicito e non TileShape: su 56dp i 24dp della tile
                         // arrotondano fino a farla diventare un cerchio.
                         .clip(squircle(18.dp))
-                        .background(EinaTheme.island.sunken)
+                        // Fondo tinto del gruppo muscolare invece del grigio: la figura
+                        // dell'esercizio e' quasi tutta bianca e in un elenco lungo le miniature
+                        // sparivano dentro la card.
+                        .background(category.color.copy(alpha = 0.12f))
                 )
             }
             androidx.compose.foundation.layout.Column(

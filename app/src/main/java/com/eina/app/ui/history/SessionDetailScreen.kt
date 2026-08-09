@@ -90,6 +90,7 @@ import com.eina.app.ui.share.shareCardDataOf
 import com.eina.app.ui.share.shareImage
 import com.eina.app.ui.theme.EinaTheme
 import com.eina.app.ui.theme.IslandShape
+import com.eina.app.ui.theme.MetricColors
 import com.eina.app.ui.theme.Spacing
 import com.eina.app.ui.theme.TileShape
 import kotlinx.coroutines.Dispatchers
@@ -178,6 +179,7 @@ fun SessionDetailScreen(
             StatTile(
                 label = stringResource(R.string.stat_sets),
                 value = summary.setCount.toString(),
+                tint = MetricColors.Sets,
                 modifier = Modifier.weight(1f)
             )
         }

@@ -26,6 +26,7 @@ import com.eina.app.R
 import com.eina.app.data.transfer.RoutineTransfer
 import com.eina.app.ui.components.IslandButton
 import com.eina.app.ui.components.IslandCard
+import com.eina.app.ui.components.IslandCardHeader
 import com.eina.app.ui.components.IslandIconButton
 import com.eina.app.ui.components.IslandScreen
 import com.eina.app.ui.components.ScreenHeader
@@ -127,11 +128,10 @@ fun WorkoutScreen(
             }
         } else {
             IslandCard(modifier = Modifier.fillMaxWidth()) {
-                Text(stringResource(R.string.workout_free_title), style = MaterialTheme.typography.titleMedium)
-                Text(
-                    stringResource(R.string.workout_free_description),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = island.textSecondary
+                IslandCardHeader(
+                    title = stringResource(R.string.workout_free_title),
+                    icon = Icons.Outlined.Bolt,
+                    subtitle = stringResource(R.string.workout_free_description)
                 )
                 IslandButton(
                     text = stringResource(R.string.workout_start_now),

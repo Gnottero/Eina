@@ -129,15 +129,17 @@ fun IslandChip(
     modifier: Modifier = Modifier,
     accentColor: Color = MaterialTheme.colorScheme.primary
 ) {
-    val island = EinaTheme.island
     val hapticTap = LocalHapticTap.current
+    // Anche da spenta la chip porta il suo colore, tenue: la fila dei gruppi muscolari era una
+    // sequenza di pastiglie grigie tutte uguali, e il colore compariva solo dopo aver scelto.
+    // Selezionata diventa piena, cosi' la differenza fra scelto e non scelto resta netta.
     Text(
         text = text,
         style = MaterialTheme.typography.labelLarge,
-        color = if (selected) accentColor else island.textSecondary,
+        color = if (selected) Color.White else accentColor,
         modifier = modifier
             .clip(PillShape)
-            .background(if (selected) accentColor.copy(alpha = 0.14f) else island.sunken)
+            .background(if (selected) accentColor else accentColor.copy(alpha = 0.13f))
             .clickable { hapticTap(); onClick() }
             .padding(horizontal = Spacing.lg, vertical = Spacing.sm)
     )

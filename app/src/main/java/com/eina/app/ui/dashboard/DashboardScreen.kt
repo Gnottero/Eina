@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.FitnessCenter
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.PlayArrow
 import androidx.compose.material.icons.outlined.Settings
@@ -28,6 +29,7 @@ import com.eina.app.R
 import com.eina.app.ui.components.ActivityRing
 import com.eina.app.ui.components.IslandButton
 import com.eina.app.ui.components.IslandCard
+import com.eina.app.ui.components.IslandCardHeader
 import com.eina.app.ui.components.IslandEmptyState
 import com.eina.app.ui.components.IslandIconButton
 import com.eina.app.ui.components.IslandScreen
@@ -43,6 +45,7 @@ import com.eina.app.ui.components.formatVolume
 import com.eina.app.ui.components.weekDayInitials
 import com.eina.app.ui.theme.EinaTheme
 import com.eina.app.ui.theme.IslandShape
+import com.eina.app.ui.theme.MetricColors
 import com.eina.app.ui.theme.Spacing
 import java.time.LocalDate
 import org.koin.androidx.compose.koinViewModel
@@ -134,7 +137,7 @@ fun DashboardScreen(
                     Text(
                         text = stringResource(R.string.dashboard_hero_week).uppercase(),
                         style = MaterialTheme.typography.labelSmall,
-                        color = island.textSecondary
+                        color = MetricColors.Volume
                     )
                     Row(verticalAlignment = Alignment.Bottom) {
                         Text(
@@ -162,15 +165,15 @@ fun DashboardScreen(
         }
 
         IslandCard(modifier = Modifier.fillMaxWidth()) {
-            Text(stringResource(R.string.dashboard_weekly_volume), style = MaterialTheme.typography.titleMedium)
-            Text(
-                text = if (hasWeekVolume) {
+            IslandCardHeader(
+                title = stringResource(R.string.dashboard_weekly_volume),
+                icon = Icons.Outlined.FitnessCenter,
+                tint = MetricColors.Volume,
+                subtitle = if (hasWeekVolume) {
                     stringResource(R.string.dashboard_weekly_volume_value, formatVolume(state.weekVolumeKg))
                 } else {
                     stringResource(R.string.dashboard_no_data)
-                },
-                style = MaterialTheme.typography.bodyMedium,
-                color = island.textSecondary
+                }
             )
             MiniBarChart(
                 values = state.weekVolumeByDay,

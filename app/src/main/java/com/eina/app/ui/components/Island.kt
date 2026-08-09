@@ -44,6 +44,7 @@ import com.eina.app.ui.theme.IslandShape
 import com.eina.app.ui.theme.PillShape
 import com.eina.app.ui.theme.Spacing
 import com.eina.app.ui.theme.TileShape
+import com.eina.app.ui.theme.squircle
 
 /**
  * Ombra dell'isola su due livelli, come le superfici di iOS: una diffusa e larga che da' la
@@ -161,12 +162,14 @@ fun StatTile(
     unit: String? = null,
     icon: ImageVector? = null,
     accentColor: Color? = null,
+    /** Tinta della tile bianca: colora icona ed etichetta, non il numero. */
+    tint: Color = MaterialTheme.colorScheme.primary,
     onClick: (() -> Unit)? = null
 ) {
     val island = EinaTheme.island
     val filled = accentColor != null
     val contentColor = if (filled) Color.White else MaterialTheme.colorScheme.onSurface
-    val labelColor = if (filled) Color.White.copy(alpha = 0.82f) else island.textSecondary
+    val labelColor = if (filled) Color.White.copy(alpha = 0.82f) else tint
     // La tile piena non e' una campitura unita ma una rampa diagonale: su un rettangolo di
     // questa taglia l'arancio pieno si legge come un adesivo.
     val fillBrush = accentColor?.let {
@@ -200,14 +203,14 @@ fun StatTile(
                             .clip(RoundedCornerShape(percent = 50))
                             .background(
                                 if (filled) Color.White.copy(alpha = 0.22f)
-                                else MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
+                                else tint.copy(alpha = 0.14f)
                             ),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = icon,
                             contentDescription = null,
-                            tint = if (filled) Color.White else MaterialTheme.colorScheme.primary,
+                            tint = if (filled) Color.White else tint,
                             modifier = Modifier.size(15.dp)
                         )
                     }
@@ -279,7 +282,8 @@ fun ScreenHeader(
                 Text(
                     text = eyebrow.uppercase(),
                     style = MaterialTheme.typography.labelSmall,
-                    color = island.textSecondary,
+                    // In accento, non in grigio: e' l'unico tocco di colore in testa alla pagina.
+                    color = MaterialTheme.colorScheme.primary,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -308,14 +312,24 @@ fun SectionHeader(
     modifier: Modifier = Modifier,
     actionLabel: String? = null,
     actionIcon: ImageVector? = null,
+    /** Colore del filetto a sinistra del titolo: dice di che sezione si tratta. */
+    tint: Color = MaterialTheme.colorScheme.primary,
     onAction: (() -> Unit)? = null
 ) {
     Row(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = Spacing.xs),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
     ) {
+        // Filetto colorato: un titolo di sezione nero su fondo chiaro spariva fra le isole.
+        Box(
+            modifier = Modifier
+                .size(width = 4.dp, height = 18.dp)
+                .clip(PillShape)
+                .background(tint)
+        )
         Text(
             text = title,
             style = MaterialTheme.typography.titleMedium,
@@ -339,6 +353,47 @@ fun SectionHeader(
                     .clickable { hapticTap(); onAction() }
                     .padding(horizontal = Spacing.sm, vertical = Spacing.xs)
             )
+        }
+    }
+}
+
+/**
+ * Testata di una card: pastiglia tinta con l'icona, titolo, riga di supporto sotto. Serve a dare
+ * un colore anche alle isole che contengono un grafico e non un numero — erano rettangoli bianchi
+ * con due righe di testo nero, e a schermo intero la pagina risultava scolorita.
+ */
+@Composable
+fun IslandCardHeader(
+    title: String,
+    icon: ImageVector,
+    modifier: Modifier = Modifier,
+    subtitle: String? = null,
+    tint: Color = MaterialTheme.colorScheme.primary
+) {
+    val island = EinaTheme.island
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(Spacing.md)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(34.dp)
+                .clip(squircle(11.dp))
+                .background(tint.copy(alpha = 0.14f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(18.dp))
+        }
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
+            Text(title, style = MaterialTheme.typography.titleMedium)
+            if (subtitle != null) {
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = island.textSecondary
+                )
+            }
         }
     }
 }
@@ -398,14 +453,16 @@ fun IslandEmptyState(
         verticalArrangement = Arrangement.spacedBy(Spacing.sm)
     ) {
         if (icon != null) {
+            // Tondo tinto d'accento, non grigio: lo stato vuoto e' la prima cosa che vede chi
+            // apre l'app appena installata e non deve sembrare una schermata rotta.
             Box(
                 modifier = Modifier
                     .size(44.dp)
                     .clip(RoundedCornerShape(percent = 50))
-                    .background(island.sunken),
+                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.13f)),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(icon, contentDescription = null, tint = island.textSecondary)
+                Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
             }
             Spacer(Modifier.height(Spacing.xs))
         }

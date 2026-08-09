@@ -27,6 +27,24 @@ val LightTextSecondary = Color(0xFF7C7A75)
 val LightOutlineSubtle = Color(0xFFE7E5E1)
 val LightOnBackground = Color(0xFF1C1B19)
 
+/**
+ * Colore per grandezza misurata. Non e' una tavolozza nuova: sono gli stessi colori dei gruppi
+ * muscolari, riusati con un significato fisso. Serve perche' le schermate erano bianche con un
+ * solo arancio: ogni numero ha ora la sua tinta e le metriche si riconoscono a colpo d'occhio
+ * anche senza leggere l'etichetta.
+ *
+ * Il colore sta sull'icona e sull'etichetta, mai sul numero: il valore resta nero, altrimenti in
+ * una riga di tre metriche non si capisce piu' quale sia quella importante.
+ */
+object MetricColors {
+    val Volume = AccentPrimary
+    val Sets = Color(0xFF9775FA)
+    val Duration = Color(0xFF4D96FF)
+    val Records = AccentRampEnd
+    val Bodyweight = Color(0xFF20C997)
+    val Streak = Color(0xFFF06595)
+}
+
 object MuscleGroupColors {
     val ChestPush = Color(0xFFFF6B6B)
     val BackPull = Color(0xFF4D96FF)

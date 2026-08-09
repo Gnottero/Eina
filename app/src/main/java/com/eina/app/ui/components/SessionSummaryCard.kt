@@ -19,6 +19,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -28,6 +29,7 @@ import com.eina.app.R
 import com.eina.app.domain.SessionSummary
 import com.eina.app.ui.library.currentLocale
 import com.eina.app.ui.theme.EinaTheme
+import com.eina.app.ui.theme.MetricColors
 import com.eina.app.ui.theme.Spacing
 
 /**
@@ -76,7 +78,7 @@ fun SessionSummaryCard(
             if (summary.prCount > 0) {
                 EinaBadge(
                     text = pluralStringResource(R.plurals.pr_count, summary.prCount, summary.prCount),
-                    color = MaterialTheme.colorScheme.primary
+                    color = MetricColors.Records
                 )
             }
             if (onClick != null) {
@@ -93,6 +95,7 @@ fun SessionSummaryCard(
             SummaryMetric(
                 label = stringResource(R.string.stat_duration),
                 value = summary.durationMinutes?.let { formatDuration(it) } ?: "—",
+                tint = MetricColors.Duration,
                 modifier = Modifier.weight(1f)
             )
             MetricDivider()
@@ -100,12 +103,14 @@ fun SessionSummaryCard(
                 label = stringResource(R.string.stat_volume),
                 value = formatVolume(summary.volumeKg),
                 unit = stringResource(R.string.unit_kg),
+                tint = MetricColors.Volume,
                 modifier = Modifier.weight(1f)
             )
             MetricDivider()
             SummaryMetric(
                 label = stringResource(R.string.stat_sets),
                 value = summary.setCount.toString(),
+                tint = MetricColors.Sets,
                 modifier = Modifier.weight(1f)
             )
         }
@@ -129,7 +134,10 @@ private fun SummaryMetric(
     label: String,
     value: String,
     modifier: Modifier = Modifier,
-    unit: String? = null
+    unit: String? = null,
+    // L'etichetta prende il colore della grandezza, il numero resta nero: colorare anche il
+    // numero avrebbe fatto sembrare tutt'e tre le metriche ugualmente urgenti.
+    tint: Color = MaterialTheme.colorScheme.primary
 ) {
     val island = EinaTheme.island
     Column(
@@ -139,7 +147,7 @@ private fun SummaryMetric(
         Text(
             text = label.uppercase(),
             style = MaterialTheme.typography.labelSmall,
-            color = island.textSecondary,
+            color = tint,
             maxLines = 1
         )
         Row(verticalAlignment = Alignment.Bottom) {

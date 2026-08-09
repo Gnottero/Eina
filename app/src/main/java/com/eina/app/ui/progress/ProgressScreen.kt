@@ -5,7 +5,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.BarChart
+import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.EmojiEvents
+import androidx.compose.material.icons.outlined.FitnessCenter
+import androidx.compose.material.icons.outlined.Repeat
 import androidx.compose.material.icons.outlined.MonitorWeight
 import androidx.compose.material.icons.outlined.Whatshot
 import androidx.compose.material3.MaterialTheme
@@ -22,6 +26,7 @@ import com.eina.app.R
 import com.eina.app.domain.PrRecord
 import com.eina.app.ui.components.HeatmapCalendar
 import com.eina.app.ui.components.IslandCard
+import com.eina.app.ui.components.IslandCardHeader
 import com.eina.app.ui.components.IslandEmptyState
 import com.eina.app.ui.components.IslandScreen
 import com.eina.app.ui.components.IslandSegmentedRow
@@ -36,6 +41,7 @@ import com.eina.app.ui.components.formatVolume
 import com.eina.app.ui.components.weekDayInitials
 import com.eina.app.ui.library.localized
 import com.eina.app.ui.theme.EinaTheme
+import com.eina.app.ui.theme.MetricColors
 import com.eina.app.ui.theme.Spacing
 import org.koin.androidx.compose.koinViewModel
 
@@ -83,21 +89,27 @@ fun ProgressScreen(
                 label = stringResource(R.string.stat_volume),
                 value = formatVolume(state.selectedDayVolumeKg),
                 unit = stringResource(R.string.unit_kg),
+                icon = Icons.Outlined.FitnessCenter,
+                tint = MetricColors.Volume,
                 modifier = Modifier.weight(1f)
             )
             StatTile(
                 label = stringResource(R.string.stat_sets),
                 value = state.selectedDaySets.toString(),
+                icon = Icons.Outlined.Repeat,
+                tint = MetricColors.Sets,
                 modifier = Modifier.weight(1f)
             )
         }
 
         IslandCard(modifier = Modifier.fillMaxWidth()) {
-            Text(stringResource(R.string.progress_volume_per_day), style = MaterialTheme.typography.titleMedium)
-            Text(
-                text = stringResource(if (hasWeekVolume) R.string.progress_current_week else R.string.dashboard_no_data),
-                style = MaterialTheme.typography.bodyMedium,
-                color = island.textSecondary
+            IslandCardHeader(
+                title = stringResource(R.string.progress_volume_per_day),
+                icon = Icons.Outlined.BarChart,
+                tint = MetricColors.Volume,
+                subtitle = stringResource(
+                    if (hasWeekVolume) R.string.progress_current_week else R.string.dashboard_no_data
+                )
             )
             MiniBarChart(
                 values = state.weekVolumeByDay,
@@ -108,11 +120,11 @@ fun ProgressScreen(
         }
 
         IslandCard(modifier = Modifier.fillMaxWidth()) {
-            Text(stringResource(R.string.progress_consistency), style = MaterialTheme.typography.titleMedium)
-            Text(
-                text = stringResource(R.string.progress_last_weeks, 18),
-                style = MaterialTheme.typography.bodyMedium,
-                color = island.textSecondary
+            IslandCardHeader(
+                title = stringResource(R.string.progress_consistency),
+                icon = Icons.Outlined.CalendarMonth,
+                tint = MetricColors.Streak,
+                subtitle = stringResource(R.string.progress_last_weeks, 18)
             )
             HeatmapCalendar(
                 valuesByDay = state.volumeByDay,
@@ -120,7 +132,7 @@ fun ProgressScreen(
             )
         }
 
-        SectionHeader(title = stringResource(R.string.progress_prs))
+        SectionHeader(title = stringResource(R.string.progress_prs), tint = MetricColors.Records)
 
         if (state.personalRecords.isEmpty()) {
             IslandEmptyState(
@@ -136,7 +148,7 @@ fun ProgressScreen(
             }
         }
 
-        SectionHeader(title = stringResource(R.string.progress_body))
+        SectionHeader(title = stringResource(R.string.progress_body), tint = MetricColors.Bodyweight)
 
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -147,6 +159,7 @@ fun ProgressScreen(
                 value = state.latestBodyweightKg?.let { formatDecimal(it) } ?: "–",
                 unit = stringResource(R.string.unit_kg),
                 icon = Icons.Outlined.MonitorWeight,
+                tint = MetricColors.Bodyweight,
                 onClick = onBodyWeightClick,
                 modifier = Modifier.weight(1f)
             )
@@ -155,6 +168,7 @@ fun ProgressScreen(
                 value = state.streakWeeks.toString(),
                 unit = pluralStringResource(R.plurals.week_count, state.streakWeeks, state.streakWeeks).substringAfter(' '),
                 icon = Icons.Outlined.Whatshot,
+                tint = MetricColors.Streak,
                 modifier = Modifier.weight(1f)
             )
         }
