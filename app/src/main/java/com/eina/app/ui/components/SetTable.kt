@@ -43,13 +43,17 @@ fun SetTableHeader(
     trailingSlot: Boolean = true
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        // Stesso rientro laterale delle righe della tabella (vedi SetRow): senza, le colonne
+        // dell'intestazione partono 4dp piu' a sinistra e le etichette non stanno sopra i campi.
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = Spacing.xs),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
     ) {
         TableLabel(stringResource(R.string.table_set), Modifier.width(40.dp))
         if (showPrevious) {
-            TableLabel(stringResource(R.string.table_previous), Modifier.weight(1.1f))
+            TableLabel(stringResource(R.string.table_previous), Modifier.weight(previousColumnWeight(weightType)))
         }
         // Senza carico da digitare la colonna kg non compare: lo spazio va alle ripetizioni.
         // Sugli esercizi a distanza lo stesso campo decimale porta i chilometri.
@@ -73,6 +77,13 @@ fun SetTableHeader(
         }
     }
 }
+
+/**
+ * Larghezza della colonna "precedente". Sulla distanza il riepilogo e' lungo il doppio
+ * ("5,2km·30" contro "60kg×8") e nella colonna stretta finiva tagliato a meta'.
+ */
+fun previousColumnWeight(weightType: WeightType): Float =
+    if (weightType.usesDistance) 1.7f else 1.1f
 
 @Composable
 fun TableLabel(text: String, modifier: Modifier = Modifier) {

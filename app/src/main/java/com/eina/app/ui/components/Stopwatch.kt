@@ -20,6 +20,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import com.eina.app.R
 import com.eina.app.ui.theme.Spacing
 import kotlinx.coroutines.delay
@@ -137,12 +139,14 @@ fun StopwatchSheet(controller: StopwatchController, onDismiss: () -> Unit) {
 fun StopwatchIconButton(
     running: Boolean,
     onClick: () -> Unit,
-    containerColor: Color = MaterialTheme.colorScheme.surface
+    containerColor: Color = MaterialTheme.colorScheme.surface,
+    size: Dp = 44.dp
 ) {
     IslandIconButton(
         icon = Icons.Outlined.Timer,
         contentDescription = stringResource(R.string.stopwatch_open_cd),
         onClick = onClick,
+        size = size,
         containerColor = if (running) MaterialTheme.colorScheme.primary.copy(alpha = 0.14f) else containerColor,
         contentColor = if (running) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
     )

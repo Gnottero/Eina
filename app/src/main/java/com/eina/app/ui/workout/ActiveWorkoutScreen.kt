@@ -83,6 +83,8 @@ import com.eina.app.ui.components.ExercisePickerSheet
 import com.eina.app.ui.components.IslandChip
 import com.eina.app.ui.components.SetTableHeader
 import com.eina.app.ui.components.SetValueField
+import com.eina.app.ui.components.formatDecimal
+import com.eina.app.ui.components.previousColumnWeight
 import com.eina.app.ui.components.IslandEmptyState
 import com.eina.app.ui.components.IslandIconButton
 import com.eina.app.ui.components.IslandSecondaryButton
@@ -99,7 +101,6 @@ import com.eina.app.ui.components.SupersetBadge
 import com.eina.app.ui.components.SupersetOption
 import com.eina.app.ui.components.SupersetSheet
 import com.eina.app.ui.components.supersetColor
-import com.eina.app.ui.components.formatDistanceAndTime
 import com.eina.app.ui.components.sanitizeWeightInput
 import com.eina.app.domain.Superset
 import com.eina.app.ui.feedback.LocalHapticTap
@@ -477,13 +478,6 @@ private fun SessionHeader(
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f)
                 )
-                // Cronometro a portata di mano anche in palestra: e' lo stesso della Dashboard,
-                // quindi un conteggio avviato prima continua qui.
-                StopwatchIconButton(
-                    running = stopwatchState.running,
-                    onClick = { showStopwatch = true },
-                    containerColor = island.sunken
-                )
                 // La playlist si lancia da qui, dove serve davvero: nell'editor della routine
                 // si sta scrivendo una scheda, non ci si sta allenando.
                 if (playlistType != null && !playlistUri.isNullOrBlank()) {
@@ -505,6 +499,15 @@ private fun SessionHeader(
                         size = 40.dp
                     )
                 }
+                // Cronometro a portata di mano anche in palestra: e' lo stesso della Dashboard,
+                // quindi un conteggio avviato prima continua qui. Sta dopo la playlist, che
+                // tiene il suo posto storico in fondo alla riga.
+                StopwatchIconButton(
+                    running = stopwatchState.running,
+                    onClick = { showStopwatch = true },
+                    containerColor = island.sunken,
+                    size = 40.dp
+                )
             }
 
             Row(
@@ -797,7 +800,7 @@ private fun SetRow(
             color = island.textSecondary,
             textAlign = TextAlign.Center,
             maxLines = 1,
-            modifier = Modifier.weight(1.1f)
+            modifier = Modifier.weight(previousColumnWeight(weightType))
         )
 
         // Segnaposto = valori proposti dal ViewModel, gli stessi che vengono registrati se la
@@ -997,7 +1000,11 @@ private fun formatNumber(value: Double): String =
 private fun formatPrevious(set: com.eina.app.data.db.SetEntryEntity, weightType: WeightType): String {
     val reps = set.actualReps?.toString()
     // Sulla distanza il "precedente" sono i chilometri col tempo, non un carico per ripetizioni.
-    if (weightType.usesDistance) return formatDistanceAndTime(set.weight, set.actualReps)
+    // Forma compatta come "5,2km·30": per esteso la colonna e' troppo stretta e taglia il tempo.
+    if (weightType.usesDistance) {
+        val km = set.weight?.let { "${formatDecimal(it)}km" }
+        return listOfNotNull(km, reps).joinToString("·").ifBlank { "—" }
+    }
     if (!weightType.usesWeight) return reps ?: "—"
     val weight = set.weight?.let { "${formatNumber(it)}kg" }
     return listOfNotNull(weight, reps).joinToString("×").ifBlank { "—" }
