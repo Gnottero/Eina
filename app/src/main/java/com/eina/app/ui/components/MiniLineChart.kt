@@ -43,13 +43,16 @@ fun MiniLineChart(
             if (values.isEmpty()) return@Canvas
             val min = values.min()
             val max = values.max()
-            val span = (max - min).takeIf { it > 0f } ?: 1f
+            val span = max - min
             val padding = size.height * 0.12f
             val usable = size.height - padding * 2
 
             fun pointAt(index: Int): Offset {
                 val x = if (values.size == 1) size.width / 2f else size.width * index / (values.size - 1)
-                val y = padding + usable * (1f - (values[index] - min) / span)
+                // Valori tutti uguali: la linea sta a mezza altezza. Schiacciata sul fondo, dove
+                // finirebbe normalizzando su uno span inventato, si leggerebbe come uno zero.
+                val ratio = if (span > 0f) (values[index] - min) / span else 0.5f
+                val y = padding + usable * (1f - ratio)
                 return Offset(x, y)
             }
 
