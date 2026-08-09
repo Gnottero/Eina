@@ -3,8 +3,11 @@ package com.eina.app.ui.share
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.graphics.LinearGradient
 import android.graphics.Paint
+import android.graphics.Path
 import android.graphics.RectF
+import android.graphics.Shader
 import android.graphics.Typeface
 import android.text.TextPaint
 import androidx.core.content.res.ResourcesCompat
@@ -41,15 +44,22 @@ fun shareCardDataOf(summary: SessionSummary): ShareCardData = ShareCardData(
 
 private const val CANVAS_SIZE = 720
 private const val MARGIN = 24f
-private const val CARD_RADIUS = 44f
+private const val CARD_RADIUS = 56f
 private const val PADDING = 48f
 private const val CARD_SIZE = CANVAS_SIZE - MARGIN * 2
 
+private const val TILE_RADIUS = 28f
+private const val TILE_GAP = 20f
+
 private const val CARD_BG = 0xFFFFFFFF.toInt()
+private const val TILE_BG = 0xFFEFEEEB.toInt()
 private const val ACCENT = 0xFFF97348.toInt()
+// Rampa dell'accento, la stessa del tema (ambra → arancio → magenta): la portano i numeri che
+// contano e il filo sotto l'intestazione, cosi' l'immagine che gira sui social ha lo stesso
+// segno della app invece di un arancio piatto.
+private val ACCENT_RAMP = intArrayOf(0xFFFFA23A.toInt(), 0xFFF97348.toInt(), 0xFFF9436B.toInt())
 private const val TEXT = 0xFF1C1B19.toInt()
 private const val TEXT_SECONDARY = 0xFF7C7A75.toInt()
-private const val HAIRLINE = 0xFFE7E5E1.toInt()
 
 // Inter, lo stesso font dell'app. L'immagine condivisa e' il pezzo che gira fuori dall'app:
 // disegnarla col sans di sistema (Roboto su un telefono, altro su un altro) la faceva sembrare
@@ -66,8 +76,7 @@ private fun loadTypefaces(context: Context) {
 // con un'ombra portata, l'unico modo di restare leggibile sia su cielo che su asfalto.
 private const val TEXT_ON_PHOTO = 0xFFFFFFFF.toInt()
 private const val TEXT_ON_PHOTO_SECONDARY = 0xCCFFFFFF.toInt()
-private const val ACCENT_ON_PHOTO = 0xFFFFB07A.toInt()
-private const val HAIRLINE_ON_PHOTO = 0x66FFFFFF
+private const val TILE_BG_ON_PHOTO = 0x2EFFFFFF
 private const val PHOTO_SHADOW = 0x99000000.toInt()
 
 private fun textPaint(
@@ -86,6 +95,61 @@ private fun textPaint(
 }
 
 private fun fill(color: Int) = Paint(Paint.ANTI_ALIAS_FLAG).apply { this.color = color }
+
+/**
+ * Angolo continuo, gli stessi rapporti di [com.eina.app.ui.theme.SquircleShape]: la card e le
+ * tessere dell'immagine condivisa devono avere la curva delle schermate, non quella di
+ * `drawRoundRect`. Non si puo' riusare la classe Compose: qui si disegna con android.graphics.
+ */
+private fun squirclePath(rect: RectF, radius: Float): Path {
+    val r = radius.coerceAtMost(minOf(rect.width(), rect.height()) / 2f / CORNER_EXTENT)
+    val path = Path()
+    corner(path, rect.right, rect.top, 1f, 0f, 0f, 1f, r, first = true)
+    corner(path, rect.right, rect.bottom, 0f, 1f, -1f, 0f, r, first = false)
+    corner(path, rect.left, rect.bottom, -1f, 0f, 0f, -1f, r, first = false)
+    corner(path, rect.left, rect.top, 0f, -1f, 1f, 0f, r, first = false)
+    path.close()
+    return path
+}
+
+private const val CORNER_EXTENT = 1.528665f
+
+@Suppress("LongParameterList")
+private fun corner(
+    path: Path,
+    cx: Float,
+    cy: Float,
+    inX: Float,
+    inY: Float,
+    outX: Float,
+    outY: Float,
+    r: Float,
+    first: Boolean
+) {
+    fun px(back: Float, forward: Float) = cx - inX * back * r + outX * forward * r
+    fun py(back: Float, forward: Float) = cy - inY * back * r + outY * forward * r
+    if (first) path.moveTo(px(CORNER_EXTENT, 0f), py(CORNER_EXTENT, 0f))
+    else path.lineTo(px(CORNER_EXTENT, 0f), py(CORNER_EXTENT, 0f))
+    path.cubicTo(
+        px(1.088485f, 0f), py(1.088485f, 0f),
+        px(0.868407f, 0f), py(0.868407f, 0f),
+        px(0.631494f, 0.074911f), py(0.631494f, 0.074911f)
+    )
+    path.cubicTo(
+        px(0.372824f, 0.221602f), py(0.372824f, 0.221602f),
+        px(0.221602f, 0.372824f), py(0.221602f, 0.372824f),
+        px(0.074911f, 0.631494f), py(0.074911f, 0.631494f)
+    )
+    path.cubicTo(
+        px(0f, 0.868407f), py(0f, 0.868407f),
+        px(0f, 1.088485f), py(0f, 1.088485f),
+        px(0f, CORNER_EXTENT), py(0f, CORNER_EXTENT)
+    )
+}
+
+/** Sfumatura della rampa sul tratto orizzontale indicato. */
+private fun rampShader(left: Float, right: Float, colors: IntArray) =
+    LinearGradient(left, 0f, right, 0f, colors, null, Shader.TileMode.CLAMP)
 
 private fun Canvas.drawRightAligned(text: String, right: Float, y: Float, paint: TextPaint) {
     drawText(text, right - paint.measureText(text), y, paint)
@@ -130,18 +194,19 @@ fun renderShareCard(
 
     val textColor = if (onPhoto) TEXT_ON_PHOTO else TEXT
     val secondaryColor = if (onPhoto) TEXT_ON_PHOTO_SECONDARY else TEXT_SECONDARY
-    val accentColor = if (onPhoto) ACCENT_ON_PHOTO else ACCENT
-    val hairlineColor = if (onPhoto) HAIRLINE_ON_PHOTO else HAIRLINE
+    // Anche sulla foto l'accento e' l'arancio dell'app, pieno e senza sfumatura: i toni
+    // schiariti piu' la rampa facevano sembrare i numeri al neon.
+    val accentColor = ACCENT
+    val ramp = ACCENT_RAMP
+    val tileColor = if (onPhoto) TILE_BG_ON_PHOTO else TILE_BG
 
     val cardTop = MARGIN
     val cardLeft = MARGIN
     val cardRight = CANVAS_SIZE - MARGIN
     // In trasparenza non si disegna nessun fondo: sotto il testo il bitmap resta vuoto.
     if (!onPhoto) {
-        canvas.drawRoundRect(
-            RectF(cardLeft, cardTop, cardRight, cardTop + CARD_SIZE),
-            CARD_RADIUS,
-            CARD_RADIUS,
+        canvas.drawPath(
+            squirclePath(RectF(cardLeft, cardTop, cardRight, cardTop + CARD_SIZE), CARD_RADIUS),
             fill(CARD_BG)
         )
     }
@@ -167,36 +232,51 @@ fun renderShareCard(
         textPaint(22f, secondaryColor, shadow = onPhoto)
     )
 
-    canvas.drawRect(left, cardTop + 132f, right, cardTop + 133f, fill(hairlineColor))
-
-    // Griglia 2x2: e' tutto il contenuto del widget.
-    val metrics = listOf(
-        Triple(context.getString(R.string.share_card_duration), data.durationLabel, textColor),
-        Triple(context.getString(R.string.share_card_volume), "${formatVolume(data.volumeKg)} kg", accentColor),
-        Triple(context.getString(R.string.share_card_sets), data.setCount.toString(), textColor),
-        Triple(
-            context.getString(R.string.share_card_pr),
-            data.prCount.toString(),
-            if (data.prCount > 0) accentColor else textColor
-        )
+    // Filo della rampa al posto del capello grigio: e' la firma del tema.
+    canvas.drawPath(
+        squirclePath(RectF(left, cardTop + 128f, right, cardTop + 134f), 3f),
+        Paint(Paint.ANTI_ALIAS_FLAG).apply { shader = rampShader(left, right, ramp) }
     )
-    val columnWidth = contentWidth / 2f
-    metrics.forEachIndexed { index, (label, value, color) ->
-        val columnLeft = left + columnWidth * (index % 2)
-        val rowTop = cardTop + if (index < 2) 250f else 480f
+
+    // Griglia 2x2 di tessere: e' tutto il contenuto del widget.
+    val metrics = listOf(
+        Triple(context.getString(R.string.share_card_duration), data.durationLabel, false),
+        Triple(context.getString(R.string.share_card_volume), "${formatVolume(data.volumeKg)} kg", true),
+        Triple(context.getString(R.string.share_card_sets), data.setCount.toString(), false),
+        Triple(context.getString(R.string.share_card_pr), data.prCount.toString(), data.prCount > 0)
+    )
+    val tileWidth = (contentWidth - TILE_GAP) / 2f
+    val tileHeight = 200f
+    metrics.forEachIndexed { index, (label, value, ramped) ->
+        val tileLeft = left + (tileWidth + TILE_GAP) * (index % 2)
+        val tileTop = cardTop + 176f + (tileHeight + TILE_GAP) * (index / 2)
+        canvas.drawPath(
+            squirclePath(RectF(tileLeft, tileTop, tileLeft + tileWidth, tileTop + tileHeight), TILE_RADIUS),
+            fill(tileColor)
+        )
         canvas.drawText(
             label,
-            columnLeft,
-            rowTop,
+            tileLeft + 32f,
+            tileTop + 58f,
             textPaint(22f, secondaryColor, spacing = 0.14f, shadow = onPhoto)
         )
         val valuePaint = fitted(
             value,
-            columnWidth - 24f,
-            textPaint(76f, color, bold = true, shadow = onPhoto),
-            minSize = 44f
+            tileWidth - 64f,
+            textPaint(72f, if (ramped) accentColor else textColor, bold = true, shadow = onPhoto),
+            minSize = 40f
         )
-        canvas.drawText(value, columnLeft, rowTop + 92f, valuePaint)
+        // Sulla tessera bianca il numero in evidenza porta la rampa: si applica al tratto del
+        // testo, quindi va misurata sul testo e non sulla tessera. Sulla foto no, resta
+        // arancio pieno.
+        if (ramped && !onPhoto) {
+            valuePaint.shader = rampShader(
+                tileLeft + 32f,
+                tileLeft + 32f + valuePaint.measureText(value),
+                ramp
+            )
+        }
+        canvas.drawText(value, tileLeft + 32f, tileTop + 152f, valuePaint)
     }
 
     return bitmap

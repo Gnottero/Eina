@@ -582,7 +582,7 @@ suoi test), con le due grandezze che quell'esercizio registra davvero — carico
 secondi a tempo, km e minuti a distanza. I record personali in Progressi sono cliccabili e
 portano a quella scheda.
 
-**Fase 28 — Restyle "HIG"** *(su branch `restyle-apple-hig`, non ancora unita a main)*
+**Fase 28 — Restyle "HIG"** *(fatta, unita a main: e' l'interfaccia ufficiale)*
 DoD: l'app ha un aspetto da vetrina senza cambiare una sola funzione. Riferimento dichiarato le
 linee guida Apple, asset tutti nostri (nessun font, simbolo o marchio Apple).
 - Font: Inter (SIL OFL 1.1) bundlato in `res/font`, licenza in `assets/licenses/inter-OFL.txt`

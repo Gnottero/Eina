@@ -11,10 +11,8 @@ import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.EditNote
 import androidx.compose.material.icons.outlined.IosShare
 import androidx.compose.material.icons.outlined.PlayArrow
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -32,8 +30,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.eina.app.R
 import com.eina.app.data.db.RoutineEntity
-import com.eina.app.ui.components.DestructiveRed
 import com.eina.app.ui.components.IslandBottomSheet
+import com.eina.app.ui.components.IslandAlertDialog
 import com.eina.app.ui.components.IslandCard
 import com.eina.app.ui.components.IslandEmptyState
 import com.eina.app.ui.components.IslandIconButton
@@ -209,22 +207,13 @@ private fun RoutineRow(
 
     if (confirmDelete) {
         // L'eliminazione non e' annullabile: si conferma prima di toccare il database.
-        AlertDialog(
-            onDismissRequest = { confirmDelete = false },
-            shape = IslandShape,
-            containerColor = MaterialTheme.colorScheme.surface,
-            title = { Text(stringResource(R.string.routine_delete_confirm_title, name), style = MaterialTheme.typography.titleLarge) },
-            text = { Text(stringResource(R.string.routine_delete_confirm_text)) },
-            confirmButton = {
-                TextButton(onClick = { confirmDelete = false; onDelete() }) {
-                    Text(stringResource(R.string.action_delete), color = DestructiveRed)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { confirmDelete = false }) {
-                    Text(stringResource(R.string.action_cancel), color = island.textSecondary)
-                }
-            }
+        IslandAlertDialog(
+            title = stringResource(R.string.routine_delete_confirm_title, name),
+            text = stringResource(R.string.routine_delete_confirm_text),
+            confirmLabel = stringResource(R.string.action_delete),
+            onConfirm = { confirmDelete = false; onDelete() },
+            dismissLabel = stringResource(R.string.action_cancel),
+            onDismiss = { confirmDelete = false }
         )
     }
 }

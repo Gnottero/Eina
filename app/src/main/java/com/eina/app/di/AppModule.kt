@@ -21,6 +21,7 @@ import com.eina.app.ui.routine.RoutineEditorViewModel
 import com.eina.app.ui.routine.RoutineListViewModel
 import com.eina.app.ui.settings.SettingsViewModel
 import com.eina.app.ui.workout.ActiveWorkoutViewModel
+import com.eina.app.ui.workout.RestTimerController
 import com.eina.app.ui.workout.WorkoutViewModel
 import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.viewmodel.dsl.viewModel
@@ -77,8 +78,11 @@ val appModule = module {
     // Cronometro condiviso: si avvia in Dashboard e si ritrova durante l'allenamento.
     single { StopwatchController() }
 
+    // Recupero condiviso: sopravvive all'uscita dalla schermata dell'allenamento in corso.
+    single { RestTimerController(get()) }
+
     viewModel { WorkoutViewModel(get()) }
-    viewModel { (sessionId: Long) -> ActiveWorkoutViewModel(get(), get(), sessionId) }
+    viewModel { (sessionId: Long) -> ActiveWorkoutViewModel(get(), get(), get(), sessionId) }
     viewModel { LibraryViewModel(get()) }
     viewModel { (exerciseId: Long) -> ExerciseDetailViewModel(get(), get(), exerciseId) }
     viewModel { CreateExerciseViewModel(get(), androidContext()) }

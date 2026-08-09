@@ -139,7 +139,6 @@ private fun SummaryMetric(
     // numero avrebbe fatto sembrare tutt'e tre le metriche ugualmente urgenti.
     tint: Color = MaterialTheme.colorScheme.primary
 ) {
-    val island = EinaTheme.island
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(Spacing.xs)
@@ -161,7 +160,8 @@ private fun SummaryMetric(
                 Text(
                     text = " $unit",
                     style = MaterialTheme.typography.labelMedium,
-                    color = island.textSecondary,
+                    // Stesso colore del numero: l'unita' ne fa parte, grigia sembrava spenta.
+                    color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.padding(bottom = 2.dp)
                 )
             }

@@ -216,15 +216,21 @@ fun EinaNavHost() {
                         icon = iconFor(destination),
                         selected = currentDestination?.hierarchy?.any { it.route == destination.route } == true,
                         onClick = {
-                            // Niente saveState/restoreState: salvavano anche le schermate di
-                            // dettaglio aperte dal tab (Impostazioni, Storico) e al ritorno
-                            // ripristinavano quelle in cima, per cui il tab sembrava irraggiungibile.
+                            // saveState/restoreState tengono in vita ViewModel e stato dei tab:
+                            // senza, ogni tocco ricostruiva la schermata da zero (nuova query
+                            // Room, scroll perso) e il cambio tab si sentiva lento.
                             navController.navigate(destination.route) {
                                 popUpTo(navController.graph.findStartDestination().id) {
-                                    inclusive = destination == EinaDestination.Dashboard
+                                    saveState = true
                                 }
                                 launchSingleTop = true
+                                restoreState = true
                             }
+                            // Lo stato ripristinato puo' avere in cima un dettaglio aperto da quel
+                            // tab (Impostazioni, Storico): era il motivo per cui in Fase 15 il
+                            // salvataggio era stato tolto — il tab sembrava irraggiungibile.
+                            // Si conserva lo stato della radice e si buttano le schermate sopra.
+                            navController.popBackStack(destination.route, inclusive = false)
                         }
                     )
                 }

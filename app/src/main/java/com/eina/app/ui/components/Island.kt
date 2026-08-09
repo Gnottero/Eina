@@ -235,7 +235,9 @@ fun StatTile(
                     Text(
                         text = unit,
                         style = MaterialTheme.typography.labelLarge,
-                        color = labelColor,
+                        // Stesso colore del numero: l'unita' ne fa parte, tinta di suo si
+                        // leggeva come un'etichetta a se'.
+                        color = contentColor,
                         modifier = Modifier.padding(bottom = 5.dp)
                     )
                 }

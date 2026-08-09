@@ -31,6 +31,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -59,6 +60,8 @@ import com.eina.app.data.db.countsAsWorking
 import com.eina.app.domain.totalVolume
 import com.eina.app.ui.components.EinaBadge
 import com.eina.app.ui.components.IslandButton
+import com.eina.app.ui.components.LocalButtonShape
+import com.eina.app.ui.components.SheetButtonShape
 import com.eina.app.ui.components.IslandCard
 import com.eina.app.ui.components.IslandEmptyState
 import com.eina.app.ui.components.IslandIconButton
@@ -394,7 +397,9 @@ private fun ShareSheet(
         onDismiss()
     }
 
+    // Anche questo e' un menu flottante: i tasti prendono la forma dei fogli, non la pastiglia.
     Dialog(onDismissRequest = onDismiss) {
+        CompositionLocalProvider(LocalButtonShape provides SheetButtonShape) {
         IslandCard(modifier = Modifier.fillMaxWidth()) {
             Text(stringResource(R.string.share_title), style = MaterialTheme.typography.titleMedium)
 
@@ -478,6 +483,7 @@ private fun ShareSheet(
                     modifier = Modifier.weight(1f)
                 )
             }
+        }
         }
     }
 }

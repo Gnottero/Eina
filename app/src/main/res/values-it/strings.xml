@@ -132,6 +132,7 @@
     <string name="active_finish_confirm_action">Termina</string>
     <string name="active_cancel_confirm_title">Annullare l\'allenamento?</string>
     <string name="active_cancel_confirm_text">La sessione e le serie registrate finora verranno eliminate. Non finirà nello storico.</string>
+    <string name="active_cancel_confirm_action">Elimina</string>
     <string name="active_add_set">+ Aggiungi serie</string>
     <string name="active_add_set_action">Aggiungi serie</string>
     <string name="active_undo_set_cd">Annulla serie</string>

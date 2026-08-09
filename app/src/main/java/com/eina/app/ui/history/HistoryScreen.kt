@@ -4,10 +4,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.History
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -17,8 +15,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import com.eina.app.R
-import com.eina.app.ui.components.DestructiveRed
 import com.eina.app.ui.components.IslandBottomSheet
+import com.eina.app.ui.components.IslandAlertDialog
 import com.eina.app.ui.components.IslandEmptyState
 import com.eina.app.ui.components.IslandScreen
 import com.eina.app.ui.components.ScreenHeader
@@ -88,27 +86,13 @@ fun HistoryScreen(
 
     confirmDeleteFor?.let { sessionId ->
         // Le serie registrate spariscono con la sessione: si conferma prima di toccare il database.
-        AlertDialog(
-            onDismissRequest = { confirmDeleteFor = null },
-            shape = IslandShape,
-            containerColor = MaterialTheme.colorScheme.surface,
-            title = {
-                Text(
-                    stringResource(R.string.history_delete_confirm_title),
-                    style = MaterialTheme.typography.titleLarge
-                )
-            },
-            text = { Text(stringResource(R.string.history_delete_confirm_text)) },
-            confirmButton = {
-                TextButton(onClick = { confirmDeleteFor = null; viewModel.deleteSession(sessionId) }) {
-                    Text(stringResource(R.string.action_delete), color = DestructiveRed)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { confirmDeleteFor = null }) {
-                    Text(stringResource(R.string.action_cancel), color = EinaTheme.island.textSecondary)
-                }
-            }
+        IslandAlertDialog(
+            title = stringResource(R.string.history_delete_confirm_title),
+            text = stringResource(R.string.history_delete_confirm_text),
+            confirmLabel = stringResource(R.string.action_delete),
+            onConfirm = { confirmDeleteFor = null; viewModel.deleteSession(sessionId) },
+            dismissLabel = stringResource(R.string.action_cancel),
+            onDismiss = { confirmDeleteFor = null }
         )
     }
 }

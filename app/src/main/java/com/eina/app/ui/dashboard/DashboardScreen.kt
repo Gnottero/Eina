@@ -147,7 +147,8 @@ fun DashboardScreen(
                         Text(
                             text = stringResource(R.string.unit_kg),
                             style = MaterialTheme.typography.labelLarge,
-                            color = island.textSecondary,
+                            // Stesso colore del numero: l'unita' ne fa parte.
+                            color = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier.padding(start = Spacing.xs, bottom = 5.dp)
                         )
                     }

@@ -21,12 +21,14 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -36,7 +38,15 @@ import com.eina.app.ui.theme.EinaTheme
 import com.eina.app.ui.theme.PillShape
 import com.eina.app.ui.theme.Spacing
 
-/** Azione primaria: pill piena accento. */
+/**
+ * Forma dei bottoni nel contesto corrente. In pagina restano pastiglie; dentro un foglio
+ * (vedi IslandBottomSheet) diventano squircle a raggio piccolo, che e' la forma dei bottoni
+ * larghi di un foglio di sistema — una pastiglia alta 52dp larga tutto lo schermo si legge
+ * come un'etichetta, non come un tasto.
+ */
+val LocalButtonShape = compositionLocalOf<Shape> { PillShape }
+
+/** Azione primaria: piena accento, pill in pagina e squircle nei fogli. */
 @Composable
 fun IslandButton(
     text: String,
@@ -45,7 +55,8 @@ fun IslandButton(
     icon: ImageVector? = null,
     enabled: Boolean = true,
     containerColor: Color = MaterialTheme.colorScheme.primary,
-    contentColor: Color = Color.White
+    contentColor: Color = Color.White,
+    shape: Shape = LocalButtonShape.current
 ) {
     val hapticTap = LocalHapticTap.current
     val accent = MaterialTheme.colorScheme.primary
@@ -56,7 +67,7 @@ fun IslandButton(
     Button(
         onClick = { hapticTap(); onClick() },
         enabled = enabled,
-        shape = PillShape,
+        shape = shape,
         modifier = modifier
             .defaultMinSize(minHeight = 52.dp)
             .then(
@@ -64,12 +75,12 @@ fun IslandButton(
                     Modifier
                         .shadow(
                             elevation = 14.dp,
-                            shape = PillShape,
+                            shape = shape,
                             clip = false,
                             ambientColor = accent.copy(alpha = 0.35f),
                             spotColor = accent.copy(alpha = 0.45f)
                         )
-                        .clip(PillShape)
+                        .clip(shape)
                         .background(Brush.horizontalGradient(fill))
                 } else {
                     Modifier
@@ -107,7 +118,8 @@ fun IslandSecondaryButton(
     modifier: Modifier = Modifier,
     icon: ImageVector? = null,
     enabled: Boolean = true,
-    contentColor: Color = MaterialTheme.colorScheme.onSurface
+    contentColor: Color = MaterialTheme.colorScheme.onSurface,
+    shape: Shape = LocalButtonShape.current
 ) {
     IslandButton(
         text = text,
@@ -116,7 +128,8 @@ fun IslandSecondaryButton(
         icon = icon,
         enabled = enabled,
         containerColor = EinaTheme.island.sunken,
-        contentColor = contentColor
+        contentColor = contentColor,
+        shape = shape
     )
 }
 

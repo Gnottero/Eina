@@ -16,7 +16,6 @@ import com.eina.app.domain.Superset
 import com.eina.app.domain.volumeForSet
 import com.eina.app.ui.components.MAX_WEIGHT_KG
 import com.eina.app.ui.feedback.WorkoutFeedback
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -30,13 +29,12 @@ import kotlinx.coroutines.launch
 class ActiveWorkoutViewModel(
     private val repository: WorkoutRepository,
     private val feedback: WorkoutFeedback,
+    private val restTimer: RestTimerController,
     private val sessionId: Long
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ActiveWorkoutUiState(sessionId = sessionId))
     val uiState: StateFlow<ActiveWorkoutUiState> = _uiState.asStateFlow()
-
-    private var timerJob: Job? = null
 
     /** Target della routine di partenza, per exerciseId: alimentano i segnaposto dei campi. */
     private var routineTargets: Map<Long, RoutineTarget> = emptyMap()
@@ -44,6 +42,15 @@ class ActiveWorkoutViewModel(
     init {
         repository.observeExercises()
             .onEach { list -> _uiState.update { it.copy(availableExercises = list) } }
+            .launchIn(viewModelScope)
+        // Il recupero vive nel controller condiviso (vedi RestTimerController): qui si rispecchia
+        // soltanto, cosi' rientrando nella schermata si ritrova il conto alla rovescia in corso.
+        restTimer.state
+            .onEach { timer ->
+                _uiState.update {
+                    it.copy(timer = timer?.let { t -> TimerUi(t.totalSeconds, t.remainingSeconds) })
+                }
+            }
             .launchIn(viewModelScope)
         loadSession()
         startElapsedTicker()
@@ -415,7 +422,16 @@ class ActiveWorkoutViewModel(
         viewModelScope.launch {
             val exercise = _uiState.value.exercises.find { it.workoutExerciseId == workoutExerciseId } ?: return@launch
             val set = exercise.sets.find { it.id == setId } ?: return@launch
-            repository.updateSet(set.copy(completedAt = null, isPR = false).toEntity(workoutExerciseId))
+            // Il recupero pianificato torna a quello dell'esercizio: setRestSeconds tocca solo le
+            // serie ancora da fare, quindi una serie riaperta si teneva il recupero di prima e
+            // rimarcandola faceva partire il timer con la durata vecchia.
+            repository.updateSet(
+                set.copy(
+                    completedAt = null,
+                    isPR = false,
+                    restSecondsPlanned = exercise.restSeconds
+                ).toEntity(workoutExerciseId)
+            )
             refreshSets(workoutExerciseId)
         }
     }
@@ -436,39 +452,11 @@ class ActiveWorkoutViewModel(
             }
     }
 
-    private fun startRestTimer(totalSeconds: Int) {
-        if (totalSeconds <= 0) return
-        timerJob?.cancel()
-        _uiState.update { it.copy(timer = TimerUi(totalSeconds, totalSeconds)) }
-        timerJob = viewModelScope.launch {
-            while (isActive) {
-                delay(1000)
-                val current = _uiState.value.timer ?: break
-                val next = current.remainingSeconds - 1
-                if (next <= 0) {
-                    _uiState.update { it.copy(timer = null) }
-                    feedback.restTimerFinished()
-                    break
-                }
-                _uiState.update { it.copy(timer = current.copy(remainingSeconds = next)) }
-            }
-        }
-    }
+    private fun startRestTimer(totalSeconds: Int) = restTimer.start(totalSeconds)
 
-    fun adjustTimer(deltaSeconds: Int) {
-        val current = _uiState.value.timer ?: return
-        val next = current.remainingSeconds + deltaSeconds
-        if (next <= 0) {
-            skipTimer()
-        } else {
-            _uiState.update { it.copy(timer = current.copy(remainingSeconds = next, totalSeconds = maxOf(current.totalSeconds, next))) }
-        }
-    }
+    fun adjustTimer(deltaSeconds: Int) = restTimer.adjust(deltaSeconds)
 
-    fun skipTimer() {
-        timerJob?.cancel()
-        _uiState.update { it.copy(timer = null) }
-    }
+    fun skipTimer() = restTimer.skip()
 
     /**
      * Chiude la sessione con la data e la durata confermate a fine allenamento: la fine si
@@ -503,10 +491,8 @@ class ActiveWorkoutViewModel(
         }
     }
 
-    override fun onCleared() {
-        timerJob?.cancel()
-        super.onCleared()
-    }
+    // Niente onCleared che fermi il recupero: uscire dalla schermata lascia l'allenamento in
+    // corso, e il conto alla rovescia deve sopravvivere fino a "Termina" o "Annulla".
 
     private companion object {
         const val DEFAULT_REST_SECONDS = 90

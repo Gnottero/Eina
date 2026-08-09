@@ -41,7 +41,6 @@ import androidx.compose.material.icons.outlined.MusicNote
 import androidx.compose.material.icons.outlined.Repeat
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Timer
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -77,6 +76,7 @@ import com.eina.app.data.db.usesWeight
 import com.eina.app.ui.components.BottomTimerBar
 import com.eina.app.ui.components.DestructiveRed
 import com.eina.app.ui.components.IslandBottomSheet
+import com.eina.app.ui.components.IslandAlertDialog
 import com.eina.app.ui.components.IslandButton
 import com.eina.app.ui.components.IslandCard
 import com.eina.app.ui.components.ExercisePickerSheet
@@ -399,21 +399,16 @@ fun ActiveWorkoutScreen(
 
     if (confirmCancel) {
         // Annullare butta via la sessione: si conferma perche' le serie gia' segnate spariscono.
-        AlertDialog(
-            onDismissRequest = { confirmCancel = false },
-            shape = IslandShape,
-            containerColor = MaterialTheme.colorScheme.surface,
-            title = { Text(stringResource(R.string.active_cancel_confirm_title), style = MaterialTheme.typography.titleLarge) },
-            text = { Text(stringResource(R.string.active_cancel_confirm_text)) },
-            confirmButton = {
-                HapticTextButton(text = stringResource(R.string.active_cancel), color = DestructiveRed, onClick = {
-                    confirmCancel = false
-                    viewModel.cancelWorkout(onCancelled)
-                })
+        IslandAlertDialog(
+            title = stringResource(R.string.active_cancel_confirm_title),
+            text = stringResource(R.string.active_cancel_confirm_text),
+            confirmLabel = stringResource(R.string.active_cancel_confirm_action),
+            onConfirm = {
+                confirmCancel = false
+                viewModel.cancelWorkout(onCancelled)
             },
-            dismissButton = {
-                HapticTextButton(text = stringResource(R.string.action_continue), onClick = { confirmCancel = false })
-            }
+            dismissLabel = stringResource(R.string.action_continue),
+            onDismiss = { confirmCancel = false }
         )
     }
 }
@@ -614,7 +609,8 @@ private fun MetricTile(
                 Text(
                     text = " $unit",
                     style = MaterialTheme.typography.labelMedium,
-                    color = island.textSecondary,
+                    // Stesso colore del numero: l'unita' ne fa parte.
+                    color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.padding(bottom = 3.dp)
                 )
             }

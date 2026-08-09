@@ -15,11 +15,9 @@ import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Search
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -44,8 +42,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import coil.compose.AsyncImage
-import com.eina.app.ui.components.DestructiveRed
 import com.eina.app.ui.components.IslandBottomSheet
+import com.eina.app.ui.components.IslandAlertDialog
 import com.eina.app.ui.components.IslandCard
 import com.eina.app.ui.components.SheetActionRow
 import com.eina.app.ui.components.hasExerciseMedia
@@ -170,36 +168,20 @@ fun LibraryScreen(
     }
 
     confirmDeleteFor?.let { exercise ->
-        AlertDialog(
-            onDismissRequest = { confirmDeleteFor = null },
-            shape = IslandShape,
-            containerColor = MaterialTheme.colorScheme.surface,
-            title = {
-                Text(
-                    stringResource(R.string.library_delete_confirm_title, exercise.localizedName()),
-                    style = MaterialTheme.typography.titleLarge
-                )
-            },
-            text = { Text(stringResource(R.string.library_delete_confirm_text)) },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        confirmDeleteFor = null
-                        viewModel.deleteCustomExercise(exercise) { deleted ->
-                            // Un esercizio ancora citato da una routine o dallo storico resta:
-                            // dirlo e' meglio di un tocco che non fa niente.
-                            if (!deleted) Toast.makeText(context, deleteBlocked, Toast.LENGTH_LONG).show()
-                        }
-                    }
-                ) {
-                    Text(stringResource(R.string.action_delete), color = DestructiveRed)
+        IslandAlertDialog(
+            title = stringResource(R.string.library_delete_confirm_title, exercise.localizedName()),
+            text = stringResource(R.string.library_delete_confirm_text),
+            confirmLabel = stringResource(R.string.action_delete),
+            onConfirm = {
+                confirmDeleteFor = null
+                viewModel.deleteCustomExercise(exercise) { deleted ->
+                    // Un esercizio ancora citato da una routine o dallo storico resta:
+                    // dirlo e' meglio di un tocco che non fa niente.
+                    if (!deleted) Toast.makeText(context, deleteBlocked, Toast.LENGTH_LONG).show()
                 }
             },
-            dismissButton = {
-                TextButton(onClick = { confirmDeleteFor = null }) {
-                    Text(stringResource(R.string.action_cancel), color = island.textSecondary)
-                }
-            }
+            dismissLabel = stringResource(R.string.action_cancel),
+            onDismiss = { confirmDeleteFor = null }
         )
     }
 }

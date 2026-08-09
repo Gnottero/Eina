@@ -10,12 +10,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Coffee
 import androidx.compose.material.icons.outlined.DeleteSweep
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -31,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import com.eina.app.BuildConfig
 import com.eina.app.R
 import com.eina.app.data.prefs.AppLanguage
+import com.eina.app.ui.components.IslandAlertDialog
 import com.eina.app.ui.components.DestructiveRed
 import com.eina.app.ui.components.IslandCard
 import com.eina.app.ui.components.IslandChip
@@ -185,29 +184,15 @@ fun SettingsScreen(
 
     if (confirmClear) {
         // Operazione irreversibile: si conferma prima di toccare il database.
-        AlertDialog(
-            onDismissRequest = { confirmClear = false },
-            shape = IslandShape,
-            containerColor = MaterialTheme.colorScheme.surface,
-            title = {
-                Text(
-                    stringResource(R.string.settings_clear_confirm_title),
-                    style = MaterialTheme.typography.titleLarge
-                )
-            },
-            text = { Text(stringResource(R.string.settings_clear_confirm_text)) },
-            confirmButton = {
-                TextButton(onClick = { confirmClear = false; viewModel.clearHistory() }) {
-                    Text(stringResource(R.string.action_delete), color = DestructiveRed)
-                }
-            },
-            dismissButton = {
-                // Neutro, non accentato: con la palette arancio "Annulla" primario si confondeva
-                // col rosso di "Cancella" e le due azioni sembravano la stessa cosa.
-                TextButton(onClick = { confirmClear = false }) {
-                    Text(stringResource(R.string.action_cancel), color = island.textSecondary)
-                }
-            }
+        // "Annulla" resta neutro, non accentato: con la palette arancio un "Annulla" primario si
+        // confondeva col rosso di "Cancella" e le due azioni sembravano la stessa cosa.
+        IslandAlertDialog(
+            title = stringResource(R.string.settings_clear_confirm_title),
+            text = stringResource(R.string.settings_clear_confirm_text),
+            confirmLabel = stringResource(R.string.action_delete),
+            onConfirm = { confirmClear = false; viewModel.clearHistory() },
+            dismissLabel = stringResource(R.string.action_cancel),
+            onDismiss = { confirmClear = false }
         )
     }
 }

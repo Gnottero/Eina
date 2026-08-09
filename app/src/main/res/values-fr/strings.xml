@@ -132,6 +132,7 @@
     <string name="active_finish_confirm_action">Terminer</string>
     <string name="active_cancel_confirm_title">Annuler la séance ?</string>
     <string name="active_cancel_confirm_text">La séance et toutes les séries enregistrées jusqu\'ici seront supprimées. Elle n\'ira pas dans l\'historique.</string>
+    <string name="active_cancel_confirm_action">Supprimer</string>
     <string name="active_add_set">+ Ajouter une série</string>
     <string name="active_add_set_action">Ajouter une série</string>
     <string name="active_undo_set_cd">Annuler la série</string>
