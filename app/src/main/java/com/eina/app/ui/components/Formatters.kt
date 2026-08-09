@@ -93,6 +93,18 @@ fun Context.formatPrValue(record: PrRecord): String = when (record.weightType) {
 
     WeightType.TIME_BASED ->
         "${record.reps ?: 0} s"
+
+    WeightType.DISTANCE_BASED -> formatDistanceAndTime(record.weight, record.reps)
+}
+
+/**
+ * Serie a distanza: chilometri e minuti insieme, perche' ne' l'uno ne' l'altro da solo dice
+ * com'e' andata (vedi [WeightType.DISTANCE_BASED]).
+ */
+fun formatDistanceAndTime(distanceKm: Double?, minutes: Int?): String {
+    val distance = distanceKm?.let { "${formatDecimal(it)} km" }
+    val time = minutes?.takeIf { it > 0 }?.let { "$it min" }
+    return listOfNotNull(distance, time).joinToString(" · ").ifBlank { "–" }
 }
 
 /** Relativo e breve: "oggi", "ieri", poi la data. */

@@ -23,6 +23,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.eina.app.R
 import com.eina.app.data.db.WeightType
+import com.eina.app.data.db.usesDistance
 import com.eina.app.data.db.usesDuration
 import com.eina.app.data.db.usesWeight
 import com.eina.app.ui.theme.EinaTheme
@@ -51,11 +52,20 @@ fun SetTableHeader(
             TableLabel(stringResource(R.string.table_previous), Modifier.weight(1.1f))
         }
         // Senza carico da digitare la colonna kg non compare: lo spazio va alle ripetizioni.
+        // Sugli esercizi a distanza lo stesso campo decimale porta i chilometri.
         if (weightType.usesWeight) {
             TableLabel(stringResource(R.string.table_kg), Modifier.weight(1f))
+        } else if (weightType.usesDistance) {
+            TableLabel(stringResource(R.string.table_km), Modifier.weight(1f))
         }
         TableLabel(
-            stringResource(if (weightType.usesDuration) R.string.table_seconds else R.string.table_reps),
+            stringResource(
+                when {
+                    weightType.usesDuration -> R.string.table_seconds
+                    weightType.usesDistance -> R.string.table_minutes
+                    else -> R.string.table_reps
+                }
+            ),
             Modifier.weight(1f)
         )
         if (trailingSlot) {

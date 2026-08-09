@@ -31,6 +31,7 @@ WHITELIST = ROOT / "tools" / "common_exercises.txt"
 TRANSLATIONS_DIR = ROOT / "tools" / "translations"
 NAMES_FILE = ROOT / "tools" / "exercise_names.json"
 FACTORS_FILE = ROOT / "tools" / "bodyweight_factors.json"
+CARDIO_TYPES_FILE = ROOT / "tools" / "cardio_weight_types.json"
 OUTPUT = ROOT / "app" / "src" / "main" / "assets" / "seed" / "exercises.json"
 
 # Solo per questi il peso corporeo entra nel conto del volume, quindi solo per questi
@@ -77,6 +78,14 @@ def main():
     if unknown_names:
         sys.exit("Nomi tradotti fuori dal dataset:\n  " + "\n  ".join(unknown_names))
 
+    # Le macchine da cardio nel dataset originale sono MACHINE_STACK, come se avessero un
+    # pacco pesi: qui si riscrive il loro tipo (vedi cardio_weight_types.json).
+    cardio_types = {k: v for k, v in json.loads(CARDIO_TYPES_FILE.read_text(encoding="utf-8")).items()
+                    if not k.startswith("_")}
+    unknown_cardio = [n for n in cardio_types if n not in catalog]
+    if unknown_cardio:
+        sys.exit("Tipi cardio fuori dal dataset:\n  " + "\n  ".join(unknown_cardio))
+
     factors = {k: v for k, v in json.loads(FACTORS_FILE.read_text(encoding="utf-8")).items()
                if not k.startswith("_")}
     unknown_factors = [n for n in factors if n not in catalog]
@@ -89,6 +98,8 @@ def main():
     curated = []
     for name in wanted:
         entry = {k: v for k, v in catalog[name].items() if k not in DROPPED_FIELDS}
+        if name in cardio_types:
+            entry["weightType"] = cardio_types[name]
         translated = translations.get(name, {})
         # Due esercizi del dataset originale hanno la descrizione vuota: la chiave "en"
         # nel file di traduzione permette di colmarla senza toccare l'export a monte.

@@ -71,6 +71,7 @@ import com.eina.app.ui.components.setTypeLabel
 import com.eina.app.ui.components.StatTile
 import com.eina.app.ui.components.formatDayMonth
 import com.eina.app.ui.components.formatDecimal
+import com.eina.app.ui.components.formatDistanceAndTime
 import com.eina.app.ui.components.formatDuration
 import com.eina.app.ui.components.formatFullDate
 import com.eina.app.ui.components.formatTime
@@ -508,6 +509,7 @@ private fun Context.toast(@StringRes message: Int) {
 
 private fun Context.setLabel(set: CompletedSetRow): String = when (set.weightType) {
     WeightType.TIME_BASED -> "${set.actualReps ?: 0} s"
+    WeightType.DISTANCE_BASED -> formatDistanceAndTime(set.weight, set.actualReps)
     WeightType.BODYWEIGHT -> getString(R.string.unit_reps_value, set.actualReps ?: 0)
     WeightType.BODYWEIGHT_PLUS_LOAD ->
         "+${formatDecimal(set.weight ?: 0.0)} kg × ${set.actualReps ?: 0}"

@@ -109,4 +109,28 @@ class PrCalculatorTest {
         val s = set(actualReps = 120)
         assertEquals(0.0, volumeForSet(WeightType.TIME_BASED, s), 0.0)
     }
+
+    @Test
+    fun `distance PR on a longer run`() {
+        val history = listOf(set(weight = 5.0, actualReps = 30))
+        assertTrue(isNewPR(WeightType.DISTANCE_BASED, set(weight = 6.0, actualReps = 40), history))
+        assertFalse(isNewPR(WeightType.DISTANCE_BASED, set(weight = 4.0, actualReps = 30), history))
+    }
+
+    @Test
+    fun `distance PR on the same run done faster`() {
+        val history = listOf(set(weight = 5.0, actualReps = 30))
+        assertTrue(isNewPR(WeightType.DISTANCE_BASED, set(weight = 5.0, actualReps = 25), history))
+        assertFalse(isNewPR(WeightType.DISTANCE_BASED, set(weight = 5.0, actualReps = 35), history))
+    }
+
+    @Test
+    fun `distance set without distance is never a PR`() {
+        assertFalse(isNewPR(WeightType.DISTANCE_BASED, set(actualReps = 30), emptyList()))
+    }
+
+    @Test
+    fun `distance volume stays out of the kg total`() {
+        assertEquals(0.0, volumeForSet(WeightType.DISTANCE_BASED, set(weight = 5.0, actualReps = 30)), 0.0)
+    }
 }

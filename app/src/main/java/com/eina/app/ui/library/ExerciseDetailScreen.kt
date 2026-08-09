@@ -16,11 +16,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.eina.app.R
+import com.eina.app.data.db.WeightType
+import com.eina.app.data.db.usesDistance
+import com.eina.app.data.db.usesDuration
+import com.eina.app.data.db.usesWeight
+import com.eina.app.domain.ProgressPoint
 import com.eina.app.ui.components.EinaBadge
 import com.eina.app.ui.components.ExerciseAnimation
 import com.eina.app.ui.components.hasExerciseMedia
 import com.eina.app.ui.components.IslandCard
 import com.eina.app.ui.components.IslandScreen
+import com.eina.app.ui.components.MiniLineChart
+import com.eina.app.ui.components.formatDayMonth
 import com.eina.app.ui.components.ScreenHeader
 import com.eina.app.ui.theme.EinaTheme
 import com.eina.app.ui.theme.Spacing
@@ -36,6 +43,7 @@ fun ExerciseDetailScreen(
     viewModel: ExerciseDetailViewModel = koinViewModel(parameters = { parametersOf(exerciseId) })
 ) {
     val exercise by viewModel.exercise.collectAsState()
+    val progress by viewModel.progress.collectAsState()
     val island = EinaTheme.island
     val current = exercise
 
@@ -94,6 +102,8 @@ fun ExerciseDetailScreen(
             }
         }
 
+        ProgressionCard(weightType = current.weightType, points = progress)
+
         IslandCard(modifier = Modifier.fillMaxWidth()) {
             Text(stringResource(R.string.exercise_description), style = MaterialTheme.typography.titleMedium)
             Text(
@@ -112,4 +122,68 @@ fun ExerciseDetailScreen(
             )
         }
     }
+}
+
+/**
+ * Progressione dell'esercizio nel tempo, come per il peso corporeo: una spezzata per grandezza,
+ * un punto per allenamento (la serie migliore, vedi [com.eina.app.domain.exerciseProgress]).
+ *
+ * Le due grandezze sono quelle della tabella serie di quell'esercizio: carico e ripetizioni,
+ * secondi a tempo, chilometri e minuti a distanza. Dove una delle due non si registra il
+ * grafico non compare, invece di disegnare una linea piatta a zero.
+ */
+@Composable
+private fun ProgressionCard(weightType: WeightType, points: List<ProgressPoint>) {
+    val island = EinaTheme.island
+
+    IslandCard(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(Spacing.md)
+    ) {
+        Text(stringResource(R.string.exercise_progress_title), style = MaterialTheme.typography.titleMedium)
+
+        if (points.isEmpty()) {
+            Text(
+                text = stringResource(R.string.exercise_progress_empty),
+                style = MaterialTheme.typography.bodyMedium,
+                color = island.textSecondary
+            )
+            return@IslandCard
+        }
+
+        val labels = listOf(formatDayMonth(points.first().date), formatDayMonth(points.last().date))
+
+        if (weightType.usesWeight || weightType.usesDistance) {
+            ProgressionChart(
+                label = stringResource(
+                    if (weightType.usesDistance) R.string.exercise_progress_distance
+                    else R.string.exercise_progress_weight
+                ),
+                values = points.map { (it.weight ?: 0.0).toFloat() },
+                labels = labels
+            )
+        }
+
+        ProgressionChart(
+            label = stringResource(
+                when {
+                    weightType.usesDuration -> R.string.exercise_progress_seconds
+                    weightType.usesDistance -> R.string.exercise_progress_minutes
+                    else -> R.string.exercise_progress_reps
+                }
+            ),
+            values = points.map { (it.reps ?: 0).toFloat() },
+            labels = labels
+        )
+    }
+}
+
+@Composable
+private fun ProgressionChart(label: String, values: List<Float>, labels: List<String>) {
+    Text(
+        text = label,
+        style = MaterialTheme.typography.labelSmall,
+        color = EinaTheme.island.textSecondary
+    )
+    MiniLineChart(values = values, labels = labels, modifier = Modifier.fillMaxWidth())
 }

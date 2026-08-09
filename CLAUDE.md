@@ -120,7 +120,9 @@ com.<org>.eina
 
 ```kotlin
 enum class WeightType {
-    FREE_WEIGHT, BODYWEIGHT, BODYWEIGHT_PLUS_LOAD, ASSISTED, MACHINE_STACK, TIME_BASED
+    FREE_WEIGHT, BODYWEIGHT, BODYWEIGHT_PLUS_LOAD, ASSISTED, MACHINE_STACK, TIME_BASED,
+    // Fase 27: tapis roulant e simili. `weight` = chilometri, `actualReps` = minuti.
+    DISTANCE_BASED
 }
 
 // Fase 24: il riscaldamento non basta piu' come booleano.
@@ -558,6 +560,27 @@ Intestazione tabella e campo numerico condivisi in `ui/components/SetTable.kt`. 
 dispositivo: migrazione di una routine esistente, tipo di serie cambiato in W con rinumerazione,
 serie aggiunta che eredita le ripetizioni, e sessione avviata dalla routine che riceve una serie
 per riga con lo stesso tipo (F / W / D) e le ripetizioni come segnaposto.
+
+**Fase 27 — Distanza, cronometro, progressione** *(fatta)*
+DoD: gli esercizi da cardio non si registrano piu' come se avessero un pacco pesi. Nuovo
+`WeightType.DISTANCE_BASED` (tapis roulant, cyclette, ellittica): in tabella al posto di kg e
+ripetizioni ci sono chilometri e minuti, e il PR scatta quando si supera la distanza massima
+**o** la velocita' media massima — correre uguale ma piu' in fretta e' un record. Nessuna
+colonna nuova sulle serie: come `actualReps` porta gia' i secondi degli esercizi a tempo, qui
+`weight` porta i km e `actualReps` i minuti (`usesDistance` / `usesDecimalField` in
+`data/db/Enums.kt`), quindi niente migrazione — DB fermo alla versione 8. I sei esercizi
+cardio del catalogo passano al tipo giusto da `tools/cardio_weight_types.json`, applicato da
+`curate_exercises.py` (Stairmaster va a TIME_BASED: non percorre una distanza),
+CATALOG_VERSION 7. Cronometro libero, distinto dal timer di recupero: `StopwatchController`
+singleton in Koin, senza job che gira per conto suo (l'istante di partenza piu' il tempo
+accumulato, la UI aperta ridisegna), col tasto tondo in testa alla Dashboard e nell'header
+dell'allenamento in corso — e' lo stesso conteggio, avviarlo prima e ritrovarlo in palestra
+funziona (`ui/components/Stopwatch.kt`). La scheda di un esercizio mostra la sua progressione
+nel tempo con le stesse spezzate del peso corporeo (`MiniLineChart`): un punto per allenamento,
+preso dalla serie migliore della sessione e non dalla media (`domain/ExerciseProgress.kt` coi
+suoi test), con le due grandezze che quell'esercizio registra davvero — carico e ripetizioni,
+secondi a tempo, km e minuti a distanza. I record personali in Progressi sono cliccabili e
+portano a quella scheda.
 
 **Fase 9 — Rifinitura** *(fatta)*
 DoD: R8 + shrinkResources attivi sulla release (20,5 MB → 2,2 MB), regole in

@@ -188,7 +188,10 @@ fun EinaNavHost() {
                 )
             }
             composable(EinaDestination.Progress.route) {
-                ProgressScreen(onBodyWeightClick = { navController.navigate("progress/bodyweight") })
+                ProgressScreen(
+                    onBodyWeightClick = { navController.navigate("progress/bodyweight") },
+                    onExerciseClick = { exerciseId -> navController.navigate("library/exercise/$exerciseId") }
+                )
             }
             composable("settings") {
                 SettingsScreen(onBack = { navController.popBackStack() })

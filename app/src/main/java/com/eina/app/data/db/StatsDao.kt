@@ -79,4 +79,27 @@ interface StatsDao {
         """
     )
     fun observeCompletedSetsForSession(sessionId: Long): Flow<List<CompletedSetRow>>
+
+    /** Storico di un solo esercizio: alimenta il grafico di progressione nella sua scheda. */
+    @Query(
+        """
+        SELECT ws.id AS sessionId, ws.startTime AS sessionStart, ws.endTime AS sessionEnd,
+               we.id AS workoutExerciseId, we.`order` AS exerciseOrder,
+               r.name AS routineName,
+               e.id AS exerciseId, e.weightType AS weightType,
+               e.bodyweightFactor AS bodyweightFactor,
+               e.name AS nameEn, e.nameIt AS nameIt, e.nameFr AS nameFr,
+               se.setIndex AS setIndex, se.actualReps AS actualReps, se.weight AS weight,
+               se.bodyweightSnapshotKg AS bodyweightSnapshotKg, se.setType AS setType,
+               se.isPR AS isPR, se.completedAt AS completedAt
+        FROM set_entries se
+        INNER JOIN workout_exercises we ON se.workoutExerciseId = we.id
+        INNER JOIN workout_sessions ws ON we.sessionId = ws.id
+        INNER JOIN exercises e ON we.exerciseId = e.id
+        LEFT JOIN routines r ON ws.routineId = r.id
+        WHERE se.completedAt IS NOT NULL AND e.id = :exerciseId
+        ORDER BY ws.startTime ASC, se.setIndex ASC
+        """
+    )
+    fun observeCompletedSetsForExercise(exerciseId: Long): Flow<List<CompletedSetRow>>
 }

@@ -179,3 +179,38 @@ class StatsTest {
         assertEquals(720.0 + 0.0 + 410.0, totalVolume(rows), 0.001)
     }
 }
+
+class ExerciseProgressTest {
+
+    @Test
+    fun `one point per session, taken from the best set`() {
+        val rows = listOf(
+            row(sessionId = 1, date = LocalDate.of(2026, 1, 5), weight = 60.0, reps = 8),
+            row(sessionId = 1, date = LocalDate.of(2026, 1, 5), setIndex = 1, weight = 70.0, reps = 5),
+            row(sessionId = 2, date = LocalDate.of(2026, 1, 12), weight = 75.0, reps = 5)
+        )
+        val points = exerciseProgress(rows)
+        assertEquals(2, points.size)
+        assertEquals(70.0, points[0].weight!!, 0.0)
+        assertEquals(5, points[0].reps)
+        assertEquals(75.0, points[1].weight!!, 0.0)
+    }
+
+    @Test
+    fun `warmup sets stay out of the progression`() {
+        val rows = listOf(
+            row(sessionId = 1, date = LocalDate.of(2026, 1, 5), weight = 100.0, setType = SetType.WARMUP),
+            row(sessionId = 1, date = LocalDate.of(2026, 1, 5), setIndex = 1, weight = 60.0)
+        )
+        assertEquals(60.0, exerciseProgress(rows).single().weight!!, 0.0)
+    }
+
+    @Test
+    fun `on distance the faster run wins over the slower one`() {
+        val rows = listOf(
+            row(sessionId = 1, date = LocalDate.of(2026, 1, 5), weightType = WeightType.DISTANCE_BASED, weight = 5.0, reps = 40),
+            row(sessionId = 1, date = LocalDate.of(2026, 1, 5), setIndex = 1, weightType = WeightType.DISTANCE_BASED, weight = 5.0, reps = 28)
+        )
+        assertEquals(28, exerciseProgress(rows).single().reps)
+    }
+}

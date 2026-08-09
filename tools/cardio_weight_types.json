@@ -1,0 +1,9 @@
+{
+  "_nota": "Fase 27. Il dataset di free-exercise-db etichetta le macchine da cardio come MACHINE_STACK, cioe' come se avessero un pacco pesi da caricare. Qui si correggono: DISTANCE_BASED per quelle che percorrono una distanza (si registrano km e minuti), TIME_BASED per quelle che non ne hanno una.",
+  "Running, Treadmill": "DISTANCE_BASED",
+  "Jogging, Treadmill": "DISTANCE_BASED",
+  "Walking, Treadmill": "DISTANCE_BASED",
+  "Bicycling, Stationary": "DISTANCE_BASED",
+  "Elliptical Trainer": "DISTANCE_BASED",
+  "Stairmaster": "TIME_BASED"
+}

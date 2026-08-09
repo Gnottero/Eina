@@ -27,6 +27,7 @@ fun WeightType.labelRes(): Int = when (this) {
     WeightType.ASSISTED -> R.string.weight_type_assisted
     WeightType.MACHINE_STACK -> R.string.weight_type_machine_stack
     WeightType.TIME_BASED -> R.string.weight_type_time_based
+    WeightType.DISTANCE_BASED -> R.string.weight_type_distance_based
 }
 
 @Composable
@@ -40,6 +41,7 @@ fun WeightType.loggingInstructionsRes(): Int = when (this) {
     WeightType.ASSISTED -> R.string.logging_assisted
     WeightType.MACHINE_STACK -> R.string.logging_machine_stack
     WeightType.TIME_BASED -> R.string.logging_time_based
+    WeightType.DISTANCE_BASED -> R.string.logging_distance_based
 }
 
 private val muscleLabels: Map<String, Int> = mapOf(

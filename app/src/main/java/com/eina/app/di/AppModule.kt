@@ -7,6 +7,7 @@ import com.eina.app.data.repository.RoutineRepository
 import com.eina.app.data.repository.StatsRepository
 import com.eina.app.data.repository.WorkoutRepository
 import com.eina.app.data.seed.ExerciseSeeder
+import com.eina.app.ui.components.StopwatchController
 import com.eina.app.ui.dashboard.DashboardViewModel
 import com.eina.app.ui.feedback.WorkoutFeedback
 import com.eina.app.ui.history.HistoryViewModel
@@ -73,10 +74,13 @@ val appModule = module {
 
     single { ExerciseSeeder(get(), get()) }
 
+    // Cronometro condiviso: si avvia in Dashboard e si ritrova durante l'allenamento.
+    single { StopwatchController() }
+
     viewModel { WorkoutViewModel(get()) }
     viewModel { (sessionId: Long) -> ActiveWorkoutViewModel(get(), get(), sessionId) }
     viewModel { LibraryViewModel(get()) }
-    viewModel { (exerciseId: Long) -> ExerciseDetailViewModel(get(), exerciseId) }
+    viewModel { (exerciseId: Long) -> ExerciseDetailViewModel(get(), get(), exerciseId) }
     viewModel { CreateExerciseViewModel(get(), androidContext()) }
     viewModel { RoutineListViewModel(get(), get()) }
     viewModel { (routineId: Long) -> RoutineEditorViewModel(get(), androidContext(), routineId) }

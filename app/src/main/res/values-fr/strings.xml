@@ -148,6 +148,8 @@
     <string name="table_kg">Kg</string>
     <string name="table_reps">Rép</string>
     <string name="table_seconds">Sec</string>
+    <string name="table_km" translatable="false">Km</string>
+    <string name="table_minutes">Min</string>
 
     <!-- Tipo di serie -->
     <string name="set_type_title">Type de série</string>
@@ -239,6 +241,7 @@
     <string name="weight_type_assisted">Assisté</string>
     <string name="weight_type_machine_stack">Machine à colonne</string>
     <string name="weight_type_time_based">Au temps</string>
+    <string name="weight_type_distance_based">À la distance</string>
 
     <!-- Comment enregistrer, par type de charge -->
     <string name="logging_free_weight">Saisis le poids total soulevé (barre + disques, ou le poids indiqué sur l\'haltère/la kettlebell).</string>
@@ -247,6 +250,7 @@
     <string name="logging_assisted">Saisis l\'assistance fournie par la machine ou l\'élastique : elle est soustraite de ton poids de corps.</string>
     <string name="logging_machine_stack">Saisis le poids indiqué sur la colonne de la machine.</string>
     <string name="logging_time_based">Saisis la durée en secondes à la place des répétitions.</string>
+    <string name="logging_distance_based">Saisis la distance en kilomètres et le temps en minutes : le record regarde les deux.</string>
 
     <!-- Catégories musculaires -->
     <string name="muscle_category_chest_push">Pectoraux/Poussée</string>
@@ -385,4 +389,21 @@
     <string name="library_delete_confirm_title">Supprimer \"%1$s\" ?</string>
     <string name="library_delete_confirm_text">L\'exercice quitte la bibliothèque définitivement.</string>
     <string name="library_delete_blocked">Cet exercice est encore utilisé par une routine ou une séance enregistrée</string>
+
+    <!-- Cronometro (Fase 27) -->
+    <string name="stopwatch_title">Chronomètre</string>
+    <string name="stopwatch_open_cd">Ouvrir le chronomètre</string>
+    <string name="stopwatch_start">Démarrer</string>
+    <string name="stopwatch_pause">Pause</string>
+    <string name="stopwatch_resume">Reprendre</string>
+    <string name="stopwatch_reset">Remettre à zéro</string>
+
+    <!-- Progressione dell'esercizio (Fase 27) -->
+    <string name="exercise_progress_title">Progression</string>
+    <string name="exercise_progress_empty">Aucune série enregistrée : le graphique apparaît après le premier entraînement avec cet exercice.</string>
+    <string name="exercise_progress_weight">Poids (kg)</string>
+    <string name="exercise_progress_reps">Répétitions</string>
+    <string name="exercise_progress_seconds">Secondes</string>
+    <string name="exercise_progress_distance">Distance (km)</string>
+    <string name="exercise_progress_minutes">Minutes</string>
 </resources>

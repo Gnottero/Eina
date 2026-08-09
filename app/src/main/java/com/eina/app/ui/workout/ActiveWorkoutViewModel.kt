@@ -9,7 +9,7 @@ import com.eina.app.data.db.WeightType
 import com.eina.app.data.db.WorkoutExerciseEntity
 import com.eina.app.data.db.countsAsWorking
 import com.eina.app.data.db.exerciseName
-import com.eina.app.data.db.usesWeight
+import com.eina.app.data.db.usesDecimalField
 import com.eina.app.data.repository.RoutineTarget
 import com.eina.app.data.repository.WorkoutRepository
 import com.eina.app.domain.Superset
@@ -172,12 +172,13 @@ class ActiveWorkoutViewModel(
         fallbackReps: Int?,
         weightType: WeightType
     ): List<SessionSetUi> {
-        var lastWeight: Double? = if (weightType.usesWeight) fallbackWeight else null
+        var lastWeight: Double? = if (weightType.usesDecimalField) fallbackWeight else null
         var lastReps: Int? = fallbackReps
         return sets.map { set ->
-            // Senza campo kg in tabella non si propone nemmeno un carico: completare la serie
-            // scriverebbe un peso che l'utente non ha mai visto ne' potuto correggere.
-            val suggestedWeight = if (!weightType.usesWeight) null
+            // Senza campo decimale in tabella non si propone nemmeno un carico: completare la
+            // serie scriverebbe un valore che l'utente non ha mai visto ne' potuto correggere.
+            // Sulla distanza il campo c'e', e quel che si propone sono i chilometri.
+            val suggestedWeight = if (!weightType.usesDecimalField) null
             else set.previous?.weight ?: set.targetWeight ?: lastWeight
             val suggestedReps = set.previous?.actualReps ?: set.targetReps ?: lastReps
             lastWeight = set.weight ?: suggestedWeight ?: lastWeight

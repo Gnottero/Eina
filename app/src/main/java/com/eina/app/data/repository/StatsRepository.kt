@@ -15,6 +15,9 @@ class StatsRepository(
     fun observeSessionSets(sessionId: Long): Flow<List<CompletedSetRow>> =
         statsDao.observeCompletedSetsForSession(sessionId)
 
+    fun observeExerciseSets(exerciseId: Long): Flow<List<CompletedSetRow>> =
+        statsDao.observeCompletedSetsForExercise(exerciseId)
+
     fun observeBodyMetrics(): Flow<List<BodyMetricEntity>> = bodyMetricDao.getAll()
 
     /** Registra il peso di oggi: alimenta bodyweightSnapshotKg delle set completate da qui in poi. */

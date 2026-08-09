@@ -40,8 +40,7 @@ import com.eina.app.R
 import com.eina.app.data.db.PlaylistType
 import com.eina.app.data.db.RoutineExerciseEntity
 import com.eina.app.data.db.WeightType
-import com.eina.app.data.db.usesDuration
-import com.eina.app.data.db.usesWeight
+import com.eina.app.data.db.usesDecimalField
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.width
@@ -491,7 +490,8 @@ private fun RoutineSetRow(
             modifier = Modifier.width(40.dp)
         )
 
-        if (weightType.usesWeight) {
+        // Kg per i carichi, km per gli esercizi a distanza: stesso campo decimale.
+        if (weightType.usesDecimalField) {
             SetValueField(
                 value = weightText,
                 placeholder = null,

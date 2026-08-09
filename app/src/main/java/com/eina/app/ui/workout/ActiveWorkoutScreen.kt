@@ -47,6 +47,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -70,7 +71,8 @@ import com.eina.app.data.db.WeightType
 import com.eina.app.data.db.countsAsWorking
 import com.eina.app.data.db.exerciseName
 import com.eina.app.data.db.matchesQuery
-import com.eina.app.data.db.usesDuration
+import com.eina.app.data.db.usesDecimalField
+import com.eina.app.data.db.usesDistance
 import com.eina.app.data.db.usesWeight
 import com.eina.app.ui.components.BottomTimerBar
 import com.eina.app.ui.components.DestructiveRed
@@ -90,10 +92,14 @@ import com.eina.app.ui.components.RestTimeSheet
 import com.eina.app.ui.components.SetTypeIndicator
 import com.eina.app.ui.components.SetTypeSheet
 import com.eina.app.ui.components.SheetActionRow
+import com.eina.app.ui.components.StopwatchController
+import com.eina.app.ui.components.StopwatchIconButton
+import com.eina.app.ui.components.StopwatchSheet
 import com.eina.app.ui.components.SupersetBadge
 import com.eina.app.ui.components.SupersetOption
 import com.eina.app.ui.components.SupersetSheet
 import com.eina.app.ui.components.supersetColor
+import com.eina.app.ui.components.formatDistanceAndTime
 import com.eina.app.ui.components.sanitizeWeightInput
 import com.eina.app.domain.Superset
 import com.eina.app.ui.feedback.LocalHapticTap
@@ -111,6 +117,7 @@ import com.eina.app.ui.theme.TileShape
 import com.eina.app.ui.theme.label
 import com.eina.app.ui.theme.primaryCategoryFor
 import org.koin.androidx.compose.koinViewModel
+import org.koin.compose.koinInject
 import org.koin.core.parameter.parametersOf
 
 @Composable
@@ -431,6 +438,9 @@ private fun SessionHeader(
 ) {
     val island = EinaTheme.island
     val context = LocalContext.current
+    val stopwatch: StopwatchController = koinInject()
+    val stopwatchState by stopwatch.state.collectAsState()
+    var showStopwatch by remember { mutableStateOf(false) }
     // La barra si muove verso il nuovo valore invece di saltarci: il progresso cambia a scatti
     // di una serie alla volta e uno scatto secco su una barra sottile si legge male.
     val animatedProgress by animateFloatAsState(
@@ -466,6 +476,13 @@ private fun SessionHeader(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f)
+                )
+                // Cronometro a portata di mano anche in palestra: e' lo stesso della Dashboard,
+                // quindi un conteggio avviato prima continua qui.
+                StopwatchIconButton(
+                    running = stopwatchState.running,
+                    onClick = { showStopwatch = true },
+                    containerColor = island.sunken
                 )
                 // La playlist si lancia da qui, dove serve davvero: nell'editor della routine
                 // si sta scrivendo una scheda, non ci si sta allenando.
@@ -543,6 +560,10 @@ private fun SessionHeader(
                     .padding(vertical = Spacing.sm)
             )
         }
+    }
+
+    if (showStopwatch) {
+        StopwatchSheet(controller = stopwatch, onDismiss = { showStopwatch = false })
     }
 }
 
@@ -781,7 +802,9 @@ private fun SetRow(
 
         // Segnaposto = valori proposti dal ViewModel, gli stessi che vengono registrati se la
         // serie viene chiusa senza digitare nulla.
-        if (weightType.usesWeight) {
+        // Stesso campo decimale per i kg e per i chilometri: cambia l'etichetta in testa alla
+        // colonna, non la casella.
+        if (weightType.usesDecimalField) {
             SetValueField(
                 value = weightText,
                 placeholder = set.suggestedWeight?.let { formatNumber(it) },
@@ -973,6 +996,8 @@ private fun formatNumber(value: Double): String =
  */
 private fun formatPrevious(set: com.eina.app.data.db.SetEntryEntity, weightType: WeightType): String {
     val reps = set.actualReps?.toString()
+    // Sulla distanza il "precedente" sono i chilometri col tempo, non un carico per ripetizioni.
+    if (weightType.usesDistance) return formatDistanceAndTime(set.weight, set.actualReps)
     if (!weightType.usesWeight) return reps ?: "—"
     val weight = set.weight?.let { "${formatNumber(it)}kg" }
     return listOfNotNull(weight, reps).joinToString("×").ifBlank { "—" }

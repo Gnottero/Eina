@@ -43,6 +43,7 @@ import org.koin.androidx.compose.koinViewModel
 @Composable
 fun ProgressScreen(
     onBodyWeightClick: () -> Unit = {},
+    onExerciseClick: (Long) -> Unit = {},
     viewModel: ProgressViewModel = koinViewModel()
 ) {
     val island = EinaTheme.island
@@ -129,7 +130,9 @@ fun ProgressScreen(
             )
         } else {
             state.personalRecords.take(8).forEach { record ->
-                PrRow(record = record)
+                // Il record porta alla scheda dell'esercizio, dove c'e' il grafico della sua
+                // progressione: e' la domanda che viene subito dopo "quanto ho alzato".
+                PrRow(record = record, onClick = { onExerciseClick(record.exerciseId) })
             }
         }
 
@@ -159,10 +162,10 @@ fun ProgressScreen(
 }
 
 @Composable
-private fun PrRow(record: PrRecord) {
+private fun PrRow(record: PrRecord, onClick: () -> Unit) {
     val island = EinaTheme.island
     val context = LocalContext.current
-    IslandCard(modifier = Modifier.fillMaxWidth()) {
+    IslandCard(modifier = Modifier.fillMaxWidth(), onClick = onClick) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,

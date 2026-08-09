@@ -4447,7 +4447,7 @@
   {
     "name": "Running, Treadmill",
     "description": "To begin, step onto the treadmill and select the desired option from the menu. Most treadmills have a manual setting, or you can select a program to run. Typically, you can enter your age and weight to estimate the amount of calories burned during exercise. Elevation can be adjusted to change the intensity of the workout. Treadmills offer convenience, cardiovascular benefits, and usually have less impact than running outside. A 150 lb person will burn over 450 calories running 8 miles per hour for 30 minutes. Maintain proper posture as you run, and only hold onto the handles when necessary, such as when dismounting or checking your heart rate.",
-    "weightType": "MACHINE_STACK",
+    "weightType": "DISTANCE_BASED",
     "muscleGroupsPrimary": [
       "quadriceps"
     ],
@@ -4472,7 +4472,7 @@
   {
     "name": "Jogging, Treadmill",
     "description": "To begin, step onto the treadmill and select the desired option from the menu. Most treadmills have a manual setting, or you can select a program to run. Typically, you can enter your age and weight to estimate the amount of calories burned during exercise. Elevation can be adjusted to change the intensity of the workout. Treadmills offer convenience, cardiovascular benefits, and usually have less impact than jogging outside. A 150 lb person will burn almost 250 calories jogging for 30 minutes, compared to more than 450 calories running. Maintain proper posture as you jog, and only hold onto the handles when necessary, such as when dismounting or checking your heart rate.",
-    "weightType": "MACHINE_STACK",
+    "weightType": "DISTANCE_BASED",
     "muscleGroupsPrimary": [
       "quadriceps"
     ],
@@ -4496,7 +4496,7 @@
   {
     "name": "Walking, Treadmill",
     "description": "To begin, step onto the treadmill and select the desired option from the menu. Most treadmills have a manual setting, or you can select a program to run. Typically, you can enter your age and weight to estimate the amount of calories burned during exercise. Elevation can be adjusted to change the intensity of the workout. Treadmills offer convenience, cardiovascular benefits, and usually have less impact than walking outside. When walking, you should move at a moderate to fast pace, not a leisurely one. Being an activity of lower intensity, walking doesn't burn as many calories as some other activities, but still provides great benefit. A 150 lb person will burn about 175 calories walking 4 miles per hour for 30 minutes, compared to 450 calories running twice as fast. Maintain proper posture as you walk, and only hold onto the handles when necessary, such as when dismounting or checking your heart rate.",
-    "weightType": "MACHINE_STACK",
+    "weightType": "DISTANCE_BASED",
     "muscleGroupsPrimary": [
       "quadriceps"
     ],
@@ -4521,7 +4521,7 @@
   {
     "name": "Bicycling, Stationary",
     "description": "To begin, seat yourself on the bike and adjust the seat to your height. Select the desired option from the menu. You may have to start pedaling to turn it on. You can use the manual setting, or you can select a program to use. Typically, you can enter your age and weight to estimate the amount of calories burned during exercise. The level of resistance can be changed throughout the workout. The handles can be used to monitor your heart rate to help you stay at an appropriate intensity.",
-    "weightType": "MACHINE_STACK",
+    "weightType": "DISTANCE_BASED",
     "muscleGroupsPrimary": [
       "quadriceps"
     ],
@@ -4574,7 +4574,7 @@
   {
     "name": "Elliptical Trainer",
     "description": "To begin, step onto the elliptical and select the desired option from the menu. Most ellipticals have a manual setting, or you can select a program to run. Typically, you can enter your age and weight to estimate the amount of calories burned during exercise. Elevation can be adjusted to change the intensity of the workout. The handles can be used to monitor your heart rate to help you stay at an appropriate intensity.",
-    "weightType": "MACHINE_STACK",
+    "weightType": "DISTANCE_BASED",
     "muscleGroupsPrimary": [
       "quadriceps"
     ],
@@ -4599,7 +4599,7 @@
   {
     "name": "Stairmaster",
     "description": "To begin, step onto the stairmaster and select the desired option from the menu. You can choose a manual setting, or you can select a program to run. Typically, you can enter your age and weight to estimate the amount of calories burned during exercise. Pump your legs up and down in an established rhythm, driving the pedals down but not all the way to the floor. It is recommended that you maintain your grip on the handles so that you don't fall. The handles can be used to monitor your heart rate to help you stay at an appropriate intensity. Stairmasters offer convenience, cardiovascular benefits, and usually have less impact than running outside. They are typically much harder than other cardio equipment. A 150 lb person will typically burn over 300 calories in 30 minutes, compared to about 175 calories walking.",
-    "weightType": "MACHINE_STACK",
+    "weightType": "TIME_BASED",
     "muscleGroupsPrimary": [
       "quadriceps"
     ],

@@ -155,6 +155,8 @@
     <string name="table_kg">Kg</string>
     <string name="table_reps">Reps</string>
     <string name="table_seconds">Sec</string>
+    <string name="table_km" translatable="false">Km</string>
+    <string name="table_minutes">Min</string>
 
     <!-- Tipo di serie -->
     <string name="set_type_title">Set type</string>
@@ -249,6 +251,7 @@
     <string name="weight_type_assisted">Assisted</string>
     <string name="weight_type_machine_stack">Weight stack machine</string>
     <string name="weight_type_time_based">Time based</string>
+    <string name="weight_type_distance_based">Distance based</string>
 
     <!-- Come registrare, per tipo di carico -->
     <string name="logging_free_weight">Enter the total weight lifted (bar + plates, or the number printed on the dumbbell/kettlebell).</string>
@@ -257,6 +260,7 @@
     <string name="logging_assisted">Enter the assistance the machine or band takes off: it is subtracted from your body weight.</string>
     <string name="logging_machine_stack">Enter the weight shown on the machine stack.</string>
     <string name="logging_time_based">Enter the duration in seconds instead of the reps.</string>
+    <string name="logging_distance_based">Enter the distance in kilometres and the time in minutes: the record looks at both.</string>
 
     <!-- Categorie muscolari -->
     <string name="muscle_category_chest_push">Chest/Push</string>
@@ -399,4 +403,21 @@
     <string name="library_delete_confirm_title">Delete \"%1$s\"?</string>
     <string name="library_delete_confirm_text">The exercise leaves the library for good.</string>
     <string name="library_delete_blocked">This exercise is still used by a routine or a recorded workout</string>
+
+    <!-- Cronometro (Fase 27) -->
+    <string name="stopwatch_title">Stopwatch</string>
+    <string name="stopwatch_open_cd">Open the stopwatch</string>
+    <string name="stopwatch_start">Start</string>
+    <string name="stopwatch_pause">Pause</string>
+    <string name="stopwatch_resume">Resume</string>
+    <string name="stopwatch_reset">Reset</string>
+
+    <!-- Progressione dell'esercizio (Fase 27) -->
+    <string name="exercise_progress_title">Progression</string>
+    <string name="exercise_progress_empty">No set recorded yet: the chart shows up after the first workout with this exercise.</string>
+    <string name="exercise_progress_weight">Weight (kg)</string>
+    <string name="exercise_progress_reps">Reps</string>
+    <string name="exercise_progress_seconds">Seconds</string>
+    <string name="exercise_progress_distance">Distance (km)</string>
+    <string name="exercise_progress_minutes">Minutes</string>
 </resources>
