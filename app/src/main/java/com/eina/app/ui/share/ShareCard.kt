@@ -47,9 +47,20 @@ private const val CARD_SIZE = CANVAS_SIZE - MARGIN * 2
 
 private const val CARD_BG = 0xFFFFFFFF.toInt()
 private const val ACCENT = 0xFFF97348.toInt()
-private const val TEXT = 0xFF1F1510.toInt()
-private const val TEXT_SECONDARY = 0xFF8A7D75.toInt()
-private const val HAIRLINE = 0xFFF0E5DD.toInt()
+private const val TEXT = 0xFF1C1B19.toInt()
+private const val TEXT_SECONDARY = 0xFF7C7A75.toInt()
+private const val HAIRLINE = 0xFFE7E5E1.toInt()
+
+// Inter, lo stesso font dell'app. L'immagine condivisa e' il pezzo che gira fuori dall'app:
+// disegnarla col sans di sistema (Roboto su un telefono, altro su un altro) la faceva sembrare
+// di un'altra applicazione. Caricato una volta sola: getFont apre il file ogni volta.
+private var interBold: Typeface? = null
+private var interRegular: Typeface? = null
+
+private fun loadTypefaces(context: Context) {
+    if (interBold == null) interBold = ResourcesCompat.getFont(context, R.font.inter_display_bold)
+    if (interRegular == null) interRegular = ResourcesCompat.getFont(context, R.font.inter_medium)
+}
 
 // Versione trasparente: il fondo e' la foto di chi condivide, quindi il testo va in bianco e
 // con un'ombra portata, l'unico modo di restare leggibile sia su cielo che su asfalto.
@@ -69,7 +80,8 @@ private fun textPaint(
     this.color = color
     textSize = size
     letterSpacing = spacing
-    typeface = Typeface.create(Typeface.SANS_SERIF, if (bold) Typeface.BOLD else Typeface.NORMAL)
+    typeface = (if (bold) interBold else interRegular)
+        ?: Typeface.create(Typeface.SANS_SERIF, if (bold) Typeface.BOLD else Typeface.NORMAL)
     if (shadow) setShadowLayer(size / 6f, 0f, size / 20f, PHOTO_SHADOW)
 }
 
@@ -111,6 +123,7 @@ fun renderShareCard(
     data: ShareCardData,
     transparent: Boolean = false
 ): Bitmap {
+    loadTypefaces(context)
     val bitmap = Bitmap.createBitmap(CANVAS_SIZE, CANVAS_SIZE, Bitmap.Config.ARGB_8888)
     val canvas = Canvas(bitmap)
     val onPhoto = transparent

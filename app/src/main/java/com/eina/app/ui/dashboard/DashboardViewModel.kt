@@ -19,6 +19,8 @@ import java.time.LocalDate
 
 data class DashboardUiState(
     val weekSessions: Int = 0,
+    /** Giorni distinti allenati nella settimana in corso: e' quello che riempie l'anello. */
+    val weekDaysTrained: Int = 0,
     val weekVolumeKg: Double = 0.0,
     val weekVolumeByDay: List<Float> = List(7) { 0f },
     val streakWeeks: Int = 0,
@@ -40,6 +42,12 @@ class DashboardViewModel(repository: StatsRepository) : ViewModel() {
 
             DashboardUiState(
                 weekSessions = weekSessions.size,
+                // Due sessioni nello stesso giorno riempiono un settore solo: l'anello conta i
+                // giorni, non gli allenamenti, altrimenti si chiuderebbe in una domenica sola.
+                weekDaysTrained = weekSessions
+                    .map { epochMillisToLocalDate(it.startTime) }
+                    .distinct()
+                    .size,
                 weekVolumeKg = weekSessions.sumOf { it.volumeKg },
                 weekVolumeByDay = (0..6).map { offset ->
                     (volumePerDay[startOfWeek.plusDays(offset.toLong())] ?: 0.0).toFloat()

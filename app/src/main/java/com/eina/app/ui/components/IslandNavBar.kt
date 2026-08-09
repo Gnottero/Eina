@@ -21,6 +21,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
@@ -55,7 +56,11 @@ fun IslandNavBar(
             .fillMaxWidth()
             .padding(horizontal = Spacing.xl, vertical = Spacing.md),
         shape = PillShape,
-        elevation = 16.dp
+        // Non del tutto opaca: il contenuto che le scorre sotto si intravede appena, cosi' la
+        // barra galleggia sulla pagina invece di tagliarla in due.
+        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.97f),
+        elevation = 18.dp,
+        outlined = true
     ) {
         Row(
             modifier = Modifier
@@ -73,12 +78,14 @@ fun IslandNavBar(
 
 @Composable
 private fun IslandNavBarItem(item: IslandNavItem) {
-    val accent = MaterialTheme.colorScheme.primary
     val island = EinaTheme.island
+    // La voce attiva e' una pastiglia piena con la rampa dell'accento e contenuto bianco: a
+    // colpo d'occhio si vede dove si e', anche in uno screenshot rimpicciolito.
     val contentColor by animateColorAsState(
-        targetValue = if (item.selected) accent else island.textSecondary,
+        targetValue = if (item.selected) Color.White else island.textSecondary,
         label = "navItemColor"
     )
+    val fill = remember(island.accentRamp) { Brush.horizontalGradient(island.accentRamp) }
     val horizontalPadding by animateDpAsState(
         targetValue = if (item.selected) Spacing.lg else Spacing.md,
         label = "navItemPadding"
@@ -89,7 +96,7 @@ private fun IslandNavBarItem(item: IslandNavItem) {
     Row(
         modifier = Modifier
             .clip(PillShape)
-            .background(if (item.selected) accent.copy(alpha = 0.12f) else Color.Transparent)
+            .then(if (item.selected) Modifier.background(fill) else Modifier)
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,

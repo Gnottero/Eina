@@ -22,7 +22,7 @@ fun launchDonationPage(context: Context) {
         .setShowTitle(true)
         .setDefaultColorSchemeParams(
             androidx.browser.customtabs.CustomTabColorSchemeParams.Builder()
-                .setToolbarColor("#FBF6F2".toColorInt())
+                .setToolbarColor("#F4F3F1".toColorInt())
                 .build()
         )
         .build()

@@ -31,6 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import android.widget.Toast
 import com.eina.app.R
@@ -38,6 +39,7 @@ import com.eina.app.data.db.ExerciseEntity
 import com.eina.app.data.db.exerciseName
 import com.eina.app.ui.components.EinaBadge
 import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
@@ -58,6 +60,7 @@ import com.eina.app.ui.theme.EinaTheme
 import com.eina.app.ui.theme.IslandShape
 import com.eina.app.ui.theme.MuscleGroupCategory
 import com.eina.app.ui.theme.Spacing
+import com.eina.app.ui.theme.squircle
 import com.eina.app.ui.theme.label
 import com.eina.app.ui.theme.primaryCategoryFor
 import org.koin.androidx.compose.koinViewModel
@@ -209,9 +212,12 @@ private fun ExerciseListItem(
     onLongClick: (() -> Unit)? = null
 ) {
     val category = primaryCategoryFor(exercise.muscleGroupsPrimary)
+    // Riga bassa e regolare invece di card alte: il badge colorato del gruppo muscolare occupava
+    // una seconda riga per conto suo e in un elenco di 197 voci diventava rumore. Ora il colore
+    // resta (un punto), e gruppo e attrezzo stanno su una riga sola sotto il nome.
     IslandCard(
         modifier = Modifier.fillMaxWidth(),
-        contentPadding = PaddingValues(Spacing.lg),
+        contentPadding = PaddingValues(horizontal = Spacing.md, vertical = Spacing.md),
         onClick = onClick,
         onLongClick = onLongClick
     ) {
@@ -227,35 +233,48 @@ private fun ExerciseListItem(
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
-                        .size(52.dp)
-                        // Raggio esplicito e non TileShape: su 52dp i 24dp della tile
+                        .size(56.dp)
+                        // Raggio esplicito e non TileShape: su 56dp i 24dp della tile
                         // arrotondano fino a farla diventare un cerchio.
-                        .clip(RoundedCornerShape(16.dp))
+                        .clip(squircle(18.dp))
                         .background(EinaTheme.island.sunken)
                 )
             }
             androidx.compose.foundation.layout.Column(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(Spacing.sm)
+                verticalArrangement = Arrangement.spacedBy(3.dp)
             ) {
-                Text(exercise.localizedName(), style = MaterialTheme.typography.titleMedium)
-                Row(horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
-                    EinaBadge(text = category.label(), color = category.color)
-                    exercise.equipment?.takeIf { it.isNotBlank() }?.let {
-                        Text(
-                            text = equipmentLabel(it),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = secondaryColor,
-                            modifier = Modifier.align(Alignment.CenterVertically)
-                        )
-                    }
+                Text(
+                    text = exercise.localizedName(),
+                    style = MaterialTheme.typography.titleMedium,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.xs)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(7.dp)
+                            .clip(CircleShape)
+                            .background(category.color)
+                    )
+                    val equipment = exercise.equipment?.takeIf { it.isNotBlank() }?.let { equipmentLabel(it) }
+                    Text(
+                        text = listOfNotNull(category.label(), equipment).joinToString(" · "),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = secondaryColor,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
                 }
             }
             Icon(
                 imageVector = Icons.Outlined.ChevronRight,
                 contentDescription = null,
-                tint = secondaryColor,
-                modifier = Modifier.size(20.dp)
+                tint = secondaryColor.copy(alpha = 0.6f),
+                modifier = Modifier.size(18.dp)
             )
         }
     }

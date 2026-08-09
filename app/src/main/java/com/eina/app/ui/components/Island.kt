@@ -29,6 +29,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -44,19 +45,32 @@ import com.eina.app.ui.theme.PillShape
 import com.eina.app.ui.theme.Spacing
 import com.eina.app.ui.theme.TileShape
 
-/** Ombra morbida e diffusa: e' quella che stacca l'isola dal background senza bordi marcati. */
+/**
+ * Ombra dell'isola su due livelli, come le superfici di iOS: una diffusa e larga che da' la
+ * distanza dal fondo, e una stretta e scura subito sotto il bordo che da' il contatto. Con la
+ * sola ombra larga le card sembravano stampate sul fondo; con la sola stretta sembravano
+ * ritagliate. Le due insieme costano un draw in piu' e si vedono.
+ */
 fun Modifier.islandShadow(
     elevation: Dp,
     shape: Shape,
     shadowColor: Color,
     isDark: Boolean
-): Modifier = this.shadow(
-    elevation = elevation,
-    shape = shape,
-    clip = false,
-    ambientColor = shadowColor.copy(alpha = if (isDark) 0.6f else 0.10f),
-    spotColor = shadowColor.copy(alpha = if (isDark) 0.6f else 0.12f)
-)
+): Modifier = this
+    .shadow(
+        elevation = elevation,
+        shape = shape,
+        clip = false,
+        ambientColor = shadowColor.copy(alpha = if (isDark) 0.55f else 0.07f),
+        spotColor = shadowColor.copy(alpha = if (isDark) 0.55f else 0.08f)
+    )
+    .shadow(
+        elevation = (elevation / 4).coerceAtLeast(1.dp),
+        shape = shape,
+        clip = false,
+        ambientColor = shadowColor.copy(alpha = if (isDark) 0.4f else 0.05f),
+        spotColor = shadowColor.copy(alpha = if (isDark) 0.4f else 0.06f)
+    )
 
 @Composable
 fun Modifier.islandShadow(elevation: Dp, shape: Shape): Modifier {
@@ -152,50 +166,76 @@ fun StatTile(
     val island = EinaTheme.island
     val filled = accentColor != null
     val contentColor = if (filled) Color.White else MaterialTheme.colorScheme.onSurface
-    val labelColor = if (filled) Color.White.copy(alpha = 0.85f) else island.textSecondary
+    val labelColor = if (filled) Color.White.copy(alpha = 0.82f) else island.textSecondary
+    // La tile piena non e' una campitura unita ma una rampa diagonale: su un rettangolo di
+    // questa taglia l'arancio pieno si legge come un adesivo.
+    val fillBrush = accentColor?.let {
+        Brush.linearGradient(if (it == MaterialTheme.colorScheme.primary) island.accentRamp else listOf(it, it))
+    }
 
-    IslandCard(
+    IslandSurface(
         modifier = modifier,
-        color = accentColor ?: MaterialTheme.colorScheme.surface,
-        contentPadding = PaddingValues(Spacing.lg),
-        verticalArrangement = Arrangement.spacedBy(Spacing.md),
+        shape = TileShape,
+        color = if (filled) Color.Transparent else MaterialTheme.colorScheme.surface,
+        elevation = 8.dp,
         onClick = onClick
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .then(if (fillBrush != null) Modifier.background(fillBrush) else Modifier)
+                .padding(Spacing.lg),
+            verticalArrangement = Arrangement.spacedBy(Spacing.md)
         ) {
-            if (icon != null) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = labelColor,
-                    modifier = Modifier.size(18.dp)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
+            ) {
+                if (icon != null) {
+                    // L'icona sta in un tondo tenue invece che nuda accanto al testo: da' un
+                    // punto d'appoggio all'occhio e allinea tutte le tile alla stessa altezza.
+                    Box(
+                        modifier = Modifier
+                            .size(26.dp)
+                            .clip(RoundedCornerShape(percent = 50))
+                            .background(
+                                if (filled) Color.White.copy(alpha = 0.22f)
+                                else MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = icon,
+                            contentDescription = null,
+                            tint = if (filled) Color.White else MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(15.dp)
+                        )
+                    }
+                }
+                Text(
+                    text = label.uppercase(),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = labelColor,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelMedium,
-                color = labelColor,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-        }
-        Row(verticalAlignment = Alignment.Bottom) {
-            Text(
-                text = value,
-                style = MaterialTheme.typography.headlineMedium,
-                color = contentColor,
-                maxLines = 1
-            )
-            if (unit != null) {
-                Spacer(Modifier.size(Spacing.xs))
+            Row(verticalAlignment = Alignment.Bottom) {
                 Text(
-                    text = unit,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = labelColor,
-                    modifier = Modifier.padding(bottom = 4.dp)
+                    text = value,
+                    style = MaterialTheme.typography.displaySmall,
+                    color = contentColor,
+                    maxLines = 1
                 )
+                if (unit != null) {
+                    Spacer(Modifier.size(Spacing.xs))
+                    Text(
+                        text = unit,
+                        style = MaterialTheme.typography.labelLarge,
+                        color = labelColor,
+                        modifier = Modifier.padding(bottom = 5.dp)
+                    )
+                }
             }
         }
     }
@@ -210,6 +250,8 @@ fun ScreenHeader(
     title: String,
     modifier: Modifier = Modifier,
     subtitle: String? = null,
+    /** Riga minuscola sopra il titolo (data, contesto): il taglio "MERCOLEDI 9 AGOSTO / Dashboard". */
+    eyebrow: String? = null,
     onBack: (() -> Unit)? = null,
     trailing: @Composable (RowScope.() -> Unit)? = null
 ) {
@@ -231,8 +273,17 @@ fun ScreenHeader(
         // Titolo e sottotitolo respirano: attaccati, la data e l'orario si leggevano come una riga sola.
         Column(
             modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(Spacing.xs)
+            verticalArrangement = Arrangement.spacedBy(2.dp)
         ) {
+            if (eyebrow != null) {
+                Text(
+                    text = eyebrow.uppercase(),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = island.textSecondary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
             Text(text = title, style = MaterialTheme.typography.headlineMedium)
             if (subtitle != null) {
                 Text(
@@ -303,13 +354,24 @@ fun IslandIconButton(
     containerColor: Color = MaterialTheme.colorScheme.surface,
     contentColor: Color = MaterialTheme.colorScheme.onSurface
 ) {
+    // Il tondo pieno d'accento (avvia routine, avvia allenamento) porta la stessa rampa della
+    // CTA: due arancioni diversi nella stessa schermata si notano.
+    val ramped = containerColor == MaterialTheme.colorScheme.primary
+    val ramp = EinaTheme.island.accentRamp
     IslandSurface(
         modifier = modifier.size(size),
         shape = RoundedCornerShape(percent = 50),
-        color = containerColor,
+        color = if (ramped) Color.Transparent else containerColor,
         elevation = 6.dp,
         onClick = onClick
     ) {
+        if (ramped) {
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .background(Brush.linearGradient(ramp))
+            )
+        }
         Icon(
             imageVector = icon,
             contentDescription = contentDescription,

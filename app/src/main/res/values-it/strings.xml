@@ -34,6 +34,9 @@
     <string name="dashboard_title">Dashboard</string>
     <string name="dashboard_settings">Impostazioni</string>
     <string name="dashboard_week">Settimana</string>
+    <string name="dashboard_ring_label">Giorni allenati</string>
+    <string name="dashboard_ring_total">su 7</string>
+    <string name="dashboard_hero_week">Questa settimana</string>
     <string name="dashboard_weekly_volume">Volume settimanale</string>
     <string name="dashboard_weekly_volume_value">%1$s kg sollevati questa settimana</string>
     <string name="dashboard_no_data">Nessun dato ancora</string>

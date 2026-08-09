@@ -2,9 +2,11 @@ package com.eina.app.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Palette definitiva: app solo in light mode, bianco + arancio tramonto.
-// I neutri hanno una punta di caldo cosi' le isole bianche staccano dal background senza bordi.
-val LightBackground = Color(0xFFFBF6F2)
+// Palette definitiva: app solo in light mode.
+// Restyle: i neutri perdono la dominante marrone (il fondo #FBF6F2 ingialliva le foto degli
+// esercizi e faceva sembrare le isole bianche "sporche"). Ora sono grigi appena tiepidi, alla
+// maniera dei fondi raggruppati di iOS: il colore in pagina lo mette solo l'accento.
+val LightBackground = Color(0xFFF4F3F1)
 val LightSurface = Color(0xFFFFFFFF)
 
 /** Accento primario: arancio tramonto. CTA, stati attivi, valori in evidenza. */
@@ -12,10 +14,18 @@ val AccentPrimary = Color(0xFFF97348)
 val AccentPrimaryDark = Color(0xFFD4501F)
 val AccentPrimarySoft = Color(0xFFFFEADF)
 
-val LightSurfaceSunken = Color(0xFFF5EDE7)
-val LightTextSecondary = Color(0xFF8A7D75)
-val LightOutlineSubtle = Color(0xFFF0E5DD)
-val LightOnBackground = Color(0xFF2A1B14)
+/**
+ * Rampa dell'accento, da ambra a magenta. Serve per le superfici grandi (hero della Dashboard,
+ * anelli di progresso, marchio): un arancio pieno su un'area larga si legge come un blocco di
+ * vernice, la rampa gli da' profondita' senza aggiungere colori estranei alla palette.
+ */
+val AccentRampStart = Color(0xFFFFA23A)
+val AccentRampEnd = Color(0xFFF9436B)
+
+val LightSurfaceSunken = Color(0xFFEFEEEB)
+val LightTextSecondary = Color(0xFF7C7A75)
+val LightOutlineSubtle = Color(0xFFE7E5E1)
+val LightOnBackground = Color(0xFF1C1B19)
 
 object MuscleGroupColors {
     val ChestPush = Color(0xFFFF6B6B)

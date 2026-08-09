@@ -41,6 +41,9 @@
     <string name="dashboard_title">Dashboard</string>
     <string name="dashboard_settings">Settings</string>
     <string name="dashboard_week">Week</string>
+    <string name="dashboard_ring_label">Days trained</string>
+    <string name="dashboard_ring_total">of 7</string>
+    <string name="dashboard_hero_week">This week</string>
     <string name="dashboard_weekly_volume">Weekly volume</string>
     <string name="dashboard_weekly_volume_value">%1$s kg lifted this week</string>
     <string name="dashboard_no_data">No data yet</string>

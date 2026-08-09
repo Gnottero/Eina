@@ -24,6 +24,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
@@ -46,14 +48,36 @@ fun IslandButton(
     contentColor: Color = Color.White
 ) {
     val hapticTap = LocalHapticTap.current
+    val accent = MaterialTheme.colorScheme.primary
+    // L'azione primaria porta la rampa e una sua ombra colorata: e' l'unico elemento della
+    // pagina che deve chiamare il tocco, e un arancio piatto non lo faceva.
+    val ramped = enabled && containerColor == accent
+    val fill = EinaTheme.island.accentRamp
     Button(
         onClick = { hapticTap(); onClick() },
         enabled = enabled,
         shape = PillShape,
-        modifier = modifier.defaultMinSize(minHeight = 52.dp),
+        modifier = modifier
+            .defaultMinSize(minHeight = 52.dp)
+            .then(
+                if (ramped) {
+                    Modifier
+                        .shadow(
+                            elevation = 14.dp,
+                            shape = PillShape,
+                            clip = false,
+                            ambientColor = accent.copy(alpha = 0.35f),
+                            spotColor = accent.copy(alpha = 0.45f)
+                        )
+                        .clip(PillShape)
+                        .background(Brush.horizontalGradient(fill))
+                } else {
+                    Modifier
+                }
+            ),
         elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp, pressedElevation = 0.dp),
         colors = ButtonDefaults.buttonColors(
-            containerColor = containerColor,
+            containerColor = if (ramped) Color.Transparent else containerColor,
             contentColor = contentColor,
             disabledContainerColor = EinaTheme.island.sunken,
             disabledContentColor = EinaTheme.island.textSecondary
@@ -151,7 +175,7 @@ fun IslandTextField(
         singleLine = singleLine,
         readOnly = readOnly,
         keyboardOptions = keyboardOptions,
-        shape = androidx.compose.foundation.shape.RoundedCornerShape(18.dp),
+        shape = com.eina.app.ui.theme.squircle(18.dp),
         leadingIcon = leadingIcon?.let { { Icon(it, contentDescription = null, tint = island.textSecondary) } },
         trailingIcon = trailingIcon,
         colors = TextFieldDefaults.colors(
@@ -204,7 +228,7 @@ fun IslandNumberField(
             cursorBrush = androidx.compose.ui.graphics.SolidColor(MaterialTheme.colorScheme.primary),
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(androidx.compose.foundation.shape.RoundedCornerShape(14.dp))
+                .clip(com.eina.app.ui.theme.squircle(14.dp))
                 .background(island.sunken)
                 .padding(vertical = Spacing.md, horizontal = Spacing.sm),
             decorationBox = { inner ->
@@ -239,7 +263,7 @@ fun IslandSegmentedRow(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .clip(androidx.compose.foundation.shape.RoundedCornerShape(22.dp))
+            .clip(com.eina.app.ui.theme.squircle(22.dp))
             .background(island.sunken)
             .padding(Spacing.xs),
         horizontalArrangement = Arrangement.spacedBy(Spacing.xs)
@@ -267,7 +291,7 @@ private fun RowScope.SegmentedItem(
 ) {
     val island = EinaTheme.island
     val hapticTap = LocalHapticTap.current
-    val shape = androidx.compose.foundation.shape.RoundedCornerShape(18.dp)
+    val shape = com.eina.app.ui.theme.squircle(18.dp)
     val base = modifier
         .clip(shape)
         .clickable { hapticTap(); onClick() }
