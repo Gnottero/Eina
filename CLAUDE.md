@@ -628,8 +628,11 @@ DoD: tre cose che mancavano, senza cambiare l'impianto.
   posizione, superset, recupero e nota non si perdono: un esercizio dentro un giro ci resta.
   In allenamento i valori registrati si azzerano (`WorkoutRepository.replaceExercise`), perche'
   peso e ripetizioni erano di un altro movimento e resterebbero nel volume e nella progressione
-  del nuovo; l'impianto delle serie (quante, di che tipo, con che recupero) sopravvive. Nella
-  routine non c'e' niente di registrato e i target restano come punto di partenza.
+  del nuovo; l'impianto delle serie (quante, di che tipo, con che recupero) sopravvive — le righe
+  pero' si rifanno da capo invece di ripulirle, perche' i campi in tabella tengono il testo
+  digitato finche' la serie ha lo stesso id, e ripulire solo il database lasciava a schermo i
+  numeri del vecchio esercizio, pronti da confermare. Nella routine non c'e' niente di registrato
+  e i target restano come punto di partenza.
 - Export: il formato `eina.routine` passa a v3 e un esercizio custom viaggia intero — nomi e
   descrizioni tradotti, `bodyweightFactor`, `loggingInstructions` e l'immagine in base64 — invece
   delle quattro colonne che bastavano a riconoscere un esercizio di libreria. I file v1 e v2 si
@@ -651,7 +654,14 @@ DoD: tre cose che mancavano, senza cambiare l'impianto.
   scelta. Interruttore e richiesta del permesso in Impostazioni → Dati dell'orologio, sezione che
   compare solo se Health Connect e' installato. Dipendenza `androidx.health.connect:connect-client`
   alla 1.1.0-alpha10 e non alla stabile: dalla beta01 pretende compileSdk 36 e AGP 8.9.
-APK di release da 70,8 a 70,9 MB.
+APK di release da 70,8 a 70,9 MB. Verificata sul dispositivo con la release: migrazione a DB v9
+con lo storico intatto, sostituzione in routine (nota e recupero conservati, colonna kg comparsa
+col nuovo tipo di carico) e in allenamento (valori azzerati, volume a zero, campi vuoti),
+export v3 di una routine con esercizio custom (media base64, `isCustom`) e reimport che ricrea
+l'immagine byte per byte, permesso Health Connect concesso dal foglio di sistema e sezione
+Impostazioni che si aggiorna al ritorno. Il riepilogo con battiti e calorie non e' verificabile
+qui: su questo telefono Health Connect non ha ancora nessun dato: serve l'orologio collegato.
+Avvio a freddo 547 ms.
 
 **Fase 9 — Rifinitura** *(fatta)*
 DoD: R8 + shrinkResources attivi sulla release (20,5 MB → 2,2 MB), regole in

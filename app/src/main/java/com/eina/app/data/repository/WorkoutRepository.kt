@@ -216,10 +216,14 @@ class WorkoutRepository(
         val current = workoutExerciseDao.getById(workoutExerciseId) ?: return false
         if (current.exerciseId == newExerciseId) return false
         workoutExerciseDao.update(current.copy(exerciseId = newExerciseId))
+        // Le serie si rifanno da capo invece di ripulirle riga per riga: i campi in tabella
+        // tengono il testo digitato finche' la serie ha lo stesso id, e ripulire il database
+        // lascerebbe a schermo i numeri del vecchio esercizio, pronti da confermare.
         setEntryDao.getForWorkoutExercise(workoutExerciseId).first().forEach { set ->
-            if (set.actualReps == null && set.weight == null && set.completedAt == null) return@forEach
-            setEntryDao.update(
+            setEntryDao.deleteById(set.id)
+            setEntryDao.insert(
                 set.copy(
+                    id = 0,
                     actualReps = null,
                     weight = null,
                     completedAt = null,
