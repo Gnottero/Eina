@@ -17,7 +17,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         SetEntryEntity::class,
         BodyMetricEntity::class
     ],
-    version = 8,
+    version = 9,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -211,6 +211,20 @@ abstract class EinaDatabase : RoomDatabase() {
                 db.execSQL("ALTER TABLE routine_exercises_new RENAME TO routine_exercises")
                 db.execSQL("CREATE INDEX IF NOT EXISTS index_routine_exercises_routineId ON routine_exercises (routineId)")
                 db.execSQL("CREATE INDEX IF NOT EXISTS index_routine_exercises_exerciseId ON routine_exercises (exerciseId)")
+            }
+        }
+
+        /**
+         * Dati dell'orologio sulla sessione: frequenza media e massima, calorie stimate e la
+         * serie dei battiti per la spezzata del riepilogo. Colonne nuove e nullable — gli
+         * allenamenti gia' registrati non hanno niente da leggere e restano com'erano.
+         */
+        val MIGRATION_8_9 = object : Migration(8, 9) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE workout_sessions ADD COLUMN avgHeartRateBpm INTEGER")
+                db.execSQL("ALTER TABLE workout_sessions ADD COLUMN maxHeartRateBpm INTEGER")
+                db.execSQL("ALTER TABLE workout_sessions ADD COLUMN caloriesKcal REAL")
+                db.execSQL("ALTER TABLE workout_sessions ADD COLUMN heartRateSamples TEXT")
             }
         }
     }

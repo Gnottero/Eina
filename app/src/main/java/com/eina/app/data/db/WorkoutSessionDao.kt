@@ -18,6 +18,10 @@ interface WorkoutSessionDao {
     @Query("SELECT * FROM workout_sessions WHERE id = :id")
     suspend fun getById(id: Long): WorkoutSessionEntity?
 
+    /** Una sessione osservata: il riepilogo aggiorna i dati dell'orologio appena arrivano. */
+    @Query("SELECT * FROM workout_sessions WHERE id = :id")
+    fun observeById(id: Long): Flow<WorkoutSessionEntity?>
+
     @Query("SELECT * FROM workout_sessions ORDER BY startTime DESC")
     fun getAll(): Flow<List<WorkoutSessionEntity>>
 

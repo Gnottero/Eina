@@ -620,6 +620,39 @@ linee guida Apple, asset tutti nostri (nessun font, simbolo o marchio Apple).
   nelle due varianti, annullamento della sessione e giro dei quattro tab senza schermate di
   dettaglio ripristinate in cima.
 
+**Fase 29 — Sostituzione esercizio, export completo, dati dell'orologio** *(fatta)*
+DoD: tre cose che mancavano, senza cambiare l'impianto.
+- Sostituzione: dal foglio del tocco lungo (routine e allenamento in corso) si cambia il
+  movimento di una voce con lo stesso `ExercisePickerSheet` che serve ad aggiungerlo — il foglio
+  prende un parametro `title`, non nasce una seconda schermata. La riga resta la stessa, quindi
+  posizione, superset, recupero e nota non si perdono: un esercizio dentro un giro ci resta.
+  In allenamento i valori registrati si azzerano (`WorkoutRepository.replaceExercise`), perche'
+  peso e ripetizioni erano di un altro movimento e resterebbero nel volume e nella progressione
+  del nuovo; l'impianto delle serie (quante, di che tipo, con che recupero) sopravvive. Nella
+  routine non c'e' niente di registrato e i target restano come punto di partenza.
+- Export: il formato `eina.routine` passa a v3 e un esercizio custom viaggia intero — nomi e
+  descrizioni tradotti, `bodyweightFactor`, `loggingInstructions` e l'immagine in base64 — invece
+  delle quattro colonne che bastavano a riconoscere un esercizio di libreria. I file v1 e v2 si
+  leggono ancora. L'immagine passa da `data/transfer/ExerciseMediaStore.kt`: il percorso assoluto
+  del telefono di partenza non significa niente altrove, quindi all'import il file si riscrive in
+  `exercise_media` con un nome nuovo. Tetto di 4 MB per immagine, oltre il quale l'esercizio
+  arriva comunque senza figura. Gli esercizi di libreria non allegano niente: chi importa ha gia'
+  gli asset.
+- Orologio: frequenza cardiaca e calorie stimate entrano nel riepilogo della sessione, lette da
+  Health Connect (`data/health/HealthConnectSource.kt`) sulla sola finestra dell'allenamento e in
+  sola lettura. Eina non parla con lo smartwatch ma con il magazzino dove l'app dell'orologio
+  deposita i dati: funziona con qualunque marca senza scrivere un'app companion e resta
+  local-first. `WorkoutHealthSync` attacca i dati alla sessione a fine allenamento e di nuovo
+  all'apertura del riepilogo, perche' un orologio sincronizza con comodo. DB alla versione 9 con
+  `MIGRATION_8_9`: `avgHeartRateBpm`, `maxHeartRateBpm`, `caloriesKcal` e `heartRateSamples`
+  (coppie "istante:bpm" in una colonna sola — niente tabella dei campioni, sono dati di sola
+  lettura che nessuna query interroga per valore). Nel riepilogo la `VitalsCard` mostra i due
+  riquadri e la spezzata dei battiti (`MiniLineChart`); la card da condividere resta com'era, per
+  scelta. Interruttore e richiesta del permesso in Impostazioni → Dati dell'orologio, sezione che
+  compare solo se Health Connect e' installato. Dipendenza `androidx.health.connect:connect-client`
+  alla 1.1.0-alpha10 e non alla stabile: dalla beta01 pretende compileSdk 36 e AGP 8.9.
+APK di release da 70,8 a 70,9 MB.
+
 **Fase 9 — Rifinitura** *(fatta)*
 DoD: R8 + shrinkResources attivi sulla release (20,5 MB → 2,2 MB), regole in
 `app/proguard-rules.pro`; release firmata con la chiave di debug finché non esiste un

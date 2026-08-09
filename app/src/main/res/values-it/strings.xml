@@ -24,6 +24,10 @@
     <string name="stat_duration">Durata</string>
     <string name="stat_volume">Volume</string>
     <string name="stat_sets">Serie</string>
+    <string name="stat_heart_rate_avg">Battito medio</string>
+    <string name="stat_heart_rate_max">Massimo %1$d bpm</string>
+    <string name="stat_calories">Calorie</string>
+    <string name="session_vitals_title">Dall\'orologio</string>
     <string name="stat_weight">Peso</string>
     <string name="stat_streak">Streak</string>
 
@@ -337,6 +341,11 @@
     <string name="settings_sound_description">Riproduce un breve avviso quando il timer arriva a zero.</string>
     <string name="settings_vibration_title">Vibrazione a fine recupero</string>
     <string name="settings_vibration_description">Doppia vibrazione all\'esaurimento del timer.</string>
+    <string name="settings_section_health">Dati dell\'orologio</string>
+    <string name="settings_health_title">Battito e calorie</string>
+    <string name="settings_health_description">Legge da Health Connect quel che l\'orologio ha registrato durante l\'allenamento. Sola lettura, solo la finestra dell\'allenamento, niente esce dal telefono.</string>
+    <string name="settings_health_permission_hint">Health Connect non ha ancora dato l\'accesso.</string>
+    <string name="settings_health_permission_action">Consenti l\'accesso</string>
     <string name="settings_section_haptics">Feedback aptico</string>
     <string name="settings_haptics_title">Vibrazione sui comandi</string>
     <string name="settings_haptics_description">Micro-vibrazione a ogni tocco: bottoni, chip, menu e check delle serie.</string>

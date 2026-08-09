@@ -10,6 +10,7 @@ import com.eina.app.data.db.WorkoutExerciseEntity
 import com.eina.app.data.db.countsAsWorking
 import com.eina.app.data.db.exerciseName
 import com.eina.app.data.db.usesDecimalField
+import com.eina.app.data.health.WorkoutHealthSync
 import com.eina.app.data.repository.RoutineTarget
 import com.eina.app.data.repository.WorkoutRepository
 import com.eina.app.domain.Superset
@@ -30,6 +31,7 @@ class ActiveWorkoutViewModel(
     private val repository: WorkoutRepository,
     private val feedback: WorkoutFeedback,
     private val restTimer: RestTimerController,
+    private val healthSync: WorkoutHealthSync,
     private val sessionId: Long
 ) : ViewModel() {
 
@@ -488,6 +490,9 @@ class ActiveWorkoutViewModel(
                 startTime = startTime,
                 endTime = startTime + durationSeconds.coerceAtLeast(0) * 1000L
             )
+            // Battiti e calorie dell'orologio si attaccano alla sessione appena chiusa. Se
+            // l'orologio non ha ancora sincronizzato non succede niente: ci riprova il riepilogo.
+            if (saved) runCatching { healthSync.sync(sessionId) }
             _uiState.update { it.copy(isFinished = true) }
             onFinished(saved)
         }

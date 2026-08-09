@@ -7,7 +7,14 @@
         android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         android:maxSdkVersion="28" />
 
+    <!-- Frequenza cardiaca e calorie dell'allenamento, lette da Health Connect: e' li' che
+         l'app dell'orologio le deposita. Sola lettura, e solo sulla finestra dell'allenamento. -->
+    <uses-permission android:name="android.permission.health.READ_HEART_RATE" />
+    <uses-permission android:name="android.permission.health.READ_ACTIVE_CALORIES_BURNED" />
+    <uses-permission android:name="android.permission.health.READ_TOTAL_CALORIES_BURNED" />
+
     <queries>
+        <package android:name="com.google.android.apps.healthdata" />
         <package android:name="com.spotify.music" />
         <package android:name="com.google.android.apps.youtube.music" />
         <!-- Serve per la condivisione della card come sticker di storia. -->
@@ -43,7 +50,23 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <!-- Da Android 14 la spiegazione dei permessi salute si chiede all'app stessa. -->
+            <intent-filter>
+                <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE" />
+            </intent-filter>
         </activity>
+
+        <!-- Sotto Android 14 Health Connect e' un'app a parte e cerca l'alias, non l'activity. -->
+        <activity-alias
+            android:name="ViewPermissionUsageActivity"
+            android:exported="true"
+            android:targetActivity=".MainActivity"
+            android:permission="android.permission.START_VIEW_PERMISSION_USAGE">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW_PERMISSION_USAGE" />
+                <category android:name="android.intent.category.HEALTH_PERMISSIONS" />
+            </intent-filter>
+        </activity-alias>
 
         <provider
             android:name="androidx.core.content.FileProvider"

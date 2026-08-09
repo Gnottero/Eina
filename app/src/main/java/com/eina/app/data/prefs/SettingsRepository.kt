@@ -26,6 +26,14 @@ class SettingsRepository(private val context: Context) {
     val timerVibrationEnabled: StateFlow<Boolean> = _timerVibrationEnabled.asStateFlow()
 
     /**
+     * Lettura dei dati dell'orologio (battiti, calorie) da Health Connect. Acceso di suo: senza
+     * il permesso di sistema non legge comunque niente, quindi non serve un secondo cancello —
+     * l'interruttore serve a spegnerlo tenendo il permesso.
+     */
+    private val _healthSyncEnabled = MutableStateFlow(prefs.getBoolean(KEY_HEALTH_SYNC, true))
+    val healthSyncEnabled: StateFlow<Boolean> = _healthSyncEnabled.asStateFlow()
+
+    /**
      * La lingua non si applica da sola: le risorse sono gia' state risolte. Chi chiama
      * ricrea l'Activity, cosi' attachBaseContext ripassa da AppLocale.wrap.
      */
@@ -40,6 +48,8 @@ class SettingsRepository(private val context: Context) {
 
     fun setTimerVibrationEnabled(enabled: Boolean) = update(KEY_TIMER_VIBRATION, enabled, _timerVibrationEnabled)
 
+    fun setHealthSyncEnabled(enabled: Boolean) = update(KEY_HEALTH_SYNC, enabled, _healthSyncEnabled)
+
     private fun update(key: String, value: Boolean, state: MutableStateFlow<Boolean>) {
         prefs.edit().putBoolean(key, value).apply()
         state.value = value
@@ -50,5 +60,6 @@ class SettingsRepository(private val context: Context) {
         const val KEY_HAPTICS = "haptics_enabled"
         const val KEY_TIMER_SOUND = "timer_sound_enabled"
         const val KEY_TIMER_VIBRATION = "timer_vibration_enabled"
+        const val KEY_HEALTH_SYNC = "health_sync_enabled"
     }
 }

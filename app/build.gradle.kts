@@ -88,6 +88,15 @@ dependencies {
     // Vico charts
     implementation("com.patrykandpatrick.vico:compose-m3:2.0.0-alpha.28")
 
+    // Health Connect: frequenza cardiaca e calorie registrate dallo smartwatch. E' l'unico modo
+    // di leggere quei dati senza scrivere un'app companion per l'orologio, e resta local-first —
+    // i dati stanno gia' sul telefono, l'app li legge e basta.
+    // DECISIONE: 1.1.0-alpha10 e non la 1.1.0 stabile. Dalla beta01 la libreria pretende
+    // compileSdk 36 e AGP 8.9, cioe' un giro di aggiornamento del build che non c'entra niente
+    // con questa fase. L'alpha10 sta su compileSdk 35 e usa le stesse API che servono qui
+    // (getSdkStatus, readRecords, PermissionController).
+    implementation("androidx.health.connect:connect-client:1.1.0-alpha10")
+
     // Custom Tabs (donation link)
     implementation("androidx.browser:browser:1.8.0")
 

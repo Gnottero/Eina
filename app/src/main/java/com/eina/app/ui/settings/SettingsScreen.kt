@@ -1,6 +1,7 @@
 package com.eina.app.ui.settings
 
 import android.app.Activity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Coffee
 import androidx.compose.material.icons.outlined.DeleteSweep
+import androidx.compose.material.icons.outlined.MonitorHeart
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
@@ -20,6 +22,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.health.connect.client.PermissionController
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -56,6 +59,13 @@ fun SettingsScreen(
     val haptics by viewModel.hapticsEnabled.collectAsState()
     val sound by viewModel.timerSoundEnabled.collectAsState()
     val vibration by viewModel.timerVibrationEnabled.collectAsState()
+    val healthSync by viewModel.healthSyncEnabled.collectAsState()
+    val healthGranted by viewModel.healthGranted.collectAsState()
+    // Il permesso salute non passa dal contratto dei permessi runtime: Health Connect ha il suo,
+    // che apre la sua schermata di consenso.
+    val healthPermissionLauncher = rememberLauncherForActivityResult(
+        contract = PermissionController.createRequestPermissionResultContract()
+    ) { viewModel.refreshHealthPermissions() }
 
     IslandScreen(
         header = {
@@ -117,6 +127,32 @@ fun SettingsScreen(
                 checked = vibration,
                 onCheckedChange = viewModel::setTimerVibration
             )
+        }
+
+        if (viewModel.healthAvailable) {
+            SectionHeader(title = stringResource(R.string.settings_section_health))
+
+            IslandCard(modifier = Modifier.fillMaxWidth()) {
+                SettingSwitch(
+                    title = stringResource(R.string.settings_health_title),
+                    description = stringResource(R.string.settings_health_description),
+                    checked = healthSync,
+                    onCheckedChange = viewModel::setHealthSync
+                )
+                if (!healthGranted) {
+                    Text(
+                        stringResource(R.string.settings_health_permission_hint),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = island.textSecondary
+                    )
+                    IslandSecondaryButton(
+                        text = stringResource(R.string.settings_health_permission_action),
+                        icon = Icons.Outlined.MonitorHeart,
+                        onClick = { healthPermissionLauncher.launch(viewModel.healthPermissions) },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
         }
 
         SectionHeader(title = stringResource(R.string.settings_section_haptics))

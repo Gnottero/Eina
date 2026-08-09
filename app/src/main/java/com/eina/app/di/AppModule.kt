@@ -6,6 +6,8 @@ import com.eina.app.data.prefs.SettingsRepository
 import com.eina.app.data.repository.RoutineRepository
 import com.eina.app.data.repository.StatsRepository
 import com.eina.app.data.repository.WorkoutRepository
+import com.eina.app.data.health.HealthConnectSource
+import com.eina.app.data.health.WorkoutHealthSync
 import com.eina.app.data.seed.ExerciseSeeder
 import com.eina.app.data.transfer.ExerciseMediaStore
 import com.eina.app.ui.components.StopwatchController
@@ -38,7 +40,8 @@ val appModule = module {
                 EinaDatabase.MIGRATION_4_5,
                 EinaDatabase.MIGRATION_5_6,
                 EinaDatabase.MIGRATION_6_7,
-                EinaDatabase.MIGRATION_7_8
+                EinaDatabase.MIGRATION_7_8,
+                EinaDatabase.MIGRATION_8_9
             )
             .build()
     }
@@ -86,6 +89,10 @@ val appModule = module {
 
     single { ExerciseSeeder(get(), get()) }
 
+    // Dati dell'orologio: sorgente Health Connect e il pezzo che li attacca alla sessione.
+    single { HealthConnectSource(androidContext()) }
+    single { WorkoutHealthSync(sessionDao = get(), source = get(), settings = get()) }
+
     // Cronometro condiviso: si avvia in Dashboard e si ritrova durante l'allenamento.
     single { StopwatchController() }
 
@@ -93,7 +100,7 @@ val appModule = module {
     single { RestTimerController(get()) }
 
     viewModel { WorkoutViewModel(get()) }
-    viewModel { (sessionId: Long) -> ActiveWorkoutViewModel(get(), get(), get(), sessionId) }
+    viewModel { (sessionId: Long) -> ActiveWorkoutViewModel(get(), get(), get(), get(), sessionId) }
     viewModel { LibraryViewModel(get()) }
     viewModel { (exerciseId: Long) -> ExerciseDetailViewModel(get(), get(), exerciseId) }
     viewModel { CreateExerciseViewModel(get(), androidContext()) }
@@ -103,6 +110,6 @@ val appModule = module {
     viewModel { ProgressViewModel(get()) }
     viewModel { BodyWeightViewModel(get()) }
     viewModel { HistoryViewModel(get(), get()) }
-    viewModel { (sessionId: Long) -> SessionDetailViewModel(get(), sessionId) }
-    viewModel { SettingsViewModel(get(), get()) }
+    viewModel { (sessionId: Long) -> SessionDetailViewModel(get(), get(), get(), sessionId) }
+    viewModel { SettingsViewModel(get(), get(), get()) }
 }

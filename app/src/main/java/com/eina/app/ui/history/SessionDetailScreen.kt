@@ -23,6 +23,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.History
+import androidx.compose.material.icons.outlined.Favorite
 import androidx.compose.material.icons.outlined.LocalFireDepartment
 import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material3.Icon
@@ -71,6 +72,7 @@ import com.eina.app.ui.components.ScreenHeader
 import com.eina.app.ui.components.SetTypeIndicator
 import com.eina.app.ui.components.setTypeAccent
 import com.eina.app.ui.components.setTypeLabel
+import com.eina.app.ui.components.MiniLineChart
 import com.eina.app.ui.components.StatTile
 import com.eina.app.ui.components.formatDayMonth
 import com.eina.app.ui.components.formatDecimal
@@ -187,8 +189,77 @@ fun SessionDetailScreen(
             )
         }
 
+        // Dati dell'orologio, se c'erano: stanno nel riepilogo e non nella card da condividere,
+        // che resta una cosa fra sport e vanto, non una cartella clinica.
+        state.vitals?.let { vitals -> VitalsCard(vitals = vitals) }
+
         state.exercises.forEachIndexed { index, exercise ->
             ExerciseSummaryCard(position = index + 1, exercise = exercise)
+        }
+    }
+}
+
+/**
+ * Battiti e calorie letti da Health Connect per la finestra dell'allenamento: due riquadri e la
+ * spezzata del cuore, che e' l'unico modo di leggere "com'e' andata" e non solo "quanto".
+ */
+@Composable
+private fun VitalsCard(vitals: SessionVitals) {
+    val island = EinaTheme.island
+    IslandCard(
+        modifier = Modifier.fillMaxWidth(),
+        contentPadding = PaddingValues(Spacing.lg),
+        verticalArrangement = Arrangement.spacedBy(Spacing.md)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.Favorite,
+                contentDescription = null,
+                tint = MetricColors.Heart,
+                modifier = Modifier.size(18.dp)
+            )
+            Text(
+                text = stringResource(R.string.session_vitals_title),
+                style = MaterialTheme.typography.titleMedium
+            )
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(Spacing.md)
+        ) {
+            if (vitals.avgBpm != null) {
+                StatTile(
+                    label = stringResource(R.string.stat_heart_rate_avg),
+                    value = vitals.avgBpm.toString(),
+                    unit = stringResource(R.string.unit_bpm),
+                    // Il massimo sta sotto l'etichetta del riquadro: due riquadri per il cuore
+                    // rubavano lo spazio alle calorie senza dire molto di piu'.
+                    description = vitals.maxBpm?.let { stringResource(R.string.stat_heart_rate_max, it) },
+                    tint = MetricColors.Heart,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+            if (vitals.kcal != null) {
+                StatTile(
+                    label = stringResource(R.string.stat_calories),
+                    value = formatVolume(vitals.kcal),
+                    unit = stringResource(R.string.unit_kcal),
+                    tint = MetricColors.Calories,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        }
+
+        if (vitals.samples.size > 1) {
+            MiniLineChart(
+                values = vitals.samples.map { it.bpm.toFloat() },
+                lineColor = MetricColors.Heart,
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     }
 }

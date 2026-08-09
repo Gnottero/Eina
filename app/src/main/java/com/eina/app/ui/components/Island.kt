@@ -161,6 +161,9 @@ fun StatTile(
     modifier: Modifier = Modifier,
     unit: String? = null,
     icon: ImageVector? = null,
+    /** Riga minuta sotto il numero: un secondo valore che non merita una tile sua (il massimo
+     * accanto alla media, per dire). */
+    description: String? = null,
     accentColor: Color? = null,
     /** Tinta della tile bianca: colora icona ed etichetta, non il numero. */
     tint: Color = MaterialTheme.colorScheme.primary,
@@ -241,6 +244,13 @@ fun StatTile(
                         modifier = Modifier.padding(bottom = 5.dp)
                     )
                 }
+            }
+            if (description != null) {
+                Text(
+                    text = description,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = if (filled) Color.White.copy(alpha = 0.82f) else island.textSecondary
+                )
             }
         }
     }

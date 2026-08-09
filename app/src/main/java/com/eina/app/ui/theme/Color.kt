@@ -43,6 +43,10 @@ object MetricColors {
     val Records = AccentRampEnd
     val Bodyweight = Color(0xFF20C997)
     val Streak = Color(0xFFF06595)
+    // Dati dell'orologio: il cuore prende il rosso della palette muscolare, le calorie l'ambra
+    // che apre la rampa dell'accento. Nessun colore nuovo in tavolozza.
+    val Heart = Color(0xFFFF6B6B)
+    val Calories = Color(0xFFFFA23A)
 }
 
 object MuscleGroupColors {

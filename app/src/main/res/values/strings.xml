@@ -31,6 +31,12 @@
     <string name="stat_duration">Duration</string>
     <string name="stat_volume">Volume</string>
     <string name="stat_sets">Sets</string>
+    <string name="stat_heart_rate_avg">Avg heart rate</string>
+    <string name="stat_heart_rate_max">Max %1$d bpm</string>
+    <string name="stat_calories">Calories</string>
+    <string name="unit_bpm" translatable="false">bpm</string>
+    <string name="unit_kcal" translatable="false">kcal</string>
+    <string name="session_vitals_title">From your watch</string>
     <string name="stat_weight">Weight</string>
     <string name="stat_streak">Streak</string>
 
@@ -351,6 +357,11 @@
     <string name="settings_sound_description">Plays a short alert when the timer hits zero.</string>
     <string name="settings_vibration_title">Vibration when rest ends</string>
     <string name="settings_vibration_description">Double buzz when the timer runs out.</string>
+    <string name="settings_section_health">Watch data</string>
+    <string name="settings_health_title">Heart rate and calories</string>
+    <string name="settings_health_description">Reads what your watch recorded during the workout from Health Connect. Read only, workout window only, nothing leaves the phone.</string>
+    <string name="settings_health_permission_hint">Health Connect has not granted access yet.</string>
+    <string name="settings_health_permission_action">Allow access</string>
     <string name="settings_section_haptics">Haptic feedback</string>
     <string name="settings_haptics_title">Vibration on controls</string>
     <string name="settings_haptics_description">A micro-buzz on every tap: buttons, chips, menus and set checks.</string>

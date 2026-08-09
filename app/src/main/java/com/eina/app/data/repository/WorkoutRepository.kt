@@ -150,6 +150,9 @@ class WorkoutRepository(
 
     suspend fun getSession(sessionId: Long): WorkoutSessionEntity? = workoutSessionDao.getById(sessionId)
 
+    /** La sessione osservata: il riepilogo si aggiorna quando arrivano i dati dell'orologio. */
+    fun observeSession(sessionId: Long): Flow<WorkoutSessionEntity?> = workoutSessionDao.observeById(sessionId)
+
     /** Routine di partenza della sessione: serve il link playlist durante l'allenamento. */
     suspend fun getRoutine(routineId: Long): RoutineEntity? = routineDao.getById(routineId)
 

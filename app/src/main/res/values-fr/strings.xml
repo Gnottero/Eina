@@ -24,6 +24,10 @@
     <string name="stat_duration">Durée</string>
     <string name="stat_volume">Volume</string>
     <string name="stat_sets">Séries</string>
+    <string name="stat_heart_rate_avg">Fréquence moyenne</string>
+    <string name="stat_heart_rate_max">Max %1$d bpm</string>
+    <string name="stat_calories">Calories</string>
+    <string name="session_vitals_title">Depuis la montre</string>
     <string name="stat_weight">Poids</string>
     <string name="stat_streak">Série</string>
 
@@ -337,6 +341,11 @@
     <string name="settings_sound_description">Joue une courte alerte quand le minuteur atteint zéro.</string>
     <string name="settings_vibration_title">Vibration en fin de repos</string>
     <string name="settings_vibration_description">Double vibration à la fin du minuteur.</string>
+    <string name="settings_section_health">Données de la montre</string>
+    <string name="settings_health_title">Fréquence cardiaque et calories</string>
+    <string name="settings_health_description">Lit dans Health Connect ce que la montre a enregistré pendant la séance. Lecture seule, uniquement la fenêtre de la séance, rien ne quitte le téléphone.</string>
+    <string name="settings_health_permission_hint">Health Connect n\'a pas encore accordé l\'accès.</string>
+    <string name="settings_health_permission_action">Autoriser l\'accès</string>
     <string name="settings_section_haptics">Retour haptique</string>
     <string name="settings_haptics_title">Vibration sur les commandes</string>
     <string name="settings_haptics_description">Une micro-vibration à chaque appui : boutons, puces, menus et validation des séries.</string>
