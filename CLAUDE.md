@@ -610,6 +610,15 @@ linee guida Apple, asset tutti nostri (nessun font, simbolo o marchio Apple).
   lettera in `ic_launcher_foreground`, sfondo dell'icona adattiva ora a gradiente
   (`ic_launcher_background.xml`), stessa tessera nella splash. `ShareCard` disegna il testo con
   Inter: e' l'immagine che gira fuori dall'app e usava il sans di sistema.
+- Immagine social trasparente: i numeri in evidenza restano dell'arancio dell'app (#F97348),
+  pieni e senza rampa. I toni schiariti piu' la sfumatura li facevano sembrare al neon; sulla
+  tessera opaca la rampa resta.
+- Il bottone di conferma dell'annullamento e' largo mezza riga e tagliava "Annulla allenamento":
+  ha una stringa sua, `active_cancel_confirm_action` (Elimina / Delete / Supprimer). Il link
+  rosso in pagina tiene l'etichetta lunga.
+- Verificata sul dispositivo con la release: avvio a freddo 573 ms, APK 70,8 MB, condivisione
+  nelle due varianti, annullamento della sessione e giro dei quattro tab senza schermate di
+  dettaglio ripristinate in cima.
 
 **Fase 9 — Rifinitura** *(fatta)*
 DoD: R8 + shrinkResources attivi sulla release (20,5 MB → 2,2 MB), regole in
