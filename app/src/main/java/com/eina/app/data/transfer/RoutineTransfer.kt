@@ -7,6 +7,7 @@ import com.eina.app.data.db.RoutineExerciseEntity
 import com.eina.app.data.db.RoutineSetEntity
 import com.eina.app.data.db.SetType
 import com.eina.app.data.db.WeightType
+import android.util.Base64
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -25,9 +26,10 @@ import org.json.JSONObject
 object RoutineTransfer {
 
     const val FORMAT = "eina.routine"
-    // v2: le serie sono un elenco ("sets") invece delle tre colonne target. Un file v1 si legge
-    // ancora, le sue targetSets diventano altrettante serie normali.
-    const val VERSION = 2
+    // v3: l'esercizio custom viaggia intero — traduzioni, quota di peso corporeo, nota di
+    // registrazione e immagine in base64 — invece delle sole quattro colonne che bastavano a
+    // riconoscere un esercizio di libreria. I file v1 e v2 si leggono ancora.
+    const val VERSION = 3
     const val MIME_TYPE = "application/json"
     const val FILE_EXTENSION = "json"
 
@@ -42,8 +44,24 @@ object RoutineTransfer {
         val restSeconds: Int,
         val notes: String?,
         /** Superset di appartenenza, come numero di gruppo. null = esercizio a se'. */
-        val supersetGroup: Int?
+        val supersetGroup: Int?,
+        /**
+         * Esercizio inventato da chi esporta, non presente in nessuna libreria: chi importa non
+         * puo' riagganciarlo per nome e deve ricrearlo con tutto quel che segue.
+         */
+        val isCustom: Boolean = false,
+        val nameIt: String? = null,
+        val nameFr: String? = null,
+        val descriptionIt: String? = null,
+        val descriptionFr: String? = null,
+        val loggingInstructions: String = "",
+        val bodyweightFactor: Double = 1.0,
+        /** Immagine dell'esercizio custom, se c'era e se stava nel tetto di dimensione. */
+        val media: MediaPayload? = null
     )
+
+    /** Immagine di un esercizio custom dentro il file: byte in base64 piu' l'estensione originale. */
+    data class MediaPayload(val base64: String, val extension: String?)
 
     data class SetPayload(
         val targetReps: Int?,
@@ -63,7 +81,9 @@ object RoutineTransfer {
         routine: RoutineEntity,
         routineExercises: List<RoutineExerciseEntity>,
         setsByRoutineExercise: Map<Long, List<RoutineSetEntity>>,
-        exercisesById: Map<Long, ExerciseEntity>
+        exercisesById: Map<Long, ExerciseEntity>,
+        /** Immagini degli esercizi custom, per exerciseId: le legge il chiamante dal disco. */
+        mediaByExerciseId: Map<Long, MediaPayload> = emptyMap()
     ): String {
         val exercises = JSONArray()
         routineExercises.sortedBy { it.order }.forEach { routineExercise ->
@@ -95,6 +115,26 @@ object RoutineTransfer {
                     put("restSeconds", routineExercise.restSeconds)
                     put("notes", routineExercise.notes ?: JSONObject.NULL)
                     put("supersetGroup", routineExercise.supersetGroup ?: JSONObject.NULL)
+                    // Un esercizio di libreria si riaggancia per nome e non ha bisogno d'altro;
+                    // uno custom va ricreato tale e quale, immagine compresa.
+                    if (exercise.isCustom) {
+                        put("isCustom", true)
+                        put("nameIt", exercise.nameIt ?: JSONObject.NULL)
+                        put("nameFr", exercise.nameFr ?: JSONObject.NULL)
+                        put("descriptionIt", exercise.descriptionIt ?: JSONObject.NULL)
+                        put("descriptionFr", exercise.descriptionFr ?: JSONObject.NULL)
+                        put("loggingInstructions", exercise.loggingInstructions)
+                        put("bodyweightFactor", exercise.bodyweightFactor)
+                        mediaByExerciseId[exercise.id]?.let { media ->
+                            put(
+                                "media",
+                                JSONObject().apply {
+                                    put("data", media.base64)
+                                    put("extension", media.extension ?: JSONObject.NULL)
+                                }
+                            )
+                        }
+                    }
                 }
             )
         }
@@ -141,7 +181,17 @@ object RoutineTransfer {
                 restSeconds = item.optInt("restSeconds", 90).coerceIn(0, 3600),
                 notes = item.optNullableString("notes"),
                 // Campo nato dopo il formato v1: un file piu' vecchio semplicemente non ha superset.
-                supersetGroup = item.optNullableInt("supersetGroup")
+                supersetGroup = item.optNullableInt("supersetGroup"),
+                // Campi del formato v3: assenti nei file piu' vecchi, dove un esercizio
+                // sconosciuto diventava comunque custom ma con i soli dati minimi.
+                isCustom = item.optBoolean("isCustom", false),
+                nameIt = item.optNullableString("nameIt"),
+                nameFr = item.optNullableString("nameFr"),
+                descriptionIt = item.optNullableString("descriptionIt"),
+                descriptionFr = item.optNullableString("descriptionFr"),
+                loggingInstructions = item.optString("loggingInstructions"),
+                bodyweightFactor = (item.optNullableDouble("bodyweightFactor") ?: 1.0).coerceIn(0.0, 1.0),
+                media = item.optJSONObject("media")?.readMedia()
             )
         }
 
@@ -177,6 +227,19 @@ object RoutineTransfer {
         val weight = optNullableDouble("targetWeight")
         return List(count) { SetPayload(targetReps = reps, targetWeight = weight, setType = SetType.NORMAL) }
     }
+
+    /** Immagine allegata: se il base64 e' illeggibile l'esercizio arriva comunque, senza figura. */
+    private fun JSONObject.readMedia(): MediaPayload? {
+        val data = optString("data").takeIf { it.isNotBlank() } ?: return null
+        return MediaPayload(base64 = data, extension = optNullableString("extension"))
+    }
+
+    /** Byte dell'immagine, o null se il file porta un base64 rotto. */
+    fun decodeMedia(media: MediaPayload): ByteArray? =
+        runCatching { Base64.decode(media.base64, Base64.NO_WRAP) }.getOrNull()
+
+    fun encodeMedia(bytes: ByteArray, extension: String?): MediaPayload =
+        MediaPayload(base64 = Base64.encodeToString(bytes, Base64.NO_WRAP), extension = extension)
 
     private fun JSONArray?.toStringList(): List<String> =
         if (this == null) emptyList() else (0 until length()).map { getString(it) }

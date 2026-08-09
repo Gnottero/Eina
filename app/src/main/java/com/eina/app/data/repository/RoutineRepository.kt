@@ -11,6 +11,7 @@ import com.eina.app.data.db.RoutineSetDao
 import com.eina.app.data.db.RoutineSetEntity
 import com.eina.app.data.db.RoutineSetCountRow
 import com.eina.app.data.db.countsAsWorking
+import com.eina.app.data.transfer.ExerciseMediaStore
 import com.eina.app.data.transfer.RoutineTransfer
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -19,7 +20,8 @@ class RoutineRepository(
     private val routineDao: RoutineDao,
     private val routineExerciseDao: RoutineExerciseDao,
     private val routineSetDao: RoutineSetDao,
-    private val exerciseDao: ExerciseDao
+    private val exerciseDao: ExerciseDao,
+    private val mediaStore: ExerciseMediaStore
 ) {
     fun observeRoutines(): Flow<List<RoutineEntity>> = routineDao.getAll()
 
@@ -127,7 +129,16 @@ class RoutineRepository(
             .distinct()
             .mapNotNull { id -> exerciseDao.getById(id)?.let { id to it } }
             .toMap()
-        return RoutineTransfer.encode(routine, routineExercises, sets, exercises)
+        // L'immagine viaggia solo per gli esercizi custom: quelle di libreria le ha gia' chi
+        // importa, bundlate negli asset.
+        val media = exercises.values
+            .filter { it.isCustom }
+            .mapNotNull { exercise ->
+                val bytes = mediaStore.read(exercise.mediaUri) ?: return@mapNotNull null
+                exercise.id to RoutineTransfer.encodeMedia(bytes, mediaStore.extensionOf(exercise.mediaUri))
+            }
+            .toMap()
+        return RoutineTransfer.encode(routine, routineExercises, sets, exercises, media)
     }
 
     /**
@@ -151,12 +162,24 @@ class RoutineRepository(
             val exerciseId = exerciseDao.getByName(item.name)?.id ?: exerciseDao.insert(
                 ExerciseEntity(
                     name = item.name,
+                    // Nomi e descrizioni tradotti arrivano solo dai file v3, e solo per gli
+                    // esercizi custom: per gli altri li ha gia' il catalogo di chi importa.
+                    nameIt = item.nameIt,
+                    nameFr = item.nameFr,
                     description = item.description,
-                    loggingInstructions = "",
+                    descriptionIt = item.descriptionIt,
+                    descriptionFr = item.descriptionFr,
+                    loggingInstructions = item.loggingInstructions,
                     weightType = item.weightType,
+                    bodyweightFactor = item.bodyweightFactor,
                     muscleGroupsPrimary = item.muscleGroupsPrimary,
                     muscleGroupsSecondary = item.muscleGroupsSecondary,
                     equipment = item.equipment,
+                    // L'immagine si riscrive nello storage di chi importa: il percorso del
+                    // telefono di partenza non significa niente qui.
+                    mediaUri = item.media
+                        ?.let { RoutineTransfer.decodeMedia(it) }
+                        ?.let { bytes -> mediaStore.write(bytes, item.media.extension) },
                     isCustom = true,
                     source = RoutineTransfer.FORMAT
                 )

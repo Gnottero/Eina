@@ -7,6 +7,7 @@ import com.eina.app.data.repository.RoutineRepository
 import com.eina.app.data.repository.StatsRepository
 import com.eina.app.data.repository.WorkoutRepository
 import com.eina.app.data.seed.ExerciseSeeder
+import com.eina.app.data.transfer.ExerciseMediaStore
 import com.eina.app.ui.components.StopwatchController
 import com.eina.app.ui.dashboard.DashboardViewModel
 import com.eina.app.ui.feedback.WorkoutFeedback
@@ -65,7 +66,17 @@ val appModule = module {
         )
     }
 
-    single { RoutineRepository(routineDao = get(), routineExerciseDao = get(), routineSetDao = get(), exerciseDao = get()) }
+    single { ExerciseMediaStore(androidContext()) }
+
+    single {
+        RoutineRepository(
+            routineDao = get(),
+            routineExerciseDao = get(),
+            routineSetDao = get(),
+            exerciseDao = get(),
+            mediaStore = get()
+        )
+    }
 
     single { StatsRepository(statsDao = get(), bodyMetricDao = get()) }
 
