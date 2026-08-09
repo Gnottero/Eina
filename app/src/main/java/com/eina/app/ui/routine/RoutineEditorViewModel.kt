@@ -132,6 +132,14 @@ class RoutineEditorViewModel(
         }
     }
 
+    /**
+     * Cambia il movimento di una voce della scheda: serie, recupero, nota, posizione e superset
+     * restano quelli di prima.
+     */
+    fun replaceExercise(routineExercise: RoutineExerciseEntity, exerciseId: Long) {
+        viewModelScope.launch { repository.replaceRoutineExercise(routineExercise, exerciseId) }
+    }
+
     fun removeExercise(routineExercise: RoutineExerciseEntity) {
         viewModelScope.launch {
             repository.removeRoutineExercise(routineExercise)

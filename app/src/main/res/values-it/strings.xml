@@ -16,6 +16,7 @@
     <string name="action_more">Altro</string>
     <string name="action_add_exercise">Aggiungi esercizio</string>
     <string name="action_remove_exercise">Rimuovi esercizio</string>
+    <string name="action_replace_exercise">Sostituisci esercizio</string>
     <string name="loading">Caricamento…</string>
     <string name="unit_reps_value">%1$d rip.</string>
 
@@ -140,6 +141,8 @@
     <string name="active_move_up">Sposta su</string>
     <string name="active_move_down">Sposta giù</string>
     <string name="active_remove_exercise_description">Elimina anche le serie registrate qui</string>
+    <string name="active_replace_exercise_description">Tiene serie, recupero e superset, azzera i valori registrati</string>
+    <string name="routine_replace_exercise_description">Tiene serie, recupero e superset</string>
     <string name="active_set_sheet_title">Serie %1$d</string>
     <string name="active_set_sheet_title_generic">Serie</string>
     <string name="active_delete_set">Elimina serie</string>

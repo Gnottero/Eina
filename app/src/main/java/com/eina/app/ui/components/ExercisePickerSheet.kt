@@ -55,7 +55,10 @@ import com.eina.app.ui.theme.primaryCategoryFor
 fun ExercisePickerSheet(
     exercises: List<ExerciseEntity>,
     onPick: (ExerciseEntity) -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    // Lo stesso foglio serve anche a sostituire un esercizio: cambia solo il titolo, perche' il
+    // gesto e' identico e una seconda schermata direbbe le stesse cose.
+    title: String = stringResource(R.string.active_add_exercise_sheet_title)
 ) {
     val island = EinaTheme.island
     var query by remember { mutableStateOf("") }
@@ -72,7 +75,7 @@ fun ExercisePickerSheet(
         }
     }
 
-    IslandBottomSheet(onDismiss = onDismiss, title = stringResource(R.string.active_add_exercise_sheet_title)) {
+    IslandBottomSheet(onDismiss = onDismiss, title = title) {
         IslandTextField(
             value = query,
             onValueChange = { query = it },

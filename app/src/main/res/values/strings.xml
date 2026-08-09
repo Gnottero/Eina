@@ -22,6 +22,7 @@
     <string name="action_more">More</string>
     <string name="action_add_exercise">Add exercise</string>
     <string name="action_remove_exercise">Remove exercise</string>
+    <string name="action_replace_exercise">Replace exercise</string>
     <string name="loading">Loading…</string>
     <string name="unit_kg" translatable="false">kg</string>
     <string name="unit_reps_value">%1$d reps</string>
@@ -148,6 +149,8 @@
     <string name="active_move_up">Move up</string>
     <string name="active_move_down">Move down</string>
     <string name="active_remove_exercise_description">Also deletes the sets logged here</string>
+    <string name="active_replace_exercise_description">Keeps sets, rest and superset, clears logged values</string>
+    <string name="routine_replace_exercise_description">Keeps sets, rest and superset</string>
     <string name="active_set_sheet_title">Set %1$d</string>
     <string name="active_set_sheet_title_generic">Set</string>
     <string name="active_delete_set">Delete set</string>

@@ -40,6 +40,7 @@ import androidx.compose.material.icons.outlined.KeyboardArrowUp
 import androidx.compose.material.icons.outlined.MusicNote
 import androidx.compose.material.icons.outlined.Repeat
 import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material.icons.outlined.SwapHoriz
 import androidx.compose.material.icons.outlined.Timer
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -138,6 +139,7 @@ fun ActiveWorkoutScreen(
     var setActionsFor by remember { mutableStateOf<SetRef?>(null) }
     var setTypeFor by remember { mutableStateOf<SetRef?>(null) }
     var supersetSheetFor by remember { mutableStateOf<Long?>(null) }
+    var replaceSheetFor by remember { mutableStateOf<Long?>(null) }
     var confirmFinish by remember { mutableStateOf(false) }
     var confirmCancel by remember { mutableStateOf(false) }
 
@@ -147,6 +149,7 @@ fun ActiveWorkoutScreen(
     val actionsSheetExercise = state.exercises.find { it.workoutExerciseId == actionsSheetFor }
     val notesSheetExercise = state.exercises.find { it.workoutExerciseId == notesSheetFor }
     val supersetSheetExercise = state.exercises.find { it.workoutExerciseId == supersetSheetFor }
+    val replaceSheetExercise = state.exercises.find { it.workoutExerciseId == replaceSheetFor }
 
     // Lettera del superset: assegnata dall'ordine in cui i giri compaiono nella lista, cosi' il
     // primo superset dall'alto e' sempre A.
@@ -285,10 +288,28 @@ fun ActiveWorkoutScreen(
                 supersetSheetFor = actionsSheetExercise.workoutExerciseId
                 actionsSheetFor = null
             },
+            onReplace = {
+                replaceSheetFor = actionsSheetExercise.workoutExerciseId
+                actionsSheetFor = null
+            },
             supersetLetter = actionsSheetExercise.supersetGroup?.let { supersetLetters[it] },
             onAddSet = { viewModel.addSet(actionsSheetExercise.workoutExerciseId); actionsSheetFor = null },
             onRemove = { viewModel.removeExercise(actionsSheetExercise.workoutExerciseId); actionsSheetFor = null },
             onDismiss = { actionsSheetFor = null }
+        )
+    }
+
+    if (replaceSheetExercise != null) {
+        // La voce resta la stessa: cambia solo il movimento, e con esso non si perde il posto
+        // nel superset.
+        ExercisePickerSheet(
+            exercises = state.availableExercises,
+            title = stringResource(R.string.action_replace_exercise),
+            onPick = { picked ->
+                viewModel.replaceExercise(replaceSheetExercise.workoutExerciseId, picked)
+                replaceSheetFor = null
+            },
+            onDismiss = { replaceSheetFor = null }
         )
     }
 
@@ -874,6 +895,7 @@ private fun ExerciseActionsSheet(
     onMoveDown: () -> Unit,
     onEditRest: () -> Unit,
     onEditSuperset: () -> Unit,
+    onReplace: () -> Unit,
     supersetLetter: String?,
     onAddSet: () -> Unit,
     onRemove: () -> Unit,
@@ -903,6 +925,12 @@ private fun ExerciseActionsSheet(
             description = supersetLetter?.let { stringResource(R.string.superset_badge, it) }
                 ?: stringResource(R.string.superset_action_none),
             onClick = onEditSuperset
+        )
+        SheetActionRow(
+            icon = Icons.Outlined.SwapHoriz,
+            label = stringResource(R.string.action_replace_exercise),
+            description = stringResource(R.string.active_replace_exercise_description),
+            onClick = onReplace
         )
         SheetActionRow(
             icon = Icons.Outlined.Add,

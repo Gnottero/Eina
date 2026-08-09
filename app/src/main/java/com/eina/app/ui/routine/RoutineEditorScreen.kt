@@ -15,6 +15,7 @@ import androidx.compose.material.icons.automirrored.outlined.Notes
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Repeat
+import androidx.compose.material.icons.outlined.SwapHoriz
 import androidx.compose.material.icons.outlined.Timer
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -37,6 +38,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.eina.app.R
+import com.eina.app.data.db.ExerciseEntity
 import com.eina.app.data.db.PlaylistType
 import com.eina.app.data.db.RoutineExerciseEntity
 import com.eina.app.data.db.WeightType
@@ -187,6 +189,8 @@ fun RoutineEditorScreen(
                     onSetValuesChange = { set, reps, weight -> viewModel.updateSetValues(set, reps, weight) },
                     onSetTypeChange = { set, type -> viewModel.setSetType(set, type) },
                     onNotesChange = { notes -> viewModel.updateNotes(routineExercise, notes) },
+                    availableExercises = availableExercises,
+                    onReplace = { picked -> viewModel.replaceExercise(routineExercise, picked.id) },
                     onRemove = { viewModel.removeExercise(routineExercise) }
                 )
             }
@@ -236,6 +240,8 @@ private fun RoutineExerciseCard(
     onSetValuesChange: (RoutineSetEntity, Int?, Double?) -> Unit,
     onSetTypeChange: (RoutineSetEntity, SetType) -> Unit,
     onNotesChange: (String?) -> Unit,
+    availableExercises: List<ExerciseEntity>,
+    onReplace: (ExerciseEntity) -> Unit,
     onRemove: () -> Unit
 ) {
     val island = EinaTheme.island
@@ -245,6 +251,7 @@ private fun RoutineExerciseCard(
     var restSheetOpen by remember { mutableStateOf(false) }
     var notesSheetOpen by remember { mutableStateOf(false) }
     var supersetSheetOpen by remember { mutableStateOf(false) }
+    var replaceSheetOpen by remember { mutableStateOf(false) }
     var setActionsFor by remember { mutableStateOf<Long?>(null) }
     var setTypeFor by remember { mutableStateOf<Long?>(null) }
 
@@ -373,6 +380,12 @@ private fun RoutineExerciseCard(
                 onClick = { actionsOpen = false; supersetSheetOpen = true }
             )
             SheetActionRow(
+                icon = Icons.Outlined.SwapHoriz,
+                label = stringResource(R.string.action_replace_exercise),
+                description = stringResource(R.string.routine_replace_exercise_description),
+                onClick = { actionsOpen = false; replaceSheetOpen = true }
+            )
+            SheetActionRow(
                 icon = Icons.Outlined.Delete,
                 label = stringResource(R.string.action_remove_exercise),
                 destructive = true,
@@ -417,6 +430,19 @@ private fun RoutineExerciseCard(
                 }
             )
         }
+    }
+
+    if (replaceSheetOpen) {
+        // Serie, recupero, nota e superset restano: cambia solo il movimento.
+        ExercisePickerSheet(
+            exercises = availableExercises,
+            title = stringResource(R.string.action_replace_exercise),
+            onPick = { picked ->
+                onReplace(picked)
+                replaceSheetOpen = false
+            },
+            onDismiss = { replaceSheetOpen = false }
+        )
     }
 
     if (restSheetOpen) {

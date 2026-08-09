@@ -197,6 +197,37 @@ class WorkoutRepository(
         return workoutExerciseId
     }
 
+    /**
+     * Sostituisce il movimento di una voce dell'allenamento: la panca diventa manubri perche' il
+     * castello e' occupato, senza rifare la voce da capo. La riga resta la stessa, quindi ordine,
+     * superset e note restano dov'erano — un esercizio in un giro ci resta.
+     *
+     * Le serie sopravvivono come impianto (quante sono, di che tipo, con che recupero) ma i valori
+     * registrati vengono azzerati: peso e ripetizioni erano di un altro esercizio, e lasciarli
+     * li' li conterebbe nel volume e nella progressione del nuovo. Il record eventualmente
+     * assegnato decade per lo stesso motivo.
+     *
+     * Ritorna false se la voce non esiste o se l'esercizio scelto e' gia' quello.
+     */
+    suspend fun replaceExercise(workoutExerciseId: Long, newExerciseId: Long): Boolean {
+        val current = workoutExerciseDao.getById(workoutExerciseId) ?: return false
+        if (current.exerciseId == newExerciseId) return false
+        workoutExerciseDao.update(current.copy(exerciseId = newExerciseId))
+        setEntryDao.getForWorkoutExercise(workoutExerciseId).first().forEach { set ->
+            if (set.actualReps == null && set.weight == null && set.completedAt == null) return@forEach
+            setEntryDao.update(
+                set.copy(
+                    actualReps = null,
+                    weight = null,
+                    completedAt = null,
+                    isPR = false,
+                    bodyweightSnapshotKg = null
+                )
+            )
+        }
+        return true
+    }
+
     suspend fun setExerciseNotes(workoutExerciseId: Long, notes: String?) {
         val current = workoutExerciseDao.getById(workoutExerciseId) ?: return
         workoutExerciseDao.update(current.copy(notes = notes))

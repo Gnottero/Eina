@@ -204,6 +204,20 @@ class ActiveWorkoutViewModel(
         }
     }
 
+    /**
+     * Cambia il movimento di una voce senza toccarne il posto: resta nel suo superset, con lo
+     * stesso recupero e la stessa nota. I valori gia' registrati si azzerano, erano di un altro
+     * esercizio (vedi [WorkoutRepository.replaceExercise]).
+     */
+    fun replaceExercise(workoutExerciseId: Long, exercise: ExerciseEntity) {
+        viewModelScope.launch {
+            if (!repository.replaceExercise(workoutExerciseId, exercise.id)) return@launch
+            val entity = repository.getSessionExercises(sessionId)
+                .find { it.id == workoutExerciseId } ?: return@launch
+            upsertExerciseUi(entity, exercise)
+        }
+    }
+
     fun removeExercise(workoutExerciseId: Long) {
         viewModelScope.launch {
             repository.removeExercise(workoutExerciseId)

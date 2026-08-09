@@ -98,6 +98,16 @@ class RoutineRepository(
             }
     }
 
+    /**
+     * Cambia il movimento di una voce della scheda tenendo tutto il resto: serie pianificate,
+     * recupero, nota, posizione e superset. Nella scheda non c'e' niente di registrato da
+     * azzerare — i target restano come punto di partenza, si correggono in tabella.
+     */
+    suspend fun replaceRoutineExercise(routineExercise: RoutineExerciseEntity, newExerciseId: Long) {
+        if (routineExercise.exerciseId == newExerciseId) return
+        routineExerciseDao.update(routineExercise.copy(exerciseId = newExerciseId))
+    }
+
     suspend fun updateRoutineExercise(routineExercise: RoutineExerciseEntity) =
         routineExerciseDao.update(routineExercise)
 
