@@ -179,6 +179,7 @@ fun SettingsScreen(
             InfoRow(stringResource(R.string.info_privacy), stringResource(R.string.info_privacy_value))
             InfoRow(stringResource(R.string.info_library), stringResource(R.string.info_library_value))
             InfoRow(stringResource(R.string.info_icons), stringResource(R.string.info_icons_value))
+            InfoRow(stringResource(R.string.info_font), stringResource(R.string.info_font_value))
         }
     }
 

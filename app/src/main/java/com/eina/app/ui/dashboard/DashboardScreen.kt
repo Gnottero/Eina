@@ -7,8 +7,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.CalendarMonth
-import androidx.compose.material.icons.outlined.FitnessCenter
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.PlayArrow
 import androidx.compose.material.icons.outlined.Settings
@@ -37,7 +35,6 @@ import com.eina.app.ui.components.MiniBarChart
 import com.eina.app.ui.components.ScreenHeader
 import com.eina.app.ui.components.SectionHeader
 import com.eina.app.ui.components.SessionSummaryCard
-import com.eina.app.ui.components.StatTile
 import com.eina.app.ui.components.StopwatchController
 import com.eina.app.ui.components.StopwatchIconButton
 import com.eina.app.ui.components.StopwatchSheet

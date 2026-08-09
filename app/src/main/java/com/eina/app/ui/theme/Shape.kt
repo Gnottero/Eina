@@ -26,21 +26,17 @@ val PillShape = RoundedCornerShape(percent = 50)
  * qualsiasi e una schermata iOS, e si nota soprattutto sui raggi grandi come i nostri 24-28dp.
  *
  * I nove punti di controllo per angolo sono i rapporti noti della curva continua di Apple: tre
- * bezier cubiche per angolo, nessun arco. Valgono finche' l'angolo ci sta nel lato
- * (1,528665 * raggio per lato); oltre, si ricade sull'angolo circolare, che a quel punto e'
- * indistinguibile perche' la forma e' quasi una pill.
+ * bezier cubiche per angolo, nessun arco.
  */
 class SquircleShape(private val radius: Dp) : Shape {
 
     override fun createOutline(size: Size, layoutDirection: LayoutDirection, density: Density): Outline {
-        val r = with(density) { radius.toPx() }.coerceAtLeast(0f)
-        val maxCorner = minOf(size.width, size.height) / 2f
+        // 1,528665 e' quanto l'angolo continuo "invade" ogni lato: su un elemento basso il raggio
+        // nominale non ci sta e va ridotto. Ridurlo e' meglio che ripiegare sull'angolo
+        // circolare a raggio pieno, che su una card bassa la trasformava in una pastiglia.
+        val maxRadius = minOf(size.width, size.height) / 2f / CORNER_EXTENT
+        val r = with(density) { radius.toPx() }.coerceIn(0f, maxRadius)
         if (r <= 0f) return Outline.Rectangle(size.toRect())
-        // 1,528665 e' quanto l'angolo continuo "invade" ogni lato: se due angoli opposti si
-        // toccherebbero la curva non e' piu' disegnabile e serve l'angolo circolare.
-        if (r * CORNER_EXTENT > maxCorner) {
-            return RoundedCornerShape(maxCorner.toDp(density)).createOutline(size, layoutDirection, density)
-        }
         val w = size.width
         val h = size.height
         val path = Path()
@@ -73,8 +69,6 @@ class SquircleShape(private val radius: Dp) : Shape {
     private fun cubic(path: Path, a: Offset, b: Offset, end: Offset) {
         path.cubicTo(a.x, a.y, b.x, b.y, end.x, end.y)
     }
-
-    private fun Float.toDp(density: Density): Dp = with(density) { this@toDp.toDp() }
 
     private fun Size.toRect() = androidx.compose.ui.geometry.Rect(Offset.Zero, this)
 

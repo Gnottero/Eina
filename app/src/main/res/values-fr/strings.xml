@@ -353,6 +353,8 @@
     <string name="info_library_value">Données issues de free-exercise-db (Unlicense), adaptées pour Eina.</string>
     <string name="info_icons">Icônes</string>
     <string name="info_icons_value">Material Symbols (Apache License 2.0).</string>
+    <string name="info_font">Police</string>
+    <string name="info_font_value">Inter de Rasmus Andersson (SIL Open Font License 1.1).</string>
 
     <!-- Carte partageable -->
     <string name="share_card_duration">DURÉE</string>

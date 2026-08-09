@@ -366,6 +366,8 @@
     <string name="info_library_value">Data from free-exercise-db (Unlicense), adapted for Eina.</string>
     <string name="info_icons">Icons</string>
     <string name="info_icons_value">Material Symbols (Apache License 2.0).</string>
+    <string name="info_font">Font</string>
+    <string name="info_font_value">Inter by Rasmus Andersson (SIL Open Font License 1.1).</string>
 
     <!-- Card condivisibile (disegnata su Canvas, tutta maiuscola) -->
     <string name="share_card_duration">DURATION</string>

@@ -582,6 +582,35 @@ suoi test), con le due grandezze che quell'esercizio registra davvero — carico
 secondi a tempo, km e minuti a distanza. I record personali in Progressi sono cliccabili e
 portano a quella scheda.
 
+**Fase 28 — Restyle "HIG"** *(su branch `restyle-apple-hig`, non ancora unita a main)*
+DoD: l'app ha un aspetto da vetrina senza cambiare una sola funzione. Riferimento dichiarato le
+linee guida Apple, asset tutti nostri (nessun font, simbolo o marchio Apple).
+- Font: Inter (SIL OFL 1.1) bundlato in `res/font`, licenza in `assets/licenses/inter-OFL.txt`
+  e riga in Impostazioni → Info. Prima era `FontFamily.Default`, cioe' Roboto. Il taglio
+  `InterDisplay` regge titoli e numeri grandi (come SF Pro Display sta a SF Pro Text), le cifre
+  tabulari (`tnum`) tengono ferme le colonne dei numeri che cambiano.
+- `SquircleShape` in `ui/theme/Shape.kt`: angolo continuo, tre bezier per angolo e nessun arco,
+  coi rapporti noti della curva di Apple. Su elementi bassi il raggio si riduce invece di
+  ripiegare sulla pastiglia. `EinaShapes` di Material3 resta ad angoli circolari perche' vuole
+  `CornerBasedShape`.
+- Neutri senza dominante marrone (fondo #F4F3F1, testo #1C1B19, incassato #EFEEEB) e ombra
+  dell'isola su due livelli, diffusa piu' contatto.
+- `accentRamp` (ambra #FFA23A → arancio #F97348 → magenta #F9436B) come token di tema: la usano
+  CTA, voce di nav attiva, tondi pieni, anello, barre e cella piu' calda della heatmap. Un solo
+  arancio in pagina invece di due.
+- `ActivityRing` (`ui/components/ActivityRing.kt`): la rampa e' distribuita sull'arco disegnato,
+  non sul giro intero, altrimenti la cucitura del gradiente spunta a mezzogiorno.
+- Dashboard: hero con l'anello dei giorni allenati sulla settimana (giorni distinti, non
+  sessioni) al posto delle due tile affiancate; data come riga minuscola sopra il titolo
+  (`eyebrow` di `ScreenHeader`).
+- Libreria: righe basse con punto colorato e "gruppo · attrezzo" su una riga, al posto del badge
+  che si prendeva una riga sua in un elenco di 197 voci.
+- Marchio rifatto: tessera squircle con la rampa e "E" monolinea inclinata in avanti di 8 gradi
+  (l'inclinazione e' cotta nelle coordinate, i group dei vector non sanno inclinare). Stessa
+  lettera in `ic_launcher_foreground`, sfondo dell'icona adattiva ora a gradiente
+  (`ic_launcher_background.xml`), stessa tessera nella splash. `ShareCard` disegna il testo con
+  Inter: e' l'immagine che gira fuori dall'app e usava il sans di sistema.
+
 **Fase 9 — Rifinitura** *(fatta)*
 DoD: R8 + shrinkResources attivi sulla release (20,5 MB → 2,2 MB), regole in
 `app/proguard-rules.pro`; release firmata con la chiave di debug finché non esiste un
