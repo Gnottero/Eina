@@ -375,11 +375,6 @@
     <string name="edit_session_save">Save changes</string>
     <string name="edit_session_sheet_title">Date and duration</string>
     <string name="edit_session_sheet_text">Move this workout to another day or correct how long it lasted. Sets, exercises and notes are already saved.</string>
-    <string name="settings_sample_title">Sample workout</string>
-    <string name="settings_sample_description">Adds a workout to your history with heart rate and calories, as if a watch had recorded them. Delete it like any other, with a long press in the history.</string>
-    <string name="settings_sample_button">Add sample workout</string>
-    <string name="settings_sample_added">Sample workout added to the history</string>
-    <string name="settings_sample_failed">No exercise available yet</string>
     <string name="settings_clear_confirm_title">Clear the whole history?</string>
     <string name="settings_clear_confirm_text">Every recorded workout will be deleted. This cannot be undone.</string>
     <string name="settings_section_info">Info</string>

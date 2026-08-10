@@ -731,15 +731,14 @@ DoD:
 - Una sessione si butta quando non ha *serie svolte*, non piu' quando non ha esercizi: lo
   storico si disegna sulle serie completate, quindi un allenamento aperto, riempito di esercizi
   e mai fatto restava una riga invisibile.
-- Allenamento di prova in Impostazioni → Dati: tre esercizi con riscaldamento e serie in
-  progressione, ieri, con battiti (media, massimo, spezzata) e calorie scritti a mano come se
-  li avesse depositati un orologio — la sorgente vera vuole un orologio collegato, che e'
-  esattamente quel che qui manca. Si elimina come gli altri, col tocco lungo nello storico.
-Verificata sul dispositivo con debug e release: allenamento di prova aggiunto e riepilogo con
-battiti/calorie, peso di una serie corretto da 70 a 42 kg con il badge PR sparito da solo e il
-volume sceso, sessione da routine senza nemmeno una serie svolta che chiede lo stesso di
-aggiornare la scheda (e la aggiorna davvero, verificato su una routine di prova). Avvio a
-freddo della release 576 ms, APK 71,0 MB.
+Verificata sul dispositivo con debug e release: peso di una serie corretto da 70 a 42 kg con il
+badge PR sparito da solo e il volume sceso, sessione da routine senza nemmeno una serie svolta
+che chiede lo stesso di aggiornare la scheda (e la aggiorna davvero, verificato su una routine
+di prova). Avvio a freddo della release 576 ms, APK 71,0 MB.
+Nota: la verifica e' passata da un allenamento di prova generabile da Impostazioni (tre esercizi
+e dati d'orologio finti). Serviva a vedere il riepilogo pieno senza orologio collegato ed e'
+stato tolto subito dopo: un tasto che scrive dati inventati nello storico non ha posto in
+un'app dove lo storico e' l'unico dato che conta.
 
 **Fase 9 — Rifinitura** *(fatta)*
 DoD: R8 + shrinkResources attivi sulla release (20,5 MB → 2,2 MB), regole in

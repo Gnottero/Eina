@@ -10,13 +10,9 @@ import com.eina.app.data.db.RoutineExerciseEntity
 import com.eina.app.data.db.RoutineSetDao
 import com.eina.app.data.db.RoutineSetEntity
 import com.eina.app.data.db.countsAsWorking
-import com.eina.app.data.db.encodeHeartRateSamples
 import com.eina.app.data.db.exerciseName
-import com.eina.app.data.db.HeartRateSample
 import com.eina.app.data.db.SetEntryDao
 import com.eina.app.data.db.SetEntryEntity
-import com.eina.app.data.db.SetType
-import com.eina.app.data.db.usesWeight
 import com.eina.app.data.db.WeightType
 import com.eina.app.data.db.WorkoutExerciseDao
 import com.eina.app.data.db.WorkoutExerciseEntity
@@ -300,104 +296,6 @@ class WorkoutRepository(
         }
     }
 
-    /**
-     * Allenamento di prova nello storico, con battiti e calorie come se li avesse depositati un
-     * orologio. Serve a vedere riepilogo, grafici e card condivisibile pieni di dati senza dover
-     * andare in palestra, e a provare la modifica di un allenamento passato su qualcosa di
-     * cancellabile.
-     *
-     * DECISIONE: i campioni del cuore si scrivono a mano invece di passare da Health Connect —
-     * la sorgente vera vuole un orologio collegato, che e' esattamente quel che qui manca.
-     *
-     * Ritorna l'id della sessione creata, o null se la libreria e' vuota (niente esercizi da
-     * mettere dentro: succede solo se il seed non e' ancora passato).
-     */
-    suspend fun insertSampleSession(): Long? {
-        val library = exerciseDao.getAll().first()
-        if (library.isEmpty()) return null
-        // Tre esercizi riconoscibili, con ripiego sui primi della libreria: il catalogo e' chiuso
-        // ma un esercizio potrebbe non esserci piu' dopo una revisione dei nomi.
-        val picks = listOf(
-            "Barbell Bench Press - Medium Grip",
-            "Wide-Grip Lat Pulldown",
-            "Barbell Shoulder Press"
-        ).mapIndexedNotNull { index, name ->
-            library.firstOrNull { it.name == name } ?: library.getOrNull(index)
-        }.distinctBy { it.id }
-        if (picks.isEmpty()) return null
-
-        val start = System.currentTimeMillis() - SAMPLE_DAYS_AGO * 86_400_000L
-        val durationMillis = SAMPLE_DURATION_MINUTES * 60_000L
-        val samples = sampleHeartRate(start, durationMillis)
-        val sessionId = workoutSessionDao.insert(
-            WorkoutSessionEntity(
-                startTime = start,
-                endTime = start + durationMillis,
-                avgHeartRateBpm = samples.map { it.bpm }.average().toInt(),
-                maxHeartRateBpm = samples.maxOf { it.bpm },
-                caloriesKcal = 486.0,
-                heartRateSamples = samples.encodeHeartRateSamples()
-            )
-        )
-
-        // Un riscaldamento e tre serie di lavoro in progressione: e' la forma piu' comune, e
-        // mostra sia la sigla W sia il badge del record.
-        val plan = listOf(
-            listOf(40.0 to 10, 60.0 to 10, 65.0 to 8, 70.0 to 6),
-            listOf(35.0 to 12, 50.0 to 10, 55.0 to 9, 55.0 to 8),
-            listOf(20.0 to 12, 35.0 to 10, 37.5 to 8, 40.0 to 6)
-        )
-        picks.forEachIndexed { index, exercise ->
-            val workoutExerciseId = workoutExerciseDao.insert(
-                WorkoutExerciseEntity(
-                    sessionId = sessionId,
-                    exerciseId = exercise.id,
-                    order = index,
-                    restSeconds = 90
-                )
-            )
-            plan[index % plan.size].forEachIndexed { setIndex, (weight, reps) ->
-                setEntryDao.insert(
-                    SetEntryEntity(
-                        workoutExerciseId = workoutExerciseId,
-                        setIndex = setIndex,
-                        targetReps = reps,
-                        actualReps = reps,
-                        // Gli esercizi a corpo libero o a tempo non hanno un carico da scrivere:
-                        // il campione resta comunque leggibile, con le sole ripetizioni.
-                        weight = weight.takeIf { exercise.weightType.usesWeight },
-                        restSecondsPlanned = 90,
-                        setType = if (setIndex == 0) SetType.WARMUP else SetType.NORMAL,
-                        // Sparse lungo la sessione: l'ordine di completamento e' quel che decide
-                        // i record, e tutte allo stesso istante non racconterebbe un allenamento.
-                        completedAt = start + (index * 4 + setIndex) * 4L * 60_000L
-                    )
-                )
-            }
-        }
-
-        // I record si assegnano qui e non a mano: la sessione di prova puo' cadere prima o dopo
-        // allenamenti veri, e solo il confronto con tutto lo storico sa dove sta il massimo.
-        recomputePrs(picks.map { it.id })
-        return sessionId
-    }
-
-    /** Curva plausibile: si sale nel riscaldamento, si oscilla fra le serie, si scende alla fine. */
-    private fun sampleHeartRate(start: Long, durationMillis: Long): List<HeartRateSample> {
-        val stepMillis = 3 * 60_000L
-        val steps = (durationMillis / stepMillis).toInt().coerceAtLeast(2)
-        return (0..steps).map { step ->
-            val progress = step.toDouble() / steps
-            val base = 96 + 62 * kotlin.math.sin(progress * Math.PI).coerceAtLeast(0.0)
-            // Ondeggia serie per serie: un cuore sotto carico non disegna una collina liscia.
-            val wave = 10 * kotlin.math.sin(step * 1.7)
-            HeartRateSample(
-                timeMillis = start + step * stepMillis,
-                bpm = (base + wave).toInt().coerceIn(80, 171)
-            )
-        }
-    }
-
     suspend fun getSessionExercises(sessionId: Long): List<WorkoutExerciseEntity> =
         workoutExerciseDao.getForSessionOnce(sessionId)
 
@@ -549,11 +447,6 @@ class WorkoutRepository(
         val finalSet = candidate.copy(isPR = isPR)
         setEntryDao.update(finalSet)
         return finalSet
-    }
-
-    private companion object {
-        const val SAMPLE_DAYS_AGO = 1
-        const val SAMPLE_DURATION_MINUTES = 62
     }
 }
 

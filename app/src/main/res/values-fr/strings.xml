@@ -359,11 +359,6 @@
     <string name="edit_session_save">Enregistrer les modifications</string>
     <string name="edit_session_sheet_title">Date et durée</string>
     <string name="edit_session_sheet_text">Déplacez la séance à un autre jour ou corrigez sa durée. Les séries, les exercices et les notes sont déjà enregistrés.</string>
-    <string name="settings_sample_title">Séance d\'essai</string>
-    <string name="settings_sample_description">Ajoute à l\'historique une séance avec fréquence cardiaque et calories, comme si une montre les avait enregistrées. Elle se supprime comme les autres, par appui long dans l\'historique.</string>
-    <string name="settings_sample_button">Ajouter une séance d\'essai</string>
-    <string name="settings_sample_added">Séance d\'essai ajoutée à l\'historique</string>
-    <string name="settings_sample_failed">Aucun exercice disponible</string>
     <string name="settings_clear_confirm_title">Effacer tout l\'historique ?</string>
     <string name="settings_clear_confirm_text">Toutes les séances enregistrées seront supprimées. L\'opération est irréversible.</string>
     <string name="settings_section_info">Infos</string>

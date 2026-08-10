@@ -359,11 +359,6 @@
     <string name="edit_session_save">Salva modifiche</string>
     <string name="edit_session_sheet_title">Data e durata</string>
     <string name="edit_session_sheet_text">Sposta l\'allenamento in un altro giorno o correggi quanto e\' durato. Serie, esercizi e note sono gia\' salvati.</string>
-    <string name="settings_sample_title">Allenamento di prova</string>
-    <string name="settings_sample_description">Mette nello storico un allenamento con battiti e calorie, come se li avesse registrati un orologio. Si elimina come gli altri, col tocco lungo nello storico.</string>
-    <string name="settings_sample_button">Aggiungi allenamento di prova</string>
-    <string name="settings_sample_added">Allenamento di prova aggiunto allo storico</string>
-    <string name="settings_sample_failed">Nessun esercizio disponibile</string>
     <string name="settings_clear_confirm_title">Cancellare tutto lo storico?</string>
     <string name="settings_clear_confirm_text">Tutti gli allenamenti registrati verranno eliminati. L\'operazione non è annullabile.</string>
     <string name="settings_section_info">Info</string>
