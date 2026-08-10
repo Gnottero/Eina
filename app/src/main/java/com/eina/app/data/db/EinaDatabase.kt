@@ -17,7 +17,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         SetEntryEntity::class,
         BodyMetricEntity::class
     ],
-    version = 9,
+    version = 10,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -219,6 +219,26 @@ abstract class EinaDatabase : RoomDatabase() {
          * serie dei battiti per la spezzata del riepilogo. Colonne nuove e nullable — gli
          * allenamenti gia' registrati non hanno niente da leggere e restano com'erano.
          */
+        /**
+         * Il recupero diventa una colonna dell'esercizio di sessione. Le sessioni gia' registrate
+         * lo prendono dalla loro prima serie, che e' esattamente da dove lo leggeva la UI.
+         */
+        val MIGRATION_9_10 = object : Migration(9, 10) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE workout_exercises ADD COLUMN restSeconds INTEGER NOT NULL DEFAULT 90")
+                db.execSQL(
+                    """
+                    UPDATE workout_exercises SET restSeconds = COALESCE(
+                        (SELECT restSecondsPlanned FROM set_entries
+                         WHERE workoutExerciseId = workout_exercises.id
+                         ORDER BY setIndex ASC LIMIT 1),
+                        90
+                    )
+                    """.trimIndent()
+                )
+            }
+        }
+
         val MIGRATION_8_9 = object : Migration(8, 9) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE workout_sessions ADD COLUMN avgHeartRateBpm INTEGER")

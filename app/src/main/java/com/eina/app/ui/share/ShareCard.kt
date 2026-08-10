@@ -194,8 +194,6 @@ fun renderShareCard(
 
     val textColor = if (onPhoto) TEXT_ON_PHOTO else TEXT
     val secondaryColor = if (onPhoto) TEXT_ON_PHOTO_SECONDARY else TEXT_SECONDARY
-    // Anche sulla foto l'accento e' l'arancio dell'app, pieno e senza sfumatura: i toni
-    // schiariti piu' la rampa facevano sembrare i numeri al neon.
     val accentColor = ACCENT
     val ramp = ACCENT_RAMP
     val tileColor = if (onPhoto) TILE_BG_ON_PHOTO else TILE_BG
@@ -266,10 +264,10 @@ fun renderShareCard(
             textPaint(72f, if (ramped) accentColor else textColor, bold = true, shadow = onPhoto),
             minSize = 40f
         )
-        // Sulla tessera bianca il numero in evidenza porta la rampa: si applica al tratto del
-        // testo, quindi va misurata sul testo e non sulla tessera. Sulla foto no, resta
-        // arancio pieno.
-        if (ramped && !onPhoto) {
+        // Il numero in evidenza porta la rampa in entrambe le varianti, come il filo
+        // dell'intestazione: si applica al tratto del testo, quindi va misurata sul testo e non
+        // sulla tessera.
+        if (ramped) {
             valuePaint.shader = rampShader(
                 tileLeft + 32f,
                 tileLeft + 32f + valuePaint.measureText(value),

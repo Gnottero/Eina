@@ -23,8 +23,16 @@ import kotlin.math.ceil
  *   dall'orologio;
  * - vive come singleton (vedi AppModule), quindi uscire dall'allenamento in corso e rientrare
  *   non lo azzera piu' — prima moriva con il ViewModel della schermata.
+ *
+ * Il tick pero' non basta a far suonare la fine: con l'app fuori dallo schermo il processo viene
+ * congelato e i `delay` restano fermi. Per questo ogni recupero programma anche una sveglia di
+ * sistema ([RestAlarmScheduler]); il primo dei due che arriva chiama [finish], che vale una
+ * volta sola.
  */
-class RestTimerController(private val feedback: WorkoutFeedback) {
+class RestTimerController(
+    private val feedback: WorkoutFeedback,
+    private val alarms: RestAlarmScheduler
+) {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private val _state = MutableStateFlow<RestTimerState?>(null)
@@ -42,18 +50,38 @@ class RestTimerController(private val feedback: WorkoutFeedback) {
         val current = _state.value ?: return
         val endAt = current.endAtMs + deltaSeconds * 1000L
         val remaining = remainingSecondsAt(endAt)
-        if (remaining <= 0) skip() else schedule(endAt, maxOf(current.totalSeconds, remaining))
+        if (remaining <= 0) finish() else schedule(endAt, maxOf(current.totalSeconds, remaining))
     }
 
+    /** Recupero saltato a mano: si spegne tutto senza suonare. */
     fun skip() {
+        stop()
+    }
+
+    /**
+     * Fine del recupero: suono e vibrazione, una volta sola. La chiamano sia il tick in-app sia
+     * la sveglia di sistema, e possono arrivare a pochi millisecondi di distanza — chi trova lo
+     * stato gia' spento non fa nulla.
+     */
+    fun finish() {
+        synchronized(this) {
+            if (_state.value == null) return
+            stop()
+        }
+        feedback.restTimerFinished()
+    }
+
+    private fun stop() {
         job?.cancel()
         job = null
+        alarms.cancel()
         _state.value = null
     }
 
     private fun schedule(endAtMs: Long, totalSeconds: Int) {
         job?.cancel()
         _state.value = RestTimerState(totalSeconds, endAtMs, remainingSecondsAt(endAtMs))
+        alarms.schedule(endAtMs)
         job = scope.launch {
             while (isActive) {
                 // Piu' fitto del secondo: il residuo viene dall'orologio, e un tick da 1s
@@ -62,8 +90,7 @@ class RestTimerController(private val feedback: WorkoutFeedback) {
                 val current = _state.value ?: break
                 val remaining = remainingSecondsAt(current.endAtMs)
                 if (remaining <= 0) {
-                    _state.value = null
-                    feedback.restTimerFinished()
+                    finish()
                     break
                 }
                 _state.value = current.copy(remainingSeconds = remaining)

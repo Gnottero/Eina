@@ -85,9 +85,12 @@ fun ProgressScreen(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(Spacing.md)
         ) {
+            // Volume e serie di tutto lo storico, non del giorno scelto: la settimana la
+            // raccontano gia' il grafico e la heatmap qui sotto, e due riquadri che si
+            // svuotavano a ogni giorno di riposo dicevano poco.
             StatTile(
                 label = stringResource(R.string.stat_volume),
-                value = formatVolume(state.selectedDayVolumeKg),
+                value = formatVolume(state.totalVolumeKg),
                 unit = stringResource(R.string.unit_kg),
                 icon = Icons.Outlined.FitnessCenter,
                 tint = MetricColors.Volume,
@@ -95,7 +98,7 @@ fun ProgressScreen(
             )
             StatTile(
                 label = stringResource(R.string.stat_sets),
-                value = state.selectedDaySets.toString(),
+                value = state.totalSets.toString(),
                 icon = Icons.Outlined.Repeat,
                 tint = MetricColors.Sets,
                 modifier = Modifier.weight(1f)

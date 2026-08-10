@@ -182,6 +182,21 @@ class RoutineEditorViewModel(
         }
     }
 
+    /**
+     * Ordine scelto trascinando le voci nel foglio di riordino: `order` e' la posizione in lista,
+     * quindi basta riscriverlo su chi si e' spostato davvero.
+     */
+    fun applyOrder(orderedRoutineExerciseIds: List<Long>) {
+        viewModelScope.launch {
+            val byId = routineExercises.value.associateBy { it.id }
+            if (orderedRoutineExerciseIds.size != byId.size) return@launch
+            orderedRoutineExerciseIds.forEachIndexed { index, id ->
+                val item = byId[id] ?: return@forEachIndexed
+                if (item.order != index) repository.updateRoutineExercise(item.copy(order = index))
+            }
+        }
+    }
+
     /** Numero di gruppo libero per un superset nuovo. */
     fun nextSupersetGroup(): Int = Superset.nextGroup(routineExercises.value.map { it.supersetGroup })
 

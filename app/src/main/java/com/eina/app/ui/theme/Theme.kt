@@ -35,6 +35,8 @@ private val LightColors = lightColorScheme(
 @Immutable
 data class EinaIslandColors(
     val sunken: Color,
+    /** Incassato chiaro dentro le card bianche: vedi [LightSurfaceSunkenSoft]. */
+    val sunkenSoft: Color,
     val textSecondary: Color,
     val outlineSubtle: Color,
     val shadow: Color,
@@ -45,6 +47,7 @@ data class EinaIslandColors(
 
 private val LightIslandColors = EinaIslandColors(
     sunken = LightSurfaceSunken,
+    sunkenSoft = LightSurfaceSunkenSoft,
     textSecondary = LightTextSecondary,
     outlineSubtle = LightOutlineSubtle,
     // Ombra neutra fredda: quella marrone tingeva il bianco delle isole di beige.

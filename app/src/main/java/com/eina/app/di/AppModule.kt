@@ -24,6 +24,7 @@ import com.eina.app.ui.routine.RoutineEditorViewModel
 import com.eina.app.ui.routine.RoutineListViewModel
 import com.eina.app.ui.settings.SettingsViewModel
 import com.eina.app.ui.workout.ActiveWorkoutViewModel
+import com.eina.app.ui.workout.RestAlarmScheduler
 import com.eina.app.ui.workout.RestTimerController
 import com.eina.app.ui.workout.WorkoutViewModel
 import org.koin.android.ext.koin.androidContext
@@ -41,7 +42,8 @@ val appModule = module {
                 EinaDatabase.MIGRATION_5_6,
                 EinaDatabase.MIGRATION_6_7,
                 EinaDatabase.MIGRATION_7_8,
-                EinaDatabase.MIGRATION_8_9
+                EinaDatabase.MIGRATION_8_9,
+                EinaDatabase.MIGRATION_9_10
             )
             .build()
     }
@@ -96,8 +98,10 @@ val appModule = module {
     // Cronometro condiviso: si avvia in Dashboard e si ritrova durante l'allenamento.
     single { StopwatchController() }
 
-    // Recupero condiviso: sopravvive all'uscita dalla schermata dell'allenamento in corso.
-    single { RestTimerController(get()) }
+    // Recupero condiviso: sopravvive all'uscita dalla schermata dell'allenamento in corso, e
+    // la sveglia di sistema lo fa suonare anche ad app fuori dallo schermo.
+    single { RestAlarmScheduler(androidContext()) }
+    single { RestTimerController(get(), get()) }
 
     viewModel { WorkoutViewModel(get()) }
     viewModel { (sessionId: Long) -> ActiveWorkoutViewModel(get(), get(), get(), get(), sessionId) }

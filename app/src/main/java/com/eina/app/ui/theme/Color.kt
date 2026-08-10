@@ -23,6 +23,14 @@ val AccentRampStart = Color(0xFFFFA23A)
 val AccentRampEnd = Color(0xFFF9436B)
 
 val LightSurfaceSunken = Color(0xFFEFEEEB)
+
+/**
+ * Incassato chiaro, per le superfici che stanno *dentro* una card bianca e occupano molto spazio:
+ * la tabella delle serie del riepilogo e i campi di peso e ripetizioni. Con il grigio pieno quei
+ * riquadri pesavano piu' dei numeri che contengono. Sul fondo della pagina resta
+ * [LightSurfaceSunken]: li' un grigio piu' chiaro del fondo non si vedrebbe affatto.
+ */
+val LightSurfaceSunkenSoft = Color(0xFFF7F6F4)
 val LightTextSecondary = Color(0xFF7C7A75)
 val LightOutlineSubtle = Color(0xFFE7E5E1)
 val LightOnBackground = Color(0xFF1C1B19)

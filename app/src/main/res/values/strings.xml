@@ -147,8 +147,11 @@
     <string name="active_add_set_action">Add set</string>
     <string name="active_undo_set_cd">Undo set</string>
     <string name="active_open_exercise">Open exercise sheet</string>
-    <string name="active_move_up">Move up</string>
-    <string name="active_move_down">Move down</string>
+    <string name="action_reorder">Reorder exercises</string>
+    <string name="reorder_action_description">Drag them into the order you want</string>
+    <string name="reorder_title">Order of exercises</string>
+    <string name="reorder_description">Press and hold a row, then drag it. A superset moves as one block.</string>
+    <string name="reorder_handle_cd">Drag to move</string>
     <string name="active_remove_exercise_description">Also deletes the sets logged here</string>
     <string name="active_replace_exercise_description">Keeps sets, rest and superset, clears logged values</string>
     <string name="routine_replace_exercise_description">Keeps sets, rest and superset</string>
@@ -437,4 +440,16 @@
     <string name="exercise_progress_seconds">Seconds</string>
     <string name="exercise_progress_distance">Distance (km)</string>
     <string name="exercise_progress_minutes">Minutes</string>
+    <!-- Proposta di aggiornare la scheda a fine allenamento -->
+    <string name="routine_sync_title">Update the routine?</string>
+    <string name="routine_sync_description">This workout did not follow \u201C%1$s\u201D. Want the routine to look like what you actually did?</string>
+    <string name="routine_sync_description_generic">This workout did not follow the routine it started from. Want the routine to look like what you actually did?</string>
+    <string name="routine_sync_added">Added: %1$s</string>
+    <string name="routine_sync_removed">Removed: %1$s</string>
+    <string name="routine_sync_sets">%1$s: from %2$d to %3$d sets</string>
+    <string name="routine_sync_rest">%1$s: rest from %2$s to %3$s</string>
+    <string name="routine_sync_reordered">Exercise order changed</string>
+    <string name="routine_sync_targets_note">Target weight and reps also become the ones you logged.</string>
+    <string name="routine_sync_apply">Update the routine</string>
+    <string name="routine_sync_keep">Leave it as it is</string>
 </resources>

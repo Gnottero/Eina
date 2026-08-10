@@ -51,6 +51,8 @@ data class SessionExerciseDetail(
     val workoutExerciseId: Long,
     val exerciseId: Long,
     val exerciseName: ExerciseName,
+    /** Giro di appartenenza, come in allenamento: la lettera e il colore li assegna la UI. */
+    val supersetGroup: Int? = null,
     val sets: List<CompletedSetRow>
 ) {
     val workingSets: List<CompletedSetRow> get() = sets.filter { it.setType.countsAsWorking }
@@ -104,6 +106,7 @@ class SessionDetailViewModel(
                         workoutExerciseId = workoutExerciseId,
                         exerciseId = exerciseRows.first().exerciseId,
                         exerciseName = exerciseRows.first().exerciseName,
+                        supersetGroup = exerciseRows.first().supersetGroup,
                         sets = exerciseRows.sortedBy { it.setIndex }
                     )
                 },

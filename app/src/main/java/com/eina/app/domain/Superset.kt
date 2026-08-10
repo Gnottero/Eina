@@ -23,25 +23,11 @@ object Superset {
     }
 
     /**
-     * Sposta di una posizione l'esercizio [movedId], portandosi dietro i compagni di giro.
-     *
-     * Un superset si sposta tutto insieme: muovere un solo membro lo staccherebbe dal blocco e
-     * il giro non si leggerebbe piu' come una sequenza. Fuori da un superset e' il solito
-     * scambio fra vicini.
+     * La lista spezzata in blocchi: un superset e' un blocco solo, gli altri esercizi uno a
+     * testa. E' l'unita' con cui si riordina (vedi il foglio di riordino): muovere un singolo
+     * membro lo staccherebbe dal giro, e un superset e' una sequenza.
      */
-    fun moveBlock(members: List<Member>, movedId: Long, delta: Int): List<Member> {
-        if (delta == 0) return members
-        val blocks = blocksOf(members)
-        val index = blocks.indexOfFirst { block -> block.any { it.id == movedId } }
-        val target = index + delta
-        if (index < 0 || target !in blocks.indices) return members
-        return blocks.toMutableList()
-            .apply { add(target, removeAt(index)) }
-            .flatten()
-    }
-
-    /** La lista spezzata in blocchi: un superset e' un blocco solo, gli altri esercizi uno a testa. */
-    private fun blocksOf(members: List<Member>): List<List<Member>> {
+    fun blocksOf(members: List<Member>): List<List<Member>> {
         val blocks = mutableListOf<MutableList<Member>>()
         members.forEach { member ->
             val previous = blocks.lastOrNull()

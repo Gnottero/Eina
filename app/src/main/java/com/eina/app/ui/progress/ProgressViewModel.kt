@@ -21,14 +21,13 @@ import java.time.LocalDate
 data class ProgressUiState(
     val weekDates: List<LocalDate> = emptyList(),
     val selectedDayIndex: Int = 0,
-    val selectedDayVolumeKg: Double = 0.0,
-    val selectedDaySets: Int = 0,
     val weekVolumeByDay: List<Float> = List(7) { 0f },
     val volumeByDay: Map<LocalDate, Double> = emptyMap(),
     val personalRecords: List<PrRecord> = emptyList(),
     val latestBodyweightKg: Double? = null,
     val streakWeeks: Int = 0,
     val totalVolumeKg: Double = 0.0,
+    val totalSets: Int = 0,
     val totalSessions: Int = 0
 )
 
@@ -48,19 +47,17 @@ class ProgressViewModel(repository: StatsRepository) : ViewModel() {
         val volumePerDay = volumeByDay(rows)
         val setsPerDay = setsByDay(rows)
         val weekDates = (0..6).map { startOfWeek.plusDays(it.toLong()) }
-        val selectedDate = weekDates[dayIndex]
 
         ProgressUiState(
             weekDates = weekDates,
             selectedDayIndex = dayIndex,
-            selectedDayVolumeKg = volumePerDay[selectedDate] ?: 0.0,
-            selectedDaySets = setsPerDay[selectedDate] ?: 0,
             weekVolumeByDay = weekDates.map { (volumePerDay[it] ?: 0.0).toFloat() },
             volumeByDay = volumePerDay,
             personalRecords = personalRecords(rows),
             latestBodyweightKg = bodyMetrics.firstOrNull()?.bodyweightKg,
             streakWeeks = currentStreak(trainingDays(rows), today),
             totalVolumeKg = volumePerDay.values.sum(),
+            totalSets = setsPerDay.values.sum(),
             totalSessions = rows.map { it.sessionId }.distinct().size
         )
     }.flowOn(Dispatchers.Default)

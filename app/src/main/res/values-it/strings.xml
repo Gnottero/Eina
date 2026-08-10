@@ -137,8 +137,11 @@
     <string name="active_add_set_action">Aggiungi serie</string>
     <string name="active_undo_set_cd">Annulla serie</string>
     <string name="active_open_exercise">Apri scheda esercizio</string>
-    <string name="active_move_up">Sposta su</string>
-    <string name="active_move_down">Sposta giù</string>
+    <string name="action_reorder">Riordina esercizi</string>
+    <string name="reorder_action_description">Trascinali nell\'ordine che vuoi</string>
+    <string name="reorder_title">Ordine degli esercizi</string>
+    <string name="reorder_description">Tieni premuta una riga e trascinala. Un superset si sposta tutto insieme.</string>
+    <string name="reorder_handle_cd">Trascina per spostare</string>
     <string name="active_remove_exercise_description">Elimina anche le serie registrate qui</string>
     <string name="active_replace_exercise_description">Tiene serie, recupero e superset, azzera i valori registrati</string>
     <string name="routine_replace_exercise_description">Tiene serie, recupero e superset</string>
@@ -420,4 +423,16 @@
     <string name="exercise_progress_seconds">Secondi</string>
     <string name="exercise_progress_distance">Distanza (km)</string>
     <string name="exercise_progress_minutes">Minuti</string>
+    <!-- Proposta di aggiornare la scheda a fine allenamento -->
+    <string name="routine_sync_title">Aggiorno la scheda?</string>
+    <string name="routine_sync_description">Questo allenamento non ha seguito \u201C%1$s\u201D. Vuoi che la scheda diventi come hai fatto davvero?</string>
+    <string name="routine_sync_description_generic">Questo allenamento non ha seguito la scheda da cui \u00E8 partito. Vuoi che la scheda diventi come hai fatto davvero?</string>
+    <string name="routine_sync_added">Aggiunto: %1$s</string>
+    <string name="routine_sync_removed">Tolto: %1$s</string>
+    <string name="routine_sync_sets">%1$s: da %2$d a %3$d serie</string>
+    <string name="routine_sync_rest">%1$s: recupero da %2$s a %3$s</string>
+    <string name="routine_sync_reordered">Ordine degli esercizi cambiato</string>
+    <string name="routine_sync_targets_note">Anche peso e ripetizioni target diventano quelli registrati.</string>
+    <string name="routine_sync_apply">Aggiorna la scheda</string>
+    <string name="routine_sync_keep">Lascia com\u2019\u00E8</string>
 </resources>

@@ -2,6 +2,13 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.VIBRATE" />
+    <!-- Fine del recupero puntuale anche ad app fuori dallo schermo: senza sveglia esatta il
+         processo resta congelato e suono e vibrazione arriverebbero al rientro. USE_EXACT_ALARM
+         copre Android 13+, dove e' concesso alle app il cui mestiere e' un timer. -->
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+    <uses-permission
+        android:name="android.permission.SCHEDULE_EXACT_ALARM"
+        android:maxSdkVersion="32" />
     <!-- Solo fino ad Android 9: da Android 10 MediaStore scrive nel rullino senza permessi. -->
     <uses-permission
         android:name="android.permission.WRITE_EXTERNAL_STORAGE"
@@ -67,6 +74,15 @@
                 <category android:name="android.intent.category.HEALTH_PERMISSIONS" />
             </intent-filter>
         </activity-alias>
+
+        <!-- Sveglia di fine recupero: vedi ui/workout/RestAlarm.kt. -->
+        <receiver
+            android:name=".ui.workout.RestAlarmReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.eina.app.REST_TIMER_FINISHED" />
+            </intent-filter>
+        </receiver>
 
         <provider
             android:name="androidx.core.content.FileProvider"

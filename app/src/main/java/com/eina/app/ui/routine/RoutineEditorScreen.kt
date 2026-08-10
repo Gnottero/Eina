@@ -15,6 +15,7 @@ import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Repeat
 import androidx.compose.material.icons.outlined.SwapHoriz
+import androidx.compose.material.icons.outlined.SwapVert
 import androidx.compose.material.icons.outlined.Timer
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -34,6 +35,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -42,6 +44,7 @@ import com.eina.app.data.db.ExerciseEntity
 import com.eina.app.data.db.PlaylistType
 import com.eina.app.data.db.RoutineExerciseEntity
 import com.eina.app.data.db.WeightType
+import com.eina.app.data.db.exerciseName
 import com.eina.app.data.db.usesDecimalField
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -65,6 +68,8 @@ import com.eina.app.ui.components.IslandEmptyState
 import com.eina.app.ui.components.IslandScreen
 import com.eina.app.ui.components.IslandSecondaryButton
 import com.eina.app.ui.components.IslandTextField
+import com.eina.app.ui.components.ReorderRow
+import com.eina.app.ui.components.ReorderSheet
 import com.eina.app.ui.components.RestTimeSheet
 import com.eina.app.ui.components.ScreenHeader
 import com.eina.app.ui.components.SectionHeader
@@ -77,6 +82,8 @@ import com.eina.app.ui.components.formatClock
 import com.eina.app.ui.components.sanitizeWeightInput
 import com.eina.app.domain.Superset
 import com.eina.app.ui.feedback.LocalHapticTap
+import com.eina.app.ui.library.currentLocale
+import com.eina.app.ui.library.localized
 import com.eina.app.ui.library.localizedName
 import com.eina.app.ui.theme.EinaTheme
 import com.eina.app.ui.theme.PillShape
@@ -101,6 +108,7 @@ fun RoutineEditorScreen(
     // Stesso foglio dell'allenamento: aggiungere un esercizio si fa allo stesso modo ovunque,
     // senza saltare su una schermata a parte.
     var showPicker by remember { mutableStateOf(false) }
+    var showReorder by remember { mutableStateOf(false) }
 
     IslandScreen(
         header = {
@@ -189,6 +197,8 @@ fun RoutineEditorScreen(
                     onSetTypeChange = { set, type -> viewModel.setSetType(set, type) },
                     onNotesChange = { notes -> viewModel.updateNotes(routineExercise, notes) },
                     availableExercises = availableExercises,
+                    canReorder = routineExercises.size > 1,
+                    onReorder = { showReorder = true },
                     onReplace = { picked -> viewModel.replaceExercise(routineExercise, picked.id) },
                     onRemove = { viewModel.removeExercise(routineExercise) }
                 )
@@ -219,6 +229,43 @@ fun RoutineEditorScreen(
             onDismiss = { showPicker = false }
         )
     }
+
+    if (showReorder) {
+        // Si trascinano blocchi: un superset e' una sequenza e si sposta intero.
+        ReorderSheet(
+            title = stringResource(R.string.reorder_title),
+            rows = routineBlocks(routineExercises, exercises),
+            onConfirm = { keys -> viewModel.applyOrder(keys.flatMap { it.split(',').map(String::toLong) }) },
+            onDismiss = { showReorder = false }
+        )
+    }
+}
+
+/**
+ * Gli esercizi della scheda visti come blocchi trascinabili, come in allenamento: la chiave della
+ * riga sono gli id dei membri, cosi' l'ordine confermato si riappiattisce senza mappe a parte.
+ */
+@Composable
+private fun routineBlocks(
+    routineExercises: List<RoutineExerciseEntity>,
+    exercises: Map<Long, ExerciseEntity>
+): List<ReorderRow> {
+    // Dentro le lambda di map non si chiamano composable: nome e lettera si risolvono qui.
+    val context = LocalContext.current
+    val locale = currentLocale()
+    val letters = Superset.letters(routineExercises.map { it.supersetGroup })
+    return Superset.blocksOf(routineExercises.map { Superset.Member(it.id, it.supersetGroup) })
+        .map { block ->
+            val members = block.mapNotNull { member -> routineExercises.find { it.id == member.id } }
+            val names = members.map { exercises[it.exerciseId]?.exerciseName()?.localized(locale) ?: "…" }
+            val letter = members.firstOrNull()?.supersetGroup?.let { letters[it] }
+            ReorderRow(
+                key = members.joinToString(",") { it.id.toString() },
+                title = if (letter == null) names.firstOrNull().orEmpty() else context.getString(R.string.superset_badge, letter),
+                subtitle = if (letter == null) null else names.joinToString(" · "),
+                tint = letter?.let { supersetColor(it) }
+            )
+        }
 }
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -240,6 +287,8 @@ private fun RoutineExerciseCard(
     onSetTypeChange: (RoutineSetEntity, SetType) -> Unit,
     onNotesChange: (String?) -> Unit,
     availableExercises: List<ExerciseEntity>,
+    canReorder: Boolean,
+    onReorder: () -> Unit,
     onReplace: (ExerciseEntity) -> Unit,
     onRemove: () -> Unit
 ) {
@@ -384,6 +433,14 @@ private fun RoutineExerciseCard(
                 description = stringResource(R.string.routine_replace_exercise_description),
                 onClick = { actionsOpen = false; replaceSheetOpen = true }
             )
+            if (canReorder) {
+                SheetActionRow(
+                    icon = Icons.Outlined.SwapVert,
+                    label = stringResource(R.string.action_reorder),
+                    description = stringResource(R.string.reorder_action_description),
+                    onClick = { actionsOpen = false; onReorder() }
+                )
+            }
             SheetActionRow(
                 icon = Icons.Outlined.Delete,
                 label = stringResource(R.string.action_remove_exercise),

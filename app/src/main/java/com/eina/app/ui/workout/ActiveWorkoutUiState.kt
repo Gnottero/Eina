@@ -66,6 +66,9 @@ data class ActiveWorkoutUiState(
     val availableExercises: List<ExerciseEntity> = emptyList(),
     val timer: TimerUi? = null,
     val isFinished: Boolean = false,
+    /** Routine di partenza, se la sessione ne aveva una: serve alla proposta di aggiornarla. */
+    val routineId: Long? = null,
+    val routineName: String? = null,
     /** Playlist della routine di partenza: si riproduce da qui, non dall'editor della routine. */
     val playlistUri: String? = null,
     val playlistType: PlaylistType? = null,

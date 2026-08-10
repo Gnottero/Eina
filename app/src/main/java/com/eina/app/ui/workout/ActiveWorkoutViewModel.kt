@@ -13,6 +13,7 @@ import com.eina.app.data.db.usesDecimalField
 import com.eina.app.data.health.WorkoutHealthSync
 import com.eina.app.data.repository.RoutineTarget
 import com.eina.app.data.repository.WorkoutRepository
+import com.eina.app.domain.RoutineChange
 import com.eina.app.domain.Superset
 import com.eina.app.domain.volumeForSet
 import com.eina.app.ui.components.MAX_WEIGHT_KG
@@ -68,6 +69,8 @@ class ActiveWorkoutViewModel(
                     val routine = repository.getRoutine(routineId)
                     _uiState.update {
                         it.copy(
+                            routineId = routineId,
+                            routineName = routine?.name,
                             playlistUri = routine?.linkedPlaylistUri,
                             playlistType = routine?.linkedPlaylistType
                         )
@@ -110,9 +113,9 @@ class ActiveWorkoutViewModel(
             order = workoutExercise.order,
             notes = workoutExercise.notes,
             supersetGroup = workoutExercise.supersetGroup,
-            restSeconds = sets.firstOrNull()?.restSecondsPlanned
-                ?: routineTargets[exercise.id]?.restSeconds
-                ?: DEFAULT_REST_SECONDS,
+            // Il recupero e' una colonna della voce di sessione: leggerlo dalla prima serie lo
+            // faceva tornare al valore della scheda appena quella serie era gia' segnata.
+            restSeconds = workoutExercise.restSeconds,
             sets = sets,
             lastTimeSets = lastTimeSets,
             lastRecordedWeight = lastWeight,
@@ -201,7 +204,13 @@ class ActiveWorkoutViewModel(
             val order = _uiState.value.exercises.size
             val rest = routineTargets[exercise.id]?.restSeconds ?: DEFAULT_REST_SECONDS
             val workoutExerciseId = repository.addExercise(sessionId, exercise.id, order, rest)
-            val workoutExercise = WorkoutExerciseEntity(id = workoutExerciseId, sessionId = sessionId, exerciseId = exercise.id, order = order)
+            val workoutExercise = WorkoutExerciseEntity(
+                id = workoutExerciseId,
+                sessionId = sessionId,
+                exerciseId = exercise.id,
+                order = order,
+                restSeconds = rest
+            )
             upsertExerciseUi(workoutExercise, exercise)
         }
     }
@@ -233,18 +242,18 @@ class ActiveWorkoutViewModel(
         }
     }
 
-    fun moveExercise(workoutExerciseId: Long, delta: Int) {
+    /**
+     * Ordine scelto trascinando le voci nel foglio di riordino: arriva gia' completo, quindi si
+     * riscrive in blocco invece di scambiare vicini una posizione per volta. Gli id sono quelli
+     * dei blocchi appiattiti, cosi' i compagni di superset restano attaccati.
+     */
+    fun applyOrder(orderedWorkoutExerciseIds: List<Long>) {
         viewModelScope.launch {
-            val current = _uiState.value.exercises
-            // Un superset si sposta tutto insieme: vedi Superset.moveBlock.
-            val moved = Superset.moveBlock(
-                current.map { Superset.Member(it.workoutExerciseId, it.supersetGroup) },
-                workoutExerciseId,
-                delta
-            )
-            val byId = current.associateBy { it.workoutExerciseId }
-            val reordered = moved.mapNotNull { byId[it.id] }
-            if (reordered.map { it.workoutExerciseId } == current.map { it.workoutExerciseId }) return@launch
+            val byId = _uiState.value.exercises.associateBy { it.workoutExerciseId }
+            val reordered = orderedWorkoutExerciseIds.mapNotNull { byId[it] }
+            // Un ordine parziale riscriverebbe la lista perdendo pezzi: meglio non fare nulla.
+            if (reordered.size != byId.size) return@launch
+            if (reordered.map { it.workoutExerciseId } == _uiState.value.exercises.map { it.workoutExerciseId }) return@launch
             _uiState.update { it.copy(exercises = reordered) }
             persistExerciseOrder(reordered)
         }
@@ -258,6 +267,7 @@ class ActiveWorkoutViewModel(
                 sessionId = sessionId,
                 exerciseId = ex.exerciseId,
                 order = index,
+                restSeconds = ex.restSeconds,
                 notes = ex.notes,
                 supersetGroup = ex.supersetGroup
             )
@@ -318,6 +328,9 @@ class ActiveWorkoutViewModel(
         }
         viewModelScope.launch {
             targets.forEach { target ->
+                repository.setExerciseRestSeconds(target.workoutExerciseId, safeSeconds)
+                // Le serie gia' svolte non si toccano: il loro recupero e' stato consumato. La
+                // durata dell'esercizio pero' vive sulla sua riga, quindi non si perde piu'.
                 target.sets.filter { it.completedAt == null }.forEach { set ->
                     repository.updateSet(
                         set.copy(restSecondsPlanned = safeSeconds).toEntity(target.workoutExerciseId)
@@ -482,9 +495,19 @@ class ActiveWorkoutViewModel(
      * `onFinished` riceve `false` quando la sessione era senza esercizi: in quel caso e' stata
      * eliminata e non c'e' nessun riepilogo da aprire.
      */
-    fun finishWorkout(startTime: Long, durationSeconds: Int, onFinished: (saved: Boolean) -> Unit) {
+    fun finishWorkout(
+        startTime: Long,
+        durationSeconds: Int,
+        onFinished: (saved: Boolean, routineChanges: List<RoutineChange>) -> Unit
+    ) {
         viewModelScope.launch {
             skipTimer()
+            // Il confronto con la scheda si fa prima di chiudere: chiudere non cambia le serie,
+            // ma tenerlo qui evita di rileggere tutto due volte.
+            val routineId = _uiState.value.routineId
+            val changes = if (routineId == null) emptyList() else {
+                repository.routineChangesFor(sessionId, routineId)
+            }
             val saved = repository.finishSession(
                 sessionId = sessionId,
                 startTime = startTime,
@@ -494,7 +517,23 @@ class ActiveWorkoutViewModel(
             // l'orologio non ha ancora sincronizzato non succede niente: ci riprova il riepilogo.
             if (saved) runCatching { healthSync.sync(sessionId) }
             _uiState.update { it.copy(isFinished = true) }
-            onFinished(saved)
+            onFinished(saved, if (saved) changes else emptyList())
+        }
+    }
+
+    /**
+     * Riporta sulla scheda l'allenamento appena chiuso: e' la risposta affermativa alla domanda
+     * di fine allenamento. Vedi [WorkoutRepository.applySessionToRoutine].
+     */
+    fun applyChangesToRoutine(onDone: () -> Unit) {
+        val routineId = _uiState.value.routineId
+        if (routineId == null) {
+            onDone()
+            return
+        }
+        viewModelScope.launch {
+            repository.applySessionToRoutine(sessionId, routineId)
+            onDone()
         }
     }
 

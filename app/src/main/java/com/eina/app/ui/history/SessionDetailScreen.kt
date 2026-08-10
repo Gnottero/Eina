@@ -10,6 +10,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -57,6 +58,7 @@ import com.eina.app.data.db.CompletedSetRow
 import com.eina.app.data.db.SetType
 import com.eina.app.data.db.WeightType
 import com.eina.app.data.db.countsAsWorking
+import com.eina.app.domain.Superset
 import com.eina.app.domain.totalVolume
 import com.eina.app.ui.components.EinaBadge
 import com.eina.app.ui.components.IslandButton
@@ -73,6 +75,8 @@ import com.eina.app.ui.components.setTypeAccent
 import com.eina.app.ui.components.setTypeLabel
 import com.eina.app.ui.components.MiniLineChart
 import com.eina.app.ui.components.StatTile
+import com.eina.app.ui.components.SupersetBadge
+import com.eina.app.ui.components.supersetColor
 import com.eina.app.ui.components.formatDayMonth
 import com.eina.app.ui.components.formatDecimal
 import com.eina.app.ui.components.formatDistanceAndTime
@@ -192,8 +196,15 @@ fun SessionDetailScreen(
         // che resta una cosa fra sport e vanto, non una cartella clinica.
         state.vitals?.let { vitals -> VitalsCard(vitals = vitals) }
 
+        // Stessa lettura dell'allenamento: il giro si riconosce dalla lettera e dal contorno,
+        // assegnati nell'ordine in cui i superset compaiono nella sessione.
+        val supersetLetters = Superset.letters(state.exercises.map { it.supersetGroup })
         state.exercises.forEachIndexed { index, exercise ->
-            ExerciseSummaryCard(position = index + 1, exercise = exercise)
+            ExerciseSummaryCard(
+                position = index + 1,
+                exercise = exercise,
+                supersetLetter = exercise.supersetGroup?.let { supersetLetters[it] }
+            )
         }
     }
 }
@@ -316,18 +327,34 @@ private fun StreakCard(weeks: Int) {
  * esercizio ripetuto nella stessa sessione compare due volte, con i suoi numeri separati.
  */
 @Composable
-private fun ExerciseSummaryCard(position: Int, exercise: SessionExerciseDetail) {
+private fun ExerciseSummaryCard(
+    position: Int,
+    exercise: SessionExerciseDetail,
+    supersetLetter: String?
+) {
     val island = EinaTheme.island
     // workingSets e totalVolume riscorrono la lista a ogni chiamata: le serie di un allenamento
     // gia' registrato non cambiano piu', quindi si calcolano una volta sola.
     val working = remember(exercise) { exercise.workingSets }
     val volume = remember(exercise) { totalVolume(exercise.sets) }
+    val supersetTint = supersetLetter?.let { supersetColor(it) }
 
     IslandCard(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .then(
+                if (supersetTint == null) Modifier
+                // TileShape e non IslandShape: e' la forma con cui IslandCard si disegna qui,
+                // e un contorno di forma diversa staccherebbe dal bordo della card.
+                else Modifier.border(2.dp, supersetTint, TileShape)
+            ),
         contentPadding = PaddingValues(Spacing.lg),
         verticalArrangement = Arrangement.spacedBy(Spacing.md)
     ) {
+        if (supersetLetter != null) {
+            SupersetBadge(letter = supersetLetter)
+        }
+
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
@@ -368,7 +395,7 @@ private fun ExerciseSummaryCard(position: Int, exercise: SessionExerciseDetail) 
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(TileShape)
-                .background(island.sunken)
+                .background(island.sunkenSoft)
                 .padding(vertical = Spacing.xs)
         ) {
             // Come in sessione: il numero segue le sole serie di lavoro, i riscaldamenti portano W.

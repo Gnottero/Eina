@@ -137,8 +137,11 @@
     <string name="active_add_set_action">Ajouter une série</string>
     <string name="active_undo_set_cd">Annuler la série</string>
     <string name="active_open_exercise">Ouvrir la fiche de l\'exercice</string>
-    <string name="active_move_up">Déplacer vers le haut</string>
-    <string name="active_move_down">Déplacer vers le bas</string>
+    <string name="action_reorder">Réorganiser les exercices</string>
+    <string name="reorder_action_description">Faites-les glisser dans l\'ordre voulu</string>
+    <string name="reorder_title">Ordre des exercices</string>
+    <string name="reorder_description">Appuyez longuement sur une ligne, puis faites-la glisser. Un superset se déplace d\'un bloc.</string>
+    <string name="reorder_handle_cd">Glisser pour déplacer</string>
     <string name="active_remove_exercise_description">Supprime aussi les séries enregistrées ici</string>
     <string name="active_replace_exercise_description">Garde séries, repos et superset, efface les valeurs enregistrées</string>
     <string name="routine_replace_exercise_description">Garde séries, repos et superset</string>
@@ -420,4 +423,16 @@
     <string name="exercise_progress_seconds">Secondes</string>
     <string name="exercise_progress_distance">Distance (km)</string>
     <string name="exercise_progress_minutes">Minutes</string>
+    <!-- Proposition de mettre a jour la seance a la fin de l'entrainement -->
+    <string name="routine_sync_title">Mettre \u00E0 jour la s\u00E9ance ?</string>
+    <string name="routine_sync_description">Cet entra\u00EEnement n\u2019a pas suivi \u00AB\u00A0%1$s\u00A0\u00BB. Voulez-vous que la s\u00E9ance ressemble \u00E0 ce que vous avez fait ?</string>
+    <string name="routine_sync_description_generic">Cet entra\u00EEnement n\u2019a pas suivi la s\u00E9ance de d\u00E9part. Voulez-vous que la s\u00E9ance ressemble \u00E0 ce que vous avez fait ?</string>
+    <string name="routine_sync_added">Ajout\u00E9 : %1$s</string>
+    <string name="routine_sync_removed">Retir\u00E9 : %1$s</string>
+    <string name="routine_sync_sets">%1$s : de %2$d \u00E0 %3$d s\u00E9ries</string>
+    <string name="routine_sync_rest">%1$s : r\u00E9cup\u00E9ration de %2$s \u00E0 %3$s</string>
+    <string name="routine_sync_reordered">Ordre des exercices modifi\u00E9</string>
+    <string name="routine_sync_targets_note">Le poids et les r\u00E9p\u00E9titions cibles deviennent aussi ceux enregistr\u00E9s.</string>
+    <string name="routine_sync_apply">Mettre \u00E0 jour la s\u00E9ance</string>
+    <string name="routine_sync_keep">Laisser telle quelle</string>
 </resources>

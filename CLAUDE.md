@@ -211,6 +211,10 @@ data class WorkoutExerciseEntity(
     val sessionId: Long,
     val exerciseId: Long,
     val order: Int,
+    // Fase 30 (DB v10, MIGRATION_9_10): il recupero e' dell'esercizio, non delle sue serie.
+    // Leggerlo dalla prima serie lo faceva tornare al valore della scheda appena quella serie
+    // era gia' svolta (una serie chiusa non si riscrive piu').
+    val restSeconds: Int = 90,
     val supersetGroup: Int? = null   // Fase 25: ereditato dalla routine, ritoccabile in palestra
 )
 
@@ -662,6 +666,43 @@ l'immagine byte per byte, permesso Health Connect concesso dal foglio di sistema
 Impostazioni che si aggiorna al ritorno. Il riepilogo con battiti e calorie non e' verificabile
 qui: su questo telefono Health Connect non ha ancora nessun dato: serve l'orologio collegato.
 Avvio a freddo 547 ms.
+
+**Fase 30 — Modifiche che restano, riordino a trascinamento, scheda che impara** *(fatta)*
+DoD:
+- Le modifiche fatte in palestra non tornano piu' indietro. `WorkoutRepository.reorderExercises`
+  confrontava l'ordine della riga in arrivo col proprio indice — e il chiamante gliela passava
+  gia' numerata, quindi la condizione era sempre falsa e non scriveva mai: ordine e superset
+  cambiati in sessione sparivano uscendo dall'allenamento, e al rientro si rivedeva la scheda.
+  Ora il confronto e' con la riga sul database. Il recupero aveva lo stesso sintomo per un'altra
+  strada: viveva solo sulle serie non ancora svolte, quindi con la prima serie gia' segnata la
+  card lo rileggeva da li'. E' diventato una colonna di `workout_exercises` (DB v10,
+  `MIGRATION_9_10`, valore preso dalla prima serie per le sessioni gia' registrate).
+- Riordino a trascinamento (`ui/components/ReorderSheet.kt`), in routine e in allenamento, dal
+  foglio del tocco lungo: al posto di "sposta su" / "sposta giu'" una posizione per volta. Si
+  trascinano blocchi e non card — un superset e' una riga sola, coi suoi membri elencati e il
+  suo colore — cosi' il giro resta una sequenza. `key()` sulle righe: senza, spostando una voce
+  il riconoscitore di gesti passava alla riga vicina e il trascinamento si interrompeva al primo
+  scatto. `Superset.blocksOf` diventa pubblica ed e' l'unita' di riordino; `moveBlock` sparisce.
+- A fine allenamento, se la sessione non ha seguito la scheda da cui era partita, si chiede se
+  aggiornarla, con l'elenco di cosa e' cambiato (`domain/RoutineSync.kt` coi suoi test:
+  aggiunti, tolti, serie, recupero, ordine). Il confronto e' per esercizio e non per posizione,
+  cosi' uno spostamento non si legge come "tolto uno, aggiunto un altro"; peso e ripetizioni non
+  entrano nel confronto (cambiano quasi sempre) ma accettando diventano i nuovi target.
+  Rispondendo di si' la scheda si riscrive dalla sessione (`applySessionToRoutine`).
+- Superset colorati anche nel riepilogo: `supersetGroup` viaggia in `CompletedSetRow`, la card
+  prende badge e contorno come in allenamento.
+- Fine del recupero puntuale ad app fuori dallo schermo. Il tick e' un coroutine, e col processo
+  congelato suono e vibrazione arrivavano solo rimettendo l'app in primo piano: ogni recupero
+  programma anche una sveglia di sistema (`ui/workout/RestAlarm.kt`, `USE_EXACT_ALARM`), e il
+  primo dei due che arriva chiama `RestTimerController.finish`, che vale una volta sola.
+- In Progressi i due riquadri contano tutto lo storico e non il giorno scelto; l'incassato
+  dentro le card bianche (tabella del riepilogo, campi di peso e ripetizioni) passa a un grigio
+  piu' chiaro (`sunkenSoft`); i numeri in evidenza dell'immagine social portano la rampa anche
+  nella variante trasparente, come il filo dell'intestazione.
+Verificata sul dispositivo: recupero cambiato dopo una serie gia' segnata e ritrovato al
+rientro, riordino trascinato che sopravvive all'uscita, foglio di aggiornamento della scheda con
+il recap giusto, superset colorati nel riepilogo, sveglia di fine recupero scattata ad app in
+background (`dumpsys alarm`: 1 wakeup) e riepilogo con battiti e calorie simulati.
 
 **Fase 9 — Rifinitura** *(fatta)*
 DoD: R8 + shrinkResources attivi sulla release (20,5 MB → 2,2 MB), regole in

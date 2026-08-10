@@ -33,11 +33,11 @@ import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.FitnessCenter
 import androidx.compose.material.icons.outlined.KeyboardArrowDown
-import androidx.compose.material.icons.outlined.KeyboardArrowUp
 import androidx.compose.material.icons.outlined.MusicNote
 import androidx.compose.material.icons.outlined.Repeat
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.SwapHoriz
+import androidx.compose.material.icons.outlined.SwapVert
 import androidx.compose.material.icons.outlined.Timer
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -81,6 +81,8 @@ import com.eina.app.ui.components.previousColumnWeight
 import com.eina.app.ui.components.IslandEmptyState
 import com.eina.app.ui.components.IslandIconButton
 import com.eina.app.ui.components.IslandSecondaryButton
+import com.eina.app.ui.components.ReorderRow
+import com.eina.app.ui.components.ReorderSheet
 import com.eina.app.ui.components.IslandSurface
 import com.eina.app.ui.components.IslandTextField
 import com.eina.app.ui.components.RestTimeSheet
@@ -95,8 +97,10 @@ import com.eina.app.ui.components.SupersetOption
 import com.eina.app.ui.components.SupersetSheet
 import com.eina.app.ui.components.supersetColor
 import com.eina.app.ui.components.sanitizeWeightInput
+import com.eina.app.domain.RoutineChange
 import com.eina.app.domain.Superset
 import com.eina.app.ui.feedback.LocalHapticTap
+import com.eina.app.ui.library.currentLocale
 import com.eina.app.ui.library.localized
 import com.eina.app.ui.routine.launchPlaylist
 import com.eina.app.ui.theme.EinaTheme
@@ -127,7 +131,11 @@ fun ActiveWorkoutScreen(
     var setTypeFor by remember { mutableStateOf<SetRef?>(null) }
     var supersetSheetFor by remember { mutableStateOf<Long?>(null) }
     var replaceSheetFor by remember { mutableStateOf<Long?>(null) }
+    var showReorder by remember { mutableStateOf(false) }
     var confirmFinish by remember { mutableStateOf(false) }
+    // Modifiche rispetto alla scheda di partenza: se ce ne sono, fra il "Termina" e il riepilogo
+    // si passa dalla domanda su cosa farne.
+    var routineChanges by remember { mutableStateOf<List<RoutineChange>>(emptyList()) }
     var confirmCancel by remember { mutableStateOf(false) }
 
     // I fogli sono ancorati all'id, non alla copia dell'esercizio: cosi' restano aperti sui dati
@@ -247,16 +255,10 @@ fun ActiveWorkoutScreen(
     }
 
     if (actionsSheetExercise != null) {
-        val index = state.exercises.indexOf(actionsSheetExercise)
-        // Un superset si sposta a blocco: le frecce guardano dove comincia e dove finisce il giro,
-        // non la singola card, altrimenti l'ultimo membro avrebbe una freccia che non muove nulla.
-        val group = actionsSheetExercise.supersetGroup
-        val blockFirst = if (group == null) index else state.exercises.indexOfFirst { it.supersetGroup == group }
-        val blockLast = if (group == null) index else state.exercises.indexOfLast { it.supersetGroup == group }
         ExerciseActionsSheet(
             exercise = actionsSheetExercise,
-            canMoveUp = blockFirst > 0,
-            canMoveDown = blockLast < state.exercises.size - 1,
+            // Con un esercizio solo (o un superset solo) non c'e' niente da riordinare.
+            canReorder = supersetBlocks(state.exercises, supersetLetters).size > 1,
             onOpenExercise = {
                 onOpenExercise(actionsSheetExercise.exerciseId)
                 actionsSheetFor = null
@@ -265,8 +267,7 @@ fun ActiveWorkoutScreen(
                 notesSheetFor = actionsSheetExercise.workoutExerciseId
                 actionsSheetFor = null
             },
-            onMoveUp = { viewModel.moveExercise(actionsSheetExercise.workoutExerciseId, -1); actionsSheetFor = null },
-            onMoveDown = { viewModel.moveExercise(actionsSheetExercise.workoutExerciseId, 1); actionsSheetFor = null },
+            onReorder = { showReorder = true; actionsSheetFor = null },
             onEditRest = {
                 restSheetFor = actionsSheetExercise.workoutExerciseId
                 actionsSheetFor = null
@@ -283,6 +284,16 @@ fun ActiveWorkoutScreen(
             onAddSet = { viewModel.addSet(actionsSheetExercise.workoutExerciseId); actionsSheetFor = null },
             onRemove = { viewModel.removeExercise(actionsSheetExercise.workoutExerciseId); actionsSheetFor = null },
             onDismiss = { actionsSheetFor = null }
+        )
+    }
+
+    if (showReorder) {
+        // Si trascinano blocchi, non card: un superset e' una sequenza e si sposta intero.
+        ReorderSheet(
+            title = stringResource(R.string.reorder_title),
+            rows = supersetBlocks(state.exercises, supersetLetters),
+            onConfirm = { keys -> viewModel.applyOrder(keys.flatMap { it.split(',').map(String::toLong) }) },
+            onDismiss = { showReorder = false }
         )
     }
 
@@ -397,11 +408,24 @@ fun ActiveWorkoutScreen(
             onConfirm = { startTime, duration ->
                 // Senza esercizi la sessione viene eliminata invece che salvata: si esce come da
                 // "Annulla", perche' non c'e' nessun riepilogo da mostrare.
-                viewModel.finishWorkout(startTime, duration) { saved ->
-                    if (saved) onFinished() else onCancelled()
+                viewModel.finishWorkout(startTime, duration) { saved, changes ->
+                    when {
+                        !saved -> onCancelled()
+                        changes.isEmpty() -> onFinished()
+                        else -> routineChanges = changes
+                    }
                 }
             },
             onDismiss = { confirmFinish = false }
+        )
+    }
+
+    if (routineChanges.isNotEmpty()) {
+        RoutineSyncSheet(
+            routineName = state.routineName,
+            changes = routineChanges,
+            onUpdate = { routineChanges = emptyList(); viewModel.applyChangesToRoutine(onFinished) },
+            onKeep = { routineChanges = emptyList(); onFinished() }
         )
     }
 
@@ -874,12 +898,10 @@ private fun SetCheckButton(completed: Boolean, onClick: () -> Unit) {
 @Composable
 private fun ExerciseActionsSheet(
     exercise: SessionExerciseUi,
-    canMoveUp: Boolean,
-    canMoveDown: Boolean,
+    canReorder: Boolean,
     onOpenExercise: () -> Unit,
     onEditNotes: () -> Unit,
-    onMoveUp: () -> Unit,
-    onMoveDown: () -> Unit,
+    onReorder: () -> Unit,
     onEditRest: () -> Unit,
     onEditSuperset: () -> Unit,
     onReplace: () -> Unit,
@@ -924,18 +946,12 @@ private fun ExerciseActionsSheet(
             label = stringResource(R.string.active_add_set_action),
             onClick = onAddSet
         )
-        if (canMoveUp) {
+        if (canReorder) {
             SheetActionRow(
-                icon = Icons.Outlined.KeyboardArrowUp,
-                label = stringResource(R.string.active_move_up),
-                onClick = onMoveUp
-            )
-        }
-        if (canMoveDown) {
-            SheetActionRow(
-                icon = Icons.Outlined.KeyboardArrowDown,
-                label = stringResource(R.string.active_move_down),
-                onClick = onMoveDown
+                icon = Icons.Outlined.SwapVert,
+                label = stringResource(R.string.action_reorder),
+                description = stringResource(R.string.reorder_action_description),
+                onClick = onReorder
             )
         }
         SheetActionRow(
@@ -1006,4 +1022,37 @@ private fun formatPrevious(set: com.eina.app.data.db.SetEntryEntity, weightType:
     if (!weightType.usesWeight) return reps ?: "—"
     val weight = set.weight?.let { "${formatNumber(it)}kg" }
     return listOfNotNull(weight, reps).joinToString("×").ifBlank { "—" }
+}
+
+/**
+ * Gli esercizi della sessione visti come blocchi trascinabili: un superset e' una riga sola,
+ * perche' i suoi membri si spostano insieme. La chiave della riga sono gli id dei membri, cosi'
+ * l'ordine confermato si riappiattisce senza tenere una mappa a parte.
+ */
+@Composable
+private fun supersetBlocks(
+    exercises: List<SessionExerciseUi>,
+    letters: Map<Int, String>
+): List<ReorderRow> {
+    // getString e locale letti fuori: dentro le lambda di map non si chiamano composable.
+    val context = LocalContext.current
+    val locale = currentLocale()
+    return Superset.blocksOf(exercises.map { Superset.Member(it.workoutExerciseId, it.supersetGroup) })
+        .map { block ->
+            val members = block.mapNotNull { member ->
+                exercises.find { it.workoutExerciseId == member.id }
+            }
+            val group = members.firstOrNull()?.supersetGroup
+            val letter = group?.let { letters[it] }
+            ReorderRow(
+                key = members.joinToString(",") { it.workoutExerciseId.toString() },
+                title = if (letter == null) {
+                    members.firstOrNull()?.name?.localized(locale).orEmpty()
+                } else {
+                    context.getString(R.string.superset_badge, letter)
+                },
+                subtitle = if (letter == null) null else members.joinToString(" · ") { it.name.localized(locale) },
+                tint = letter?.let { supersetColor(it) }
+            )
+        }
 }

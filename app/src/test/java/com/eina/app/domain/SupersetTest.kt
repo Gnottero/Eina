@@ -69,18 +69,10 @@ class SupersetTest {
     }
 
     @Test
-    fun `spostare un membro del giro sposta tutto il blocco`() {
-        val list = members(1L to null, 2L to 3, 3L to 3, 4L to null)
-        val result = Superset.moveBlock(list, movedId = 3L, delta = 1)
+    fun `i membri di un giro stanno in un blocco solo`() {
+        val blocks = Superset.blocksOf(members(1L to null, 2L to 3, 3L to 3, 4L to null))
 
-        assertEquals(listOf(1L, 4L, 2L, 3L), result.map { it.id })
-    }
-
-    @Test
-    fun `un blocco gia in cima non si sposta piu su`() {
-        val list = members(1L to 3, 2L to 3, 3L to null)
-
-        assertEquals(list, Superset.moveBlock(list, movedId = 2L, delta = -1))
+        assertEquals(listOf(listOf(1L), listOf(2L, 3L), listOf(4L)), blocks.map { block -> block.map { it.id } })
     }
 
     @Test

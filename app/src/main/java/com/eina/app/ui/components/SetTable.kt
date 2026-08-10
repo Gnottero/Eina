@@ -122,7 +122,7 @@ fun SetValueField(
         cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
         modifier = modifier
             .clip(PillShape)
-            .background(island.sunken)
+            .background(island.sunkenSoft)
             .padding(vertical = Spacing.md, horizontal = Spacing.xs),
         decorationBox = { inner ->
             Box(contentAlignment = Alignment.Center) {

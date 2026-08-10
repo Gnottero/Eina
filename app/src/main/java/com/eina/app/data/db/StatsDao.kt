@@ -19,6 +19,8 @@ data class CompletedSetRow(
     // due volte nello stesso allenamento resta cosi' due blocchi distinti, non uno solo.
     val workoutExerciseId: Long = 0,
     val exerciseOrder: Int = 0,
+    // Superset di appartenenza: serve al riepilogo per colorare i giri come in allenamento.
+    val supersetGroup: Int? = null,
     // Nome della routine da cui e' partita la sessione: null per un allenamento libero.
     val routineName: String? = null,
     val exerciseId: Long,
@@ -40,6 +42,7 @@ interface StatsDao {
         """
         SELECT ws.id AS sessionId, ws.startTime AS sessionStart, ws.endTime AS sessionEnd,
                we.id AS workoutExerciseId, we.`order` AS exerciseOrder,
+               we.supersetGroup AS supersetGroup,
                r.name AS routineName,
                e.id AS exerciseId, e.weightType AS weightType,
                e.bodyweightFactor AS bodyweightFactor,
@@ -62,6 +65,7 @@ interface StatsDao {
         """
         SELECT ws.id AS sessionId, ws.startTime AS sessionStart, ws.endTime AS sessionEnd,
                we.id AS workoutExerciseId, we.`order` AS exerciseOrder,
+               we.supersetGroup AS supersetGroup,
                r.name AS routineName,
                e.id AS exerciseId, e.weightType AS weightType,
                e.bodyweightFactor AS bodyweightFactor,
@@ -85,6 +89,7 @@ interface StatsDao {
         """
         SELECT ws.id AS sessionId, ws.startTime AS sessionStart, ws.endTime AS sessionEnd,
                we.id AS workoutExerciseId, we.`order` AS exerciseOrder,
+               we.supersetGroup AS supersetGroup,
                r.name AS routineName,
                e.id AS exerciseId, e.weightType AS weightType,
                e.bodyweightFactor AS bodyweightFactor,

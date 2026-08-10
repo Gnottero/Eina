@@ -6,8 +6,11 @@ import com.eina.app.data.db.ExerciseEntity
 import com.eina.app.data.db.RoutineDao
 import com.eina.app.data.db.RoutineEntity
 import com.eina.app.data.db.RoutineExerciseDao
+import com.eina.app.data.db.RoutineExerciseEntity
 import com.eina.app.data.db.RoutineSetDao
+import com.eina.app.data.db.RoutineSetEntity
 import com.eina.app.data.db.countsAsWorking
+import com.eina.app.data.db.exerciseName
 import com.eina.app.data.db.SetEntryDao
 import com.eina.app.data.db.SetEntryEntity
 import com.eina.app.data.db.WeightType
@@ -15,6 +18,9 @@ import com.eina.app.data.db.WorkoutExerciseDao
 import com.eina.app.data.db.WorkoutExerciseEntity
 import com.eina.app.data.db.WorkoutSessionDao
 import com.eina.app.data.db.WorkoutSessionEntity
+import com.eina.app.domain.PlanItem
+import com.eina.app.domain.RoutineChange
+import com.eina.app.domain.routineChanges
 import com.eina.app.domain.isNewPR
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -76,6 +82,7 @@ class WorkoutRepository(
                     sessionId = sessionId,
                     exerciseId = routineExercise.exerciseId,
                     order = index,
+                    restSeconds = routineExercise.restSeconds,
                     // La nota della routine parte come nota della sessione: modificarla durante
                     // l'allenamento non deve riscrivere il template. Stessa storia per il
                     // superset: il giro della scheda si puo' rifare in palestra senza toccarla.
@@ -173,6 +180,78 @@ class WorkoutRepository(
             )
         }
 
+    /**
+     * La scheda ridotta a quel che si confronta con l'allenamento svolto: vedi
+     * [com.eina.app.domain.routineChanges].
+     */
+    suspend fun routinePlan(routineId: Long): List<PlanItem> =
+        routineExerciseDao.getForRoutine(routineId).first().sortedBy { it.order }.mapNotNull { routineExercise ->
+            val exercise = exerciseDao.getById(routineExercise.exerciseId) ?: return@mapNotNull null
+            PlanItem(
+                exerciseId = routineExercise.exerciseId,
+                name = exercise.exerciseName(),
+                setCount = routineSetDao.getForRoutineExercise(routineExercise.id).size,
+                restSeconds = routineExercise.restSeconds
+            )
+        }
+
+    /** Cosa e' cambiato fra la scheda e l'allenamento: lista vuota se l'ha seguita alla lettera. */
+    suspend fun routineChangesFor(sessionId: Long, routineId: Long): List<RoutineChange> =
+        routineChanges(routinePlan(routineId), sessionPlan(sessionId))
+
+    /** L'allenamento svolto nella stessa forma della scheda, per poterli confrontare. */
+    suspend fun sessionPlan(sessionId: Long): List<PlanItem> =
+        workoutExerciseDao.getForSessionOnce(sessionId).mapNotNull { workoutExercise ->
+            val exercise = exerciseDao.getById(workoutExercise.exerciseId) ?: return@mapNotNull null
+            val sets = setEntryDao.getForWorkoutExercise(workoutExercise.id).first()
+            PlanItem(
+                exerciseId = workoutExercise.exerciseId,
+                name = exercise.exerciseName(),
+                setCount = sets.size,
+                restSeconds = workoutExercise.restSeconds
+            )
+        }
+
+    /**
+     * Riscrive la scheda com'e' andato l'allenamento: esercizi, ordine, superset, note, recupero
+     * e serie (numero e tipo). I target diventano i valori registrati, perche' una scheda
+     * aggiornata dopo un allenamento serve a ripartire da li' la volta dopo.
+     *
+     * Le voci si rifanno da capo invece di correggerle una a una: le differenze possono essere
+     * di ogni genere (una voce in mezzo tolta, due aggiunte, l'ordine ribaltato) e un merge
+     * incrementale avrebbe piu' casi che righe.
+     */
+    suspend fun applySessionToRoutine(sessionId: Long, routineId: Long) {
+        val sessionExercises = workoutExerciseDao.getForSessionOnce(sessionId)
+        // La cascade di routine_exercises porta via anche le sue routine_sets.
+        routineExerciseDao.getForRoutine(routineId).first().forEach { routineExerciseDao.delete(it) }
+        sessionExercises.forEachIndexed { index, workoutExercise ->
+            val sets = setEntryDao.getForWorkoutExercise(workoutExercise.id).first()
+            val routineExerciseId = routineExerciseDao.insert(
+                RoutineExerciseEntity(
+                    routineId = routineId,
+                    exerciseId = workoutExercise.exerciseId,
+                    order = index,
+                    restSeconds = workoutExercise.restSeconds,
+                    notes = workoutExercise.notes,
+                    supersetGroup = workoutExercise.supersetGroup
+                )
+            )
+            sets.forEachIndexed { setIndex, set ->
+                routineSetDao.insert(
+                    RoutineSetEntity(
+                        routineExerciseId = routineExerciseId,
+                        setIndex = setIndex,
+                        // Una serie lasciata a meta' non deve cancellare il target che c'era.
+                        targetReps = set.actualReps ?: set.targetReps,
+                        targetWeight = set.weight,
+                        setType = set.setType
+                    )
+                )
+            }
+        }
+    }
+
     suspend fun getSessionExercises(sessionId: Long): List<WorkoutExerciseEntity> =
         workoutExerciseDao.getForSessionOnce(sessionId)
 
@@ -188,7 +267,12 @@ class WorkoutRepository(
 
     suspend fun addExercise(sessionId: Long, exerciseId: Long, order: Int, defaultRestSeconds: Int = 90): Long {
         val workoutExerciseId = workoutExerciseDao.insert(
-            WorkoutExerciseEntity(sessionId = sessionId, exerciseId = exerciseId, order = order)
+            WorkoutExerciseEntity(
+                sessionId = sessionId,
+                exerciseId = exerciseId,
+                order = order,
+                restSeconds = defaultRestSeconds
+            )
         )
         setEntryDao.insert(
             SetEntryEntity(
@@ -240,14 +324,31 @@ class WorkoutRepository(
         workoutExerciseDao.update(current.copy(notes = notes))
     }
 
+    /** Recupero dell'esercizio in sessione: vedi [WorkoutExerciseEntity.restSeconds]. */
+    suspend fun setExerciseRestSeconds(workoutExerciseId: Long, restSeconds: Int) {
+        val current = workoutExerciseDao.getById(workoutExerciseId) ?: return
+        if (current.restSeconds == restSeconds) return
+        workoutExerciseDao.update(current.copy(restSeconds = restSeconds))
+    }
+
     suspend fun removeExercise(workoutExerciseId: Long) {
         workoutExerciseDao.deleteById(workoutExerciseId)
     }
 
+    /**
+     * Riscrive la lista degli esercizi di sessione: la posizione nella lista *e'* il campo
+     * `order`, e con essa viaggiano superset e note.
+     *
+     * Il confronto va fatto con la riga sul database, non con l'`order` di quella in arrivo: il
+     * chiamante costruisce le righe gia' numerate, quindi confrontarle con il proprio indice
+     * dava sempre "uguale" e non veniva scritto mai niente. Ordine e superset cambiati in
+     * palestra sparivano uscendo dall'allenamento, e al rientro tornava fuori la scheda.
+     */
     suspend fun reorderExercises(orderedWorkoutExercises: List<WorkoutExerciseEntity>) {
         orderedWorkoutExercises.forEachIndexed { index, workoutExercise ->
-            if (workoutExercise.order != index) {
-                workoutExerciseDao.update(workoutExercise.copy(order = index))
+            val updated = workoutExercise.copy(order = index)
+            if (workoutExerciseDao.getById(workoutExercise.id) != updated) {
+                workoutExerciseDao.update(updated)
             }
         }
     }
