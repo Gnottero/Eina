@@ -185,7 +185,11 @@ fun ActiveWorkoutScreen(
                 // scritte serie per serie, e lasciarle senza ricalcolo darebbe record sbagliati.
                 onExit = {
                     if (!editing) onExit()
-                    else viewModel.saveEdits(state.startTime, state.elapsedSeconds, onExit)
+                    // Tolte tutte le serie svolte l'allenamento non esiste piu': si esce come da
+                    // "Annulla", perche' il riepilogo alle spalle non ha piu' niente da mostrare.
+                    else viewModel.saveEdits(state.startTime, state.elapsedSeconds) { kept ->
+                        if (kept) onExit() else onCancelled()
+                    }
                 },
                 modifier = Modifier.padding(horizontal = Spacing.xl, vertical = Spacing.md)
             )
@@ -429,7 +433,9 @@ fun ActiveWorkoutScreen(
             editing = editing,
             onConfirm = { startTime, duration ->
                 if (editing) {
-                    viewModel.saveEdits(startTime, duration, onFinished)
+                    viewModel.saveEdits(startTime, duration) { kept ->
+                        if (kept) onFinished() else onCancelled()
+                    }
                     return@FinishWorkoutSheet
                 }
                 // Senza esercizi la sessione viene eliminata invece che salvata: si esce come da

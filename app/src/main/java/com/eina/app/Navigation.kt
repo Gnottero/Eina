@@ -150,7 +150,12 @@ fun EinaNavHost() {
                     editing = true,
                     onFinished = { navController.popBackStack() },
                     onExit = { navController.popBackStack() },
-                    onCancelled = { navController.popBackStack() },
+                    // L'allenamento non c'e' piu' (gli si sono tolte tutte le serie svolte):
+                    // si salta anche il suo riepilogo, che mostrerebbe una schermata vuota.
+                    onCancelled = {
+                        navController.popBackStack()
+                        navController.popBackStack()
+                    },
                     onOpenExercise = { exerciseId ->
                         navController.navigate("library/exercise/$exerciseId")
                     }

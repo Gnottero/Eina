@@ -730,7 +730,13 @@ DoD:
   `answerRoutineSync` chiude davvero.
 - Una sessione si butta quando non ha *serie svolte*, non piu' quando non ha esercizi: lo
   storico si disegna sulle serie completate, quindi un allenamento aperto, riempito di esercizi
-  e mai fatto restava una riga invisibile.
+  e mai fatto restava una riga invisibile. Le righe fantasma lasciate dalle versioni precedenti
+  si tolgono da sole: `WorkoutSessionDao.deleteEmptySessions` (sessioni con `endTime` non nullo
+  e nessuna serie completata) gira a ogni avvio dall'`EinaApplication`, e di nuovo dopo la
+  correzione di un allenamento passato — svuotarne tutte le serie e' l'unico altro modo di
+  crearne una. L'allenamento in corso non si tocca: ha `endTime` nullo finche' non si termina.
+  Se la correzione lascia la sessione senza serie svolte, `saveEdits` risponde `kept = false` e
+  la navigazione salta anche il riepilogo, che non avrebbe piu' niente da mostrare.
 Verificata sul dispositivo con debug e release: peso di una serie corretto da 70 a 42 kg con il
 badge PR sparito da solo e il volume sceso, sessione da routine senza nemmeno una serie svolta
 che chiede lo stesso di aggiornare la scheda (e la aggiorna davvero, verificato su una routine

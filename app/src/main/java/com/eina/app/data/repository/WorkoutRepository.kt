@@ -125,10 +125,7 @@ class WorkoutRepository(
         endTime: Long? = null
     ): Boolean {
         val session = workoutSessionDao.getById(sessionId) ?: return false
-        val hasCompletedSets = workoutExerciseDao.getForSessionOnce(sessionId).any { workoutExercise ->
-            setEntryDao.getForWorkoutExercise(workoutExercise.id).first().any { it.completedAt != null }
-        }
-        if (!hasCompletedSets) {
+        if (!hasCompletedSets(sessionId)) {
             workoutSessionDao.deleteById(sessionId)
             return false
         }
@@ -193,6 +190,24 @@ class WorkoutRepository(
     /** Esercizi toccati da una sessione: la lista da passare a [recomputePrs] dopo averla corretta. */
     suspend fun exerciseIdsOfSession(sessionId: Long): List<Long> =
         workoutExerciseDao.getForSessionOnce(sessionId).map { it.exerciseId }
+
+    /** Se la sessione ha almeno una serie svolta: e' quel che la rende un allenamento. */
+    suspend fun hasCompletedSets(sessionId: Long): Boolean =
+        workoutExerciseDao.getForSessionOnce(sessionId).any { workoutExercise ->
+            setEntryDao.getForWorkoutExercise(workoutExercise.id).first().any { it.completedAt != null }
+        }
+
+    /**
+     * Toglie le sessioni chiuse senza nemmeno una serie svolta. Non sono allenamenti: lo storico
+     * si disegna sulle serie completate, quindi erano righe invisibili che nessuna schermata
+     * poteva eliminare. Gira all'avvio dell'app e dopo aver corretto un allenamento passato,
+     * cioe' nei due punti in cui una riga del genere puo' trovarsi nel database — le vecchie
+     * versioni ne lasciavano, e svuotare tutte le serie di un allenamento e' un modo di crearne.
+     *
+     * L'allenamento in corso non e' toccato: ha `endTime` nullo finche' non si preme "Termina".
+     * Ritorna quante ne ha eliminate.
+     */
+    suspend fun purgeEmptySessions(): Int = workoutSessionDao.deleteEmptySessions()
 
     /** Cancella tutto lo storico, sessione in corso compresa. Irreversibile: si conferma prima. */
     suspend fun deleteAllSessions() {

@@ -3,6 +3,7 @@ package com.eina.app
 import android.app.Application
 import android.content.Context
 import com.eina.app.data.prefs.AppLocale
+import com.eina.app.data.repository.WorkoutRepository
 import com.eina.app.data.seed.ExerciseSeeder
 import com.eina.app.di.appModule
 import kotlinx.coroutines.CoroutineScope
@@ -33,6 +34,10 @@ class EinaApplication : Application() {
             // Il seed gira fuori dal main thread al primo avvio: se l'asset manca o e' malformato
             // l'app resta usabile con la libreria vuota invece di crashare in partenza.
             runCatching { get<ExerciseSeeder>().seedIfEmpty() }
+            // Righe fantasma lasciate dalle versioni precedenti: allenamenti chiusi senza nemmeno
+            // una serie svolta, che lo storico non mostra e nessuna schermata puo' eliminare.
+            // Vedi WorkoutRepository.purgeEmptySessions.
+            runCatching { get<WorkoutRepository>().purgeEmptySessions() }
         }
     }
 }

@@ -612,15 +612,20 @@ class ActiveWorkoutViewModel(
      * spostare il massimo di un esercizio in un allenamento di mesi fa
      * (vedi [com.eina.app.domain.recomputePrFlags]).
      */
-    fun saveEdits(startTime: Long, durationSeconds: Int, onDone: () -> Unit) {
+    fun saveEdits(startTime: Long, durationSeconds: Int, onDone: (kept: Boolean) -> Unit) {
         viewModelScope.launch {
             repository.updateSessionTimes(sessionId, startTime, durationSeconds)
             repository.recomputePrs(touchedExerciseIds + repository.exerciseIdsOfSession(sessionId))
             touchedExerciseIds.clear()
+            // Un allenamento a cui si sono tolte tutte le serie svolte non e' piu' un allenamento:
+            // lo storico non lo disegnerebbe e resterebbe una riga fantasma
+            // (vedi [WorkoutRepository.purgeEmptySessions]). Sparisce come chi lo annulla.
+            val kept = repository.hasCompletedSets(sessionId)
+            if (!kept) repository.purgeEmptySessions()
             _uiState.update {
                 it.copy(startTime = startTime, elapsedSeconds = durationSeconds.coerceAtLeast(0))
             }
-            onDone()
+            onDone(kept)
         }
     }
 

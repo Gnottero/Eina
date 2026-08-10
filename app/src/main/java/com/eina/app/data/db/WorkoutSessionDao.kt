@@ -40,6 +40,26 @@ interface WorkoutSessionDao {
     suspend fun deleteById(id: Long)
 
     /**
+     * Elimina le sessioni chiuse senza nemmeno una serie svolta: righe che lo storico non disegna
+     * (si basa sulle serie completate) ma che restavano nel database, invisibili e non
+     * cancellabili da nessuna schermata.
+     *
+     * `endTime IS NOT NULL` tiene fuori l'allenamento in corso, che di serie svolte non ne ha
+     * finche' non se ne chiude la prima. Ritorna quante ne ha tolte.
+     */
+    @Query(
+        """
+        DELETE FROM workout_sessions
+        WHERE endTime IS NOT NULL AND id NOT IN (
+            SELECT we.sessionId FROM set_entries se
+            INNER JOIN workout_exercises we ON se.workoutExerciseId = we.id
+            WHERE se.completedAt IS NOT NULL
+        )
+        """
+    )
+    suspend fun deleteEmptySessions(): Int
+
+    /**
      * Svuota lo storico. Esercizi e serie spariscono con le sessioni (ON DELETE CASCADE),
      * routine, libreria e peso corporeo restano.
      */
