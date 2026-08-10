@@ -33,14 +33,31 @@ class ActiveWorkoutViewModel(
     private val feedback: WorkoutFeedback,
     private val restTimer: RestTimerController,
     private val healthSync: WorkoutHealthSync,
-    private val sessionId: Long
+    private val sessionId: Long,
+    /**
+     * Allenamento gia' registrato, aperto dallo storico per correggerlo. Cambiano tre cose: il
+     * cronometro non scorre (la durata e' quella salvata), chiudere una serie non fa partire il
+     * recupero — non si e' in palestra — e l'istante di completamento resta dentro la giornata
+     * dell'allenamento invece di essere "adesso".
+     */
+    private val isPast: Boolean = false
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(ActiveWorkoutUiState(sessionId = sessionId))
+    private val _uiState = MutableStateFlow(ActiveWorkoutUiState(sessionId = sessionId, isPast = isPast))
     val uiState: StateFlow<ActiveWorkoutUiState> = _uiState.asStateFlow()
 
     /** Target della routine di partenza, per exerciseId: alimentano i segnaposto dei campi. */
     private var routineTargets: Map<Long, RoutineTarget> = emptyMap()
+
+    /** Fine allenamento in attesa della risposta sulla scheda: vedi [finishWorkout]. */
+    private var pendingFinish: PendingFinish? = null
+
+    /**
+     * Esercizi usciti dalla sessione mentre la si correggeva. Vanno ricordati: quando si salva
+     * non sono piu' fra i suoi esercizi, ma il loro record puo' essere proprio la serie appena
+     * tolta e va rifatto anche per loro.
+     */
+    private val touchedExerciseIds = mutableSetOf<Long>()
 
     init {
         repository.observeExercises()
@@ -56,14 +73,23 @@ class ActiveWorkoutViewModel(
             }
             .launchIn(viewModelScope)
         loadSession()
-        startElapsedTicker()
+        if (!isPast) startElapsedTicker()
     }
 
     private fun loadSession() {
         viewModelScope.launch {
             val session = repository.getSession(sessionId)
             if (session != null) {
-                _uiState.update { it.copy(startTime = session.startTime) }
+                _uiState.update {
+                    it.copy(
+                        startTime = session.startTime,
+                        // Su un allenamento passato la durata e' quella registrata, non il tempo
+                        // trascorso da allora: il ticker non gira e va scritta qui.
+                        elapsedSeconds = if (!isPast) it.elapsedSeconds else {
+                            (((session.endTime ?: session.startTime) - session.startTime) / 1000).toInt()
+                        }
+                    )
+                }
                 session.routineId?.let { routineId ->
                     routineTargets = repository.getRoutineTargets(routineId)
                     val routine = repository.getRoutine(routineId)
@@ -222,6 +248,8 @@ class ActiveWorkoutViewModel(
      */
     fun replaceExercise(workoutExerciseId: Long, exercise: ExerciseEntity) {
         viewModelScope.launch {
+            _uiState.value.exercises.find { it.workoutExerciseId == workoutExerciseId }
+                ?.let { touchedExerciseIds += it.exerciseId }
             if (!repository.replaceExercise(workoutExerciseId, exercise.id)) return@launch
             val entity = repository.getSessionExercises(sessionId)
                 .find { it.id == workoutExerciseId } ?: return@launch
@@ -231,6 +259,8 @@ class ActiveWorkoutViewModel(
 
     fun removeExercise(workoutExerciseId: Long) {
         viewModelScope.launch {
+            _uiState.value.exercises.find { it.workoutExerciseId == workoutExerciseId }
+                ?.let { touchedExerciseIds += it.exerciseId }
             repository.removeExercise(workoutExerciseId)
             // Tolto un compagno, un superset rimasto da solo non e' piu' un superset.
             val remaining = dissolveOrphanSupersets(
@@ -435,12 +465,20 @@ class ActiveWorkoutViewModel(
                 actualReps = set.actualReps ?: set.suggestedReps,
                 weight = set.weight ?: set.suggestedWeight
             )
-            val completed = repository.completeSet(filled.toEntity(workoutExerciseId), exercise.exerciseId, exercise.weightType)
+            val completed = repository.completeSet(
+                set = filled.toEntity(workoutExerciseId),
+                exerciseId = exercise.exerciseId,
+                weightType = exercise.weightType,
+                // Correggendo un allenamento passato, "adesso" metterebbe la serie in cima allo
+                // storico: la si colloca dentro la giornata in cui e' stata fatta.
+                completedAt = if (!isPast) System.currentTimeMillis() else pastCompletionTime(exercise, set)
+            )
             refreshSets(workoutExerciseId)
             feedback.haptic()
             // In un superset il recupero non spetta alla singola serie ma al giro: parte solo
-            // quando ogni compagno ha chiuso la sua serie di pari indice.
-            if (completed.setType.countsAsWorking && isRoundComplete(workoutExerciseId, set.setIndex)) {
+            // quando ogni compagno ha chiuso la sua serie di pari indice. Su un allenamento gia'
+            // registrato non parte affatto: si sta scrivendo, non ci si sta allenando.
+            if (!isPast && completed.setType.countsAsWorking && isRoundComplete(workoutExerciseId, set.setIndex)) {
                 startRestTimer(completed.restSecondsPlanned)
             }
         }
@@ -463,6 +501,20 @@ class ActiveWorkoutViewModel(
             )
             refreshSets(workoutExerciseId)
         }
+    }
+
+    /**
+     * Istante in cui collocare una serie chiusa mentre si corregge un allenamento passato:
+     * dentro la durata registrata, nell'ordine in cui gli esercizi e le serie compaiono. Serve
+     * ai record, che si assegnano seguendo l'ordine di completamento, e all'"ultima volta".
+     */
+    private fun pastCompletionTime(exercise: SessionExerciseUi, set: SessionSetUi): Long {
+        val state = _uiState.value
+        val position = state.exercises.indexOfFirst { it.workoutExerciseId == exercise.workoutExerciseId }
+            .coerceAtLeast(0)
+        val offset = (position * MAX_SETS_PER_EXERCISE + set.setIndex) * 60_000L
+        val end = state.startTime + state.elapsedSeconds * 1000L
+        return (state.startTime + offset).coerceAtMost(end.coerceAtLeast(state.startTime))
     }
 
     /**
@@ -498,41 +550,76 @@ class ActiveWorkoutViewModel(
     fun finishWorkout(
         startTime: Long,
         durationSeconds: Int,
-        onFinished: (saved: Boolean, routineChanges: List<RoutineChange>) -> Unit
+        onNeedsRoutineAnswer: (List<RoutineChange>) -> Unit,
+        onFinished: (saved: Boolean) -> Unit
     ) {
         viewModelScope.launch {
             skipTimer()
-            // Il confronto con la scheda si fa prima di chiudere: chiudere non cambia le serie,
-            // ma tenerlo qui evita di rileggere tutto due volte.
+            // Il confronto con la scheda si fa prima di chiudere, e la domanda si fa prima di
+            // scrivere: una sessione senza serie svolte non finisce nello storico, ma le
+            // modifiche fatte in palestra valgono lo stesso — se la si chiudesse subito, quando
+            // arriva la risposta non ci sarebbe piu' niente da copiare sulla scheda.
             val routineId = _uiState.value.routineId
             val changes = if (routineId == null) emptyList() else {
                 repository.routineChangesFor(sessionId, routineId)
             }
-            val saved = repository.finishSession(
-                sessionId = sessionId,
-                startTime = startTime,
-                endTime = startTime + durationSeconds.coerceAtLeast(0) * 1000L
-            )
-            // Battiti e calorie dell'orologio si attaccano alla sessione appena chiusa. Se
-            // l'orologio non ha ancora sincronizzato non succede niente: ci riprova il riepilogo.
-            if (saved) runCatching { healthSync.sync(sessionId) }
-            _uiState.update { it.copy(isFinished = true) }
-            onFinished(saved, if (saved) changes else emptyList())
+            if (changes.isNotEmpty()) {
+                pendingFinish = PendingFinish(startTime, durationSeconds)
+                onNeedsRoutineAnswer(changes)
+                return@launch
+            }
+            closeSession(startTime, durationSeconds, onFinished)
         }
     }
 
     /**
-     * Riporta sulla scheda l'allenamento appena chiuso: e' la risposta affermativa alla domanda
-     * di fine allenamento. Vedi [WorkoutRepository.applySessionToRoutine].
+     * Risposta alla domanda di fine allenamento: `applyToRoutine` riscrive la scheda com'e'
+     * andata la sessione (vedi [WorkoutRepository.applySessionToRoutine]), poi in entrambi i casi
+     * l'allenamento si chiude davvero.
      */
-    fun applyChangesToRoutine(onDone: () -> Unit) {
-        val routineId = _uiState.value.routineId
-        if (routineId == null) {
-            onDone()
-            return
-        }
+    fun answerRoutineSync(applyToRoutine: Boolean, onFinished: (saved: Boolean) -> Unit) {
+        val pending = pendingFinish ?: return
+        pendingFinish = null
         viewModelScope.launch {
-            repository.applySessionToRoutine(sessionId, routineId)
+            val routineId = _uiState.value.routineId
+            if (applyToRoutine && routineId != null) {
+                repository.applySessionToRoutine(sessionId, routineId)
+            }
+            closeSession(pending.startTime, pending.durationSeconds, onFinished)
+        }
+    }
+
+    private suspend fun closeSession(
+        startTime: Long,
+        durationSeconds: Int,
+        onFinished: (saved: Boolean) -> Unit
+    ) {
+        val saved = repository.finishSession(
+            sessionId = sessionId,
+            startTime = startTime,
+            endTime = startTime + durationSeconds.coerceAtLeast(0) * 1000L
+        )
+        // Battiti e calorie dell'orologio si attaccano alla sessione appena chiusa. Se
+        // l'orologio non ha ancora sincronizzato non succede niente: ci riprova il riepilogo.
+        if (saved) runCatching { healthSync.sync(sessionId) }
+        _uiState.update { it.copy(isFinished = true) }
+        onFinished(saved)
+    }
+
+    /**
+     * Chiude la correzione di un allenamento passato: data e durata scelte si scrivono sulla
+     * sessione e i record si rifanno su tutto lo storico, perche' una serie corretta oggi puo'
+     * spostare il massimo di un esercizio in un allenamento di mesi fa
+     * (vedi [com.eina.app.domain.recomputePrFlags]).
+     */
+    fun saveEdits(startTime: Long, durationSeconds: Int, onDone: () -> Unit) {
+        viewModelScope.launch {
+            repository.updateSessionTimes(sessionId, startTime, durationSeconds)
+            repository.recomputePrs(touchedExerciseIds + repository.exerciseIdsOfSession(sessionId))
+            touchedExerciseIds.clear()
+            _uiState.update {
+                it.copy(startTime = startTime, elapsedSeconds = durationSeconds.coerceAtLeast(0))
+            }
             onDone()
         }
     }
@@ -554,8 +641,17 @@ class ActiveWorkoutViewModel(
 
     private companion object {
         const val DEFAULT_REST_SECONDS = 90
+
+        /**
+         * Serie per esercizio ipotizzate quando si colloca nel tempo una serie chiusa correggendo
+         * il passato: e' solo un passo, serve a tenere gli esercizi in ordine fra loro.
+         */
+        const val MAX_SETS_PER_EXERCISE = 10
     }
 }
+
+/** Data e durata scelte a fine allenamento, in attesa della risposta sulla scheda. */
+private data class PendingFinish(val startTime: Long, val durationSeconds: Int)
 
 /**
  * Esercizi che condividono il recupero: i compagni di superset, o il solo esercizio stesso se

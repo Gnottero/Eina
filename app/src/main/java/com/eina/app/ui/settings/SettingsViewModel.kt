@@ -49,6 +49,17 @@ class SettingsViewModel(
     fun setHealthSync(enabled: Boolean) = settings.setHealthSyncEnabled(enabled)
     fun setTimerVibration(enabled: Boolean) = settings.setTimerVibrationEnabled(enabled)
 
+    /**
+     * Mette nello storico un allenamento di prova con battiti e calorie da orologio: serve a
+     * vedere riepilogo, grafici e condivisione con dei dati dentro. Si elimina come qualunque
+     * altro allenamento, col tocco lungo nello storico.
+     */
+    fun addSampleSession(onDone: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            onDone(workoutRepository.insertSampleSession() != null)
+        }
+    }
+
     /** Svuota lo storico allenamenti. Routine, esercizi e peso corporeo restano. */
     fun clearHistory() {
         viewModelScope.launch { workoutRepository.deleteAllSessions() }

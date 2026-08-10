@@ -128,7 +128,7 @@
     <string name="active_cancel">Annuler la séance</string>
     <string name="active_finish_confirm_title">Terminer la séance ?</string>
     <string name="active_finish_confirm_text">La séance sera clôturée et enregistrée dans l\'historique.</string>
-    <string name="active_finish_confirm_text_empty">La séance n\'a aucun exercice : elle sera supprimée au lieu d\'être enregistrée dans l\'historique.</string>
+    <string name="active_finish_confirm_text_empty">La séance n\'a aucune série effectuée : elle sera supprimée au lieu d\'être enregistrée dans l\'historique.</string>
     <string name="active_finish_confirm_action">Terminer</string>
     <string name="active_cancel_confirm_title">Annuler la séance ?</string>
     <string name="active_cancel_confirm_text">La séance et toutes les séries enregistrées jusqu\'ici seront supprimées. Elle n\'ira pas dans l\'historique.</string>
@@ -206,6 +206,7 @@
     <string name="session_completed">Terminée</string>
     <string name="session_fallback_title">Séance</string>
     <string name="session_share_cd">Partager la séance</string>
+    <string name="session_edit_cd">Modifier la séance</string>
     <string name="session_share_text">Séance enregistrée avec Eina</string>
     <string name="session_empty_title">Séance sans série terminée</string>
     <string name="session_empty_description">Cette séance n\'a aucune série enregistrée.</string>
@@ -355,6 +356,14 @@
     <string name="settings_clear_title">Effacer l\'historique</string>
     <string name="settings_clear_description">Supprime toutes les séances enregistrées, séries comprises. Routines, exercices et poids corporel restent.</string>
     <string name="settings_clear_button">Effacer l\'historique des séances</string>
+    <string name="edit_session_save">Enregistrer les modifications</string>
+    <string name="edit_session_sheet_title">Date et durée</string>
+    <string name="edit_session_sheet_text">Déplacez la séance à un autre jour ou corrigez sa durée. Les séries, les exercices et les notes sont déjà enregistrés.</string>
+    <string name="settings_sample_title">Séance d\'essai</string>
+    <string name="settings_sample_description">Ajoute à l\'historique une séance avec fréquence cardiaque et calories, comme si une montre les avait enregistrées. Elle se supprime comme les autres, par appui long dans l\'historique.</string>
+    <string name="settings_sample_button">Ajouter une séance d\'essai</string>
+    <string name="settings_sample_added">Séance d\'essai ajoutée à l\'historique</string>
+    <string name="settings_sample_failed">Aucun exercice disponible</string>
     <string name="settings_clear_confirm_title">Effacer tout l\'historique ?</string>
     <string name="settings_clear_confirm_text">Toutes les séances enregistrées seront supprimées. L\'opération est irréversible.</string>
     <string name="settings_section_info">Infos</string>

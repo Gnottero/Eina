@@ -10,9 +10,13 @@ import com.eina.app.data.db.RoutineExerciseEntity
 import com.eina.app.data.db.RoutineSetDao
 import com.eina.app.data.db.RoutineSetEntity
 import com.eina.app.data.db.countsAsWorking
+import com.eina.app.data.db.encodeHeartRateSamples
 import com.eina.app.data.db.exerciseName
+import com.eina.app.data.db.HeartRateSample
 import com.eina.app.data.db.SetEntryDao
 import com.eina.app.data.db.SetEntryEntity
+import com.eina.app.data.db.SetType
+import com.eina.app.data.db.usesWeight
 import com.eina.app.data.db.WeightType
 import com.eina.app.data.db.WorkoutExerciseDao
 import com.eina.app.data.db.WorkoutExerciseEntity
@@ -22,6 +26,7 @@ import com.eina.app.domain.PlanItem
 import com.eina.app.domain.RoutineChange
 import com.eina.app.domain.routineChanges
 import com.eina.app.domain.isNewPR
+import com.eina.app.domain.recomputePrFlags
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 
@@ -111,8 +116,12 @@ class WorkoutRepository(
      * Chiude la sessione. `startTime` ed `endTime` arrivano dalla conferma di fine allenamento,
      * dove sono correggibili: un allenamento fatto ieri va nello storico di ieri.
      *
-     * Una sessione senza nemmeno un esercizio non ha niente da raccontare: invece di salvarla
+     * Una sessione senza nemmeno una serie svolta non ha niente da raccontare: invece di salvarla
      * viene eliminata, come se fosse stata annullata. Ritorna `false` in quel caso.
+     *
+     * Il criterio e' la serie svolta e non l'esercizio in lista: lo storico si disegna sulle
+     * serie completate, quindi un allenamento aperto, riempito di esercizi e mai fatto restava
+     * una riga invisibile — nello storico non compariva, ma continuava a esistere.
      */
     suspend fun finishSession(
         sessionId: Long,
@@ -120,7 +129,10 @@ class WorkoutRepository(
         endTime: Long? = null
     ): Boolean {
         val session = workoutSessionDao.getById(sessionId) ?: return false
-        if (workoutExerciseDao.getForSessionOnce(sessionId).isEmpty()) {
+        val hasCompletedSets = workoutExerciseDao.getForSessionOnce(sessionId).any { workoutExercise ->
+            setEntryDao.getForWorkoutExercise(workoutExercise.id).first().any { it.completedAt != null }
+        }
+        if (!hasCompletedSets) {
             workoutSessionDao.deleteById(sessionId)
             return false
         }
@@ -145,10 +157,46 @@ class WorkoutRepository(
     /**
      * Elimina un allenamento gia' registrato, con le sue serie. Stessa cancellazione di
      * [cancelSession], ma parte dallo storico: si conferma prima, e' irreversibile.
+     *
+     * I record degli esercizi che c'erano dentro si rifanno: se il massimo di sempre stava in
+     * quella sessione, sparita lei il record torna a chi ce l'aveva prima.
      */
     suspend fun deleteSession(sessionId: Long) {
+        val exerciseIds = workoutExerciseDao.getForSessionOnce(sessionId).map { it.exerciseId }
         workoutSessionDao.deleteById(sessionId)
+        recomputePrs(exerciseIds)
     }
+
+    /**
+     * Corregge data e durata di un allenamento gia' registrato: e' la stessa scelta del foglio di
+     * fine allenamento, riaperta dalla modifica di una sessione passata.
+     */
+    suspend fun updateSessionTimes(sessionId: Long, startTime: Long, durationSeconds: Int) {
+        val session = workoutSessionDao.getById(sessionId) ?: return
+        workoutSessionDao.update(
+            session.copy(
+                startTime = startTime,
+                endTime = startTime + durationSeconds.coerceAtLeast(0) * 1000L
+            )
+        )
+    }
+
+    /**
+     * Rifa' i record degli esercizi indicati su tutto lo storico. Vedi
+     * [com.eina.app.domain.recomputePrFlags]: modificare un allenamento passato puo' creare o
+     * annullare record anche in sessioni diverse da quella toccata.
+     */
+    suspend fun recomputePrs(exerciseIds: Collection<Long>) {
+        exerciseIds.distinct().forEach { exerciseId ->
+            val weightType = exerciseDao.getById(exerciseId)?.weightType ?: return@forEach
+            recomputePrFlags(weightType, setEntryDao.getCompletedSetsForExercise(exerciseId))
+                .forEach { setEntryDao.update(it) }
+        }
+    }
+
+    /** Esercizi toccati da una sessione: la lista da passare a [recomputePrs] dopo averla corretta. */
+    suspend fun exerciseIdsOfSession(sessionId: Long): List<Long> =
+        workoutExerciseDao.getForSessionOnce(sessionId).map { it.exerciseId }
 
     /** Cancella tutto lo storico, sessione in corso compresa. Irreversibile: si conferma prima. */
     suspend fun deleteAllSessions() {
@@ -249,6 +297,104 @@ class WorkoutRepository(
                     )
                 )
             }
+        }
+    }
+
+    /**
+     * Allenamento di prova nello storico, con battiti e calorie come se li avesse depositati un
+     * orologio. Serve a vedere riepilogo, grafici e card condivisibile pieni di dati senza dover
+     * andare in palestra, e a provare la modifica di un allenamento passato su qualcosa di
+     * cancellabile.
+     *
+     * DECISIONE: i campioni del cuore si scrivono a mano invece di passare da Health Connect —
+     * la sorgente vera vuole un orologio collegato, che e' esattamente quel che qui manca.
+     *
+     * Ritorna l'id della sessione creata, o null se la libreria e' vuota (niente esercizi da
+     * mettere dentro: succede solo se il seed non e' ancora passato).
+     */
+    suspend fun insertSampleSession(): Long? {
+        val library = exerciseDao.getAll().first()
+        if (library.isEmpty()) return null
+        // Tre esercizi riconoscibili, con ripiego sui primi della libreria: il catalogo e' chiuso
+        // ma un esercizio potrebbe non esserci piu' dopo una revisione dei nomi.
+        val picks = listOf(
+            "Barbell Bench Press - Medium Grip",
+            "Wide-Grip Lat Pulldown",
+            "Barbell Shoulder Press"
+        ).mapIndexedNotNull { index, name ->
+            library.firstOrNull { it.name == name } ?: library.getOrNull(index)
+        }.distinctBy { it.id }
+        if (picks.isEmpty()) return null
+
+        val start = System.currentTimeMillis() - SAMPLE_DAYS_AGO * 86_400_000L
+        val durationMillis = SAMPLE_DURATION_MINUTES * 60_000L
+        val samples = sampleHeartRate(start, durationMillis)
+        val sessionId = workoutSessionDao.insert(
+            WorkoutSessionEntity(
+                startTime = start,
+                endTime = start + durationMillis,
+                avgHeartRateBpm = samples.map { it.bpm }.average().toInt(),
+                maxHeartRateBpm = samples.maxOf { it.bpm },
+                caloriesKcal = 486.0,
+                heartRateSamples = samples.encodeHeartRateSamples()
+            )
+        )
+
+        // Un riscaldamento e tre serie di lavoro in progressione: e' la forma piu' comune, e
+        // mostra sia la sigla W sia il badge del record.
+        val plan = listOf(
+            listOf(40.0 to 10, 60.0 to 10, 65.0 to 8, 70.0 to 6),
+            listOf(35.0 to 12, 50.0 to 10, 55.0 to 9, 55.0 to 8),
+            listOf(20.0 to 12, 35.0 to 10, 37.5 to 8, 40.0 to 6)
+        )
+        picks.forEachIndexed { index, exercise ->
+            val workoutExerciseId = workoutExerciseDao.insert(
+                WorkoutExerciseEntity(
+                    sessionId = sessionId,
+                    exerciseId = exercise.id,
+                    order = index,
+                    restSeconds = 90
+                )
+            )
+            plan[index % plan.size].forEachIndexed { setIndex, (weight, reps) ->
+                setEntryDao.insert(
+                    SetEntryEntity(
+                        workoutExerciseId = workoutExerciseId,
+                        setIndex = setIndex,
+                        targetReps = reps,
+                        actualReps = reps,
+                        // Gli esercizi a corpo libero o a tempo non hanno un carico da scrivere:
+                        // il campione resta comunque leggibile, con le sole ripetizioni.
+                        weight = weight.takeIf { exercise.weightType.usesWeight },
+                        restSecondsPlanned = 90,
+                        setType = if (setIndex == 0) SetType.WARMUP else SetType.NORMAL,
+                        // Sparse lungo la sessione: l'ordine di completamento e' quel che decide
+                        // i record, e tutte allo stesso istante non racconterebbe un allenamento.
+                        completedAt = start + (index * 4 + setIndex) * 4L * 60_000L
+                    )
+                )
+            }
+        }
+
+        // I record si assegnano qui e non a mano: la sessione di prova puo' cadere prima o dopo
+        // allenamenti veri, e solo il confronto con tutto lo storico sa dove sta il massimo.
+        recomputePrs(picks.map { it.id })
+        return sessionId
+    }
+
+    /** Curva plausibile: si sale nel riscaldamento, si oscilla fra le serie, si scende alla fine. */
+    private fun sampleHeartRate(start: Long, durationMillis: Long): List<HeartRateSample> {
+        val stepMillis = 3 * 60_000L
+        val steps = (durationMillis / stepMillis).toInt().coerceAtLeast(2)
+        return (0..steps).map { step ->
+            val progress = step.toDouble() / steps
+            val base = 96 + 62 * kotlin.math.sin(progress * Math.PI).coerceAtLeast(0.0)
+            // Ondeggia serie per serie: un cuore sotto carico non disegna una collina liscia.
+            val wave = 10 * kotlin.math.sin(step * 1.7)
+            HeartRateSample(
+                timeMillis = start + step * stepMillis,
+                bpm = (base + wave).toInt().coerceIn(80, 171)
+            )
         }
     }
 
@@ -373,8 +519,17 @@ class WorkoutRepository(
     /**
      * Completa una set: applica bodyweight snapshot per i weightType che lo richiedono, calcola isPR
      * confrontando con lo storico non-warmup, persiste. Ritorna la set aggiornata.
+     *
+     * `completedAt` si passa quando la serie non si sta chiudendo adesso: correggendo un
+     * allenamento del mese scorso, "adesso" la collocherebbe in cima allo storico e ne farebbe
+     * l'ultimo valore noto di quell'esercizio.
      */
-    suspend fun completeSet(set: SetEntryEntity, exerciseId: Long, weightType: WeightType): SetEntryEntity {
+    suspend fun completeSet(
+        set: SetEntryEntity,
+        exerciseId: Long,
+        weightType: WeightType,
+        completedAt: Long = System.currentTimeMillis()
+    ): SetEntryEntity {
         val needsBodyweightSnapshot = weightType == WeightType.BODYWEIGHT ||
             weightType == WeightType.BODYWEIGHT_PLUS_LOAD ||
             weightType == WeightType.ASSISTED
@@ -387,13 +542,18 @@ class WorkoutRepository(
 
         val historicalSets = setEntryDao.getHistoricalSets(exerciseId)
         val candidate = set.copy(
-            completedAt = System.currentTimeMillis(),
+            completedAt = completedAt,
             bodyweightSnapshotKg = bodyweightSnapshotKg
         )
         val isPR = isNewPR(weightType, candidate, historicalSets)
         val finalSet = candidate.copy(isPR = isPR)
         setEntryDao.update(finalSet)
         return finalSet
+    }
+
+    private companion object {
+        const val SAMPLE_DAYS_AGO = 1
+        const val SAMPLE_DURATION_MINUTES = 62
     }
 }
 

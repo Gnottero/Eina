@@ -1,6 +1,7 @@
 package com.eina.app.ui.settings
 
 import android.app.Activity
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -12,6 +13,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Coffee
 import androidx.compose.material.icons.outlined.DeleteSweep
 import androidx.compose.material.icons.outlined.MonitorHeart
+import androidx.compose.material.icons.outlined.Science
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
@@ -202,6 +204,36 @@ fun SettingsScreen(
                 icon = Icons.Outlined.DeleteSweep,
                 onClick = { confirmClear = true },
                 contentColor = DestructiveRed,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+
+        // Allenamento di prova: la sola via per vedere il riepilogo con battiti e calorie senza
+        // un orologio collegato, e qualcosa di cancellabile su cui provare la correzione.
+        IslandCard(modifier = Modifier.fillMaxWidth()) {
+            Text(
+                stringResource(R.string.settings_sample_title),
+                style = MaterialTheme.typography.titleSmall
+            )
+            Text(
+                stringResource(R.string.settings_sample_description),
+                style = MaterialTheme.typography.bodySmall,
+                color = island.textSecondary
+            )
+            IslandSecondaryButton(
+                text = stringResource(R.string.settings_sample_button),
+                icon = Icons.Outlined.Science,
+                onClick = {
+                    viewModel.addSampleSession { added ->
+                        Toast.makeText(
+                            context,
+                            context.getString(
+                                if (added) R.string.settings_sample_added else R.string.settings_sample_failed
+                            ),
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                },
                 modifier = Modifier.fillMaxWidth()
             )
         }

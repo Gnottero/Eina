@@ -128,7 +128,7 @@
     <string name="active_cancel">Annulla allenamento</string>
     <string name="active_finish_confirm_title">Terminare l\'allenamento?</string>
     <string name="active_finish_confirm_text">La sessione verrà chiusa e salvata nello storico.</string>
-    <string name="active_finish_confirm_text_empty">La sessione non ha esercizi: verrà eliminata invece che salvata nello storico.</string>
+    <string name="active_finish_confirm_text_empty">La sessione non ha serie svolte: verrà eliminata invece che salvata nello storico.</string>
     <string name="active_finish_confirm_action">Termina</string>
     <string name="active_cancel_confirm_title">Annullare l\'allenamento?</string>
     <string name="active_cancel_confirm_text">La sessione e le serie registrate finora verranno eliminate. Non finirà nello storico.</string>
@@ -206,6 +206,7 @@
     <string name="session_completed">Completato</string>
     <string name="session_fallback_title">Allenamento</string>
     <string name="session_share_cd">Condividi allenamento</string>
+    <string name="session_edit_cd">Modifica allenamento</string>
     <string name="session_share_text">Allenamento registrato con Eina</string>
     <string name="session_empty_title">Sessione senza serie completate</string>
     <string name="session_empty_description">Questo allenamento non ha serie registrate.</string>
@@ -355,6 +356,14 @@
     <string name="settings_clear_title">Cancella lo storico</string>
     <string name="settings_clear_description">Elimina tutti gli allenamenti registrati, serie comprese. Routine, esercizi e peso corporeo restano.</string>
     <string name="settings_clear_button">Cancella storico allenamenti</string>
+    <string name="edit_session_save">Salva modifiche</string>
+    <string name="edit_session_sheet_title">Data e durata</string>
+    <string name="edit_session_sheet_text">Sposta l\'allenamento in un altro giorno o correggi quanto e\' durato. Serie, esercizi e note sono gia\' salvati.</string>
+    <string name="settings_sample_title">Allenamento di prova</string>
+    <string name="settings_sample_description">Mette nello storico un allenamento con battiti e calorie, come se li avesse registrati un orologio. Si elimina come gli altri, col tocco lungo nello storico.</string>
+    <string name="settings_sample_button">Aggiungi allenamento di prova</string>
+    <string name="settings_sample_added">Allenamento di prova aggiunto allo storico</string>
+    <string name="settings_sample_failed">Nessun esercizio disponibile</string>
     <string name="settings_clear_confirm_title">Cancellare tutto lo storico?</string>
     <string name="settings_clear_confirm_text">Tutti gli allenamenti registrati verranno eliminati. L\'operazione non è annullabile.</string>
     <string name="settings_section_info">Info</string>

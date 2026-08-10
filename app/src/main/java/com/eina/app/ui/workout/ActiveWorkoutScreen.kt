@@ -77,6 +77,7 @@ import com.eina.app.ui.components.ExercisePickerSheet
 import com.eina.app.ui.components.SetTableHeader
 import com.eina.app.ui.components.SetValueField
 import com.eina.app.ui.components.formatDecimal
+import com.eina.app.ui.components.formatFullDate
 import com.eina.app.ui.components.previousColumnWeight
 import com.eina.app.ui.components.IslandEmptyState
 import com.eina.app.ui.components.IslandIconButton
@@ -113,6 +114,15 @@ import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
 import org.koin.core.parameter.parametersOf
 
+/**
+ * La schermata dell'allenamento, in due vesti.
+ *
+ * Con `editing` a true la stessa schermata corregge un allenamento gia' nello storico: le serie,
+ * gli esercizi, i superset e le note si toccano con gli stessi gesti, perche' un allenamento
+ * passato e' fatto della stessa materia di uno in corso. Cambia il contorno — niente cronometro
+ * che scorre, niente recupero che parte, niente "Annulla" — e in fondo il salvataggio rifa' i
+ * record su tutto lo storico.
+ */
 @Composable
 fun ActiveWorkoutScreen(
     sessionId: Long,
@@ -120,7 +130,8 @@ fun ActiveWorkoutScreen(
     onExit: () -> Unit = {},
     onCancelled: () -> Unit = {},
     onOpenExercise: (Long) -> Unit = {},
-    viewModel: ActiveWorkoutViewModel = koinViewModel(parameters = { parametersOf(sessionId) })
+    editing: Boolean = false,
+    viewModel: ActiveWorkoutViewModel = koinViewModel(parameters = { parametersOf(sessionId, editing) })
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     var showPicker by remember { mutableStateOf(false) }
@@ -166,9 +177,16 @@ fun ActiveWorkoutScreen(
                 progress = state.progress,
                 playlistUri = state.playlistUri,
                 playlistType = state.playlistType,
+                editing = editing,
+                startTime = state.startTime,
                 onFinish = { confirmFinish = true },
                 onCancel = { confirmCancel = true },
-                onExit = onExit,
+                // Uscendo dalla correzione i record si rifanno lo stesso: le modifiche sono gia'
+                // scritte serie per serie, e lasciarle senza ricalcolo darebbe record sbagliati.
+                onExit = {
+                    if (!editing) onExit()
+                    else viewModel.saveEdits(state.startTime, state.elapsedSeconds, onExit)
+                },
                 modifier = Modifier.padding(horizontal = Spacing.xl, vertical = Spacing.md)
             )
 
@@ -400,32 +418,46 @@ fun ActiveWorkoutScreen(
 
     if (confirmFinish) {
         // "Termina" e' l'unico modo di chiudere una sessione: si conferma perche' e' irreversibile,
-        // e nella conferma si correggono data e durata prima di scriverle nello storico.
+        // e nella conferma si correggono data e durata prima di scriverle nello storico. Sulla
+        // correzione di un allenamento passato lo stesso foglio serve a spostarne data e durata.
         FinishWorkoutSheet(
             startTime = state.startTime,
             elapsedSeconds = state.elapsedSeconds,
-            isEmpty = state.exercises.isEmpty(),
+            // "Non finira' nello storico" vale per la sessione senza serie svolte, non solo per
+            // quella senza esercizi: e' quella che viene eliminata al posto di essere salvata.
+            isEmpty = state.completedSets == 0 && !editing,
+            editing = editing,
             onConfirm = { startTime, duration ->
+                if (editing) {
+                    viewModel.saveEdits(startTime, duration, onFinished)
+                    return@FinishWorkoutSheet
+                }
                 // Senza esercizi la sessione viene eliminata invece che salvata: si esce come da
                 // "Annulla", perche' non c'e' nessun riepilogo da mostrare.
-                viewModel.finishWorkout(startTime, duration) { saved, changes ->
-                    when {
-                        !saved -> onCancelled()
-                        changes.isEmpty() -> onFinished()
-                        else -> routineChanges = changes
-                    }
-                }
+                viewModel.finishWorkout(
+                    startTime = startTime,
+                    durationSeconds = duration,
+                    onNeedsRoutineAnswer = { changes -> routineChanges = changes },
+                    onFinished = { saved -> if (saved) onFinished() else onCancelled() }
+                )
             },
             onDismiss = { confirmFinish = false }
         )
     }
 
     if (routineChanges.isNotEmpty()) {
+        // La domanda arriva prima che la sessione si chiuda: cosi' vale anche per un allenamento
+        // senza serie svolte, che nello storico non ci finisce ma la scheda l'ha comunque
+        // cambiata (esercizi tolti, serie aggiunte, recuperi diversi).
+        val answer = { update: Boolean ->
+            routineChanges = emptyList()
+            viewModel.answerRoutineSync(update) { saved -> if (saved) onFinished() else onCancelled() }
+        }
         RoutineSyncSheet(
             routineName = state.routineName,
             changes = routineChanges,
-            onUpdate = { routineChanges = emptyList(); viewModel.applyChangesToRoutine(onFinished) },
-            onKeep = { routineChanges = emptyList(); onFinished() }
+            onUpdate = { answer(true) },
+            onKeep = { answer(false) }
         )
     }
 
@@ -459,6 +491,8 @@ private fun SessionHeader(
     progress: Float,
     playlistUri: String?,
     playlistType: PlaylistType?,
+    editing: Boolean,
+    startTime: Long,
     onFinish: () -> Unit,
     onCancel: () -> Unit,
     onExit: () -> Unit,
@@ -498,7 +532,9 @@ private fun SessionHeader(
                     size = 40.dp
                 )
                 Text(
-                    text = stringResource(R.string.active_title),
+                    // Correggendo un allenamento passato il titolo dice la sua data: e' l'unico
+                    // modo di sapere quale si sta riscrivendo.
+                    text = if (editing) formatFullDate(startTime) else stringResource(R.string.active_title),
                     style = MaterialTheme.typography.labelLarge,
                     color = island.textSecondary,
                     maxLines = 1,
@@ -573,22 +609,28 @@ private fun SessionHeader(
             }
 
             IslandButton(
-                text = stringResource(R.string.active_finish),
+                // Sulla correzione il tasto apre lo stesso foglio, ma quel che conferma sono data
+                // e durata di un allenamento che nello storico c'e' gia'.
+                text = stringResource(if (editing) R.string.edit_session_save else R.string.active_finish),
                 onClick = onFinish,
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Text(
-                text = stringResource(R.string.active_cancel),
-                style = MaterialTheme.typography.labelLarge,
-                color = DestructiveRed,
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(PillShape)
-                    .clickable { onCancel() }
-                    .padding(vertical = Spacing.sm)
-            )
+            // "Annulla" butta via la sessione: su un allenamento gia' registrato non ha senso,
+            // si elimina dallo storico dove si e' scelto di tenerlo.
+            if (!editing) {
+                Text(
+                    text = stringResource(R.string.active_cancel),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = DestructiveRed,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(PillShape)
+                        .clickable { onCancel() }
+                        .padding(vertical = Spacing.sm)
+                )
+            }
         }
     }
 

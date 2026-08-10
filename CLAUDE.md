@@ -704,6 +704,43 @@ rientro, riordino trascinato che sopravvive all'uscita, foglio di aggiornamento 
 il recap giusto, superset colorati nel riepilogo, sveglia di fine recupero scattata ad app in
 background (`dumpsys alarm`: 1 wakeup) e riepilogo con battiti e calorie simulati.
 
+**Fase 31 — Allenamenti passati modificabili** *(fatta)*
+DoD:
+- Un allenamento gia' nello storico si corregge: dal riepilogo, tondo "Modifica" accanto a
+  "Condividi", rotta `workout/edit/{sessionId}`. La schermata e' la stessa dell'allenamento in
+  corso (`ActiveWorkoutScreen(editing = true)`, `ActiveWorkoutViewModel(isPast = true)`): un
+  allenamento passato e' fatto della stessa materia di uno in corso, e duplicare tabella serie,
+  fogli, superset e riordino sarebbe stata una seconda schermata da tenere allineata. Cambia il
+  contorno — il cronometro non scorre (la durata e' quella salvata), chiudere una serie non fa
+  partire il recupero, "Annulla allenamento" sparisce — e una serie chiusa qui prende come
+  istante di completamento un punto dentro la giornata dell'allenamento, non "adesso": con
+  "adesso" finirebbe in cima allo storico e diventerebbe l'ultimo valore noto di quell'esercizio.
+  "Salva modifiche" riapre il foglio di fine allenamento per data e durata.
+- I record si rifanno da capo. `isPR` e' l'unico dato che non si ricava da una query: si scrive
+  sulla riga quando la serie si chiude, e finche' il passato era immutabile bastava.
+  `domain/PrRecalculator.kt` (`recomputePrFlags`, coi suoi test) riscorre tutte le serie
+  completate di un esercizio in ordine e riassegna il flag; lo chiamano il salvataggio della
+  modifica e l'eliminazione di un allenamento dallo storico — se il massimo di sempre stava li',
+  sparito quello il record torna a chi ce l'aveva prima. Volume, grafici, heatmap e progressione
+  vengono gia' da query sulle serie e si correggono da soli.
+- La domanda "aggiorno la scheda?" arriva prima che la sessione si chiuda, non dopo. Cosi' vale
+  anche per l'allenamento senza serie svolte, che nello storico non ci finisce ma la scheda
+  l'ha comunque cambiata: prima si chiudeva subito e, quando la risposta arrivava, non c'era
+  piu' niente da copiare. `finishWorkout` mette in attesa data e durata (`PendingFinish`) e
+  `answerRoutineSync` chiude davvero.
+- Una sessione si butta quando non ha *serie svolte*, non piu' quando non ha esercizi: lo
+  storico si disegna sulle serie completate, quindi un allenamento aperto, riempito di esercizi
+  e mai fatto restava una riga invisibile.
+- Allenamento di prova in Impostazioni → Dati: tre esercizi con riscaldamento e serie in
+  progressione, ieri, con battiti (media, massimo, spezzata) e calorie scritti a mano come se
+  li avesse depositati un orologio — la sorgente vera vuole un orologio collegato, che e'
+  esattamente quel che qui manca. Si elimina come gli altri, col tocco lungo nello storico.
+Verificata sul dispositivo con debug e release: allenamento di prova aggiunto e riepilogo con
+battiti/calorie, peso di una serie corretto da 70 a 42 kg con il badge PR sparito da solo e il
+volume sceso, sessione da routine senza nemmeno una serie svolta che chiede lo stesso di
+aggiornare la scheda (e la aggiorna davvero, verificato su una routine di prova). Avvio a
+freddo della release 576 ms, APK 71,0 MB.
+
 **Fase 9 — Rifinitura** *(fatta)*
 DoD: R8 + shrinkResources attivi sulla release (20,5 MB → 2,2 MB), regole in
 `app/proguard-rules.pro`; release firmata con la chiave di debug finché non esiste un

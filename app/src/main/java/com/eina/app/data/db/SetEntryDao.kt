@@ -28,6 +28,21 @@ interface SetEntryDao {
     )
     suspend fun getHistoricalSets(exerciseId: Long): List<SetEntryEntity>
 
+    /**
+     * Tutte le serie completate di un esercizio, riscaldamenti compresi, in ordine di
+     * completamento: e' l'ingresso di [com.eina.app.domain.recomputePrFlags], che deve poter
+     * togliere il record anche a una serie diventata riscaldamento.
+     */
+    @Query(
+        """
+        SELECT se.* FROM set_entries se
+        INNER JOIN workout_exercises we ON se.workoutExerciseId = we.id
+        WHERE we.exerciseId = :exerciseId AND se.completedAt IS NOT NULL
+        ORDER BY se.completedAt ASC
+        """
+    )
+    suspend fun getCompletedSetsForExercise(exerciseId: Long): List<SetEntryEntity>
+
     // "Ultima volta": set della piu' recente WorkoutSession (per startTime, escludendo la sessione corrente) che contiene l'esercizio.
     @Query(
         """

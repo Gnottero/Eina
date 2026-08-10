@@ -60,6 +60,8 @@ data class TimerUi(
 
 data class ActiveWorkoutUiState(
     val sessionId: Long,
+    /** Allenamento gia' registrato, aperto dallo storico per correggerlo. */
+    val isPast: Boolean = false,
     val startTime: Long = System.currentTimeMillis(),
     val elapsedSeconds: Int = 0,
     val exercises: List<SessionExerciseUi> = emptyList(),

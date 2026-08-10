@@ -52,7 +52,9 @@ fun FinishWorkoutSheet(
     elapsedSeconds: Int,
     isEmpty: Boolean,
     onConfirm: (startTime: Long, durationSeconds: Int) -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    /** Allenamento gia' nello storico: non si sta chiudendo niente, si sposta quando e' avvenuto. */
+    editing: Boolean = false
 ) {
     val island = EinaTheme.island
     val locale = currentLocale()
@@ -65,14 +67,19 @@ fun FinishWorkoutSheet(
 
     IslandBottomSheet(
         onDismiss = onDismiss,
-        title = stringResource(R.string.active_finish_confirm_title),
+        title = stringResource(
+            if (editing) R.string.edit_session_sheet_title else R.string.active_finish_confirm_title
+        ),
         // Col calendario aperto il foglio supera lo schermo.
         scrollable = true
     ) {
         Text(
             text = stringResource(
-                if (isEmpty) R.string.active_finish_confirm_text_empty
-                else R.string.active_finish_confirm_text
+                when {
+                    editing -> R.string.edit_session_sheet_text
+                    isEmpty -> R.string.active_finish_confirm_text_empty
+                    else -> R.string.active_finish_confirm_text
+                }
             ),
             style = MaterialTheme.typography.bodyMedium,
             color = island.textSecondary
@@ -129,7 +136,9 @@ fun FinishWorkoutSheet(
         }
 
         IslandButton(
-            text = stringResource(R.string.active_finish_confirm_action),
+            text = stringResource(
+                if (editing) R.string.edit_session_save else R.string.active_finish_confirm_action
+            ),
             onClick = { onConfirm(start, duration); onDismiss() },
             modifier = Modifier.fillMaxWidth()
         )

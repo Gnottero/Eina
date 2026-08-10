@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AutoAwesome
+import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.Favorite
 import androidx.compose.material.icons.outlined.LocalFireDepartment
@@ -110,6 +111,7 @@ import org.koin.core.parameter.parametersOf
 fun SessionDetailScreen(
     sessionId: Long,
     onBack: () -> Unit,
+    onEdit: () -> Unit = {},
     justFinished: Boolean = false,
     viewModel: SessionDetailViewModel = koinViewModel { parametersOf(sessionId) }
 ) {
@@ -148,6 +150,13 @@ fun SessionDetailScreen(
                 onBack = onBack,
                 trailing = if (summary == null) null else {
                     {
+                        // Correggere viene prima di condividere: e' l'azione che riguarda i dati,
+                        // l'altra li porta fuori.
+                        IslandIconButton(
+                            icon = Icons.Outlined.Edit,
+                            contentDescription = stringResource(R.string.session_edit_cd),
+                            onClick = onEdit
+                        )
                         IslandIconButton(
                             icon = Icons.Outlined.Share,
                             contentDescription = stringResource(R.string.session_share_cd),

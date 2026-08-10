@@ -104,7 +104,9 @@ val appModule = module {
     single { RestTimerController(get(), get()) }
 
     viewModel { WorkoutViewModel(get()) }
-    viewModel { (sessionId: Long) -> ActiveWorkoutViewModel(get(), get(), get(), get(), sessionId) }
+    viewModel { (sessionId: Long, isPast: Boolean) ->
+        ActiveWorkoutViewModel(get(), get(), get(), get(), sessionId, isPast)
+    }
     viewModel { LibraryViewModel(get()) }
     viewModel { (exerciseId: Long) -> ExerciseDetailViewModel(get(), get(), exerciseId) }
     viewModel { CreateExerciseViewModel(get(), androidContext()) }

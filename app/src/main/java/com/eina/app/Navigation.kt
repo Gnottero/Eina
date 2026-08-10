@@ -138,6 +138,24 @@ fun EinaNavHost() {
                     }
                 )
             }
+            composable(
+                route = "workout/edit/{sessionId}",
+                arguments = listOf(navArgument("sessionId") { type = NavType.LongType })
+            ) { backStackEntry ->
+                val sessionId = backStackEntry.arguments?.getLong("sessionId") ?: return@composable
+                // Stessa schermata dell'allenamento in corso, in veste di correzione: vedi
+                // ActiveWorkoutScreen. Si torna sempre al riepilogo, che e' da dove si e' entrati.
+                ActiveWorkoutScreen(
+                    sessionId = sessionId,
+                    editing = true,
+                    onFinished = { navController.popBackStack() },
+                    onExit = { navController.popBackStack() },
+                    onCancelled = { navController.popBackStack() },
+                    onOpenExercise = { exerciseId ->
+                        navController.navigate("library/exercise/$exerciseId")
+                    }
+                )
+            }
             composable(EinaDestination.Library.route) {
                 LibraryScreen(
                     onExerciseClick = { exerciseId ->
@@ -184,7 +202,8 @@ fun EinaNavHost() {
                 SessionDetailScreen(
                     sessionId = sessionId,
                     justFinished = backStackEntry.arguments?.getBoolean("justFinished") == true,
-                    onBack = { navController.popBackStack() }
+                    onBack = { navController.popBackStack() },
+                    onEdit = { navController.navigate("workout/edit/$sessionId") }
                 )
             }
             composable(EinaDestination.Progress.route) {

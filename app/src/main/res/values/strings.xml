@@ -137,7 +137,7 @@
     <string name="active_cancel">Cancel workout</string>
     <string name="active_finish_confirm_title">Finish the workout?</string>
     <string name="active_finish_confirm_text">The session will be closed and saved to your history.</string>
-    <string name="active_finish_confirm_text_empty">This session has no exercises, so it will be discarded instead of saved to your history.</string>
+    <string name="active_finish_confirm_text_empty">This session has no completed sets, so it will be discarded instead of saved to your history.</string>
     <string name="active_finish_confirm_action">Finish</string>
     <string name="active_cancel_confirm_title">Cancel the workout?</string>
     <string name="active_cancel_confirm_text">The session and every set logged so far will be deleted. It won\'t reach your history.</string>
@@ -218,6 +218,7 @@
     <string name="session_completed">Completed</string>
     <string name="session_fallback_title">Workout</string>
     <string name="session_share_cd">Share workout</string>
+    <string name="session_edit_cd">Edit workout</string>
     <string name="session_share_text">Workout tracked with Eina</string>
     <string name="session_empty_title">Session with no completed sets</string>
     <string name="session_empty_description">This workout has no sets logged.</string>
@@ -371,6 +372,14 @@
     <string name="settings_clear_title">Clear your history</string>
     <string name="settings_clear_description">Deletes every recorded workout, sets included. Routines, exercises and body weight stay.</string>
     <string name="settings_clear_button">Clear workout history</string>
+    <string name="edit_session_save">Save changes</string>
+    <string name="edit_session_sheet_title">Date and duration</string>
+    <string name="edit_session_sheet_text">Move this workout to another day or correct how long it lasted. Sets, exercises and notes are already saved.</string>
+    <string name="settings_sample_title">Sample workout</string>
+    <string name="settings_sample_description">Adds a workout to your history with heart rate and calories, as if a watch had recorded them. Delete it like any other, with a long press in the history.</string>
+    <string name="settings_sample_button">Add sample workout</string>
+    <string name="settings_sample_added">Sample workout added to the history</string>
+    <string name="settings_sample_failed">No exercise available yet</string>
     <string name="settings_clear_confirm_title">Clear the whole history?</string>
     <string name="settings_clear_confirm_text">Every recorded workout will be deleted. This cannot be undone.</string>
     <string name="settings_section_info">Info</string>
