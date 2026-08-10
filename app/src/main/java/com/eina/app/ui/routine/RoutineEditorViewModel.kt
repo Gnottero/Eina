@@ -55,13 +55,13 @@ class RoutineEditorViewModel(
     val availableExercises: StateFlow<List<ExerciseEntity>> = repository.observeExercises()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    /** Esercizi referenziati dalla routine: servono nome tradotto e tipo di carico (campo kg). */
-    val exercises: StateFlow<Map<Long, ExerciseEntity>> = routineExercises
-        .map { list ->
-            list.mapNotNull { routineExercise ->
-                repository.getExercise(routineExercise.exerciseId)?.let { routineExercise.exerciseId to it }
-            }.toMap()
-        }
+    /**
+     * Esercizi referenziati dalla routine: servono nome tradotto e tipo di carico (campo kg).
+     * Si pescano dalla libreria gia' osservata invece di una query per ogni voce della scheda:
+     * cambiare una serie faceva ripartire N letture sul database per riottenere gli stessi nomi.
+     */
+    val exercises: StateFlow<Map<Long, ExerciseEntity>> = availableExercises
+        .map { library -> library.associateBy { it.id } }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
 
     init {

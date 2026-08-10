@@ -66,8 +66,13 @@ fun ExercisePickerSheet(
 
     val locale = currentLocale()
     // Ordine alfabetico nella lingua attiva: il database li tiene ordinati per nome inglese.
-    val filtered = remember(exercises, query, category, locale) {
-        exercises.sortedBy { it.exerciseName().localized(locale).lowercase(locale) }.filter { exercise ->
+    // L'ordinamento non dipende da cosa si sta digitando: si fa una volta sola sui 197 esercizi,
+    // altrimenti ogni tasto della ricerca riordinerebbe l'intera libreria.
+    val sorted = remember(exercises, locale) {
+        exercises.sortedBy { it.exerciseName().localized(locale).lowercase(locale) }
+    }
+    val filtered = remember(sorted, query, category) {
+        sorted.filter { exercise ->
             val matchesQuery = query.isBlank() || exercise.matchesQuery(query)
             val matchesCategory = category == null ||
                 primaryCategoryFor(exercise.muscleGroupsPrimary) == category

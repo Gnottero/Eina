@@ -88,11 +88,17 @@ fun SetTypeIndicator(
     val hapticTap = LocalHapticTap.current
     val accent = setTypeAccent(type)
     val text = type.glyph ?: if (isPR) stringResource(R.string.badge_pr) else number.toString()
+    // Il segno e' una sigla di una lettera: senza etichetta sull'azione, TalkBack leggerebbe
+    // "W, doppio tocco per attivare" senza dire cosa attiva.
+    val clickLabel = stringResource(R.string.set_type_cd)
 
     Box(
         modifier = modifier
             .clip(PillShape)
-            .then(if (onClick != null) Modifier.clickable { hapticTap(); onClick() } else Modifier),
+            .then(
+                if (onClick == null) Modifier
+                else Modifier.clickable(onClickLabel = clickLabel) { hapticTap(); onClick() }
+            ),
         contentAlignment = Alignment.Center
     ) {
         when {

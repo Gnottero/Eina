@@ -83,7 +83,6 @@ class SquircleShape(private val radius: Dp) : Shape {
 
 val IslandShape: Shape = SquircleShape(IslandCornerRadius)
 val TileShape: Shape = SquircleShape(TileCornerRadius)
-val CardShape: Shape = SquircleShape(CardCornerRadius)
 
 /** Squircle piccolo per campi e controlli, dove il raggio grande sformerebbe l'elemento. */
 fun squircle(radius: Dp): Shape = SquircleShape(radius)
@@ -94,7 +93,6 @@ object Spacing {
     val md = 12.dp
     val lg = 16.dp
     val xl = 24.dp
-    val xxl = 32.dp
 }
 
 // Material3 vuole CornerBasedShape nei suoi Shapes (deve saper interpolare i raggi), quindi qui

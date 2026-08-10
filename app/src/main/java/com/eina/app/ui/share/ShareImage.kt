@@ -114,32 +114,6 @@ fun openInstagramStoryCamera(context: Context): Boolean {
     return runCatching { context.startActivity(launch) }.isSuccess
 }
 
-/**
- * Condivide la card come *sticker* di una storia Instagram invece che come immagine di sfondo:
- * con ACTION_SEND normale Instagram usa il PNG come sfondo e lo scala a tutto il canvas, qui
- * l'immagine resta un adesivo ridimensionabile sopra lo sfondo (in tinta con l'accento).
- * Ritorna false se l'intent non e' gestibile: il chiamante ricade sul chooser di sistema.
- */
-fun shareToInstagramStory(
-    context: Context,
-    stickerUri: Uri,
-    topColor: String = "#F97348",
-    bottomColor: String = "#FFB07A"
-): Boolean {
-    val intent = Intent("com.instagram.share.ADD_TO_STORY").apply {
-        setPackage(INSTAGRAM_PACKAGE)
-        type = "image/png"
-        putExtra("interactive_asset_uri", stickerUri)
-        putExtra("top_background_color", topColor)
-        putExtra("bottom_background_color", bottomColor)
-        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-    }
-    if (intent.resolveActivity(context.packageManager) == null) return false
-    // Lo sticker viaggia come extra, non come EXTRA_STREAM: il permesso va concesso a mano.
-    context.grantUriPermission(INSTAGRAM_PACKAGE, stickerUri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
-    return runCatching { context.startActivity(intent) }.isSuccess
-}
-
 /** Chooser di sistema con l'immagine allegata e permesso di lettura temporaneo. */
 fun shareImage(context: Context, uri: Uri, text: String? = null) {
     val send = Intent(Intent.ACTION_SEND).apply {

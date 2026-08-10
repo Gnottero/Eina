@@ -198,7 +198,7 @@ fun DashboardScreen(
                 icon = Icons.Outlined.History
             )
         } else {
-            state.recentSessions.take(3).forEach { session ->
+            state.recentSessions.forEach { session ->
                 SessionSummaryCard(
                     summary = session,
                     onClick = { onSessionClick(session.sessionId) }

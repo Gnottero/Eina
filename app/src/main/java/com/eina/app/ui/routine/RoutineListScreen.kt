@@ -38,7 +38,6 @@ import com.eina.app.ui.components.IslandIconButton
 import com.eina.app.ui.components.SheetActionRow
 import com.eina.app.ui.library.currentLocale
 import com.eina.app.ui.theme.EinaTheme
-import com.eina.app.ui.theme.IslandShape
 import com.eina.app.ui.theme.Spacing
 import org.koin.androidx.compose.koinViewModel
 
@@ -139,7 +138,8 @@ private fun RoutineRow(
             IslandIconButton(
                 icon = Icons.Outlined.PlayArrow,
                 contentDescription = stringResource(R.string.routine_start_cd, name),
-                onClick = { if (startEnabled) onStart() },
+                onClick = onStart,
+                enabled = startEnabled,
                 size = 48.dp,
                 containerColor = if (startEnabled) {
                     MaterialTheme.colorScheme.primary

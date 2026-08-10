@@ -38,7 +38,6 @@
     <!-- Accueil -->
     <string name="dashboard_title">Dashboard</string>
     <string name="dashboard_settings">Réglages</string>
-    <string name="dashboard_week">Semaine</string>
     <string name="dashboard_ring_label">Jours d\'entraînement</string>
     <string name="dashboard_ring_total">sur 7</string>
     <string name="dashboard_hero_week">Cette semaine</string>
@@ -108,10 +107,6 @@
     <string name="routine_editor_empty_title">Aucun exercice</string>
     <string name="routine_editor_empty_description">Ajoute des exercices et fixe séries, répétitions, poids et repos cibles.</string>
     <string name="action_save_routine">Enregistrer la routine</string>
-    <string name="field_sets">Séries</string>
-    <string name="field_reps">Rép.</string>
-    <string name="field_seconds">Sec</string>
-    <string name="field_kg">Kg</string>
     <string name="rest_label">Repos %1$s</string>
     <string name="note_add">Ajouter une note</string>
     <string name="note_edit">Modifier la note</string>
@@ -159,7 +154,7 @@
     <string name="table_kg">Kg</string>
     <string name="table_reps">Rép</string>
     <string name="table_seconds">Sec</string>
-    <string name="table_km" translatable="false">Km</string>
+    <string name="table_km">Km</string>
     <string name="table_minutes">Min</string>
 
     <!-- Tipo di serie -->
@@ -324,6 +319,7 @@
     <string name="bodyweight_new">Nouvelle mesure</string>
     <string name="bodyweight_trend">Évolution</string>
     <string name="bodyweight_first">Première mesure enregistrée</string>
+    <string name="bodyweight_delta">%1$s kg depuis la dernière mesure</string>
     <string name="bodyweight_history">Historique des mesures</string>
     <string name="bodyweight_empty_title">Aucune mesure</string>
     <string name="bodyweight_empty_description">Enregistre ton poids : il sert à calculer le volume et les records des exercices au poids du corps.</string>

@@ -85,8 +85,9 @@ dependencies {
     implementation("io.coil-kt:coil-compose:2.7.0")
     implementation("io.coil-kt:coil-gif:2.7.0")
 
-    // Vico charts
-    implementation("com.patrykandpatrick.vico:compose-m3:2.0.0-alpha.28")
+    // Niente libreria di grafici: dalla Fase 5b le spezzate e le barre sono Canvas puro
+    // (ui/components/MiniLineChart, MiniBarChart, HeatmapCalendar, ActivityRing). Vico era
+    // rimasta nel build senza un solo import.
 
     // Health Connect: frequenza cardiaca e calorie registrate dallo smartwatch. E' l'unico modo
     // di leggere quei dati senza scrivere un'app companion per l'orologio, e resta local-first —

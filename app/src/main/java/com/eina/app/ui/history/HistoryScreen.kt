@@ -4,8 +4,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.History
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -22,8 +20,6 @@ import com.eina.app.ui.components.IslandScreen
 import com.eina.app.ui.components.ScreenHeader
 import com.eina.app.ui.components.SessionSummaryCard
 import com.eina.app.ui.components.SheetActionRow
-import com.eina.app.ui.theme.EinaTheme
-import com.eina.app.ui.theme.IslandShape
 import com.eina.app.ui.theme.Spacing
 import org.koin.androidx.compose.koinViewModel
 

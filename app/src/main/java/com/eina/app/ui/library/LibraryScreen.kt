@@ -35,10 +35,8 @@ import android.widget.Toast
 import com.eina.app.R
 import com.eina.app.data.db.ExerciseEntity
 import com.eina.app.data.db.exerciseName
-import com.eina.app.ui.components.EinaBadge
 import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import coil.compose.AsyncImage
@@ -55,7 +53,6 @@ import com.eina.app.ui.components.IslandTextField
 import com.eina.app.ui.components.ScreenHeader
 import com.eina.app.ui.components.islandListContentPadding
 import com.eina.app.ui.theme.EinaTheme
-import com.eina.app.ui.theme.IslandShape
 import com.eina.app.ui.theme.MuscleGroupCategory
 import com.eina.app.ui.theme.Spacing
 import com.eina.app.ui.theme.squircle

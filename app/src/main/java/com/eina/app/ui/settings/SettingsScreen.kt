@@ -42,7 +42,6 @@ import com.eina.app.ui.components.ScreenHeader
 import com.eina.app.ui.components.SectionHeader
 import com.eina.app.ui.feedback.LocalHapticTap
 import com.eina.app.ui.theme.EinaTheme
-import com.eina.app.ui.theme.IslandShape
 import com.eina.app.ui.theme.Spacing
 import org.koin.androidx.compose.koinViewModel
 

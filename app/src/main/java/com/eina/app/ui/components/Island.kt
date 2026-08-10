@@ -417,6 +417,9 @@ fun IslandIconButton(
     contentDescription: String?,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    // Spento non e' solo un altro colore: il tocco non deve nemmeno rispondere, altrimenti il
+    // tondo vibra e non succede niente (vedi "Avvia" con un allenamento gia' in corso).
+    enabled: Boolean = true,
     size: Dp = 44.dp,
     containerColor: Color = MaterialTheme.colorScheme.surface,
     contentColor: Color = MaterialTheme.colorScheme.onSurface
@@ -430,7 +433,7 @@ fun IslandIconButton(
         shape = RoundedCornerShape(percent = 50),
         color = if (ramped) Color.Transparent else containerColor,
         elevation = 6.dp,
-        onClick = onClick
+        onClick = onClick.takeIf { enabled }
     ) {
         if (ramped) {
             Box(

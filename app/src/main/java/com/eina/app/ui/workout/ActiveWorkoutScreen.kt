@@ -25,10 +25,7 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Notes
 import androidx.compose.material.icons.outlined.Add
@@ -45,7 +42,6 @@ import androidx.compose.material.icons.outlined.Timer
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -56,7 +52,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
@@ -65,12 +60,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.eina.app.R
-import com.eina.app.data.db.ExerciseEntity
 import com.eina.app.data.db.PlaylistType
 import com.eina.app.data.db.WeightType
 import com.eina.app.data.db.countsAsWorking
 import com.eina.app.data.db.exerciseName
-import com.eina.app.data.db.matchesQuery
 import com.eina.app.data.db.usesDecimalField
 import com.eina.app.data.db.usesDistance
 import com.eina.app.data.db.usesWeight
@@ -81,7 +74,6 @@ import com.eina.app.ui.components.IslandAlertDialog
 import com.eina.app.ui.components.IslandButton
 import com.eina.app.ui.components.IslandCard
 import com.eina.app.ui.components.ExercisePickerSheet
-import com.eina.app.ui.components.IslandChip
 import com.eina.app.ui.components.SetTableHeader
 import com.eina.app.ui.components.SetValueField
 import com.eina.app.ui.components.formatDecimal
@@ -105,19 +97,14 @@ import com.eina.app.ui.components.supersetColor
 import com.eina.app.ui.components.sanitizeWeightInput
 import com.eina.app.domain.Superset
 import com.eina.app.ui.feedback.LocalHapticTap
-import com.eina.app.ui.library.currentLocale
-import com.eina.app.ui.library.equipmentLabel
 import com.eina.app.ui.library.localized
-import com.eina.app.ui.library.localizedName
 import com.eina.app.ui.routine.launchPlaylist
 import com.eina.app.ui.theme.EinaTheme
 import com.eina.app.ui.theme.IslandShape
-import com.eina.app.ui.theme.MuscleGroupCategory
 import com.eina.app.ui.theme.PillShape
 import com.eina.app.ui.theme.Spacing
 import com.eina.app.ui.theme.TileShape
 import com.eina.app.ui.theme.label
-import com.eina.app.ui.theme.primaryCategoryFor
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
 import org.koin.core.parameter.parametersOf
@@ -986,19 +973,6 @@ private fun ExerciseNotesSheet(
             onClick = { onSave(text); onDismiss() },
             modifier = Modifier.fillMaxWidth()
         )
-    }
-}
-
-/** Azione testuale dei dialog, con lo stesso micro-feedback aptico dei controlli island. */
-@Composable
-private fun HapticTextButton(
-    text: String,
-    onClick: () -> Unit,
-    color: Color = MaterialTheme.colorScheme.primary
-) {
-    val hapticTap = LocalHapticTap.current
-    TextButton(onClick = { hapticTap(); onClick() }) {
-        Text(text, color = color)
     }
 }
 

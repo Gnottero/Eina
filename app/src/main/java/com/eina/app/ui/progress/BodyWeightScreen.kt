@@ -98,7 +98,10 @@ fun BodyWeightScreen(
                 Text(
                     text = state.deltaKg?.let { delta ->
                         val sign = if (delta >= 0) "+" else "-"
-                        "$sign${formatDecimal(kotlin.math.abs(delta))} kg dall'ultima misura"
+                        stringResource(
+                            R.string.bodyweight_delta,
+                            "$sign${formatDecimal(kotlin.math.abs(delta))}"
+                        )
                     } ?: stringResource(R.string.bodyweight_first),
                     style = MaterialTheme.typography.bodyMedium,
                     color = island.textSecondary

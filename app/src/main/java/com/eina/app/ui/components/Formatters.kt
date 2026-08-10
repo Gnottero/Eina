@@ -16,31 +16,34 @@ import java.util.Locale
 // "12 mar" in italiano, "12 Mar" in inglese, "12 mars" in francese. Locale.getDefault()
 // segue la lingua scelta in Impostazioni, che MainActivity applica anche al processo.
 // Un formatter viene ricostruito solo quando la lingua cambia davvero.
-private var formatterLocale: Locale? = null
-private lateinit var dayMonthFormatter: DateTimeFormatter
-private lateinit var fullDateFormatter: DateTimeFormatter
-private lateinit var timeFormatter: DateTimeFormatter
+// I tre formatter viaggiano insieme in un oggetto solo, sostituito con una scrittura sola: il
+// riepilogo si formatta anche fuori dal thread della UI (vedi renderShareCard), e tre campi
+// riscritti uno alla volta si possono leggere a meta' da un altro thread.
+private class Formatters(val locale: Locale) {
+    val dayMonth: DateTimeFormatter = DateTimeFormatter.ofPattern("d MMM", locale)
+    val fullDate: DateTimeFormatter = DateTimeFormatter.ofPattern("EEEE d MMMM", locale)
+    val time: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm", locale)
+}
 
-private fun formatters(): Triple<DateTimeFormatter, DateTimeFormatter, DateTimeFormatter> {
+@Volatile
+private var cachedFormatters: Formatters? = null
+
+private fun formatters(): Formatters {
     val locale = Locale.getDefault()
-    if (formatterLocale != locale) {
-        dayMonthFormatter = DateTimeFormatter.ofPattern("d MMM", locale)
-        fullDateFormatter = DateTimeFormatter.ofPattern("EEEE d MMMM", locale)
-        timeFormatter = DateTimeFormatter.ofPattern("HH:mm", locale)
-        formatterLocale = locale
-    }
-    return Triple(dayMonthFormatter, fullDateFormatter, timeFormatter)
+    val cached = cachedFormatters
+    if (cached != null && cached.locale == locale) return cached
+    return Formatters(locale).also { cachedFormatters = it }
 }
 
 fun localDateOf(millis: Long): LocalDate =
     Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault()).toLocalDate()
 
-fun formatDayMonth(millis: Long): String = localDateOf(millis).format(formatters().first)
+fun formatDayMonth(millis: Long): String = localDateOf(millis).format(formatters().dayMonth)
 
 fun formatFullDate(millis: Long): String = formatFullDate(localDateOf(millis))
 
 fun formatFullDate(date: LocalDate): String =
-    date.format(formatters().second).replaceFirstChar { it.uppercase() }
+    date.format(formatters().fullDate).replaceFirstChar { it.uppercase() }
 
 /**
  * Iniziali dei giorni, da lunedi': "L M M G V S D" in italiano, "M T W T F S S" in inglese.
@@ -57,7 +60,7 @@ fun weekDayInitials(): List<String> {
 
 fun formatTime(millis: Long): String =
     Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault()).toLocalTime()
-        .format(formatters().third)
+        .format(formatters().time)
 
 /** Numero compatto: sopra i 1000 kg si passa a "12,4k" per non far esplodere le tile. */
 fun formatVolume(kg: Double): String = when {
@@ -113,6 +116,6 @@ fun Context.formatRelativeDay(millis: Long, today: LocalDate = LocalDate.now()):
     return when (date) {
         today -> getString(R.string.date_today)
         today.minusDays(1) -> getString(R.string.date_yesterday)
-        else -> date.format(formatters().first)
+        else -> date.format(formatters().dayMonth)
     }
 }

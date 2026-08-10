@@ -4,10 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.eina.app.data.repository.StatsRepository
 import com.eina.app.domain.SessionSummary
-import com.eina.app.domain.currentStreak
 import com.eina.app.domain.epochMillisToLocalDate
 import com.eina.app.domain.summarizeSessions
-import com.eina.app.domain.trainingDays
 import com.eina.app.domain.volumeByDay
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
@@ -23,8 +21,6 @@ data class DashboardUiState(
     val weekDaysTrained: Int = 0,
     val weekVolumeKg: Double = 0.0,
     val weekVolumeByDay: List<Float> = List(7) { 0f },
-    val streakWeeks: Int = 0,
-    val lastSession: SessionSummary? = null,
     val recentSessions: List<SessionSummary> = emptyList()
 )
 
@@ -52,13 +48,16 @@ class DashboardViewModel(repository: StatsRepository) : ViewModel() {
                 weekVolumeByDay = (0..6).map { offset ->
                     (volumePerDay[startOfWeek.plusDays(offset.toLong())] ?: 0.0).toFloat()
                 },
-                streakWeeks = currentStreak(trainingDays(rows), today),
-                lastSession = sessions.firstOrNull(),
-                recentSessions = sessions.take(5)
+                recentSessions = sessions.take(RECENT_SESSIONS)
             )
         }
         // Il riepilogo si ricalcola su tutto lo storico a ogni emissione: fuori dal thread
         // della UI, altrimenti con molte sessioni l'aggiornamento si sente.
         .flowOn(Dispatchers.Default)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DashboardUiState())
+
+    private companion object {
+        /** Quante sessioni recenti finiscono in Dashboard: il resto sta nello Storico. */
+        const val RECENT_SESSIONS = 3
+    }
 }

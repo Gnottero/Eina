@@ -34,15 +34,17 @@ data class ProgressUiState(
 
 class ProgressViewModel(repository: StatsRepository) : ViewModel() {
 
-    private val today = LocalDate.now()
-    private val startOfWeek = today.minusDays((today.dayOfWeek.value - 1).toLong())
-    private val selectedDayIndex = MutableStateFlow(today.dayOfWeek.value - 1)
+    private val selectedDayIndex = MutableStateFlow(LocalDate.now().dayOfWeek.value - 1)
 
     val uiState: StateFlow<ProgressUiState> = combine(
         repository.observeCompletedSets(),
         repository.observeBodyMetrics(),
         selectedDayIndex
     ) { rows, bodyMetrics, dayIndex ->
+        // La data si rilegge a ogni emissione: fissarla alla nascita del ViewModel lasciava la
+        // settimana ferma a ieri su un'app rimasta aperta oltre la mezzanotte.
+        val today = LocalDate.now()
+        val startOfWeek = today.minusDays((today.dayOfWeek.value - 1).toLong())
         val volumePerDay = volumeByDay(rows)
         val setsPerDay = setsByDay(rows)
         val weekDates = (0..6).map { startOfWeek.plusDays(it.toLong()) }
