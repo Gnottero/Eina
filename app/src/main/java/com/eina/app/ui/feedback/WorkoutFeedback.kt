@@ -39,22 +39,46 @@ class WorkoutFeedback(
 
     /**
      * Micro-feedback su ogni tocco dei controlli. EFFECT_TICK e DEFAULT_AMPLITUDE risultano
-     * impercettibili su molti dispositivi: si preferisce l'effetto di sistema EFFECT_HEAVY_CLICK,
-     * che i vibratori lineari rendono come un colpo secco, e si ripiega su un one-shot ad
-     * ampiezza massima dove i predefiniti non sono supportati.
+     * impercettibili su molti dispositivi: dove c'e' si preferisce l'effetto di sistema
+     * EFFECT_HEAVY_CLICK, che i vibratori lineari rendono come un colpo secco.
+     *
+     * Il predefinito pero' non e' garantito: sui motori a massa rotante (telefoni di fascia bassa,
+     * molti Android non di punta) `areEffectsSupported` risponde NO e certi firmware non fanno
+     * nessun ripiego — l'app chiede una vibrazione, non succede niente e nessuno segnala errore.
+     * Quindi lo si chiede solo se il dispositivo dice di saperlo fare, e altrimenti si scende a un
+     * one-shot: piu' lungo dove non c'e' controllo d'ampiezza, perche' un motore rotante deve
+     * partire prima di farsi sentire e 30 ms non bastano a percepirlo.
      */
     fun haptic() {
         if (!settings.hapticsEnabled.value) return
         val vibrator = vibrator?.takeIf { it.hasVibrator() } ?: return
-        val effect = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            VibrationEffect.createPredefined(VibrationEffect.EFFECT_HEAVY_CLICK)
-        } else {
-            VibrationEffect.createOneShot(TAP_DURATION_MS, MAX_AMPLITUDE)
-        }
         // Canale non attenuato anche per i tap: sui canali "feedback" diversi produttori
         // abbassano (o azzerano) l'ampiezza in base alle impostazioni di sistema, e il toggle
         // dell'app non produceva nulla di percepibile. L'effetto resta comunque brevissimo.
-        vibrator.vibrateCompat(effect)
+        vibrator.vibrateCompat(vibrator.tapEffect())
+    }
+
+    private fun Vibrator.tapEffect(): VibrationEffect {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && supportsHeavyClick()) {
+            return VibrationEffect.createPredefined(VibrationEffect.EFFECT_HEAVY_CLICK)
+        }
+        return if (hasAmplitudeControl()) {
+            VibrationEffect.createOneShot(TAP_DURATION_MS, MAX_AMPLITUDE)
+        } else {
+            VibrationEffect.createOneShot(ROTARY_TAP_DURATION_MS, VibrationEffect.DEFAULT_AMPLITUDE)
+        }
+    }
+
+    /**
+     * Solo un NO esplicito conta come "non supportato": la domanda esiste da Android 11 e sotto
+     * quella versione (o con risposta UNKNOWN) tanto vale provare il predefinito.
+     */
+    private fun Vibrator.supportsHeavyClick(): Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return true
+        val support = runCatching {
+            areEffectsSupported(VibrationEffect.EFFECT_HEAVY_CLICK).firstOrNull()
+        }.getOrNull() ?: return true
+        return support != Vibrator.VIBRATION_EFFECT_SUPPORT_NO
     }
 
     private fun vibrateWaveform(pattern: LongArray) {
@@ -94,6 +118,7 @@ class WorkoutFeedback(
         const val TONE_VOLUME = 90
         const val TONE_DURATION_MS = 700
         const val TAP_DURATION_MS = 30L
+        const val ROTARY_TAP_DURATION_MS = 45L
         const val MAX_AMPLITUDE = 255
     }
 }

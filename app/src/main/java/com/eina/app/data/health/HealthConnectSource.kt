@@ -61,9 +61,17 @@ class HealthConnectSource(private val context: Context) {
         val healthClient = client ?: return@withContext null
         if (!hasPermissions()) return@withContext null
 
-        val range = TimeRangeFilter.between(Instant.ofEpochMilli(start), Instant.ofEpochMilli(end))
+        // La finestra si interroga allargata di un margine, poi si ritaglia a mano. Le braccialette
+        // non scrivono un record che comincia e finisce con l'allenamento: depositano blocchi
+        // sincronizzati a pacchetti, e le calorie spesso come un unico record lungo (a volte
+        // dell'intera giornata). Chiedendo la finestra esatta, un allenamento breve trovava zero
+        // record e il riepilogo restava vuoto pur avendo i dati sul telefono.
+        val range = TimeRangeFilter.between(
+            Instant.ofEpochMilli(start - QUERY_MARGIN_MS),
+            Instant.ofEpochMilli(end + QUERY_MARGIN_MS)
+        )
 
-        val samples = runCatching {
+        val allSamples = runCatching {
             healthClient.readRecords(ReadRecordsRequest(HeartRateRecord::class, timeRangeFilter = range))
                 .records
                 .flatMap { record -> record.samples }
@@ -71,10 +79,15 @@ class HealthConnectSource(private val context: Context) {
                 .sortedBy { it.timeMillis }
         }.getOrDefault(emptyList())
 
+        // Prima i battiti davvero dentro l'allenamento; solo se non ce n'e' nemmeno uno si tiene
+        // quel che cade nel margine — meglio un battito misurato un minuto prima che niente su un
+        // allenamento piu' corto dell'intervallo di campionamento della bracciale.
+        val samples = allSamples.filter { it.timeMillis in start..end }.ifEmpty { allSamples }
+
         val activeKcal = runCatching {
             healthClient.readRecords(ReadRecordsRequest(ActiveCaloriesBurnedRecord::class, timeRangeFilter = range))
                 .records
-                .sumOf { it.energy.inKilocalories }
+                .sumOf { it.energy.inKilocalories.overlapShare(it.startTime, it.endTime, start, end) }
         }.getOrDefault(0.0)
 
         val kcal = if (activeKcal > 0.0) {
@@ -83,7 +96,7 @@ class HealthConnectSource(private val context: Context) {
             runCatching {
                 healthClient.readRecords(ReadRecordsRequest(TotalCaloriesBurnedRecord::class, timeRangeFilter = range))
                     .records
-                    .sumOf { it.energy.inKilocalories }
+                    .sumOf { it.energy.inKilocalories.overlapShare(it.startTime, it.endTime, start, end) }
             }.getOrDefault(0.0)
         }
 
@@ -95,6 +108,29 @@ class HealthConnectSource(private val context: Context) {
             kcal = kcal.takeIf { it > 0.0 }
         )
     }
+}
+
+/** Margine con cui si allarga la finestra di lettura: vedi [HealthConnectSource.readWorkoutVitals]. */
+private const val QUERY_MARGIN_MS = 10 * 60 * 1000L
+
+/**
+ * La quota di calorie di un record che ricade davvero nell'allenamento, in proporzione al tempo:
+ * un record lungo (o giornaliero) non si somma intero, altrimenti dieci minuti di palestra
+ * direbbero le calorie della giornata. Un record istantaneo o piu' corto della finestra entra tutto.
+ */
+private fun Double.overlapShare(
+    recordStart: Instant,
+    recordEnd: Instant,
+    windowStart: Long,
+    windowEnd: Long
+): Double {
+    val from = recordStart.toEpochMilli()
+    val to = recordEnd.toEpochMilli()
+    val duration = to - from
+    if (duration <= 0L) return if (from in windowStart..windowEnd) this else 0.0
+    val overlap = minOf(to, windowEnd) - maxOf(from, windowStart)
+    if (overlap <= 0L) return 0.0
+    return this * (overlap.toDouble() / duration.toDouble()).coerceAtMost(1.0)
 }
 
 /** Dati dell'orologio per una sessione: gia' ridotti a quel che il riepilogo mostra. */
