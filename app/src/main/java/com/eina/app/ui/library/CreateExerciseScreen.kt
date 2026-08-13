@@ -51,9 +51,16 @@ import org.koin.androidx.compose.koinViewModel
 fun CreateExerciseScreen(
     onSaved: () -> Unit,
     onBack: (() -> Unit)? = null,
+    // Non nullo = si sta correggendo un esercizio custom: stesso form, cambia il titolo e il
+    // salvataggio riscrive la riga invece di aggiungerne una.
+    exerciseId: Long? = null,
     viewModel: CreateExerciseViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+
+    LaunchedEffect(exerciseId) {
+        if (exerciseId != null) viewModel.load(exerciseId)
+    }
 
     LaunchedEffect(uiState.saved) {
         if (uiState.saved) onSaved()
@@ -66,8 +73,14 @@ fun CreateExerciseScreen(
     IslandScreen(
         header = {
             ScreenHeader(
-                title = stringResource(R.string.create_exercise_title),
-                subtitle = stringResource(R.string.create_exercise_subtitle),
+                title = stringResource(
+                    if (exerciseId != null) R.string.edit_exercise_title
+                    else R.string.create_exercise_title
+                ),
+                subtitle = stringResource(
+                    if (exerciseId != null) R.string.edit_exercise_subtitle
+                    else R.string.create_exercise_subtitle
+                ),
                 onBack = onBack
             )
         },

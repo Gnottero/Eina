@@ -10,6 +10,7 @@ import com.eina.app.data.db.WeightType
 import com.eina.app.data.repository.WorkoutRepository
 import com.eina.app.ui.theme.MuscleGroupCategory
 import com.eina.app.ui.theme.canonicalMuscleKey
+import com.eina.app.ui.theme.categoryFor
 import java.io.File
 import java.util.UUID
 import kotlinx.coroutines.Dispatchers
@@ -20,6 +21,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 data class CreateExerciseUiState(
+    // Fase 32: lo stesso form crea e corregge. Non nullo = si sta modificando un esercizio
+    // custom che esiste gia', e il salvataggio riscrive quella riga invece di aggiungerne una.
+    val exerciseId: Long? = null,
     val name: String = "",
     val description: String = "",
     val loggingInstructions: String = "",
@@ -40,6 +44,32 @@ class CreateExerciseViewModel(
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(CreateExerciseUiState())
     val uiState: StateFlow<CreateExerciseUiState> = _uiState
+
+    /** Colonne dell'esercizio che il form non mostra e che la modifica non deve perdere. */
+    private var editing: ExerciseEntity? = null
+
+    /**
+     * Carica un esercizio custom nel form. Si chiama una volta sola: rileggerlo a ogni
+     * ricomposizione butterebbe via quello che si sta digitando.
+     */
+    fun load(exerciseId: Long) {
+        if (editing?.id == exerciseId) return
+        viewModelScope.launch {
+            val exercise = repository.getExercise(exerciseId)?.takeIf { it.isCustom } ?: return@launch
+            editing = exercise
+            _uiState.value = CreateExerciseUiState(
+                exerciseId = exercise.id,
+                name = exercise.name,
+                description = exercise.description,
+                loggingInstructions = exercise.loggingInstructions,
+                weightType = exercise.weightType,
+                primaryCategories = exercise.muscleGroupsPrimary.map { categoryFor(it) }.toSet(),
+                secondaryCategories = exercise.muscleGroupsSecondary.map { categoryFor(it) }.toSet(),
+                equipment = exercise.equipment.orEmpty(),
+                mediaUri = exercise.mediaUri
+            )
+        }
+    }
 
     fun onNameChange(value: String) = _uiState.update { it.copy(name = value) }
     fun onDescriptionChange(value: String) = _uiState.update { it.copy(description = value) }
@@ -89,20 +119,34 @@ class CreateExerciseViewModel(
         val state = _uiState.value
         if (!state.canSave) return
         viewModelScope.launch {
-            repository.insertExercise(
-                ExerciseEntity(
-                    name = state.name.trim(),
-                    description = state.description.trim(),
-                    loggingInstructions = state.loggingInstructions.trim(),
-                    weightType = state.weightType,
-                    muscleGroupsPrimary = state.primaryCategories.map { canonicalMuscleKey(it) },
-                    muscleGroupsSecondary = state.secondaryCategories.map { canonicalMuscleKey(it) },
-                    equipment = state.equipment.trim().ifBlank { null },
-                    mediaUri = state.mediaUri,
-                    isCustom = true,
-                    source = null
-                )
+            // In modifica si parte dalla riga esistente: nomi e descrizioni tradotti e
+            // bodyweightFactor non stanno nel form e resterebbero indietro ricostruendola.
+            val base = editing ?: ExerciseEntity(
+                name = "",
+                description = "",
+                loggingInstructions = "",
+                weightType = WeightType.FREE_WEIGHT,
+                muscleGroupsPrimary = emptyList(),
+                muscleGroupsSecondary = emptyList(),
+                isCustom = true,
+                source = null
             )
+            val exercise = base.copy(
+                name = state.name.trim(),
+                description = state.description.trim(),
+                loggingInstructions = state.loggingInstructions.trim(),
+                weightType = state.weightType,
+                muscleGroupsPrimary = state.primaryCategories.map { canonicalMuscleKey(it) },
+                muscleGroupsSecondary = state.secondaryCategories.map { canonicalMuscleKey(it) },
+                equipment = state.equipment.trim().ifBlank { null },
+                mediaUri = state.mediaUri
+            )
+            if (editing != null) {
+                repository.updateCustomExercise(exercise)
+                editing = exercise
+            } else {
+                repository.insertExercise(exercise)
+            }
             _uiState.update { it.copy(saved = true) }
         }
     }

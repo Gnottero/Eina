@@ -3978,7 +3978,7 @@
   {
     "name": "Plank",
     "description": "Get into a prone position on the floor, supporting your weight on your toes and your forearms. Your arms are bent and directly below the shoulder. Keep your body straight at all times, and hold this position as long as possible. To increase difficulty, an arm or leg can be raised.",
-    "weightType": "BODYWEIGHT",
+    "weightType": "TIME_BASED",
     "muscleGroupsPrimary": [
       "abdominals"
     ],
@@ -3994,13 +3994,12 @@
     "descriptionIt": "Mettiti a terra a pancia in giù, sostenendo il peso sulle punte dei piedi e sugli avambracci. Le braccia sono flesse con i gomiti esattamente sotto le spalle. Tieni il corpo sempre in linea e mantieni la posizione il più a lungo possibile. Per aumentare la difficoltà puoi sollevare un braccio o una gamba.",
     "descriptionFr": "Mets-toi au sol face contre terre, en soutenant le poids sur les pointes de pieds et les avant-bras. Les bras sont fléchis, coudes exactement sous les épaules. Garde le corps toujours aligné et tiens la position aussi longtemps que possible. Pour augmenter la difficulté, tu peux lever un bras ou une jambe.",
     "nameIt": "Plank",
-    "nameFr": "Planche (gainage)",
-    "bodyweightFactor": 0.0
+    "nameFr": "Planche (gainage)"
   },
   {
     "name": "Side Bridge",
     "description": "Lie on your side with your legs stacked and your forearm on the floor, elbow directly under the shoulder. Brace your core and lift your hips off the ground until your body forms a straight line from head to feet. Keep your neck neutral and avoid letting the top hip rotate forward or the bottom hip sag. Hold the position for the prescribed time, then lower under control and switch sides.",
-    "weightType": "BODYWEIGHT",
+    "weightType": "TIME_BASED",
     "muscleGroupsPrimary": [
       "abdominals"
     ],
@@ -4018,8 +4017,7 @@
     "descriptionIt": "Sdraiati su un fianco con le gambe sovrapposte e l'avambraccio a terra, il gomito esattamente sotto la spalla. Attiva il core e stacca le anche da terra finché il corpo non forma una linea retta dalla testa ai piedi. Tieni il collo in linea ed evita che l'anca alta ruoti in avanti o che quella bassa si abbassi. Mantieni la posizione per il tempo previsto, poi scendi in controllo e cambia lato.",
     "descriptionFr": "Allonge-toi sur le côté, jambes superposées et avant-bras au sol, coude exactement sous l'épaule. Gaine le tronc et décolle les hanches du sol jusqu'à ce que le corps forme une ligne droite de la tête aux pieds. Garde la nuque alignée et évite que la hanche du haut pivote vers l'avant ou que celle du bas s'affaisse. Tiens la position pendant la durée prévue, puis redescends en contrôle et change de côté.",
     "nameIt": "Plank laterale",
-    "nameFr": "Gainage latéral",
-    "bodyweightFactor": 0.0
+    "nameFr": "Gainage latéral"
   },
   {
     "name": "Russian Twist",

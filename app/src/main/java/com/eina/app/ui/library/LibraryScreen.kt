@@ -14,6 +14,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -64,6 +65,8 @@ import org.koin.androidx.compose.koinViewModel
 fun LibraryScreen(
     onExerciseClick: (Long) -> Unit = {},
     onCreateExerciseClick: (() -> Unit)? = null,
+    // Solo per gli esercizi custom: quelli di libreria li riscriverebbe il seeder.
+    onEditExerciseClick: ((Long) -> Unit)? = null,
     onBack: (() -> Unit)? = null,
     viewModel: LibraryViewModel = koinViewModel()
 ) {
@@ -154,6 +157,13 @@ fun LibraryScreen(
 
     actionsFor?.let { exercise ->
         IslandBottomSheet(onDismiss = { actionsFor = null }, title = exercise.localizedName()) {
+            if (onEditExerciseClick != null) {
+                SheetActionRow(
+                    icon = Icons.Outlined.Edit,
+                    label = stringResource(R.string.library_edit_custom),
+                    onClick = { actionsFor = null; onEditExerciseClick(exercise.id) }
+                )
+            }
             SheetActionRow(
                 icon = Icons.Outlined.Delete,
                 label = stringResource(R.string.library_delete_exercise),

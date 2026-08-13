@@ -65,4 +65,7 @@ object MuscleGroupColors {
     val Arms = Color(0xFFFFB020)
     val Core = Color(0xFF20C997)
     val Cardio = Color(0xFFF06595)
+    // Fase 32: il collo era l'unico muscolo della categoria "Altro", che aveva il grigio di
+    // chi non sa dove mettersi. Ora e' una categoria sua e ha un colore suo.
+    val Neck = Color(0xFFA9746E)
 }

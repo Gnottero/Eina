@@ -27,8 +27,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.eina.app.ui.feedback.LocalHapticTap
@@ -80,6 +85,7 @@ fun IslandBottomSheet(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .nestedScroll(SheetContentNestedScroll)
                     .then(if (scrollable) Modifier.verticalScroll(scrollState) else Modifier)
                     .navigationBarsPadding()
                     .padding(horizontal = Spacing.xl)
@@ -97,6 +103,26 @@ fun IslandBottomSheet(
             }
         }
     }
+}
+
+/**
+ * Lo scorrimento che avanza dentro il foglio si ferma qui e non arriva al foglio.
+ *
+ * ModalBottomSheet ascolta il nested scroll dei figli: quando la lista e' gia' in cima, ogni
+ * altro sfioramento verso il basso — e ogni lancio — diventava trascinamento del foglio, che
+ * cosi' si chiudeva mentre si scorreva l'elenco degli esercizi. Peggio: durante il tiro alla
+ * fune fra lista e foglio lo scorrimento si inchiodava a meta'. Mangiandosi il residuo, il
+ * foglio si trascina solo dalla maniglia e dalle zone senza lista, che e' dove il pollice va
+ * apposta per chiuderlo.
+ */
+private val SheetContentNestedScroll = object : NestedScrollConnection {
+    override fun onPostScroll(
+        consumed: Offset,
+        available: Offset,
+        source: NestedScrollSource
+    ): Offset = if (source == NestedScrollSource.UserInput) available else Offset.Zero
+
+    override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity = available
 }
 
 /** Squircle a raggio piccolo: la forma dei tasti larghi di un foglio. */

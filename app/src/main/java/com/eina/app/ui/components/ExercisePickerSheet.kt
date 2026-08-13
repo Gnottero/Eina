@@ -27,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.eina.app.R
@@ -116,8 +117,12 @@ fun ExercisePickerSheet(
                 modifier = Modifier.padding(vertical = Spacing.lg)
             )
         } else {
+            // Altezza legata allo schermo e non i 380dp fissi di prima: su un telefono alto
+            // restava mezzo foglio vuoto sotto una finestrella di elenco, e ogni esercizio in
+            // piu' costava uno scorrimento.
+            val listHeight = (LocalConfiguration.current.screenHeightDp * 0.55f).dp
             LazyColumn(
-                modifier = Modifier.height(380.dp),
+                modifier = Modifier.height(listHeight),
                 verticalArrangement = Arrangement.spacedBy(Spacing.sm)
             ) {
                 items(filtered, key = { it.id }) { exercise ->

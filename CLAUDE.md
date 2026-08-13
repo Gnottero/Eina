@@ -573,7 +573,7 @@ ripetizioni ci sono chilometri e minuti, e il PR scatta quando si supera la dist
 colonna nuova sulle serie: come `actualReps` porta gia' i secondi degli esercizi a tempo, qui
 `weight` porta i km e `actualReps` i minuti (`usesDistance` / `usesDecimalField` in
 `data/db/Enums.kt`), quindi niente migrazione — DB fermo alla versione 8. I sei esercizi
-cardio del catalogo passano al tipo giusto da `tools/cardio_weight_types.json`, applicato da
+cardio del catalogo passano al tipo giusto da `tools/weight_type_overrides.json`, applicato da
 `curate_exercises.py` (Stairmaster va a TIME_BASED: non percorre una distanza),
 CATALOG_VERSION 7. Cronometro libero, distinto dal timer di recupero: `StopwatchController`
 singleton in Koin, senza job che gira per conto suo (l'istante di partenza piu' il tempo
@@ -745,6 +745,57 @@ Nota: la verifica e' passata da un allenamento di prova generabile da Impostazio
 e dati d'orologio finti). Serviva a vedere il riepilogo pieno senza orologio collegato ed e'
 stato tolto subito dopo: un tasto che scrive dati inventati nello storico non ha posto in
 un'app dove lo storico e' l'unico dato che conta.
+
+**Fase 32 — Isometrici a tempo, fogli che restano, dati dell'orologio veri** *(fatta)*
+DoD:
+- Un plank si tiene, non si ripete. `tools/cardio_weight_types.json` diventa
+  `tools/weight_type_overrides.json` — non erano piu' solo le macchine da cardio — e ci entrano
+  Plank e Side Bridge come TIME_BASED: in tabella la colonna e' "sec" e non "rip", e il fattore
+  di peso corporeo cade (a durata non c'e' volume in kg da calcolare). `curate_exercises.py`
+  applica l'override prima dei controlli, cosi' il tipo definitivo e' quello che conta.
+  CATALOG_VERSION 8; l'id dell'esercizio non cambia, storico e schede restano attaccati.
+- I fogli dal basso non si chiudono piu' mentre si scorre. `IslandBottomSheet` mette una
+  `NestedScrollConnection` che si mangia lo scorrimento avanzato dal contenuto: ModalBottomSheet
+  lo prendeva come trascinamento e chiudeva il foglio al primo sfioramento verso il basso, e
+  durante il tiro alla fune fra lista e foglio lo scorrimento si inchiodava. Il foglio si
+  trascina ancora dalla maniglia e dalle zone senza lista. La lista del picker esercizi passa da
+  380dp fissi al 55% dello schermo.
+- Un esercizio aggiunto alla scheda nasce con **una** serie e non tre, come gia' succedeva in
+  allenamento: toglierne due costava piu' gesti che aggiungerne una
+  (`RoutineRepository.DEFAULT_SET_COUNT`).
+- Le serie si buttano trascinandole a sinistra (`SwipeToDeleteSetRow` in `ui/components/SetTable.kt`,
+  in routine e in allenamento). Col solo tocco lungo, su un esercizio senza colonna kg i campi
+  numerici si prendevano quasi tutta la riga e restavano pochi millimetri di bordo utile. Soglia
+  a meta' riga, sfondo rosso disegnato solo mentre si trascina.
+- I dati dell'orologio si leggono con `aggregate()` invece che sommando i record. Health Connect,
+  aggregando, **deduplica per priorita' delle app** (orologio e telefono che scrivono entrambi le
+  calorie venivano contati due volte) e taglia i record a cavallo della finestra; la media dei
+  battiti non e' piu' una media aritmetica dei campioni, pesata su quanto fitto campiona ogni
+  sorgente. La spezzata continua a venire dai record grezzi, ma di una sola sorgente (la piu'
+  fitta) e senza doppioni. Via il ripiego sui campioni fuori finestra: mostravano la frequenza di
+  dieci minuti prima spacciata per media dell'allenamento. Due nuovi paletti: le calorie compaiono
+  solo se l'orologio ha coperto almeno meta' allenamento (un blocco sfiorato per un minuto diceva
+  "2 kcal" su novanta minuti di palestra), e i battiti solo con almeno tre campioni. Se non c'e'
+  niente da leggere e la sessione porta ancora i dati di prima, quelli si tolgono: succede
+  correggendo data o durata, quando la finestra si sposta dove l'orologio non ha misurato niente.
+- Gli esercizi custom si modificano: stessa schermata che li crea (`library/edit/{exerciseId}`,
+  `CreateExerciseScreen(exerciseId = ...)`), aperta dal foglio del tocco lungo in libreria. In
+  modifica si riparte dalla riga esistente, cosi' nomi tradotti e `bodyweightFactor` — che il
+  form non mostra — non si perdono, e l'id resta lo stesso. Solo custom: un esercizio di libreria
+  lo riscriverebbe il seeder al primo avvio utile.
+- La categoria "Altro" era una categoria con dentro una cosa sola: e' diventata "Collo"
+  (`MuscleGroupCategory.NECK`, colore suo). Un muscolo fuori dai diciassette del dataset cade
+  ancora li'.
+- Un allenamento gia' fatto si salva come scheda: tasto in fondo al riepilogo,
+  `WorkoutRepository.createRoutineFromSession` (scheda nuova + `applySessionToRoutine`, la cui
+  cancellazione iniziale su una scheda vuota non trova niente). Si apre subito l'editor, che e'
+  dove si cambia il nome — di suo prende quello della routine di partenza o la data.
+Verificata sul dispositivo con debug e release: plank aggiunto in sessione con colonna "sec",
+foglio che sopravvive a un lancio verso il basso sulla lista, esercizio aggiunto alla scheda con
+una serie sola, serie cancellata a trascinamento in scheda e in allenamento, esercizio custom
+modificato e riletto, scheda creata da un allenamento passato con gli stessi 11 esercizi e 28
+serie, e lettura di Health Connect confrontata coi record veri sul telefono (finestra coperta:
+avg 95 / max 132 bpm e 235 kcal; finestra scoperta: niente al posto di "2 kcal").
 
 **Fase 9 — Rifinitura** *(fatta)*
 DoD: R8 + shrinkResources attivi sulla release (20,5 MB → 2,2 MB), regole in

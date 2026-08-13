@@ -59,6 +59,7 @@ import com.eina.app.ui.components.SetTableHeader
 import com.eina.app.ui.components.SetTypeIndicator
 import com.eina.app.ui.components.SetTypeSheet
 import com.eina.app.ui.components.SetValueField
+import com.eina.app.ui.components.SwipeToDeleteSetRow
 import com.eina.app.ui.theme.IslandShape
 import com.eina.app.ui.components.ExercisePickerSheet
 import com.eina.app.ui.components.IslandBottomSheet
@@ -373,14 +374,17 @@ private fun RoutineExerciseCard(
             var workingNumber = 0
             sets.forEach { set ->
                 if (set.setType.countsAsWorking) workingNumber++
-                RoutineSetRow(
-                    set = set,
-                    number = workingNumber,
-                    weightType = weightType,
-                    onValuesChange = { reps, weight -> onSetValuesChange(set, reps, weight) },
-                    onTypeClick = { setTypeFor = set.id },
-                    onLongClick = { setActionsFor = set.id }
-                )
+                // Come in allenamento: la serie si butta trascinandola a sinistra.
+                SwipeToDeleteSetRow(onDelete = { onRemoveSet(set) }) {
+                    RoutineSetRow(
+                        set = set,
+                        number = workingNumber,
+                        weightType = weightType,
+                        onValuesChange = { reps, weight -> onSetValuesChange(set, reps, weight) },
+                        onTypeClick = { setTypeFor = set.id },
+                        onLongClick = { setActionsFor = set.id }
+                    )
+                }
             }
         }
 

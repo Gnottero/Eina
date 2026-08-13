@@ -30,12 +30,34 @@ class WorkoutHealthSync(
         if (!settings.healthSyncEnabled.value) return false
         val session = sessionDao.getById(sessionId) ?: return false
         val endTime = session.endTime ?: return false
-        val vitals = source.readWorkoutVitals(session.startTime, endTime) ?: return false
+        val vitals = source.readWorkoutVitals(session.startTime, endTime)
+        if (vitals == null) {
+            // Niente da leggere. Se pero' la sessione porta ancora i dati di una lettura
+            // precedente, quelli vanno tolti: succede quando l'allenamento viene corretto e la
+            // finestra si sposta dove l'orologio non ha misurato niente. Solo col permesso in
+            // mano, altrimenti si cancellerebbe per il motivo sbagliato.
+            val stale = session.avgHeartRateBpm != null || session.maxHeartRateBpm != null ||
+                session.caloriesKcal != null || session.heartRateSamples != null
+            if (!stale || !source.hasPermissions()) return false
+            sessionDao.update(
+                session.copy(
+                    avgHeartRateBpm = null,
+                    maxHeartRateBpm = null,
+                    caloriesKcal = null,
+                    heartRateSamples = null
+                )
+            )
+            return true
+        }
+        // Quel che si legge adesso sostituisce quel che c'era, campo per campo, invece di
+        // tenere il vecchio dove il nuovo e' nullo: se l'allenamento e' stato corretto (data,
+        // ora, durata) la finestra non e' piu' la stessa, e i battiti di prima erano di
+        // un'altra mezz'ora. Una lettura che non trova niente non arriva fin qui.
         val updated = session.copy(
-            avgHeartRateBpm = vitals.avgBpm ?: session.avgHeartRateBpm,
-            maxHeartRateBpm = vitals.maxBpm ?: session.maxHeartRateBpm,
-            caloriesKcal = vitals.kcal ?: session.caloriesKcal,
-            heartRateSamples = vitals.samples.encodeHeartRateSamples() ?: session.heartRateSamples
+            avgHeartRateBpm = vitals.avgBpm,
+            maxHeartRateBpm = vitals.maxBpm,
+            caloriesKcal = vitals.kcal,
+            heartRateSamples = vitals.samples.encodeHeartRateSamples()
         )
         if (updated == session) return false
         sessionDao.update(updated)

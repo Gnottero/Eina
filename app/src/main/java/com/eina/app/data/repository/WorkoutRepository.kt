@@ -43,6 +43,17 @@ class WorkoutRepository(
     suspend fun insertExercise(exercise: ExerciseEntity): Long = exerciseDao.insert(exercise)
 
     /**
+     * Riscrive un esercizio custom. Solo custom: un esercizio di libreria lo riscriverebbe il
+     * seeder al primo avvio utile, quindi la modifica sparirebbe da sola. L'id resta lo stesso,
+     * cosi' routine e storico continuano a puntare alla stessa riga.
+     */
+    suspend fun updateCustomExercise(exercise: ExerciseEntity): Boolean {
+        if (!exercise.isCustom) return false
+        exerciseDao.update(exercise)
+        return true
+    }
+
+    /**
      * Elimina un esercizio custom, se non lo usa nessuno. Ritorna false quando compare in una
      * routine o in un allenamento gia' registrato: li' il nome serve ancora.
      * Gli esercizi di libreria non si toccano: li riscriverebbe il seeder al primo avvio utile.
@@ -309,6 +320,20 @@ class WorkoutRepository(
                 )
             }
         }
+    }
+
+    /**
+     * Fa di un allenamento gia' fatto una scheda nuova: quello che si e' fatto in palestra e'
+     * gia' un piano, e ricopiarlo a mano nell'editor era l'unico modo di tenerlo.
+     *
+     * Il grosso del lavoro e' [applySessionToRoutine], che qui parte da una scheda appena
+     * creata: la cancellazione con cui comincia non trova niente da cancellare.
+     */
+    suspend fun createRoutineFromSession(sessionId: Long, name: String): Long? {
+        if (workoutExerciseDao.getForSessionOnce(sessionId).isEmpty()) return null
+        val routineId = routineDao.insert(RoutineEntity(name = name))
+        applySessionToRoutine(sessionId, routineId)
+        return routineId
     }
 
     suspend fun getSessionExercises(sessionId: Long): List<WorkoutExerciseEntity> =

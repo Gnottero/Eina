@@ -76,6 +76,7 @@ import com.eina.app.ui.components.IslandCard
 import com.eina.app.ui.components.ExercisePickerSheet
 import com.eina.app.ui.components.SetTableHeader
 import com.eina.app.ui.components.SetValueField
+import com.eina.app.ui.components.SwipeToDeleteSetRow
 import com.eina.app.ui.components.formatDecimal
 import com.eina.app.ui.components.formatFullDate
 import com.eina.app.ui.components.previousColumnWeight
@@ -799,15 +800,19 @@ private fun ExerciseCard(
             var workingNumber = 0
             exercise.sets.forEach { set ->
                 if (set.setType.countsAsWorking) workingNumber++
-                SetRow(
-                    set = set,
-                    number = workingNumber,
-                    weightType = exercise.weightType,
-                    onTypeClick = { onOpenSetType(set.id) },
-                    onValuesChange = { reps, weight -> onSetValuesChange(set.id, reps, weight) },
-                    onToggle = { onToggleSet(set.id, set.completedAt != null) },
-                    onLongClick = { onOpenSetActions(set.id) }
-                )
+                // Trascinando la riga a sinistra la serie sparisce: col tocco lungo era l'unica
+                // via, e fra i campi numerici restava poco da toccare.
+                SwipeToDeleteSetRow(onDelete = { onRemoveSet(set.id) }) {
+                    SetRow(
+                        set = set,
+                        number = workingNumber,
+                        weightType = exercise.weightType,
+                        onTypeClick = { onOpenSetType(set.id) },
+                        onValuesChange = { reps, weight -> onSetValuesChange(set.id, reps, weight) },
+                        onToggle = { onToggleSet(set.id, set.completedAt != null) },
+                        onLongClick = { onOpenSetActions(set.id) }
+                    )
+                }
             }
         }
 

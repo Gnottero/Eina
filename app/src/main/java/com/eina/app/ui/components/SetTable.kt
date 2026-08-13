@@ -4,14 +4,22 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -26,9 +34,11 @@ import com.eina.app.data.db.WeightType
 import com.eina.app.data.db.usesDistance
 import com.eina.app.data.db.usesDuration
 import com.eina.app.data.db.usesWeight
+import com.eina.app.ui.feedback.LocalHapticTap
 import com.eina.app.ui.theme.EinaTheme
 import com.eina.app.ui.theme.PillShape
 import com.eina.app.ui.theme.Spacing
+import com.eina.app.ui.theme.TileShape
 
 /**
  * Intestazione della tabella serie, condivisa fra allenamento ed editor routine.
@@ -84,6 +94,76 @@ fun SetTableHeader(
  */
 fun previousColumnWeight(weightType: WeightType): Float =
     if (weightType.usesDistance) 1.7f else 1.1f
+
+/**
+ * Riga di tabella che si butta via trascinandola verso sinistra.
+ *
+ * Il tocco lungo restava l'unico modo di togliere una serie, e su un esercizio senza colonna kg
+ * i campi numerici si prendono quasi tutta la riga: il gesto trovava solo qualche millimetro di
+ * bordo. Lo scorrimento laterale non ha questo problema — i campi non lo intercettano — e non
+ * toglie niente: il tocco lungo resta al suo posto per il resto delle azioni.
+ *
+ * La soglia e' mezza riga invece del 50% di default con lancio: cosi' non si cancella una serie
+ * di striscio mentre si scorre la pagina.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SwipeToDeleteSetRow(
+    onDelete: () -> Unit,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit
+) {
+    val hapticTap = LocalHapticTap.current
+    val state = rememberSwipeToDismissBoxState(
+        confirmValueChange = { value ->
+            if (value == SwipeToDismissBoxValue.EndToStart) {
+                hapticTap()
+                onDelete()
+            }
+            // Non si conferma mai lo stato: la riga sparisce perche' il dato sparisce, e se la
+            // cancellazione non va in porto la riga torna al suo posto invece di restare
+            // fuori schermo.
+            false
+        },
+        positionalThreshold = { distance -> distance * 0.5f }
+    )
+    SwipeToDismissBox(
+        state = state,
+        enableDismissFromStartToEnd = false,
+        backgroundContent = {
+            // Il rosso si vede solo mentre si trascina: disegnato sempre, tingeva di rosa la
+            // riga ferma, che sopra non ha un fondo suo.
+            if (state.dismissDirection == SwipeToDismissBoxValue.EndToStart) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .clip(TileShape)
+                        .background(DestructiveRed.copy(alpha = 0.12f))
+                        .padding(horizontal = Spacing.lg),
+                    contentAlignment = Alignment.CenterEnd
+                ) {
+                    Icon(
+                        Icons.Outlined.Delete,
+                        contentDescription = stringResource(R.string.active_delete_set),
+                        tint = DestructiveRed,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
+        },
+        modifier = modifier,
+        content = {
+            // La riga che scorre porta il suo fondo, se no il rosso si vede anche attraverso.
+            Box(
+                modifier = Modifier
+                    .clip(TileShape)
+                    .background(MaterialTheme.colorScheme.surface)
+            ) {
+                content()
+            }
+        }
+    )
+}
 
 @Composable
 fun TableLabel(text: String, modifier: Modifier = Modifier) {

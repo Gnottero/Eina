@@ -1,0 +1,11 @@
+{
+  "_nota": "Tipo di carico riscritto rispetto a free-exercise-db, che etichetta tutto come se si contassero ripetizioni con un pacco pesi. Fase 27: le macchine da cardio diventano DISTANCE_BASED (km e minuti) o TIME_BASED se non percorrono una distanza. Fase 32: gli isometrici — un plank si tiene, non si ripete — diventano TIME_BASED, e cosi' perdono anche il bodyweightFactor: a durata il volume in kg non si calcola.",
+  "Running, Treadmill": "DISTANCE_BASED",
+  "Jogging, Treadmill": "DISTANCE_BASED",
+  "Walking, Treadmill": "DISTANCE_BASED",
+  "Bicycling, Stationary": "DISTANCE_BASED",
+  "Elliptical Trainer": "DISTANCE_BASED",
+  "Stairmaster": "TIME_BASED",
+  "Plank": "TIME_BASED",
+  "Side Bridge": "TIME_BASED"
+}

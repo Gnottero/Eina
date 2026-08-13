@@ -27,6 +27,7 @@ import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.Favorite
 import androidx.compose.material.icons.outlined.LocalFireDepartment
+import androidx.compose.material.icons.automirrored.outlined.PlaylistAdd
 import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -112,6 +113,7 @@ fun SessionDetailScreen(
     sessionId: Long,
     onBack: () -> Unit,
     onEdit: () -> Unit = {},
+    onRoutineCreated: (Long) -> Unit = {},
     justFinished: Boolean = false,
     viewModel: SessionDetailViewModel = koinViewModel { parametersOf(sessionId) }
 ) {
@@ -213,6 +215,26 @@ fun SessionDetailScreen(
                 position = index + 1,
                 exercise = exercise,
                 supersetLetter = exercise.supersetGroup?.let { supersetLetters[it] }
+            )
+        }
+
+        // Un allenamento andato bene e' gia' una scheda: qui si tiene, invece di ricopiarlo a
+        // mano nell'editor. Si apre subito la scheda creata, che e' dove si cambia il nome.
+        if (state.exercises.isNotEmpty()) {
+            val routineName = summary.routineName ?: formatFullDate(summary.startTime)
+            val createdMessage = stringResource(R.string.history_create_routine_done)
+            IslandSecondaryButton(
+                text = stringResource(R.string.history_create_routine),
+                icon = Icons.AutoMirrored.Outlined.PlaylistAdd,
+                onClick = {
+                    viewModel.createRoutine(routineName) { routineId ->
+                        if (routineId != null) {
+                            Toast.makeText(context, createdMessage, Toast.LENGTH_SHORT).show()
+                            onRoutineCreated(routineId)
+                        }
+                    }
+                },
+                modifier = Modifier.fillMaxWidth()
             )
         }
     }

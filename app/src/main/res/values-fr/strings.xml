@@ -269,7 +269,7 @@
     <string name="muscle_category_shoulders">Épaules</string>
     <string name="muscle_category_arms">Bras</string>
     <string name="muscle_category_core">Gainage</string>
-    <string name="muscle_category_other">Autre</string>
+    <string name="muscle_category_neck">Cou</string>
 
     <!-- Muscles du jeu de données -->
     <string name="muscle_chest">Pectoraux</string>
@@ -439,4 +439,10 @@
     <string name="routine_sync_targets_note">Le poids et les r\u00E9p\u00E9titions cibles deviennent aussi ceux enregistr\u00E9s.</string>
     <string name="routine_sync_apply">Mettre \u00E0 jour la s\u00E9ance</string>
     <string name="routine_sync_keep">Laisser telle quelle</string>
+    <string name="edit_exercise_title">Modifier \'exercice</string>
+    <string name="edit_exercise_subtitle">Seuls tes propres exercices sont modifiables</string>
+    <string name="library_edit_custom">Modifier \'exercice</string>
+    <string name="history_create_routine">Enregistrer comme routine</string>
+    <string name="history_create_routine_description">Mêmes exercices, séries et repos que cette séance</string>
+    <string name="history_create_routine_done">Routine créée</string>
 </resources>

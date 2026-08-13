@@ -115,6 +115,6 @@ class ExerciseSeeder(
         private const val KEY_CATALOG_VERSION = "catalog_version"
 
         /** Da alzare a ogni rigenerazione di exercises.json che cambia i contenuti. */
-        private const val CATALOG_VERSION = 7
+        private const val CATALOG_VERSION = 8
     }
 }

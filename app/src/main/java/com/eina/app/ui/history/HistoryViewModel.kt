@@ -78,10 +78,20 @@ data class SessionVitals(
 
 class SessionDetailViewModel(
     repository: StatsRepository,
-    workoutRepository: WorkoutRepository,
+    private val workoutRepository: WorkoutRepository,
     private val healthSync: WorkoutHealthSync,
     private val sessionId: Long
 ) : ViewModel() {
+
+    /**
+     * Fa una scheda nuova da questo allenamento. `onDone` riceve l'id della scheda creata, o
+     * null se la sessione non ha piu' nemmeno un esercizio da copiare.
+     */
+    fun createRoutine(name: String, onDone: (Long?) -> Unit) {
+        viewModelScope.launch {
+            onDone(workoutRepository.createRoutineFromSession(sessionId, name))
+        }
+    }
 
     init {
         // Un orologio sincronizza con comodo: i battiti dell'ultima serie possono arrivare in

@@ -59,7 +59,11 @@ class RoutineRepository(
 
     suspend fun deleteRoutine(routine: RoutineEntity) = routineDao.delete(routine)
 
-    /** Esercizio aggiunto alla scheda con tre serie normali vuote, come in allenamento. */
+    /**
+     * Esercizio aggiunto alla scheda con una sola serie vuota, come in allenamento: quante
+     * serie fara' davvero lo sa solo chi scrive la scheda, e togliere le due di troppo costava
+     * piu' gesti che aggiungerle.
+     */
     suspend fun addExerciseToRoutine(routineId: Long, exerciseId: Long, order: Int): Long {
         val routineExerciseId = routineExerciseDao.insert(
             RoutineExerciseEntity(
@@ -210,7 +214,7 @@ class RoutineRepository(
     }
 
     private companion object {
-        const val DEFAULT_SET_COUNT = 3
+        const val DEFAULT_SET_COUNT = 1
         const val DEFAULT_REST_SECONDS = 90
     }
 }

@@ -168,11 +168,25 @@ fun EinaNavHost() {
                     },
                     onCreateExerciseClick = {
                         navController.navigate("library/create")
+                    },
+                    onEditExerciseClick = { exerciseId ->
+                        navController.navigate("library/edit/$exerciseId")
                     }
                 )
             }
             composable("library/create") {
                 CreateExerciseScreen(
+                    onSaved = { navController.popBackStack() },
+                    onBack = { navController.popBackStack() }
+                )
+            }
+            composable(
+                route = "library/edit/{exerciseId}",
+                arguments = listOf(navArgument("exerciseId") { type = NavType.LongType })
+            ) { backStackEntry ->
+                val exerciseId = backStackEntry.arguments?.getLong("exerciseId") ?: return@composable
+                CreateExerciseScreen(
+                    exerciseId = exerciseId,
                     onSaved = { navController.popBackStack() },
                     onBack = { navController.popBackStack() }
                 )
@@ -208,7 +222,10 @@ fun EinaNavHost() {
                     sessionId = sessionId,
                     justFinished = backStackEntry.arguments?.getBoolean("justFinished") == true,
                     onBack = { navController.popBackStack() },
-                    onEdit = { navController.navigate("workout/edit/$sessionId") }
+                    onEdit = { navController.navigate("workout/edit/$sessionId") },
+                    // La scheda appena creata si apre subito: e' li' che si cambia il nome, che
+                    // per ora e' quello dell'allenamento da cui e' nata.
+                    onRoutineCreated = { routineId -> navController.navigate("routines/edit/$routineId") }
                 )
             }
             composable(EinaDestination.Progress.route) {

@@ -269,7 +269,7 @@
     <string name="muscle_category_shoulders">Spalle</string>
     <string name="muscle_category_arms">Braccia</string>
     <string name="muscle_category_core">Core</string>
-    <string name="muscle_category_other">Altro</string>
+    <string name="muscle_category_neck">Collo</string>
 
     <!-- Muscoli del dataset -->
     <string name="muscle_chest">Petto</string>
@@ -439,4 +439,10 @@
     <string name="routine_sync_targets_note">Anche peso e ripetizioni target diventano quelli registrati.</string>
     <string name="routine_sync_apply">Aggiorna la scheda</string>
     <string name="routine_sync_keep">Lascia com\u2019\u00E8</string>
+    <string name="edit_exercise_title">Modifica esercizio</string>
+    <string name="edit_exercise_subtitle">Si possono modificare solo gli esercizi tuoi</string>
+    <string name="library_edit_custom">Modifica esercizio</string>
+    <string name="history_create_routine">Salva come scheda</string>
+    <string name="history_create_routine_description">Stessi esercizi, serie e recupero di questo allenamento</string>
+    <string name="history_create_routine_done">Scheda creata</string>
 </resources>

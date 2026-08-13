@@ -6,6 +6,7 @@ import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.ActiveCaloriesBurnedRecord
 import androidx.health.connect.client.records.HeartRateRecord
 import androidx.health.connect.client.records.TotalCaloriesBurnedRecord
+import androidx.health.connect.client.request.AggregateRequest
 import androidx.health.connect.client.request.ReadRecordsRequest
 import androidx.health.connect.client.time.TimeRangeFilter
 import com.eina.app.data.db.HeartRateSample
@@ -61,76 +62,130 @@ class HealthConnectSource(private val context: Context) {
         val healthClient = client ?: return@withContext null
         if (!hasPermissions()) return@withContext null
 
-        // La finestra si interroga allargata di un margine, poi si ritaglia a mano. Le braccialette
-        // non scrivono un record che comincia e finisce con l'allenamento: depositano blocchi
-        // sincronizzati a pacchetti, e le calorie spesso come un unico record lungo (a volte
-        // dell'intera giornata). Chiedendo la finestra esatta, un allenamento breve trovava zero
-        // record e il riepilogo restava vuoto pur avendo i dati sul telefono.
-        val range = TimeRangeFilter.between(
+        // I numeri vengono dall'aggregazione sulla finestra esatta dell'allenamento, non dalla
+        // somma dei record letti a mano. Health Connect, aggregando, fa due cose che leggendo i
+        // record non si hanno: taglia i record a cavallo della finestra (le calorie sono spesso
+        // un blocco lungo, a volte dell'intera giornata) e soprattutto **deduplica per
+        // priorita' delle app**. Con l'orologio e il telefono che scrivono entrambi le calorie,
+        // sommare i record contava due volte lo stesso sforzo: e' la ragione principale per cui
+        // i numeri non tornavano. Anche la media dei battiti era una media aritmetica dei
+        // campioni, quindi pesata su quanto fitto campiona ogni sorgente invece che sul tempo.
+        val window = TimeRangeFilter.between(Instant.ofEpochMilli(start), Instant.ofEpochMilli(end))
+
+        val aggregate = runCatching {
+            healthClient.aggregate(
+                AggregateRequest(
+                    metrics = setOf(
+                        HeartRateRecord.BPM_AVG,
+                        HeartRateRecord.BPM_MAX,
+                        ActiveCaloriesBurnedRecord.ACTIVE_CALORIES_TOTAL,
+                        TotalCaloriesBurnedRecord.ENERGY_TOTAL
+                    ),
+                    timeRangeFilter = window
+                )
+            )
+        }.getOrNull()
+
+        val avgBpm = aggregate?.get(HeartRateRecord.BPM_AVG)?.toInt()
+        val maxBpm = aggregate?.get(HeartRateRecord.BPM_MAX)?.toInt()
+        // Le attive hanno la precedenza sulle totali: quelle totali comprendono il metabolismo
+        // basale, e contarlo direbbe che l'allenamento ha bruciato anche lo stare fermi.
+        val activeKcal = aggregate?.get(ActiveCaloriesBurnedRecord.ACTIVE_CALORIES_TOTAL)?.inKilocalories
+        val rawKcal = activeKcal?.takeIf { it > 0.0 }
+            ?: aggregate?.get(TotalCaloriesBurnedRecord.ENERGY_TOTAL)?.inKilocalories
+
+        // Le calorie si sommano, quindi un orologio che ha misurato solo un pezzo di
+        // allenamento produce un numero vero ma monco — e un numero monco, letto nel
+        // riepilogo, e' un numero sbagliato: novanta minuti di palestra che dicono "2 kcal"
+        // perche' la finestra sfiorava di un minuto l'ultimo blocco di dati. Sotto meta'
+        // allenamento coperto si preferisce non dire niente.
+        val coverage = runCatching {
+            val active = healthClient
+                .readRecords(ReadRecordsRequest(ActiveCaloriesBurnedRecord::class, timeRangeFilter = window))
+                .records.map { it.startTime.toEpochMilli() to it.endTime.toEpochMilli() }
+            val intervals = active.ifEmpty {
+                healthClient
+                    .readRecords(ReadRecordsRequest(TotalCaloriesBurnedRecord::class, timeRangeFilter = window))
+                    .records.map { it.startTime.toEpochMilli() to it.endTime.toEpochMilli() }
+            }
+            coveredShare(intervals, start, end)
+        }.getOrDefault(0.0)
+        val kcal = rawKcal?.takeIf { coverage >= MIN_COVERAGE }
+
+        // La spezzata invece vuole i singoli campioni, che l'aggregazione non da'. Qui la
+        // finestra si allarga di un margine, perche' una bracciale sincronizza a pacchetti e un
+        // allenamento corto puo' cadere fra due blocchi; e si tiene una sola sorgente — quella
+        // che ha campionato piu' fitto, cioe' l'orologio — altrimenti due provider disegnano
+        // due tracce sovrapposte sullo stesso grafico.
+        val margin = TimeRangeFilter.between(
             Instant.ofEpochMilli(start - QUERY_MARGIN_MS),
             Instant.ofEpochMilli(end + QUERY_MARGIN_MS)
         )
-
-        val allSamples = runCatching {
-            healthClient.readRecords(ReadRecordsRequest(HeartRateRecord::class, timeRangeFilter = range))
+        val byOrigin = runCatching {
+            healthClient.readRecords(ReadRecordsRequest(HeartRateRecord::class, timeRangeFilter = margin))
                 .records
-                .flatMap { record -> record.samples }
-                .map { HeartRateSample(it.time.toEpochMilli(), it.beatsPerMinute.toInt()) }
-                .sortedBy { it.timeMillis }
-        }.getOrDefault(emptyList())
+                .groupBy { it.metadata.dataOrigin.packageName }
+                .mapValues { (_, records) ->
+                    records
+                        .flatMap { record -> record.samples }
+                        .map { HeartRateSample(it.time.toEpochMilli(), it.beatsPerMinute.toInt()) }
+                        .sortedBy { it.timeMillis }
+                        // Blocchi diversi della stessa sorgente si sovrappongono agli estremi e
+                        // ripetono lo stesso battito: sulla spezzata era un punto disegnato due volte.
+                        .distinctBy { it.timeMillis }
+                }
+        }.getOrDefault(emptyMap())
 
-        // Prima i battiti davvero dentro l'allenamento; solo se non ce n'e' nemmeno uno si tiene
-        // quel che cade nel margine — meglio un battito misurato un minuto prima che niente su un
-        // allenamento piu' corto dell'intervallo di campionamento della bracciale.
-        val samples = allSamples.filter { it.timeMillis in start..end }.ifEmpty { allSamples }
-
-        val activeKcal = runCatching {
-            healthClient.readRecords(ReadRecordsRequest(ActiveCaloriesBurnedRecord::class, timeRangeFilter = range))
-                .records
-                .sumOf { it.energy.inKilocalories.overlapShare(it.startTime, it.endTime, start, end) }
-        }.getOrDefault(0.0)
-
-        val kcal = if (activeKcal > 0.0) {
-            activeKcal
-        } else {
-            runCatching {
-                healthClient.readRecords(ReadRecordsRequest(TotalCaloriesBurnedRecord::class, timeRangeFilter = range))
-                    .records
-                    .sumOf { it.energy.inKilocalories.overlapShare(it.startTime, it.endTime, start, end) }
-            }.getOrDefault(0.0)
+        // Solo i battiti misurati dentro l'allenamento. Prima, quando dentro la finestra non ce
+        // n'era nessuno, si ripiegava su quelli del margine: il riepilogo mostrava allora la
+        // frequenza di dieci minuti prima — cioe' di uno seduto — spacciata per media
+        // dell'allenamento. Meglio nessun dato di un dato di un altro momento.
+        val inWindow = byOrigin.mapValues { (_, samples) ->
+            samples.filter { it.timeMillis in start..end }
         }
+        val samples = inWindow.values.maxByOrNull { it.size }.orEmpty()
 
-        if (samples.isEmpty() && kcal <= 0.0) return@withContext null
+        // Due battiti in croce non fanno una media: con un orologio che campiona al minuto
+        // sono due minuti di allenamento, e il numero grande in pagina direbbe piu' di quel
+        // che sa.
+        val hasHeartRate = samples.size >= MIN_HR_SAMPLES
+        if (!hasHeartRate && kcal == null) return@withContext null
         WorkoutVitals(
-            samples = samples,
-            avgBpm = samples.takeIf { it.isNotEmpty() }?.map { it.bpm }?.average()?.toInt(),
-            maxBpm = samples.maxOfOrNull { it.bpm },
-            kcal = kcal.takeIf { it > 0.0 }
+            samples = if (hasHeartRate) samples else emptyList(),
+            avgBpm = avgBpm?.takeIf { hasHeartRate },
+            maxBpm = maxBpm?.takeIf { hasHeartRate },
+            kcal = kcal?.takeIf { it > 0.0 }
         )
     }
 }
 
-/** Margine con cui si allarga la finestra di lettura: vedi [HealthConnectSource.readWorkoutVitals]. */
+/** Margine con cui si allarga la lettura dei campioni: vedi [HealthConnectSource.readWorkoutVitals]. */
 private const val QUERY_MARGIN_MS = 10 * 60 * 1000L
 
-/**
- * La quota di calorie di un record che ricade davvero nell'allenamento, in proporzione al tempo:
- * un record lungo (o giornaliero) non si somma intero, altrimenti dieci minuti di palestra
- * direbbero le calorie della giornata. Un record istantaneo o piu' corto della finestra entra tutto.
- */
-private fun Double.overlapShare(
-    recordStart: Instant,
-    recordEnd: Instant,
-    windowStart: Long,
-    windowEnd: Long
-): Double {
-    val from = recordStart.toEpochMilli()
-    val to = recordEnd.toEpochMilli()
-    val duration = to - from
-    if (duration <= 0L) return if (from in windowStart..windowEnd) this else 0.0
-    val overlap = minOf(to, windowEnd) - maxOf(from, windowStart)
-    if (overlap <= 0L) return 0.0
-    return this * (overlap.toDouble() / duration.toDouble()).coerceAtMost(1.0)
+/** Quanto dell'allenamento l'orologio deve aver misurato perche' le calorie valgano qualcosa. */
+private const val MIN_COVERAGE = 0.5
+
+/** Battiti minimi perche' media e massimo abbiano un senso. */
+private const val MIN_HR_SAMPLES = 3
+
+/** Quota della finestra coperta dagli intervalli, contando una volta sola le sovrapposizioni. */
+private fun coveredShare(intervals: List<Pair<Long, Long>>, start: Long, end: Long): Double {
+    val window = (end - start).toDouble()
+    if (window <= 0.0) return 0.0
+    var covered = 0L
+    var cursor = start
+    intervals
+        .map { (from, to) -> maxOf(from, start) to minOf(to, end) }
+        .filter { (from, to) -> to > from }
+        .sortedBy { it.first }
+        .forEach { (from, to) ->
+            val begin = maxOf(from, cursor)
+            if (to > begin) {
+                covered += to - begin
+                cursor = to
+            }
+        }
+    return covered / window
 }
 
 /** Dati dell'orologio per una sessione: gia' ridotti a quel che il riepilogo mostra. */
