@@ -2,10 +2,14 @@
 <!--
   Solo la lettera del marchio: l'icona adattiva mette il colore nel layer di sfondo, quindi qui
   la tessera non va disegnata. Il marchio completo (tessera + lettera) vive in ic_eina_logo.xml:
-  la lettera va tenuta identica. Il group la rimpicciolisce e ricentra nella zona sicura
-  (66dp su 108) dell'adaptive icon.
+  la lettera va tenuta identica, rampa compresa. Il group la rimpicciolisce e ricentra nella zona
+  sicura (66dp su 108) dell'adaptive icon.
+
+  Questo file fa anche da layer monochrome (mipmap-anydpi/ic_launcher.xml): li' il sistema
+  ricolora tutto di suo, quindi la rampa non si vede e non e' un problema.
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
@@ -16,15 +20,39 @@
         android:scaleX="0.88"
         android:scaleY="0.88">
         <path
-            android:strokeColor="#FFFFFF"
             android:strokeWidth="12"
             android:strokeLineCap="round"
             android:strokeLineJoin="round"
-            android:pathData="M80.2,32 L35.2,32 L29,76 L75,76" />
+            android:pathData="M80.2,32 L35.2,32 L29,76 L75,76">
+            <aapt:attr name="android:strokeColor">
+                <gradient
+                    android:type="linear"
+                    android:startX="29"
+                    android:startY="32"
+                    android:endX="80"
+                    android:endY="76">
+                    <item android:offset="0" android:color="#FFA23A" />
+                    <item android:offset="0.5" android:color="#F97348" />
+                    <item android:offset="1" android:color="#F9436B" />
+                </gradient>
+            </aapt:attr>
+        </path>
         <path
-            android:strokeColor="#FFFFFF"
             android:strokeWidth="12"
             android:strokeLineCap="round"
-            android:pathData="M32.1,54 L66.1,54" />
+            android:pathData="M32.1,54 L66.1,54">
+            <aapt:attr name="android:strokeColor">
+                <gradient
+                    android:type="linear"
+                    android:startX="29"
+                    android:startY="32"
+                    android:endX="80"
+                    android:endY="76">
+                    <item android:offset="0" android:color="#FFA23A" />
+                    <item android:offset="0.5" android:color="#F97348" />
+                    <item android:offset="1" android:color="#F9436B" />
+                </gradient>
+            </aapt:attr>
+        </path>
     </group>
 </vector>
