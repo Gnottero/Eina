@@ -269,6 +269,7 @@
     <string name="muscle_category_shoulders">Épaules</string>
     <string name="muscle_category_arms">Bras</string>
     <string name="muscle_category_core">Gainage</string>
+    <string name="muscle_category_other">Autre</string>
     <string name="muscle_category_neck">Cou</string>
 
     <!-- Muscles du jeu de données -->

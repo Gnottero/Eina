@@ -783,9 +783,23 @@ DoD:
   modifica si riparte dalla riga esistente, cosi' nomi tradotti e `bodyweightFactor` — che il
   form non mostra — non si perdono, e l'id resta lo stesso. Solo custom: un esercizio di libreria
   lo riscriverebbe il seeder al primo avvio utile.
-- La categoria "Altro" era una categoria con dentro una cosa sola: e' diventata "Collo"
-  (`MuscleGroupCategory.NECK`, colore suo). Un muscolo fuori dai diciassette del dataset cade
-  ancora li'.
+- La categoria "Altro" aveva dentro una cosa sola, il collo: ora "Collo" e' una categoria sua
+  (`MuscleGroupCategory.NECK`, colore suo) e "Altro" (`OTHER`, chiave `other`, grigio) resta per
+  quello che e' — un movimento che non lavora nessuno dei gruppi elencati (mobilita', equilibrio,
+  riscaldamento). Un muscolo che il dataset non conosce cade li'.
+- I dati dell'orologio si ritrovano anche quando l'app che li deposita sbaglia a stampigliarli.
+  Mi Fitness scrive in Health Connect gli stessi battiti e le stesse calorie dell'allenamento ma
+  un'ora e mezza piu' avanti (verificato sul telefono: allenamento 08:00-09:30, record in Health
+  Connect 09:30-11:00, e nessuna `ExerciseSessionRecord` esportata a cui agganciarsi), quindi la
+  finestra esatta trovava il vuoto. `HealthConnectSource.detectOffset` misura lo scarto: prova
+  prima la finestra esatta, e solo se e' scoperta guarda nelle 24 ore intorno, allinea l'inizio
+  di ogni blocco di dati con l'inizio dell'allenamento, arrotonda il candidato al quarto d'ora
+  (tutti i fusi sono multipli di quindici minuti) e tiene lo scarto che copre di piu' — e almeno
+  meta' — dell'allenamento. Sotto quella soglia lo scarto resta zero, cioe' nessun dato invece
+  della camminata di un'altra ora. I battiti si leggono sulla finestra spostata con 15 minuti di
+  margine (i blocchi di una bracciale sono allineati alla mezz'ora) e i campioni tornano poi
+  all'ora vera dell'allenamento; le calorie restano sulla finestra esatta, perche' si sommano e
+  mezz'ora in piu' sarebbero calorie non bruciate li'.
 - Un allenamento gia' fatto si salva come scheda: tasto in fondo al riepilogo,
   `WorkoutRepository.createRoutineFromSession` (scheda nuova + `applySessionToRoutine`, la cui
   cancellazione iniziale su una scheda vuota non trova niente). Si apre subito l'editor, che e'

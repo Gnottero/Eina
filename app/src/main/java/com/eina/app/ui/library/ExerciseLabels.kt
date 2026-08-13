@@ -61,7 +61,10 @@ private val muscleLabels: Map<String, Int> = mapOf(
     "calves" to R.string.muscle_calves,
     "glutes" to R.string.muscle_glutes,
     "adductors" to R.string.muscle_adductors,
-    "abductors" to R.string.muscle_abductors
+    "abductors" to R.string.muscle_abductors,
+    // Non e' un muscolo del dataset: e' la chiave dell'esercizio che non ne lavora nessuno di
+    // quelli elencati. Vedi MuscleGroupCategory.OTHER.
+    "other" to R.string.muscle_category_other
 )
 
 private val equipmentLabels: Map<String, Int> = mapOf(

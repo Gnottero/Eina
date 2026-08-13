@@ -269,6 +269,7 @@
     <string name="muscle_category_shoulders">Spalle</string>
     <string name="muscle_category_arms">Braccia</string>
     <string name="muscle_category_core">Core</string>
+    <string name="muscle_category_other">Altro</string>
     <string name="muscle_category_neck">Collo</string>
 
     <!-- Muscoli del dataset -->

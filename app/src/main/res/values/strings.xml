@@ -282,6 +282,7 @@
     <string name="muscle_category_shoulders">Shoulders</string>
     <string name="muscle_category_arms">Arms</string>
     <string name="muscle_category_core">Core</string>
+    <string name="muscle_category_other">Other</string>
     <string name="muscle_category_neck">Neck</string>
 
     <!-- Muscoli del dataset -->

@@ -14,9 +14,13 @@ enum class MuscleGroupCategory(@StringRes val labelRes: Int, val color: Color) {
     SHOULDERS(R.string.muscle_category_shoulders, MuscleGroupColors.Shoulders),
     ARMS(R.string.muscle_category_arms, MuscleGroupColors.Arms),
     CORE(R.string.muscle_category_core, MuscleGroupColors.Core),
-    // Fase 32: era OTHER, ma l'unico muscolo che ci finiva era il collo — una categoria
-    // "Altro" con dentro una cosa sola e' solo un nome che non dice niente.
-    NECK(R.string.muscle_category_neck, MuscleGroupColors.Neck)
+    // Fase 32: il collo era finito in "Altro" perche' era l'unico muscolo fuori dalle sei
+    // categorie, e "Altro" con dentro una cosa sola non dice niente. Ora e' una categoria sua.
+    NECK(R.string.muscle_category_neck, MuscleGroupColors.Neck),
+    // "Altro" resta, ma per quello che e': un movimento che non lavora nessuno dei gruppi
+    // elencati (mobilita', equilibrio, riscaldamento generale). E' anche dove cade un muscolo
+    // che il dataset non conosce.
+    OTHER(R.string.muscle_category_other, MuscleGroupColors.Other)
 }
 
 @Composable
@@ -39,19 +43,19 @@ private val muscleToCategory: Map<String, MuscleGroupCategory> = mapOf(
     "triceps" to MuscleGroupCategory.ARMS,
     "forearms" to MuscleGroupCategory.ARMS,
     "abdominals" to MuscleGroupCategory.CORE,
-    "neck" to MuscleGroupCategory.NECK
+    "neck" to MuscleGroupCategory.NECK,
+    // Chiave dell'esercizio che non lavora nessuno dei gruppi elencati: la scrive il form degli
+    // esercizi custom quando si sceglie "Altro".
+    "other" to MuscleGroupCategory.OTHER
 )
 
-/**
- * Categoria di un muscolo. Un nome fuori dai diciassette del dataset (puo' arrivare solo da un
- * import) cade su NECK: e' l'ultima chip della lista, dove finiva anche prima.
- */
+/** Categoria di un muscolo. Un nome che il dataset non conosce cade su "Altro". */
 fun categoryFor(muscle: String): MuscleGroupCategory =
-    muscleToCategory[muscle.lowercase()] ?: MuscleGroupCategory.NECK
+    muscleToCategory[muscle.lowercase()] ?: MuscleGroupCategory.OTHER
 
 /** Categoria "primaria" di un esercizio: quella del primo muscolo primario, per badge in lista. */
 fun primaryCategoryFor(muscleGroupsPrimary: List<String>): MuscleGroupCategory =
-    muscleGroupsPrimary.firstOrNull()?.let { categoryFor(it) } ?: MuscleGroupCategory.NECK
+    muscleGroupsPrimary.firstOrNull()?.let { categoryFor(it) } ?: MuscleGroupCategory.OTHER
 
 /** Chiave muscolo canonica per categoria: usata quando l'utente sceglie una categoria nel form esercizio custom. */
 fun canonicalMuscleKey(category: MuscleGroupCategory): String =
