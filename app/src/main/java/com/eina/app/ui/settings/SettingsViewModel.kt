@@ -23,8 +23,15 @@ class SettingsViewModel(
     val timerVibrationEnabled: StateFlow<Boolean> = settings.timerVibrationEnabled
     val healthSyncEnabled: StateFlow<Boolean> = settings.healthSyncEnabled
 
-    /** Health Connect installato su questo telefono: senza, la sezione non ha niente da offrire. */
-    val healthAvailable: Boolean get() = healthSync.isAvailable
+    /**
+     * Health Connect installato su questo telefono: senza, la sezione non ha niente da offrire.
+     * Il valore si tiene invece di richiederlo a ogni lettura: dietro c'e' un'interrogazione al
+     * PackageManager e la schermata lo legge in composizione, quindi girava a ogni ridisegno. Si
+     * rilegge quando si torna dal foglio dei permessi, cioe' anche dopo aver installato Health
+     * Connect da li'.
+     */
+    private val _healthAvailable = MutableStateFlow(healthSync.isAvailable)
+    val healthAvailable: StateFlow<Boolean> = _healthAvailable.asStateFlow()
 
     /** Permessi salute da chiedere al sistema: li passa la schermata al contratto di Health Connect. */
     val healthPermissions: Set<String> get() = healthSync.permissions
@@ -39,6 +46,7 @@ class SettingsViewModel(
     /** Ricontrolla il permesso: si torna qui dopo la richiesta e dopo un giro in Health Connect. */
     fun refreshHealthPermissions() {
         viewModelScope.launch {
+            _healthAvailable.value = healthSync.isAvailable
             _healthGranted.value = runCatching { healthSync.hasPermissions() }.getOrDefault(false)
         }
     }

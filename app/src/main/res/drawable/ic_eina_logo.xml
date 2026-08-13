@@ -16,6 +16,11 @@
   l'immagine condivisibile (ui/share/ShareCard.kt) e la splash (ic_eina_splash_mark) disegnano
   questa tessera. Se cambia il tratto, va cambiato in tutti e tre. La rampa dei tratti usa le
   stesse coordinate in tutti i file, cosi' la sfumatura attraversa la lettera allo stesso modo.
+
+  I due tratti della "E" stanno in un path solo, separati da una seconda "M": le coordinate del
+  gradiente sono in spazio viewport e non nel riquadro del path, quindi due path con la stessa
+  rampa disegnano esattamente quel che disegna un path con due sottotracciati — ma costano due
+  shader invece di uno, ogni volta che il vettoriale viene gonfiato.
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:aapt="http://schemas.android.com/aapt"
@@ -30,24 +35,7 @@
         android:strokeWidth="12"
         android:strokeLineCap="round"
         android:strokeLineJoin="round"
-        android:pathData="M80.2,32 L35.2,32 L29,76 L75,76">
-        <aapt:attr name="android:strokeColor">
-            <gradient
-                android:type="linear"
-                android:startX="29"
-                android:startY="32"
-                android:endX="80"
-                android:endY="76">
-                <item android:offset="0" android:color="#FFA23A" />
-                <item android:offset="0.5" android:color="#F97348" />
-                <item android:offset="1" android:color="#F9436B" />
-            </gradient>
-        </aapt:attr>
-    </path>
-    <path
-        android:strokeWidth="12"
-        android:strokeLineCap="round"
-        android:pathData="M32.1,54 L66.1,54">
+        android:pathData="M80.2,32 L35.2,32 L29,76 L75,76 M32.1,54 L66.1,54">
         <aapt:attr name="android:strokeColor">
             <gradient
                 android:type="linear"

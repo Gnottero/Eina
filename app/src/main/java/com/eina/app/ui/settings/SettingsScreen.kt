@@ -60,6 +60,7 @@ fun SettingsScreen(
     val vibration by viewModel.timerVibrationEnabled.collectAsState()
     val healthSync by viewModel.healthSyncEnabled.collectAsState()
     val healthGranted by viewModel.healthGranted.collectAsState()
+    val healthAvailable by viewModel.healthAvailable.collectAsState()
     // Il permesso salute non passa dal contratto dei permessi runtime: Health Connect ha il suo,
     // che apre la sua schermata di consenso.
     val healthPermissionLauncher = rememberLauncherForActivityResult(
@@ -128,7 +129,7 @@ fun SettingsScreen(
             )
         }
 
-        if (viewModel.healthAvailable) {
+        if (healthAvailable) {
             SectionHeader(title = stringResource(R.string.settings_section_health))
 
             IslandCard(modifier = Modifier.fillMaxWidth()) {

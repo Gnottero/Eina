@@ -45,10 +45,19 @@ class HealthConnectSource(private val context: Context) {
 
     /** Vero solo se ci sono tutti e tre: con un permesso a meta' la lettura sarebbe monca. */
     suspend fun hasPermissions(): Boolean = withContext(Dispatchers.IO) {
+        hasPermissions(client)
+    }
+
+    /**
+     * Stessa domanda, ma con il client gia' in mano. Il getter [client] ricontrolla lo stato
+     * dell'SDK e richiama `getOrCreate` a ogni accesso: chi il client ce l'ha lo passa invece di
+     * farselo ricreare.
+     */
+    private suspend fun hasPermissions(healthClient: HealthConnectClient?): Boolean {
         val granted = runCatching {
-            client?.permissionController?.getGrantedPermissions()
+            healthClient?.permissionController?.getGrantedPermissions()
         }.getOrNull().orEmpty()
-        permissions.all { it in granted }
+        return permissions.all { it in granted }
     }
 
     /**
@@ -62,7 +71,7 @@ class HealthConnectSource(private val context: Context) {
     suspend fun readWorkoutVitals(start: Long, end: Long): WorkoutVitals? = withContext(Dispatchers.IO) {
         if (end <= start) return@withContext null
         val healthClient = client ?: return@withContext null
-        if (!hasPermissions()) return@withContext null
+        if (!hasPermissions(healthClient)) return@withContext null
 
         // Prima di leggere si guarda *dove* stanno i dati. L'app dell'orologio dovrebbe
         // depositarli con l'ora in cui li ha misurati, ma non tutte lo fanno: Mi Fitness, per
@@ -71,7 +80,7 @@ class HealthConnectSource(private val context: Context) {
         // la finestra esatta si trovava il vuoto. [detectOffset] misura lo scarto e sposta la
         // finestra di conseguenza; se i dati sono al loro posto lo scarto e' zero e non cambia
         // niente.
-        val offset = detectOffset(healthClient, start, end)
+        val (offset, coverage) = detectOffset(healthClient, start, end)
         val shiftedStart = start + offset
         val shiftedEnd = end + offset
 
@@ -141,12 +150,9 @@ class HealthConnectSource(private val context: Context) {
         // allenamento produce un numero vero ma monco — e un numero monco, letto nel
         // riepilogo, e' un numero sbagliato: novanta minuti di palestra che dicono "2 kcal"
         // perche' la finestra sfiorava di un minuto l'ultimo blocco di dati. Sotto meta'
-        // allenamento coperto si preferisce non dire niente.
-        val coverage = coveredShare(
-            readEnergyIntervals(healthClient, exactWindow),
-            shiftedStart,
-            shiftedEnd
-        )
+        // allenamento coperto si preferisce non dire niente. La copertura arriva gia' misurata da
+        // [detectOffset], che per scegliere lo scarto ha dovuto leggere gli stessi intervalli:
+        // rileggerli qui era un secondo giro su Health Connect per ricalcolare lo stesso numero.
         val kcal = rawKcal?.takeIf { coverage >= MIN_COVERAGE }
 
         // La spezzata invece vuole i singoli campioni, che l'aggregazione non da'. Si tiene una
@@ -200,8 +206,12 @@ class HealthConnectSource(private val context: Context) {
      * Vince lo scarto che copre di piu' l'allenamento, a parita' il piu' piccolo; se nemmeno il
      * migliore copre mezzo allenamento si torna a zero, cioe' "niente dati" invece di prendere
      * la camminata di un'altra ora.
+     *
+     * Torna anche la copertura raggiunta con lo scarto scelto: e' lo stesso numero che decide se
+     * le calorie valgono qualcosa, e misurarlo di nuovo dopo vorrebbe dire rileggere gli stessi
+     * intervalli da Health Connect.
      */
-    private suspend fun detectOffset(client: HealthConnectClient, start: Long, end: Long): Long {
+    private suspend fun detectOffset(client: HealthConnectClient, start: Long, end: Long): DataOffset {
         val exact = runCatching {
             coveredShare(
                 readEnergyIntervals(
@@ -212,18 +222,18 @@ class HealthConnectSource(private val context: Context) {
                 end
             )
         }.getOrDefault(0.0)
-        if (exact >= MIN_COVERAGE) return 0L
+        if (exact >= MIN_COVERAGE) return DataOffset(0L, exact)
 
         val search = TimeRangeFilter.between(
             Instant.ofEpochMilli(start - MAX_OFFSET_MS),
             Instant.ofEpochMilli(end + MAX_OFFSET_MS)
         )
         val intervals = runCatching { readEnergyIntervals(client, search) }.getOrDefault(emptyList())
-        if (intervals.isEmpty()) return 0L
+        if (intervals.isEmpty()) return DataOffset(0L, exact)
 
         var best = 0L
         var bestCoverage = exact
-        intervals.map { it.first }.distinct().forEach { blockStart ->
+        intervals.distinctBy { it.first }.forEach { (blockStart, _) ->
             val candidate = ((blockStart - start).toDouble() / QUARTER_HOUR_MS).roundToLong() * QUARTER_HOUR_MS
             if (candidate == 0L || abs(candidate) > MAX_OFFSET_MS) return@forEach
             val coverage = coveredShare(intervals, start + candidate, end + candidate)
@@ -234,7 +244,9 @@ class HealthConnectSource(private val context: Context) {
                 bestCoverage = coverage
             }
         }
-        return if (bestCoverage >= MIN_COVERAGE) best else 0L
+        // Sotto la soglia si resta fermi: lo scarto e' zero, e la copertura da riportare torna a
+        // essere quella della finestra vera, non quella dello scarto scartato.
+        return if (bestCoverage >= MIN_COVERAGE) DataOffset(best, bestCoverage) else DataOffset(0L, exact)
     }
 
     /**
@@ -256,6 +268,12 @@ class HealthConnectSource(private val context: Context) {
         }
     }
 }
+
+/**
+ * Dove stanno i dati dell'orologio rispetto all'allenamento, e quanto ne coprono: [offset] e' lo
+ * scarto da applicare alla finestra, [coverage] la quota di allenamento misurata con quello scarto.
+ */
+private data class DataOffset(val offset: Long, val coverage: Double)
 
 /** Margine con cui si allarga la finestra dei battiti: vedi [HealthConnectSource.readWorkoutVitals]. */
 private const val WINDOW_PADDING_MS = 15 * 60 * 1000L
