@@ -109,15 +109,18 @@ class SessionDetailViewModel(
             vitals = session?.toVitals()?.takeIf { it.hasData },
             summary = summarizeSessions(rows).firstOrNull(),
             exercises = rows
+                // groupBy tiene l'ordine di arrivo: ordinato qui, ogni blocco esce gia' in ordine
+                // di serie e non serve riordinarlo dentro.
                 .sortedWith(compareBy({ it.exerciseOrder }, { it.setIndex }))
                 .groupBy { it.workoutExerciseId }
                 .map { (workoutExerciseId, exerciseRows) ->
+                    val head = exerciseRows.first()
                     SessionExerciseDetail(
                         workoutExerciseId = workoutExerciseId,
-                        exerciseId = exerciseRows.first().exerciseId,
-                        exerciseName = exerciseRows.first().exerciseName,
-                        supersetGroup = exerciseRows.first().supersetGroup,
-                        sets = exerciseRows.sortedBy { it.setIndex }
+                        exerciseId = head.exerciseId,
+                        exerciseName = head.exerciseName,
+                        supersetGroup = head.supersetGroup,
+                        sets = exerciseRows
                     )
                 },
             streakWeeks = currentStreak(trainingDays(allRows))

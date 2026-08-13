@@ -444,6 +444,5 @@
     <string name="edit_exercise_subtitle">Seuls tes propres exercices sont modifiables</string>
     <string name="library_edit_custom">Modifier \'exercice</string>
     <string name="history_create_routine">Enregistrer comme routine</string>
-    <string name="history_create_routine_description">Mêmes exercices, séries et repos que cette séance</string>
     <string name="history_create_routine_done">Routine créée</string>
 </resources>

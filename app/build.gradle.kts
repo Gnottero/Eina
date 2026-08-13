@@ -53,20 +53,18 @@ android {
 }
 
 dependencies {
-    val composeBom = platform("androidx.compose:compose-bom:2024.09.03")
-    implementation(composeBom)
-    androidTestImplementation(composeBom)
+    implementation(platform("androidx.compose:compose-bom:2024.09.03"))
 
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.6")
+    // lifecycle-runtime-ktx arriva con runtime-compose alla stessa versione: nessun uso diretto
+    // (niente lifecycleScope, niente repeatOnLifecycle) da giustificare una riga sua.
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.6")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.6")
     implementation("androidx.activity:activity-compose:1.9.2")
 
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-graphics")
-    implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
     // Necessaria per icone Outlined (FitnessCenter, ecc.) non presenti nel set core
     implementation("androidx.compose.material:material-icons-extended")
@@ -101,13 +99,11 @@ dependencies {
     // Custom Tabs (donation link)
     implementation("androidx.browser:browser:1.8.0")
 
+    // I test sono unitari puri (dominio, converter, parsing) piu' un test DAO strumentato che usa
+    // Room.inMemoryDatabaseBuilder: niente Espresso, niente ui-test di Compose, niente
+    // room-testing (serve solo per MigrationTestHelper) e niente coroutines-test — le prove
+    // sospese girano con runBlocking.
     testImplementation("junit:junit:4.13.2")
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
-    androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
-    androidTestImplementation("androidx.compose.ui:ui-test-junit4")
-    androidTestImplementation("androidx.room:room-testing:2.6.1")
-    androidTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")
     debugImplementation("androidx.compose.ui:ui-tooling")
-    debugImplementation("androidx.compose.ui:ui-test-manifest")
 }

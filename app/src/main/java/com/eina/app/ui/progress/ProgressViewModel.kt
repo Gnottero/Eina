@@ -35,11 +35,15 @@ class ProgressViewModel(repository: StatsRepository) : ViewModel() {
 
     private val selectedDayIndex = MutableStateFlow(LocalDate.now().dayOfWeek.value - 1)
 
-    val uiState: StateFlow<ProgressUiState> = combine(
+    /**
+     * Tutto quello che dipende dallo storico e non dal giorno scelto. Sta in un flusso suo perche'
+     * toccare un giorno della settimana non deve far ricalcolare record, streak e volumi di tutto
+     * lo storico: cambia solo quale colonna e' evidenziata.
+     */
+    private val history: StateFlow<ProgressUiState> = combine(
         repository.observeCompletedSets(),
-        repository.observeBodyMetrics(),
-        selectedDayIndex
-    ) { rows, bodyMetrics, dayIndex ->
+        repository.observeBodyMetrics()
+    ) { rows, bodyMetrics ->
         // La data si rilegge a ogni emissione: fissarla alla nascita del ViewModel lasciava la
         // settimana ferma a ieri su un'app rimasta aperta oltre la mezzanotte.
         val today = LocalDate.now()
@@ -50,7 +54,6 @@ class ProgressViewModel(repository: StatsRepository) : ViewModel() {
 
         ProgressUiState(
             weekDates = weekDates,
-            selectedDayIndex = dayIndex,
             weekVolumeByDay = weekDates.map { (volumePerDay[it] ?: 0.0).toFloat() },
             volumeByDay = volumePerDay,
             personalRecords = personalRecords(rows),
@@ -58,10 +61,14 @@ class ProgressViewModel(repository: StatsRepository) : ViewModel() {
             streakWeeks = currentStreak(trainingDays(rows), today),
             totalVolumeKg = volumePerDay.values.sum(),
             totalSets = setsPerDay.values.sum(),
-            totalSessions = rows.map { it.sessionId }.distinct().size
+            totalSessions = rows.mapTo(HashSet()) { it.sessionId }.size
         )
     }.flowOn(Dispatchers.Default)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ProgressUiState())
+
+    val uiState: StateFlow<ProgressUiState> = combine(history, selectedDayIndex) { state, dayIndex ->
+        state.copy(selectedDayIndex = dayIndex)
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ProgressUiState())
 
     fun selectDay(index: Int) {
         selectedDayIndex.value = index

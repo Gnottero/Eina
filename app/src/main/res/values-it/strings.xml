@@ -444,6 +444,5 @@
     <string name="edit_exercise_subtitle">Si possono modificare solo gli esercizi tuoi</string>
     <string name="library_edit_custom">Modifica esercizio</string>
     <string name="history_create_routine">Salva come scheda</string>
-    <string name="history_create_routine_description">Stessi esercizi, serie e recupero di questo allenamento</string>
     <string name="history_create_routine_done">Scheda creata</string>
 </resources>

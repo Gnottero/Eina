@@ -103,10 +103,14 @@ class ActiveWorkoutViewModel(
                     }
                 }
             }
-            repository.getSessionExercises(sessionId).forEach { we ->
-                val exercise = repository.getExercise(we.exerciseId) ?: return@forEach
-                upsertExerciseUi(we, exercise)
+            // La lista si pubblica in una scrittura sola: un `update` per esercizio ricostruiva e
+            // riordinava la lista intera a ogni giro, e ricalcolava il volume su un allenamento
+            // ancora a meta' caricamento.
+            val loaded = repository.getSessionExercises(sessionId).mapNotNull { we ->
+                repository.getExercise(we.exerciseId)?.let { buildExerciseUi(we, it) }
             }
+            _uiState.update { it.copy(exercises = loaded.sortedBy { ex -> ex.order }) }
+            recomputeVolume()
         }
     }
 
@@ -122,6 +126,19 @@ class ActiveWorkoutViewModel(
     }
 
     private suspend fun upsertExerciseUi(workoutExercise: WorkoutExerciseEntity, exercise: ExerciseEntity) {
+        val exerciseUi = buildExerciseUi(workoutExercise, exercise)
+        _uiState.update { state ->
+            val others = state.exercises.filterNot { it.workoutExerciseId == workoutExercise.id }
+            state.copy(exercises = (others + exerciseUi).sortedBy { it.order })
+        }
+        recomputeVolume()
+    }
+
+    /** La voce di sessione pronta da mostrare, con segnaposto e "ultima volta" gia' risolti. */
+    private suspend fun buildExerciseUi(
+        workoutExercise: WorkoutExerciseEntity,
+        exercise: ExerciseEntity
+    ): SessionExerciseUi {
         val lastTimeSets = repository.getLastTimeSets(exercise.id, sessionId)
         val (lastWeight, lastReps) = repository.getLastRecordedValues(exercise.id)
         val sets = withSuggestions(
@@ -130,7 +147,7 @@ class ActiveWorkoutViewModel(
             lastReps,
             exercise.weightType
         )
-        val exerciseUi = SessionExerciseUi(
+        return SessionExerciseUi(
             workoutExerciseId = workoutExercise.id,
             exerciseId = exercise.id,
             name = exercise.exerciseName(),
@@ -147,11 +164,6 @@ class ActiveWorkoutViewModel(
             lastRecordedWeight = lastWeight,
             lastRecordedReps = lastReps
         )
-        _uiState.update { state ->
-            val others = state.exercises.filterNot { it.workoutExerciseId == workoutExercise.id }
-            state.copy(exercises = (others + exerciseUi).sortedBy { it.order })
-        }
-        recomputeVolume()
     }
 
     private suspend fun refreshSets(workoutExerciseId: Long) {

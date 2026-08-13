@@ -5,7 +5,6 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
-import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface SetEntryDao {
@@ -15,8 +14,23 @@ interface SetEntryDao {
     @Update
     suspend fun update(setEntry: SetEntryEntity)
 
+    // Lettura una tantum e non Flow: nessun chiamante osserva le serie di un singolo esercizio,
+    // le prendevano tutti con `.first()`. Un Flow letto una volta sola registra e disiscrive un
+    // osservatore dell'InvalidationTracker per niente, e qui succedeva dentro cicli per esercizio.
     @Query("SELECT * FROM set_entries WHERE workoutExerciseId = :workoutExerciseId ORDER BY setIndex ASC")
-    fun getForWorkoutExercise(workoutExerciseId: Long): Flow<List<SetEntryEntity>>
+    suspend fun getForWorkoutExercise(workoutExerciseId: Long): List<SetEntryEntity>
+
+    /** Se la sessione ha almeno una serie svolta: e' quel che la rende un allenamento. */
+    @Query(
+        """
+        SELECT EXISTS(
+            SELECT 1 FROM set_entries se
+            INNER JOIN workout_exercises we ON se.workoutExerciseId = we.id
+            WHERE we.sessionId = :sessionId AND se.completedAt IS NOT NULL
+        )
+        """
+    )
+    suspend fun sessionHasCompletedSets(sessionId: Long): Boolean
 
     // Tutte le set non-warmup completate per un esercizio, usate da isNewPR/volumeForSet.
     @Query(

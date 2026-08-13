@@ -461,6 +461,5 @@
     <string name="edit_exercise_subtitle">Only your own exercises can be edited</string>
     <string name="library_edit_custom">Edit exercise</string>
     <string name="history_create_routine">Save as routine</string>
-    <string name="history_create_routine_description">Same exercises, sets and rest as this workout</string>
     <string name="history_create_routine_done">Routine created</string>
 </resources>

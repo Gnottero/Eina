@@ -96,12 +96,17 @@ class WorkoutFeedback(
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             vibrate(effect, VibrationAttributes.createForUsage(VibrationAttributes.USAGE_ALARM))
         } else {
-            val attributes = AudioAttributes.Builder()
-                .setUsage(AudioAttributes.USAGE_ALARM)
-                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                .build()
-            vibrate(effect, attributes)
+            @Suppress("DEPRECATION")
+            vibrate(effect, legacyAttributes)
         }
+    }
+
+    /** Un'istanza sola: gli attributi non cambiano mai e ogni tap ne costruiva una nuova. */
+    private val legacyAttributes: AudioAttributes by lazy {
+        AudioAttributes.Builder()
+            .setUsage(AudioAttributes.USAGE_ALARM)
+            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+            .build()
     }
 
     // ToneGenerator non ha bisogno di asset audio: usa i toni di sistema e si rilascia da solo

@@ -14,7 +14,6 @@ import com.eina.app.data.db.countsAsWorking
 import com.eina.app.data.transfer.ExerciseMediaStore
 import com.eina.app.data.transfer.RoutineTransfer
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.first
 
 class RoutineRepository(
     private val routineDao: RoutineDao,
@@ -126,7 +125,7 @@ class RoutineRepository(
      */
     suspend fun exportRoutine(routineId: Long): String? {
         val routine = routineDao.getById(routineId) ?: return null
-        val routineExercises = routineExerciseDao.getForRoutine(routineId).first()
+        val routineExercises = routineExerciseDao.getForRoutineOnce(routineId)
         val sets = routineExercises.associate { it.id to routineSetDao.getForRoutineExercise(it.id) }
         val exercises = routineExercises
             .map { it.exerciseId }

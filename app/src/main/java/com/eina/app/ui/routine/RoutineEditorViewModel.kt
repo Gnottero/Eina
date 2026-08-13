@@ -12,6 +12,7 @@ import com.eina.app.data.db.RoutineSetEntity
 import com.eina.app.data.db.SetType
 import com.eina.app.data.repository.RoutineRepository
 import com.eina.app.domain.Superset
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -30,6 +31,9 @@ data class RoutineEditorUiState(
     val ready: Boolean = false
 )
 
+// flatMapLatest e' sperimentale ma stabile da anni: l'id della routine cambia una volta sola,
+// quando la bozza viene creata, e la scheda osservata deve seguirlo.
+@OptIn(ExperimentalCoroutinesApi::class)
 class RoutineEditorViewModel(
     private val repository: RoutineRepository,
     private val appContext: Context,

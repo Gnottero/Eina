@@ -29,6 +29,14 @@ interface RoutineExerciseDao {
     @Query("SELECT * FROM routine_exercises WHERE routineId = :routineId ORDER BY `order` ASC")
     fun getForRoutine(routineId: Long): Flow<List<RoutineExerciseEntity>>
 
+    /**
+     * Le stesse righe, lette una volta sola. Chi non osserva la scheda ma la legge e basta
+     * (avvio sessione, export, confronto con l'allenamento) non deve registrare un osservatore
+     * dell'InvalidationTracker per poi disiscriverlo subito.
+     */
+    @Query("SELECT * FROM routine_exercises WHERE routineId = :routineId ORDER BY `order` ASC")
+    suspend fun getForRoutineOnce(routineId: Long): List<RoutineExerciseEntity>
+
     @Query(
         """
         SELECT re.routineId AS routineId,

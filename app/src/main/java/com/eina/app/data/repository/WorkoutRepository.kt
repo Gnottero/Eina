@@ -24,7 +24,6 @@ import com.eina.app.domain.routineChanges
 import com.eina.app.domain.isNewPR
 import com.eina.app.domain.recomputePrFlags
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.first
 
 class WorkoutRepository(
     private val workoutSessionDao: WorkoutSessionDao,
@@ -87,7 +86,7 @@ class WorkoutRepository(
         val sessionId = workoutSessionDao.insert(
             WorkoutSessionEntity(routineId = routineId, startTime = System.currentTimeMillis())
         )
-        val routineExercises = routineExerciseDao.getForRoutine(routineId).first().sortedBy { it.order }
+        val routineExercises = routineExerciseDao.getForRoutineOnce(routineId)
         routineExercises.forEachIndexed { index, routineExercise ->
             val workoutExerciseId = workoutExerciseDao.insert(
                 WorkoutExerciseEntity(
@@ -166,7 +165,7 @@ class WorkoutRepository(
      * quella sessione, sparita lei il record torna a chi ce l'aveva prima.
      */
     suspend fun deleteSession(sessionId: Long) {
-        val exerciseIds = workoutExerciseDao.getForSessionOnce(sessionId).map { it.exerciseId }
+        val exerciseIds = exerciseIdsOfSession(sessionId)
         workoutSessionDao.deleteById(sessionId)
         recomputePrs(exerciseIds)
     }
@@ -202,11 +201,12 @@ class WorkoutRepository(
     suspend fun exerciseIdsOfSession(sessionId: Long): List<Long> =
         workoutExerciseDao.getForSessionOnce(sessionId).map { it.exerciseId }
 
-    /** Se la sessione ha almeno una serie svolta: e' quel che la rende un allenamento. */
+    /**
+     * Se la sessione ha almeno una serie svolta: e' quel che la rende un allenamento.
+     * Una query sola con EXISTS, non una lettura di serie per ogni esercizio in lista.
+     */
     suspend fun hasCompletedSets(sessionId: Long): Boolean =
-        workoutExerciseDao.getForSessionOnce(sessionId).any { workoutExercise ->
-            setEntryDao.getForWorkoutExercise(workoutExercise.id).first().any { it.completedAt != null }
-        }
+        setEntryDao.sessionHasCompletedSets(sessionId)
 
     /**
      * Toglie le sessioni chiuse senza nemmeno una serie svolta. Non sono allenamenti: lo storico
@@ -240,7 +240,7 @@ class WorkoutRepository(
      * numero solo da proporre.
      */
     suspend fun getRoutineTargets(routineId: Long): Map<Long, RoutineTarget> =
-        routineExerciseDao.getForRoutine(routineId).first().associate { routineExercise ->
+        routineExerciseDao.getForRoutineOnce(routineId).associate { routineExercise ->
             val sets = routineSetDao.getForRoutineExercise(routineExercise.id)
             val reference = sets.firstOrNull { it.setType.countsAsWorking } ?: sets.firstOrNull()
             routineExercise.exerciseId to RoutineTarget(
@@ -255,7 +255,7 @@ class WorkoutRepository(
      * [com.eina.app.domain.routineChanges].
      */
     suspend fun routinePlan(routineId: Long): List<PlanItem> =
-        routineExerciseDao.getForRoutine(routineId).first().sortedBy { it.order }.mapNotNull { routineExercise ->
+        routineExerciseDao.getForRoutineOnce(routineId).mapNotNull { routineExercise ->
             val exercise = exerciseDao.getById(routineExercise.exerciseId) ?: return@mapNotNull null
             PlanItem(
                 exerciseId = routineExercise.exerciseId,
@@ -273,7 +273,7 @@ class WorkoutRepository(
     suspend fun sessionPlan(sessionId: Long): List<PlanItem> =
         workoutExerciseDao.getForSessionOnce(sessionId).mapNotNull { workoutExercise ->
             val exercise = exerciseDao.getById(workoutExercise.exerciseId) ?: return@mapNotNull null
-            val sets = setEntryDao.getForWorkoutExercise(workoutExercise.id).first()
+            val sets = setEntryDao.getForWorkoutExercise(workoutExercise.id)
             PlanItem(
                 exerciseId = workoutExercise.exerciseId,
                 name = exercise.exerciseName(),
@@ -294,9 +294,9 @@ class WorkoutRepository(
     suspend fun applySessionToRoutine(sessionId: Long, routineId: Long) {
         val sessionExercises = workoutExerciseDao.getForSessionOnce(sessionId)
         // La cascade di routine_exercises porta via anche le sue routine_sets.
-        routineExerciseDao.getForRoutine(routineId).first().forEach { routineExerciseDao.delete(it) }
+        routineExerciseDao.getForRoutineOnce(routineId).forEach { routineExerciseDao.delete(it) }
         sessionExercises.forEachIndexed { index, workoutExercise ->
-            val sets = setEntryDao.getForWorkoutExercise(workoutExercise.id).first()
+            val sets = setEntryDao.getForWorkoutExercise(workoutExercise.id)
             val routineExerciseId = routineExerciseDao.insert(
                 RoutineExerciseEntity(
                     routineId = routineId,
@@ -340,7 +340,7 @@ class WorkoutRepository(
         workoutExerciseDao.getForSessionOnce(sessionId)
 
     suspend fun getSetsForWorkoutExercise(workoutExerciseId: Long): List<SetEntryEntity> =
-        setEntryDao.getForWorkoutExercise(workoutExerciseId).first()
+        setEntryDao.getForWorkoutExercise(workoutExerciseId)
 
     suspend fun getLastTimeSets(exerciseId: Long, currentSessionId: Long): List<SetEntryEntity> =
         setEntryDao.getLastTimeSets(exerciseId, currentSessionId)
@@ -387,7 +387,7 @@ class WorkoutRepository(
         // Le serie si rifanno da capo invece di ripulirle riga per riga: i campi in tabella
         // tengono il testo digitato finche' la serie ha lo stesso id, e ripulire il database
         // lascerebbe a schermo i numeri del vecchio esercizio, pronti da confermare.
-        setEntryDao.getForWorkoutExercise(workoutExerciseId).first().forEach { set ->
+        setEntryDao.getForWorkoutExercise(workoutExerciseId).forEach { set ->
             setEntryDao.deleteById(set.id)
             setEntryDao.insert(
                 set.copy(
@@ -429,9 +429,13 @@ class WorkoutRepository(
      * palestra sparivano uscendo dall'allenamento, e al rientro tornava fuori la scheda.
      */
     suspend fun reorderExercises(orderedWorkoutExercises: List<WorkoutExerciseEntity>) {
+        // Le righe salvate si leggono in blocco: una `getById` per voce erano N query per
+        // scoprire, quasi sempre, che non c'era niente da riscrivere.
+        val sessionId = orderedWorkoutExercises.firstOrNull()?.sessionId ?: return
+        val stored = workoutExerciseDao.getForSessionOnce(sessionId).associateBy { it.id }
         orderedWorkoutExercises.forEachIndexed { index, workoutExercise ->
             val updated = workoutExercise.copy(order = index)
-            if (workoutExerciseDao.getById(workoutExercise.id) != updated) {
+            if (stored[workoutExercise.id] != updated) {
                 workoutExerciseDao.update(updated)
             }
         }
