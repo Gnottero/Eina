@@ -75,18 +75,21 @@ class HealthConnectSource(private val context: Context) {
         val shiftedStart = start + offset
         val shiftedEnd = end + offset
 
-        // Quindici minuti di margine: i blocchi di una bracciale sono allineati alla mezz'ora,
-        // quindi i primi e gli ultimi minuti di allenamento cadono spesso in un blocco che
-        // comincia poco prima o finisce poco dopo.
-        val window = TimeRangeFilter.between(
-            Instant.ofEpochMilli(shiftedStart - WINDOW_PADDING_MS),
-            Instant.ofEpochMilli(shiftedEnd + WINDOW_PADDING_MS)
-        )
-        // Le calorie invece si chiedono sulla finestra esatta: si sommano, e mezz'ora in piu'
-        // di giornata sarebbe mezz'ora di calorie che l'allenamento non ha bruciato.
+        // La finestra dell'allenamento, quella vera: e' la stessa su cui Health Connect calcola
+        // i suoi numeri se gli si chiede lo stesso intervallo, quindi e' l'unica che rende media,
+        // massimo, calorie e spezzata confrontabili con quel che si legge nell'app di sistema.
         val exactWindow = TimeRangeFilter.between(
             Instant.ofEpochMilli(shiftedStart),
             Instant.ofEpochMilli(shiftedEnd)
+        )
+        // Ripiego coi soliti quindici minuti di margine, usato solo se dentro la finestra esatta
+        // non c'e' nemmeno un battito: i blocchi di una bracciale sono allineati alla mezz'ora e
+        // un allenamento corto puo' cadere fra due misurazioni. Allargare sempre, come si faceva
+        // prima, voleva dire mettere nella media mezz'ora che l'allenamento non contiene — ed e'
+        // proprio quello che faceva divergere il numero da Health Connect.
+        val paddedWindow = TimeRangeFilter.between(
+            Instant.ofEpochMilli(shiftedStart - WINDOW_PADDING_MS),
+            Instant.ofEpochMilli(shiftedEnd + WINDOW_PADDING_MS)
         )
 
         // I numeri vengono dall'aggregazione, non dalla somma dei record letti a mano. Health
@@ -96,14 +99,24 @@ class HealthConnectSource(private val context: Context) {
         // telefono che scrivono entrambi le calorie, sommare i record contava due volte lo
         // stesso sforzo. Anche la media dei battiti era una media aritmetica dei campioni,
         // quindi pesata su quanto fitto campiona ogni sorgente invece che sul tempo.
-        val heartAggregate = runCatching {
+        suspend fun aggregateHeart(range: TimeRangeFilter) = runCatching {
             healthClient.aggregate(
                 AggregateRequest(
                     metrics = setOf(HeartRateRecord.BPM_AVG, HeartRateRecord.BPM_MAX),
-                    timeRangeFilter = window
+                    timeRangeFilter = range
                 )
             )
         }.getOrNull()
+
+        // Prima la finestra esatta; il margine si apre solo se li' dentro non c'e' niente, e in
+        // quel caso lo usano anche i campioni della spezzata, cosi' numeri e grafico raccontano
+        // sempre lo stesso intervallo.
+        val exactHeart = aggregateHeart(exactWindow)
+        val usesPadding = exactHeart?.get(HeartRateRecord.BPM_AVG) == null
+        val heartAggregate = if (usesPadding) aggregateHeart(paddedWindow) else exactHeart
+        val heartWindow = if (usesPadding) paddedWindow else exactWindow
+        val heartFrom = if (usesPadding) shiftedStart - WINDOW_PADDING_MS else shiftedStart
+        val heartTo = if (usesPadding) shiftedEnd + WINDOW_PADDING_MS else shiftedEnd
         val energyAggregate = runCatching {
             healthClient.aggregate(
                 AggregateRequest(
@@ -140,7 +153,7 @@ class HealthConnectSource(private val context: Context) {
         // sola sorgente — quella che ha campionato piu' fitto, cioe' l'orologio — altrimenti
         // due provider disegnano due tracce sovrapposte sullo stesso grafico.
         val byOrigin = runCatching {
-            healthClient.readRecords(ReadRecordsRequest(HeartRateRecord::class, timeRangeFilter = window))
+            healthClient.readRecords(ReadRecordsRequest(HeartRateRecord::class, timeRangeFilter = heartWindow))
                 .records
                 .groupBy { it.metadata.dataOrigin.packageName }
                 .mapValues { (_, records) ->
@@ -155,7 +168,7 @@ class HealthConnectSource(private val context: Context) {
         }.getOrDefault(emptyMap())
 
         val inWindow = byOrigin.mapValues { (_, samples) ->
-            samples.filter { it.timeMillis in (shiftedStart - WINDOW_PADDING_MS)..(shiftedEnd + WINDOW_PADDING_MS) }
+            samples.filter { it.timeMillis in heartFrom..heartTo }
         }
         // I campioni tornano all'ora dell'allenamento: la spezzata sta sotto le sue ore, non
         // sotto quelle in cui l'app dell'orologio ha creduto di trovarsi.
