@@ -10,3 +10,8 @@
 local.properties
 app/build/
 build/
+
+# APK di release tenuti a portata di mano: un binario da 71 MB (quasi tutto
+# assets/media) non si comprime contro la versione precedente, quindi ogni build
+# committata peserebbe per intero sulla storia per sempre.
+release/
