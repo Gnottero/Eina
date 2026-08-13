@@ -116,13 +116,10 @@ import org.koin.compose.koinInject
 import org.koin.core.parameter.parametersOf
 
 /**
- * La schermata dell'allenamento, in due vesti.
- *
- * Con `editing` a true la stessa schermata corregge un allenamento gia' nello storico: le serie,
- * gli esercizi, i superset e le note si toccano con gli stessi gesti, perche' un allenamento
- * passato e' fatto della stessa materia di uno in corso. Cambia il contorno — niente cronometro
- * che scorre, niente recupero che parte, niente "Annulla" — e in fondo il salvataggio rifa' i
- * record su tutto lo storico.
+ * Workout screen, used both for the live session and, with [editing] true, for correcting a past
+ * one: a past workout is made of the same data, so the gestures are shared. In editing mode there
+ * is no running clock, no rest timer and no cancel action, and saving recomputes PR flags across
+ * the whole history.
  */
 @Composable
 fun ActiveWorkoutScreen(
@@ -145,21 +142,20 @@ fun ActiveWorkoutScreen(
     var replaceSheetFor by remember { mutableStateOf<Long?>(null) }
     var showReorder by remember { mutableStateOf(false) }
     var confirmFinish by remember { mutableStateOf(false) }
-    // Modifiche rispetto alla scheda di partenza: se ce ne sono, fra il "Termina" e il riepilogo
-    // si passa dalla domanda su cosa farne.
+    // Differences against the source routine; when non-empty the user is asked whether to apply
+    // them before the session is closed.
     var routineChanges by remember { mutableStateOf<List<RoutineChange>>(emptyList()) }
     var confirmCancel by remember { mutableStateOf(false) }
 
-    // I fogli sono ancorati all'id, non alla copia dell'esercizio: cosi' restano aperti sui dati
-    // aggiornati anche se nel frattempo cambia una serie.
+    // Sheets are keyed by id and not by the exercise snapshot, so they keep showing fresh data
+    // when a set changes while they are open.
     val restSheetExercise = state.exercises.find { it.workoutExerciseId == restSheetFor }
     val actionsSheetExercise = state.exercises.find { it.workoutExerciseId == actionsSheetFor }
     val notesSheetExercise = state.exercises.find { it.workoutExerciseId == notesSheetFor }
     val supersetSheetExercise = state.exercises.find { it.workoutExerciseId == supersetSheetFor }
     val replaceSheetExercise = state.exercises.find { it.workoutExerciseId == replaceSheetFor }
 
-    // Lettera del superset: assegnata dall'ordine in cui i giri compaiono nella lista, cosi' il
-    // primo superset dall'alto e' sempre A.
+    // Superset letters follow the order the groups appear in the list: the topmost one is always A.
     val supersetLetters = Superset.letters(state.exercises.map { it.supersetGroup })
 
     Box(
@@ -182,12 +178,11 @@ fun ActiveWorkoutScreen(
                 startTime = state.startTime,
                 onFinish = { confirmFinish = true },
                 onCancel = { confirmCancel = true },
-                // Uscendo dalla correzione i record si rifanno lo stesso: le modifiche sono gia'
-                // scritte serie per serie, e lasciarle senza ricalcolo darebbe record sbagliati.
+                // Leaving the editor still saves: edits are written set by set, so skipping the
+                // save would leave stale PR flags behind. If every completed set was removed the
+                // session no longer exists and there is no summary to go back to.
                 onExit = {
                     if (!editing) onExit()
-                    // Tolte tutte le serie svolte l'allenamento non esiste piu': si esce come da
-                    // "Annulla", perche' il riepilogo alle spalle non ha piu' niente da mostrare.
                     else viewModel.saveEdits(state.startTime, state.elapsedSeconds) { kept ->
                         if (kept) onExit() else onCancelled()
                     }
@@ -250,7 +245,7 @@ fun ActiveWorkoutScreen(
             }
         }
 
-        // Il timer di recupero e' un'isola che galleggia sopra la lista, non una barra ancorata.
+        // The rest timer floats above the list instead of being docked to the bottom edge.
         state.timer?.let { timer ->
             BottomTimerBar(
                 remainingSeconds = timer.remainingSeconds,
@@ -280,7 +275,7 @@ fun ActiveWorkoutScreen(
     if (actionsSheetExercise != null) {
         ExerciseActionsSheet(
             exercise = actionsSheetExercise,
-            // Con un esercizio solo (o un superset solo) non c'e' niente da riordinare.
+            // Nothing to reorder with a single block (one exercise, or one superset).
             canReorder = supersetBlocks(state.exercises, supersetLetters).size > 1,
             onOpenExercise = {
                 onOpenExercise(actionsSheetExercise.exerciseId)
@@ -311,7 +306,7 @@ fun ActiveWorkoutScreen(
     }
 
     if (showReorder) {
-        // Si trascinano blocchi, non card: un superset e' una sequenza e si sposta intero.
+        // Blocks are dragged, not cards: a superset is a sequence and moves as a whole.
         ReorderSheet(
             title = stringResource(R.string.reorder_title),
             rows = supersetBlocks(state.exercises, supersetLetters),
@@ -321,8 +316,8 @@ fun ActiveWorkoutScreen(
     }
 
     if (replaceSheetExercise != null) {
-        // La voce resta la stessa: cambia solo il movimento, e con esso non si perde il posto
-        // nel superset.
+        // The row is kept and only the movement changes, so position, superset, rest and notes
+        // survive the replacement.
         ExercisePickerSheet(
             exercises = state.availableExercises,
             title = stringResource(R.string.action_replace_exercise),
@@ -394,8 +389,8 @@ fun ActiveWorkoutScreen(
     }
 
     setActionsFor?.let { ref ->
-        // Titolo col numero che la serie porta in tabella: le warmup non hanno numero, quindi
-        // per loro resta il titolo generico.
+        // Title carries the number shown in the table; warmup sets have none, so they fall back
+        // to the generic title.
         val sets = state.exercises.find { it.workoutExerciseId == ref.workoutExerciseId }?.sets.orEmpty()
         val target = sets.find { it.id == ref.setId }
         val number = sets
@@ -422,14 +417,13 @@ fun ActiveWorkoutScreen(
     }
 
     if (confirmFinish) {
-        // "Termina" e' l'unico modo di chiudere una sessione: si conferma perche' e' irreversibile,
-        // e nella conferma si correggono data e durata prima di scriverle nello storico. Sulla
-        // correzione di un allenamento passato lo stesso foglio serve a spostarne data e durata.
+        // Finishing is the only way to close a session and cannot be undone, so it is confirmed;
+        // the same sheet also adjusts date and duration before they reach the history.
         FinishWorkoutSheet(
             startTime = state.startTime,
             elapsedSeconds = state.elapsedSeconds,
-            // "Non finira' nello storico" vale per la sessione senza serie svolte, non solo per
-            // quella senza esercizi: e' quella che viene eliminata al posto di essere salvata.
+            // A session without completed sets is deleted rather than saved, even if it has
+            // exercises.
             isEmpty = state.completedSets == 0 && !editing,
             editing = editing,
             onConfirm = { startTime, duration ->
@@ -439,8 +433,7 @@ fun ActiveWorkoutScreen(
                     }
                     return@FinishWorkoutSheet
                 }
-                // Senza esercizi la sessione viene eliminata invece che salvata: si esce come da
-                // "Annulla", perche' non c'e' nessun riepilogo da mostrare.
+                // A deleted session has no summary to show, so exit as if it were cancelled.
                 viewModel.finishWorkout(
                     startTime = startTime,
                     durationSeconds = duration,
@@ -453,9 +446,8 @@ fun ActiveWorkoutScreen(
     }
 
     if (routineChanges.isNotEmpty()) {
-        // La domanda arriva prima che la sessione si chiuda: cosi' vale anche per un allenamento
-        // senza serie svolte, che nello storico non ci finisce ma la scheda l'ha comunque
-        // cambiata (esercizi tolti, serie aggiunte, recuperi diversi).
+        // Asked before the session is closed, so it also applies to a workout without completed
+        // sets: it never reaches the history, but it may still have changed the routine.
         val answer = { update: Boolean ->
             routineChanges = emptyList()
             viewModel.answerRoutineSync(update) { saved -> if (saved) onFinished() else onCancelled() }
@@ -469,7 +461,7 @@ fun ActiveWorkoutScreen(
     }
 
     if (confirmCancel) {
-        // Annullare butta via la sessione: si conferma perche' le serie gia' segnate spariscono.
+        // Cancelling discards the session, completed sets included.
         IslandAlertDialog(
             title = stringResource(R.string.active_cancel_confirm_title),
             text = stringResource(R.string.active_cancel_confirm_text),
@@ -484,13 +476,10 @@ fun ActiveWorkoutScreen(
     }
 }
 
-/** Riferimento a una serie dentro la sessione: chiave del foglio azioni aperto col tocco lungo. */
+/** Reference to a single set inside the session; keys the long-press actions sheet. */
 private data class SetRef(val workoutExerciseId: Long, val setId: Long)
 
-/**
- * Intestazione di sessione: durata e volume come due metriche grandi, avanzamento affidato alla
- * sola barra (il contatore numerico delle serie sarebbe ridondante) e chiusura dell'allenamento.
- */
+/** Session header: duration and volume as headline metrics, progress bar, and the finish action. */
 @Composable
 private fun SessionHeader(
     elapsedSeconds: Int,
@@ -510,8 +499,7 @@ private fun SessionHeader(
     val stopwatch: StopwatchController = koinInject()
     val stopwatchState by stopwatch.state.collectAsState()
     var showStopwatch by remember { mutableStateOf(false) }
-    // La barra si muove verso il nuovo valore invece di saltarci: il progresso cambia a scatti
-    // di una serie alla volta e uno scatto secco su una barra sottile si legge male.
+    // Progress jumps one set at a time; animating the bar keeps those steps readable.
     val animatedProgress by animateFloatAsState(
         targetValue = progress.coerceIn(0f, 1f),
         animationSpec = tween(durationMillis = 450, easing = FastOutSlowInEasing),
@@ -530,7 +518,7 @@ private fun SessionHeader(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(Spacing.md)
             ) {
-                // Uscire mette l'allenamento in pausa "sociale": resta in corso, si rientra da Allena.
+                // Exiting leaves the workout running; it is resumed from the Workout tab.
                 IslandIconButton(
                     icon = Icons.Outlined.KeyboardArrowDown,
                     contentDescription = stringResource(R.string.active_exit_cd),
@@ -539,8 +527,7 @@ private fun SessionHeader(
                     size = 40.dp
                 )
                 Text(
-                    // Correggendo un allenamento passato il titolo dice la sua data: e' l'unico
-                    // modo di sapere quale si sta riscrivendo.
+                    // When editing, the date is the only way to tell which workout is open.
                     text = if (editing) formatFullDate(startTime) else stringResource(R.string.active_title),
                     style = MaterialTheme.typography.labelLarge,
                     color = island.textSecondary,
@@ -548,15 +535,12 @@ private fun SessionHeader(
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f)
                 )
-                // La playlist si lancia da qui, dove serve davvero: nell'editor della routine
-                // si sta scrivendo una scheda, non ci si sta allenando.
                 if (playlistType != null && !playlistUri.isNullOrBlank()) {
                     IslandIconButton(
                         icon = Icons.Outlined.MusicNote,
                         contentDescription = stringResource(R.string.active_play_playlist_cd),
                         onClick = {
-                            // Senza app musicale ne' browser non succede nulla: lo si dice,
-                            // invece di lasciare il tasto muto.
+                            // Neither a music app nor a browser: say so instead of doing nothing.
                             if (!launchPlaylist(context, playlistUri, playlistType)) {
                                 Toast.makeText(
                                     context,
@@ -569,9 +553,7 @@ private fun SessionHeader(
                         size = 40.dp
                     )
                 }
-                // Cronometro a portata di mano anche in palestra: e' lo stesso della Dashboard,
-                // quindi un conteggio avviato prima continua qui. Sta dopo la playlist, che
-                // tiene il suo posto storico in fondo alla riga.
+                // Same stopwatch as the Dashboard: a count started earlier keeps running here.
                 StopwatchIconButton(
                     running = stopwatchState.running,
                     onClick = { showStopwatch = true },
@@ -616,15 +598,12 @@ private fun SessionHeader(
             }
 
             IslandButton(
-                // Sulla correzione il tasto apre lo stesso foglio, ma quel che conferma sono data
-                // e durata di un allenamento che nello storico c'e' gia'.
                 text = stringResource(if (editing) R.string.edit_session_save else R.string.active_finish),
                 onClick = onFinish,
                 modifier = Modifier.fillMaxWidth()
             )
 
-            // "Annulla" butta via la sessione: su un allenamento gia' registrato non ha senso,
-            // si elimina dallo storico dove si e' scelto di tenerlo.
+            // Cancelling only applies to a live session; a saved workout is deleted from history.
             if (!editing) {
                 Text(
                     text = stringResource(R.string.active_cancel),
@@ -690,7 +669,6 @@ private fun MetricTile(
                 Text(
                     text = " $unit",
                     style = MaterialTheme.typography.labelMedium,
-                    // Stesso colore del numero: l'unita' ne fa parte.
                     color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.padding(bottom = 3.dp)
                 )
@@ -719,7 +697,7 @@ private fun ExerciseCard(
     val supersetTint = supersetLetter?.let { supersetColor(it) }
 
     IslandCard(
-        // Il contorno colorato dice a colpo d'occhio quali card fanno parte dello stesso giro.
+        // The tinted border marks the cards belonging to the same superset.
         modifier = Modifier
             .fillMaxWidth()
             .then(
@@ -729,15 +707,13 @@ private fun ExerciseCard(
         shape = IslandShape,
         contentPadding = PaddingValues(horizontal = Spacing.lg, vertical = Spacing.xl),
         verticalArrangement = Arrangement.spacedBy(Spacing.lg),
-        // Niente tre puntini: le azioni si aprono col tocco lungo sulla card.
         onLongClick = onOpenActions
     ) {
         if (supersetLetter != null) {
             SupersetBadge(letter = supersetLetter)
         }
 
-        // Il nome porta alla scheda dell'esercizio: durante una serie serve rileggere
-        // l'esecuzione, non ricercarlo in libreria.
+        // The name opens the exercise sheet, so form can be checked without leaving the session.
         Text(
             exercise.name.localized(),
             style = MaterialTheme.typography.titleLarge,
@@ -746,12 +722,11 @@ private fun ExerciseCard(
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier
                 .fillMaxWidth()
-                // Raggio piccolo: TileShape (24dp) e' piu' alto di mezza riga di testo e la sua
-                // curva mangiava le prime e le ultime lettere dei nomi lunghi. Cosi' il nome
-                // resta a filo del bordo della card, in colonna con recupero e tabella serie.
+                // Small radius: TileShape (24dp) is taller than half a text line and its curve
+                // clipped the first and last letters of long names.
                 .clip(RoundedCornerShape(8.dp))
-                // Anche i figli cliccabili devono rispondere al tocco lungo: senza, il gesto
-                // funzionerebbe solo sui pochi punti morti della card.
+                // Clickable children must forward the long press too, otherwise the gesture only
+                // works on the few dead spots of the card.
                 .combinedClickable(
                     onLongClick = { hapticTap(); onOpenActions() },
                     onClick = { hapticTap(); onOpenExercise() }
@@ -767,7 +742,6 @@ private fun ExerciseCard(
             )
         }
 
-        // Chip recupero: modificabile durante l'allenamento, non solo in fase di routine.
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(Spacing.xs),
@@ -795,13 +769,11 @@ private fun ExerciseCard(
 
         Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
             SetTableHeader(weightType = exercise.weightType)
-            // Il numero conta solo le serie di lavoro: un riscaldamento in mezzo porta la W, non
-            // ruba il numero alla serie dopo.
+            // Only working sets are numbered: a warmup in between shows W and does not consume
+            // the number of the set after it.
             var workingNumber = 0
             exercise.sets.forEach { set ->
                 if (set.setType.countsAsWorking) workingNumber++
-                // Trascinando la riga a sinistra la serie sparisce: col tocco lungo era l'unica
-                // via, e fra i campi numerici restava poco da toccare.
                 SwipeToDeleteSetRow(onDelete = { onRemoveSet(set.id) }) {
                     SetRow(
                         set = set,
@@ -849,8 +821,8 @@ private fun SetRow(
     val hapticTap = LocalHapticTap.current
     val completed = set.completedAt != null
 
-    // Il testo digitato vive nella UI, non nel modello: passando ogni tasto per Double
-    // "52." diventerebbe "52.0" e il decimale successivo sarebbe impossibile da scrivere.
+    // The typed text lives in the UI, not in the model: routing every keystroke through Double
+    // would turn "52." into "52.0" and make the decimal digit impossible to type.
     var weightText by remember(set.id) { mutableStateOf(set.weight?.toString() ?: "") }
     var repsText by remember(set.id) { mutableStateOf(set.actualReps?.toString() ?: "") }
 
@@ -859,14 +831,13 @@ private fun SetRow(
             .fillMaxWidth()
             .clip(TileShape)
             .background(if (completed) MaterialTheme.colorScheme.primary.copy(alpha = 0.10f) else Color.Transparent)
-            // Tocco lungo sulla riga = azioni della serie. I campi numerici si prendono i tocchi
-            // che li riguardano, il resto della riga resta area utile per il gesto.
+            // Long press opens the set actions; the numeric fields keep their own taps.
             .combinedClickable(onLongClick = { hapticTap(); onLongClick() }, onClick = {})
             .padding(vertical = Spacing.sm, horizontal = Spacing.xs),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
     ) {
-        // Il segno della serie e' anche il comando: un tocco apre la scelta W / numero / F / D.
+        // The set marker is also the control: tapping it opens the W / number / F / D picker.
         SetTypeIndicator(
             type = set.setType,
             number = number,
@@ -884,10 +855,9 @@ private fun SetRow(
             modifier = Modifier.weight(previousColumnWeight(weightType))
         )
 
-        // Segnaposto = valori proposti dal ViewModel, gli stessi che vengono registrati se la
-        // serie viene chiusa senza digitare nulla.
-        // Stesso campo decimale per i kg e per i chilometri: cambia l'etichetta in testa alla
-        // colonna, non la casella.
+        // Placeholders are the values suggested by the ViewModel, the same ones recorded when a
+        // set is completed without typing anything. Kilograms and kilometres share this field:
+        // only the column header changes.
         if (weightType.usesDecimalField) {
             SetValueField(
                 value = weightText,
@@ -916,10 +886,7 @@ private fun SetRow(
     }
 }
 
-/**
- * Check della serie: cerchio vuoto finche' non e' svolta (un segno di spunta grigio si legge
- * come "gia' fatta"), pill piena viola quando e' completata.
- */
+/** Set check: an empty circle until done, a filled accent pill once completed. */
 @Composable
 private fun SetCheckButton(completed: Boolean, onClick: () -> Unit) {
     val island = EinaTheme.island
@@ -947,7 +914,7 @@ private fun SetCheckButton(completed: Boolean, onClick: () -> Unit) {
     }
 }
 
-/** Azioni sull'esercizio in corso: righe grandi con icona, al posto del menu a tendina minuscolo. */
+/** Actions for an exercise in the current session, opened by long press. */
 @Composable
 private fun ExerciseActionsSheet(
     exercise: SessionExerciseUi,
@@ -1017,10 +984,7 @@ private fun ExerciseActionsSheet(
     }
 }
 
-/**
- * Nota dell'esercizio durante l'allenamento: carico usato, sensazioni, correzioni di tecnica.
- * Resta nella sessione e non riscrive la nota della routine.
- */
+/** Per-exercise note for this session; it does not overwrite the routine note. */
 @Composable
 private fun ExerciseNotesSheet(
     exercise: SessionExerciseUi,
@@ -1053,7 +1017,7 @@ private fun formatDuration(totalSeconds: Int): String {
     return if (hours > 0) "%d:%02d:%02d".format(hours, minutes, seconds) else "%02d:%02d".format(minutes, seconds)
 }
 
-/** Volume come intero con separatore delle migliaia: l'unita' la stampa la tile a parte. */
+/** Volume as an integer with thousands separator; the unit is printed by the tile. */
 private fun formatVolumeValue(kg: Double): String =
     "%,d".format(kg.toLong()).replace(',', '.')
 
@@ -1061,13 +1025,13 @@ private fun formatNumber(value: Double): String =
     if (value % 1.0 == 0.0) value.toInt().toString() else value.toString()
 
 /**
- * "60kg×8" dove il carico esiste, le sole ripetizioni (o i secondi) a corpo libero e a tempo:
- * stampare "0kg×8" su una trazione sarebbe un dato inventato.
+ * "60kg×8" where a load exists, reps (or seconds) alone for bodyweight and timed exercises:
+ * printing "0kg×8" on a pull-up would be a made-up value.
  */
 private fun formatPrevious(set: com.eina.app.data.db.SetEntryEntity, weightType: WeightType): String {
     val reps = set.actualReps?.toString()
-    // Sulla distanza il "precedente" sono i chilometri col tempo, non un carico per ripetizioni.
-    // Forma compatta come "5,2km·30": per esteso la colonna e' troppo stretta e taglia il tempo.
+    // For distance the previous value is kilometres and minutes; the compact "5.2km·30" form fits
+    // the column, the expanded one would cut off the time.
     if (weightType.usesDistance) {
         val km = set.weight?.let { "${formatDecimal(it)}km" }
         return listOfNotNull(km, reps).joinToString("·").ifBlank { "—" }
@@ -1078,16 +1042,16 @@ private fun formatPrevious(set: com.eina.app.data.db.SetEntryEntity, weightType:
 }
 
 /**
- * Gli esercizi della sessione visti come blocchi trascinabili: un superset e' una riga sola,
- * perche' i suoi membri si spostano insieme. La chiave della riga sono gli id dei membri, cosi'
- * l'ordine confermato si riappiattisce senza tenere una mappa a parte.
+ * Session exercises as draggable blocks: a superset is a single row, since its members move
+ * together. The row key is the joined member ids, so the confirmed order can be flattened back
+ * without keeping a separate map.
  */
 @Composable
 private fun supersetBlocks(
     exercises: List<SessionExerciseUi>,
     letters: Map<Int, String>
 ): List<ReorderRow> {
-    // getString e locale letti fuori: dentro le lambda di map non si chiamano composable.
+    // Context and locale are read outside: composables cannot be called inside the map lambdas.
     val context = LocalContext.current
     val locale = currentLocale()
     return Superset.blocksOf(exercises.map { Superset.Member(it.workoutExerciseId, it.supersetGroup) })

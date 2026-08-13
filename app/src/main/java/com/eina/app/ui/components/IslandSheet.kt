@@ -44,9 +44,8 @@ import com.eina.app.ui.theme.Spacing
 import com.eina.app.ui.theme.squircle
 
 /**
- * Foglio che sale dal basso, in stile island: angoli grandi solo in alto, superficie bianca,
- * niente maniglia Material. Sostituisce i menu a tendina e i dialog dove le voci sono azioni da
- * colpire col pollice, non testo da leggere.
+ * Bottom sheet in island style: large top corners, white surface, custom handle. Used instead of
+ * dropdown menus and dialogs wherever the entries are thumb-sized actions.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -54,9 +53,9 @@ fun IslandBottomSheet(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
     title: String? = null,
-    // Da attivare quando il contenuto puo' superare lo schermo (un calendario che si apre, per
-    // dire): senza, la Column comprime i figli ad altezza fissa e i rulli di durata finiscono
-    // scollati dalla loro banda di selezione.
+    // Enable when the content can exceed the screen (an expanding calendar, for instance):
+    // otherwise the Column squeezes its children and the duration wheels drift away from their
+    // selection band.
     scrollable: Boolean = false,
     content: @Composable ColumnScope.() -> Unit
 ) {
@@ -64,8 +63,8 @@ fun IslandBottomSheet(
     val island = EinaTheme.island
     ModalBottomSheet(
         onDismissRequest = onDismiss,
-        // Sempre a tutta altezza: i fogli qui contengono liste e griglie, e lo stato intermedio
-        // taglierebbe il contenuto a meta'.
+        // Always fully expanded: these sheets hold lists and grids, and the partial state would
+        // cut the content in half.
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
         containerColor = MaterialTheme.colorScheme.surface,
         shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
@@ -80,7 +79,7 @@ fun IslandBottomSheet(
         },
         modifier = modifier
     ) {
-        // Nel foglio i bottoni non sono pastiglie: vedi LocalButtonShape.
+        // Inside a sheet buttons are not pills; see LocalButtonShape.
         CompositionLocalProvider(LocalButtonShape provides SheetButtonShape) {
             Column(
                 modifier = Modifier
@@ -106,14 +105,12 @@ fun IslandBottomSheet(
 }
 
 /**
- * Lo scorrimento che avanza dentro il foglio si ferma qui e non arriva al foglio.
+ * Consumes the scroll left over by the sheet content so it never reaches the sheet itself.
  *
- * ModalBottomSheet ascolta il nested scroll dei figli: quando la lista e' gia' in cima, ogni
- * altro sfioramento verso il basso — e ogni lancio — diventava trascinamento del foglio, che
- * cosi' si chiudeva mentre si scorreva l'elenco degli esercizi. Peggio: durante il tiro alla
- * fune fra lista e foglio lo scorrimento si inchiodava a meta'. Mangiandosi il residuo, il
- * foglio si trascina solo dalla maniglia e dalle zone senza lista, che e' dove il pollice va
- * apposta per chiuderlo.
+ * ModalBottomSheet listens to the nested scroll of its children: once the list is at the top, any
+ * further downward drag — or fling — became a sheet drag and closed it mid-scroll, and the tug of
+ * war between list and sheet could stall the scroll entirely. By eating the leftovers, the sheet
+ * can still be dragged from the handle and the areas without a list.
  */
 private val SheetContentNestedScroll = object : NestedScrollConnection {
     override fun onPostScroll(
@@ -125,19 +122,18 @@ private val SheetContentNestedScroll = object : NestedScrollConnection {
     override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity = available
 }
 
-/** Squircle a raggio piccolo: la forma dei tasti larghi di un foglio. */
+/** Small-radius squircle: the shape of the wide buttons inside a sheet. */
 val SheetButtonShape: Shape = squircle(16.dp)
 
-/** Squircle delle righe d'azione: piu' generoso, sono tessere non tasti. */
+/** Squircle of the action rows: more generous, since they are tiles rather than buttons. */
 private val SheetRowShape: Shape = squircle(20.dp)
 
 /**
- * Riga d'azione di un foglio: tessera piena a tutta larghezza, icona in testa ed etichetta.
- * `destructive` la tinge di rosso — resta l'ultima della lista.
+ * Action row of a sheet: full-width filled tile with a leading icon and a label. [destructive]
+ * tints it red and it stays last in the list.
  *
- * La riga e' la tessera stessa (fondo incassato, angolo continuo) invece di un'icona in
- * pastiglia su fondo bianco: cosi' l'area toccabile si vede, che e' il punto di un menu che si
- * usa col pollice.
+ * The row is the tile itself (sunken background, continuous corner) rather than an icon badge on
+ * white, so the touch target is visible.
  */
 @Composable
 fun SheetActionRow(
@@ -152,8 +148,8 @@ fun SheetActionRow(
     val hapticTap = LocalHapticTap.current
     val accent = MaterialTheme.colorScheme.primary
     val labelColor = if (destructive) DestructiveRed else MaterialTheme.colorScheme.onSurface
-    // L'icona porta il colore, l'etichetta resta nera: tingere anche il testo faceva sembrare
-    // ogni voce un avviso. La voce distruttiva e' l'eccezione, e deve saltare all'occhio.
+    // The icon carries the colour and the label stays black: tinting the text too made every entry
+    // look like a warning. The destructive row is the exception.
     val iconColor = if (destructive) DestructiveRed else accent
 
     Row(
@@ -182,12 +178,11 @@ fun SheetActionRow(
 }
 
 /**
- * Conferma di un'azione: titolo, una riga di spiegazione e due tasti larghi uguali.
+ * Action confirmation: title, one explanatory line and two equally wide buttons.
  *
- * Sostituisce l'AlertDialog Material, che allineava a destra due scritte senza sfondo: da
- * toccare erano due bersagli piccoli in un angolo, e quale delle due fosse l'azione pericolosa
- * lo diceva solo il colore del testo. Qui i tasti sono pieni, alti quanto quelli dei fogli e
- * della stessa forma (vedi [SheetButtonShape]).
+ * Replaces the Material AlertDialog, which right-aligned two backgroundless labels: small targets
+ * in a corner, with only the text colour marking the dangerous one. Here the buttons are filled
+ * and share the sheet button shape (see [SheetButtonShape]).
  */
 @Composable
 fun IslandAlertDialog(
@@ -225,7 +220,7 @@ fun IslandAlertDialog(
                     text = confirmLabel,
                     onClick = onConfirm,
                     modifier = Modifier.weight(1f),
-                    // Il rosso resta pieno: e' l'azione da cui non si torna indietro.
+                    // Red stays filled: it is the action that cannot be undone.
                     containerColor = if (destructive) DestructiveRed else MaterialTheme.colorScheme.primary,
                     shape = SheetButtonShape
                 )
@@ -234,5 +229,5 @@ fun IslandAlertDialog(
     }
 }
 
-/** Rosso delle azioni distruttive: usato solo qui, non entra nella palette generale. */
+/** Red of destructive actions; used only here and not part of the general palette. */
 val DestructiveRed = Color(0xFFE5484D)

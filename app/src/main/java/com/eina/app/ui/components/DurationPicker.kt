@@ -40,9 +40,9 @@ private val ITEM_HEIGHT = 46.dp
 private const val VISIBLE_ITEMS = 5
 
 /**
- * Selettore di durata a rulli, come la sveglia di sistema: minuti e secondi scorrono e si
- * agganciano alla riga centrale evidenziata. Sostituisce i campi numerici e le griglie di preset,
- * perche' impostare "1:30" scorrendo e' un gesto solo invece di due tocchi e una tastiera.
+ * Wheel duration picker, like a system alarm clock: minutes and seconds scroll and snap to the
+ * highlighted centre row. It replaces numeric fields and preset grids, since setting "1:30" by
+ * scrolling is one gesture instead of two taps and a keyboard.
  */
 @Composable
 fun DurationWheelPicker(
@@ -56,8 +56,8 @@ fun DurationWheelPicker(
     val minuteValues = remember(maxMinutes) { (0..maxMinutes).toList() }
     val secondValues = remember(secondStep) { (0 until 60 step secondStep).toList() }
 
-    // Il valore iniziale si arrotonda al passo del rullo: senza, un recupero di 47s non avrebbe
-    // nessuna riga su cui agganciarsi e il rullo partirebbe disallineato.
+    // The initial value is rounded to the wheel step: otherwise a 47s rest would have no row to
+    // snap to and the wheel would start misaligned.
     var minutes by remember {
         mutableIntStateOf((seconds / 60).coerceIn(0, maxMinutes))
     }
@@ -67,7 +67,7 @@ fun DurationWheelPicker(
     }
 
     Box(modifier = modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-        // Banda della selezione: sta sotto ai rulli, cosi' il numero al centro resta leggibile.
+        // Selection band, drawn under the wheels so the centre number stays readable.
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -100,8 +100,8 @@ fun DurationWheelPicker(
 }
 
 /**
- * Rulli ore/minuti, per la durata di un allenamento intero: [DurationWheelPicker] arriva a dieci
- * minuti e conta i secondi, qui servono le ore e il minuto esatto.
+ * Hour and minute wheels for the duration of a whole workout: [DurationWheelPicker] tops out at ten
+ * minutes and counts seconds, while here hours and exact minutes are needed.
  */
 @Composable
 fun HourMinuteWheelPicker(
@@ -150,9 +150,9 @@ fun HourMinuteWheelPicker(
 }
 
 /**
- * Foglio del tempo di recupero, unico per routine e allenamento in corso: rulli stile sveglia e
- * una conferma. Il valore si applica solo su "Fatto", perche' scorrendo si passa per decine di
- * valori intermedi che non vanno scritti nel database uno per uno.
+ * Rest time sheet, shared by the routine editor and the running workout. The value is applied only
+ * on confirmation, since scrolling passes through dozens of intermediate values that must not be
+ * written to the database one by one.
  */
 @Composable
 fun RestTimeSheet(
@@ -191,7 +191,7 @@ fun RestTimeSheet(
     }
 }
 
-/** mm:ss, il formato con cui il recupero viene mostrato ovunque nell'app. */
+/** mm:ss, the format rest is shown with everywhere in the app. */
 fun formatClock(totalSeconds: Int): String {
     val safe = totalSeconds.coerceAtLeast(0)
     return "%d:%02d".format(safe / 60, safe % 60)
@@ -208,8 +208,8 @@ private fun WheelLabel(text: String) {
 }
 
 /**
- * Un rullo. Il valore scelto e' quello incorniciato dalla banda centrale: con due elementi di
- * padding sopra e sotto, coincide con il primo elemento visibile una volta agganciato lo snap.
+ * One wheel. The chosen value is the one framed by the centre band: with two padding items above
+ * and below, it coincides with the first visible item once the snap settles.
  */
 @Composable
 private fun WheelColumn(
@@ -223,8 +223,8 @@ private fun WheelColumn(
     val initialIndex = remember { values.indexOf(selected).coerceAtLeast(0) }
     val listState = rememberLazyListState(initialFirstVisibleItemIndex = initialIndex)
     val edgeItems = VISIBLE_ITEMS / 2
-    // Letto direttamente, firstVisibleItemIndex ricomporrebbe ogni riga a ogni fotogramma di
-    // scorrimento: cosi' invece le righe si ricompongono solo quando il valore incorniciato cambia.
+    // Read directly, firstVisibleItemIndex would recompose every row on each scroll frame; this
+    // way rows recompose only when the framed value changes.
     val selectedIndex by remember { derivedStateOf { listState.firstVisibleItemIndex } }
 
     LaunchedEffect(listState, values) {

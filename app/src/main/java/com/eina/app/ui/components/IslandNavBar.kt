@@ -29,9 +29,9 @@ import com.eina.app.ui.theme.EinaTheme
 import com.eina.app.ui.theme.PillShape
 import com.eina.app.ui.theme.Spacing
 
-/** Altezza riservata alla nav flottante: le schermate la usano come padding di coda del contenuto. */
-// Misurata sul layout reale: 12dp di margine verticale + 8dp di padding interno + 46dp di voce,
-// per lato. Sottostimarla fa finire l'ultima isola sotto la nav.
+/** Height reserved for the floating nav bar; screens use it as trailing content padding. */
+// Measured on the real layout: 12dp outer margin + 8dp inner padding + 46dp item, per side.
+// Underestimating it leaves the last island hidden behind the bar.
 val IslandNavBarHeight = 92.dp
 
 data class IslandNavItem(
@@ -42,8 +42,8 @@ data class IslandNavItem(
 )
 
 /**
- * Barra di navigazione flottante a pill (stile reference): non tocca i bordi dello schermo,
- * la voce attiva si espande in una pastiglia colorata con etichetta.
+ * Floating pill navigation bar: it never touches the screen edges, and the active item expands
+ * into a coloured pill with its label.
  */
 @Composable
 fun IslandNavBar(
@@ -55,8 +55,8 @@ fun IslandNavBar(
             .fillMaxWidth()
             .padding(horizontal = Spacing.xl, vertical = Spacing.md),
         shape = PillShape,
-        // Non del tutto opaca: il contenuto che le scorre sotto si intravede appena, cosi' la
-        // barra galleggia sulla pagina invece di tagliarla in due.
+        // Slightly translucent, so content scrolling underneath shows through and the bar floats
+        // over the page instead of cutting it in two.
         color = MaterialTheme.colorScheme.surface.copy(alpha = 0.97f),
         elevation = 18.dp,
         outlined = true
@@ -65,15 +65,14 @@ fun IslandNavBar(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(Spacing.sm),
-            // SpaceBetween, non un gruppo centrato: la pastiglia colorata deve stare sempre alla
-            // stessa distanza dal bordo del contenitore (8dp, come sopra e sotto). Centrando, il
-            // margine laterale dipendeva dalla lunghezza dell'etichetta attiva — con "Dashboard"
-            // acceso restavano 13dp, con "Progressi" 18dp, e lo scarto si vedeva.
+            // SpaceBetween rather than a centred group: the coloured pill must keep the same 8dp
+            // distance from the container edge. Centred, the side margin depended on the length of
+            // the active label and the difference was visible.
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Le voci si dimensionano sul contenuto: con un weight fisso l'etichetta della voce
-            // attiva verrebbe tagliata (etichette di lunghezza molto diversa fra loro).
+            // Items size themselves on their content: with a fixed weight the active label would
+            // be clipped, since the labels differ a lot in length.
             items.forEach { item -> IslandNavBarItem(item) }
         }
     }
@@ -82,11 +81,9 @@ fun IslandNavBar(
 @Composable
 private fun IslandNavBarItem(item: IslandNavItem) {
     val island = EinaTheme.island
-    // La voce attiva e' una pastiglia piena con la rampa dell'accento e contenuto bianco: a
-    // colpo d'occhio si vede dove si e', anche in uno screenshot rimpicciolito.
-    // Senza animazione: la pastiglia colorata compare di colpo, mentre il colore animato partiva
-    // dal grigio e ci metteva il tempo della transizione ad arrivare al bianco — l'etichetta
-    // appena comparsa si leggeva grigia sull'arancio.
+    // The active item is a filled pill with the accent ramp and white content. The colour is not
+    // animated: an animated one started from grey and the freshly shown label read grey on orange
+    // for the duration of the transition.
     val contentColor = if (item.selected) Color.White else island.textSecondary
     val fill = remember(island.accentRamp) { Brush.horizontalGradient(island.accentRamp) }
     val horizontalPadding by animateDpAsState(

@@ -65,7 +65,7 @@ import org.koin.androidx.compose.koinViewModel
 fun LibraryScreen(
     onExerciseClick: (Long) -> Unit = {},
     onCreateExerciseClick: (() -> Unit)? = null,
-    // Solo per gli esercizi custom: quelli di libreria li riscriverebbe il seeder.
+    // Custom exercises only: the seeder would overwrite a library one.
     onEditExerciseClick: ((Long) -> Unit)? = null,
     onBack: (() -> Unit)? = null,
     viewModel: LibraryViewModel = koinViewModel()
@@ -74,12 +74,11 @@ fun LibraryScreen(
     val island = EinaTheme.island
     val locale = currentLocale()
     val context = LocalContext.current
-    // Solo gli esercizi custom (creati a mano o arrivati con una routine importata) si possono
-    // togliere: quelli di libreria li riscriverebbe comunque il seeder.
+    // Only custom exercises (hand-made or imported with a routine) can be removed.
     var actionsFor by remember { mutableStateOf<ExerciseEntity?>(null) }
     var confirmDeleteFor by remember { mutableStateOf<ExerciseEntity?>(null) }
     val deleteBlocked = stringResource(R.string.library_delete_blocked)
-    // Ordine alfabetico nella lingua attiva: il database li tiene ordinati per nome inglese.
+    // Alphabetical in the active language: the database sorts them by English name.
     val exercises = remember(uiState.exercises, locale) {
         uiState.exercises.sortedBy { it.exerciseName().localized(locale).lowercase(locale) }
     }
@@ -182,8 +181,8 @@ fun LibraryScreen(
             onConfirm = {
                 confirmDeleteFor = null
                 viewModel.deleteCustomExercise(exercise) { deleted ->
-                    // Un esercizio ancora citato da una routine o dallo storico resta:
-                    // dirlo e' meglio di un tocco che non fa niente.
+                    // An exercise still referenced by a routine or the history is kept; say so
+                    // instead of leaving the tap silent.
                     if (!deleted) Toast.makeText(context, deleteBlocked, Toast.LENGTH_LONG).show()
                 }
             },
@@ -201,9 +200,9 @@ private fun ExerciseListItem(
     onLongClick: (() -> Unit)? = null
 ) {
     val category = primaryCategoryFor(exercise.muscleGroupsPrimary)
-    // Riga bassa e regolare invece di card alte: il badge colorato del gruppo muscolare occupava
-    // una seconda riga per conto suo e in un elenco di 197 voci diventava rumore. Ora il colore
-    // resta (un punto), e gruppo e attrezzo stanno su una riga sola sotto il nome.
+    // Short, regular rows instead of tall cards: the coloured muscle badge took a line of its own
+    // and turned into noise across 197 entries. The colour survives as a dot, with group and
+    // equipment on one line under the name.
     IslandCard(
         modifier = Modifier.fillMaxWidth(),
         contentPadding = PaddingValues(horizontal = Spacing.md, vertical = Spacing.md),
@@ -215,20 +214,18 @@ private fun ExerciseListItem(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(Spacing.md)
         ) {
-            // Miniatura del primo fotogramma: si riconosce il movimento senza aprire la scheda.
+            // First-frame thumbnail: the movement is recognisable without opening the detail.
             if (hasExerciseMedia(exercise.mediaUri)) {
-                // Miniatura piena, senza fondo ne' cornice colorata: la figura ha il suo bianco
-                // opaco, quindi un fondo tinto non si vedrebbe e una cornice la fa sembrare un
-                // segnaposto vuoto. Il colore del gruppo muscolare sta nel punto e nel testo qui
-                // sotto, che bastano a dare ritmo alla lista.
+                // No background and no coloured frame: the figure carries its own opaque white, so
+                // a tinted background would be invisible and a frame would read as an empty slot.
                 AsyncImage(
                     model = exercise.mediaUri,
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
                         .size(56.dp)
-                        // Raggio esplicito e non TileShape: su 56dp i 24dp della tile
-                        // arrotondano fino a farla diventare un cerchio.
+                        // Explicit radius, not TileShape: at 56dp its 24dp corners round the
+                        // thumbnail into a circle.
                         .clip(squircle(18.dp))
                 )
             }
@@ -253,8 +250,8 @@ private fun ExerciseListItem(
                             .background(category.color)
                     )
                     val equipment = exercise.equipment?.takeIf { it.isNotBlank() }?.let { equipmentLabel(it) }
-                    // Gruppo muscolare nel suo colore, attrezzo in grigio: due informazioni di
-                    // peso diverso sulla stessa riga, distinte dal colore invece che da un badge.
+                    // Muscle group in its colour, equipment in grey: two levels of information on
+                    // one line, told apart by colour instead of a badge.
                     Text(
                         text = category.label(),
                         style = MaterialTheme.typography.bodySmall,

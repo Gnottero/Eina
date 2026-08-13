@@ -46,8 +46,8 @@ class LibraryViewModel(private val repository: WorkoutRepository) : ViewModel() 
     }
 
     /**
-     * Elimina un esercizio creato dall'utente (o arrivato con una routine importata).
-     * `onResult` riceve false se l'esercizio e' ancora usato da una routine o dallo storico.
+     * Deletes an exercise created by the user (or imported with a routine). [onResult] receives
+     * false when the exercise is still used by a routine or by the history.
      */
     fun deleteCustomExercise(exercise: ExerciseEntity, onResult: (Boolean) -> Unit) {
         viewModelScope.launch { onResult(repository.deleteCustomExercise(exercise)) }

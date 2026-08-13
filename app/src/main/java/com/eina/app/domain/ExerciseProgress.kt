@@ -5,9 +5,9 @@ import com.eina.app.data.db.WeightType
 import com.eina.app.data.db.countsAsWorking
 
 /**
- * Un punto della progressione: la serie migliore di un allenamento, con la data di quel giorno.
- * `weight` sono kg (o km sugli esercizi a distanza) e `reps` sono ripetizioni, secondi o minuti
- * a seconda del [WeightType] — le stesse due colonne della tabella serie.
+ * One progression point: the best set of a workout, dated on that day. `weight` holds kilograms (or
+ * kilometres for distance exercises) and `reps` holds repetitions, seconds or minutes depending on
+ * the [WeightType] — the same two columns as the set table.
  */
 data class ProgressPoint(
     val date: Long,
@@ -16,14 +16,12 @@ data class ProgressPoint(
 )
 
 /**
- * Progressione di un esercizio nel tempo, dal piu' vecchio al piu' recente: un punto per
- * allenamento, non uno per serie.
+ * Progression of an exercise over time, oldest to newest: one point per workout, not per set.
  *
- * DECISIONE: il punto e' la serie migliore della sessione, non la media. La media scende
- * appena si aggiunge una serie leggera in coda, e leggere un calo dove invece si e' lavorato
- * di piu' e' esattamente il contrario di quel che serve a un grafico di progressione.
- * "Migliore" e' il carico piu' alto dove un carico c'e' — sugli assistiti si legge come per i
- * PR, il numero piu' alto — e le ripetizioni piu' alte dove il carico non si digita.
+ * DECISIONE: the point is the best set of the session, not the average. An average drops as soon as
+ * a light set is appended, showing a decline where more work was actually done. "Best" is the
+ * highest load where a load exists (assisted exercises read as they do for PRs, highest number
+ * wins) and the highest reps where no load is typed.
  */
 fun exerciseProgress(rows: List<CompletedSetRow>): List<ProgressPoint> =
     rows.filter { it.setType.countsAsWorking }
@@ -43,11 +41,10 @@ private fun bestSet(rows: List<CompletedSetRow>): CompletedSetRow? = when (rows.
     WeightType.MACHINE_STACK,
     WeightType.ASSISTED,
     WeightType.BODYWEIGHT_PLUS_LOAD ->
-        // A parita' di carico vince la serie con piu' ripetizioni: e' andata meglio.
+        // On equal load the set with more reps wins: it went better.
         rows.maxWithOrNull(compareBy({ it.weight ?: 0.0 }, { it.actualReps ?: 0 }))
 
-    // Sulla distanza a parita' di chilometri vince chi ci ha messo meno, non chi ci ha messo
-    // piu' minuti: si confronta la velocita', come per i PR.
+    // On equal distance the faster run wins, not the longer one: speed is compared, as for PRs.
     WeightType.DISTANCE_BASED ->
         rows.maxWithOrNull(compareBy({ it.weight ?: 0.0 }, { it.speedKmPerHour() }))
 
@@ -55,7 +52,7 @@ private fun bestSet(rows: List<CompletedSetRow>): CompletedSetRow? = when (rows.
         rows.maxByOrNull { it.actualReps ?: 0 }
 }
 
-/** Km/h della serie a distanza: `weight` sono chilometri e `actualReps` minuti. */
+/** Km/h of a distance set: `weight` holds kilometres and `actualReps` minutes. */
 private fun CompletedSetRow.speedKmPerHour(): Double {
     val minutes = actualReps ?: 0
     if (minutes <= 0) return 0.0

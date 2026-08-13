@@ -26,7 +26,7 @@ class RoutineRepository(
 
     suspend fun getExercise(exerciseId: Long): ExerciseEntity? = exerciseDao.getById(exerciseId)
 
-    /** Libreria intera: il foglio di scelta dell'editor routine filtra in memoria come in sessione. */
+    /** Whole library: the editor picker filters in memory, as the workout one does. */
     fun observeExercises(): Flow<List<ExerciseEntity>> = exerciseDao.getAll()
 
     suspend fun getRoutine(id: Long): RoutineEntity? = routineDao.getById(id)
@@ -34,19 +34,21 @@ class RoutineRepository(
     fun observeRoutineExercises(routineId: Long): Flow<List<RoutineExerciseEntity>> =
         routineExerciseDao.getForRoutine(routineId)
 
-    /** Serie pianificate della routine, in ordine di esercizio e di serie. */
+    /** Planned sets of the routine, ordered by exercise and set index. */
     fun observeRoutineSets(routineId: Long): Flow<List<RoutineSetEntity>> =
         routineSetDao.observeForRoutine(routineId)
 
-    /** Serie pianificate per routine: il conteggio delle card dell'elenco. */
+    /** Planned set count per routine, shown on the list cards. */
     fun observeRoutineSetCounts(): Flow<List<RoutineSetCountRow>> = routineSetDao.observeSetCounts()
 
-    /** Anteprime di tutte le routine in un colpo solo: alimenta le card dell'elenco. */
+    /** Previews of every routine in one query, feeding the list cards. */
     fun observeRoutinePreviews(): Flow<List<RoutineExercisePreviewRow>> =
         routineExerciseDao.observeAllPreviews()
 
-    /** Insert se id == 0 (nuova routine), update altrimenti: evita OnConflictStrategy.REPLACE che
-     * cancellerebbe e ricreerebbe la riga, triggerando la cascade delete su routine_exercises. */
+    /**
+     * Insert when id == 0, update otherwise: OnConflictStrategy.REPLACE would delete and recreate
+     * the row, triggering the cascade delete on routine_exercises.
+     */
     suspend fun saveRoutine(routine: RoutineEntity): Long {
         return if (routine.id == 0L) {
             routineDao.insert(routine)
@@ -59,9 +61,8 @@ class RoutineRepository(
     suspend fun deleteRoutine(routine: RoutineEntity) = routineDao.delete(routine)
 
     /**
-     * Esercizio aggiunto alla scheda con una sola serie vuota, come in allenamento: quante
-     * serie fara' davvero lo sa solo chi scrive la scheda, e togliere le due di troppo costava
-     * piu' gesti che aggiungerle.
+     * Adds an exercise with a single empty set, as the workout screen does: removing extra sets
+     * costs more gestures than adding the ones actually needed.
      */
     suspend fun addExerciseToRoutine(routineId: Long, exerciseId: Long, order: Int): Long {
         val routineExerciseId = routineExerciseDao.insert(
@@ -78,7 +79,7 @@ class RoutineRepository(
         return routineExerciseId
     }
 
-    /** Serie in coda all'esercizio: eredita i valori dell'ultima, come farebbe in palestra. */
+    /** Appends a set, inheriting the values of the last working one. */
     suspend fun addSetToRoutineExercise(routineExerciseId: Long) {
         val existing = routineSetDao.getForRoutineExercise(routineExerciseId)
         val last = existing.lastOrNull { it.setType.countsAsWorking } ?: existing.lastOrNull()
@@ -94,7 +95,7 @@ class RoutineRepository(
 
     suspend fun updateRoutineSet(set: RoutineSetEntity) = routineSetDao.update(set)
 
-    /** Toglie la serie e ricompatta gli indici: `setIndex` resta la posizione in tabella. */
+    /** Removes the set and compacts the indices: `setIndex` is the position in the table. */
     suspend fun removeRoutineSet(set: RoutineSetEntity) {
         routineSetDao.delete(set)
         routineSetDao.getForRoutineExercise(set.routineExerciseId)
@@ -104,9 +105,8 @@ class RoutineRepository(
     }
 
     /**
-     * Cambia il movimento di una voce della scheda tenendo tutto il resto: serie pianificate,
-     * recupero, nota, posizione e superset. Nella scheda non c'e' niente di registrato da
-     * azzerare — i target restano come punto di partenza, si correggono in tabella.
+     * Swaps the movement of a routine row keeping everything else: planned sets, rest, note,
+     * position and superset. Nothing is recorded here, so the targets stay as a starting point.
      */
     suspend fun replaceRoutineExercise(routineExercise: RoutineExerciseEntity, newExerciseId: Long) {
         if (routineExercise.exerciseId == newExerciseId) return
@@ -120,8 +120,8 @@ class RoutineRepository(
         routineExerciseDao.delete(routineExercise)
 
     /**
-     * Routine in formato di scambio, o null se non esiste piu'. Vedi
-     * [com.eina.app.data.transfer.RoutineTransfer] per il formato del file.
+     * Routine in exchange format, or null if it no longer exists. See
+     * [com.eina.app.data.transfer.RoutineTransfer] for the file format.
      */
     suspend fun exportRoutine(routineId: Long): String? {
         val routine = routineDao.getById(routineId) ?: return null
@@ -132,8 +132,8 @@ class RoutineRepository(
             .distinct()
             .mapNotNull { id -> exerciseDao.getById(id)?.let { id to it } }
             .toMap()
-        // L'immagine viaggia solo per gli esercizi custom: quelle di libreria le ha gia' chi
-        // importa, bundlate negli asset.
+        // Images travel for custom exercises only: library ones are already bundled in the assets
+        // of the importing device.
         val media = exercises.values
             .filter { it.isCustom }
             .mapNotNull { exercise ->
@@ -145,11 +145,11 @@ class RoutineRepository(
     }
 
     /**
-     * Crea una routine da un file di scambio. Gli esercizi si riagganciano per nome inglese a
-     * quelli gia' in libreria; quelli sconosciuti diventano esercizi custom, cosi' una scheda
-     * scritta da un preparatore arriva intera anche se contiene movimenti suoi.
+     * Creates a routine from an exchange file. Exercises are matched to the library by English
+     * name; unknown ones become custom exercises, so a routine written elsewhere arrives whole
+     * even when it contains movements of its own.
      *
-     * Ritorna l'id della routine creata, o null se il file non e' una routine Eina.
+     * Returns the id of the created routine, or null if the file is not an Eina routine.
      */
     suspend fun importRoutine(json: String): Long? {
         val payload = RoutineTransfer.decode(json) ?: return null
@@ -165,8 +165,8 @@ class RoutineRepository(
             val exerciseId = exerciseDao.getByName(item.name)?.id ?: exerciseDao.insert(
                 ExerciseEntity(
                     name = item.name,
-                    // Nomi e descrizioni tradotti arrivano solo dai file v3, e solo per gli
-                    // esercizi custom: per gli altri li ha gia' il catalogo di chi importa.
+                    // Translated names and descriptions only come from v3 files and only for
+                    // custom exercises; the catalog already has the others.
                     nameIt = item.nameIt,
                     nameFr = item.nameFr,
                     description = item.description,
@@ -178,8 +178,8 @@ class RoutineRepository(
                     muscleGroupsPrimary = item.muscleGroupsPrimary,
                     muscleGroupsSecondary = item.muscleGroupsSecondary,
                     equipment = item.equipment,
-                    // L'immagine si riscrive nello storage di chi importa: il percorso del
-                    // telefono di partenza non significa niente qui.
+                    // The image is rewritten into local storage: the exporting device path means
+                    // nothing here.
                     mediaUri = item.media
                         ?.let { RoutineTransfer.decodeMedia(it) }
                         ?.let { bytes -> mediaStore.write(bytes, item.media.extension) },

@@ -15,25 +15,25 @@ import androidx.compose.ui.unit.dp
 val CardCornerRadius = 20.dp
 val ButtonCornerRadius = 12.dp
 
-// --- Stile "island": raggi generosi per i contenitori flottanti, pill per nav e controlli.
+// --- Island style: generous radii for floating containers, pills for nav and controls.
 val IslandCornerRadius = 28.dp
 val TileCornerRadius = 24.dp
 val PillShape = RoundedCornerShape(percent = 50)
 
 /**
- * Angolo continuo (squircle), non arco di cerchio: la curvatura cresce e cala in modo graduale
- * invece di attaccarsi di colpo al lato. E' la differenza che si vede fra una card Android
- * qualsiasi e una schermata iOS, e si nota soprattutto sui raggi grandi come i nostri 24-28dp.
+ * Continuous corner (squircle) rather than a circular arc: curvature grows and fades gradually
+ * instead of meeting the edge abruptly. The difference shows mostly on large radii like the 24-28dp
+ * used here.
  *
- * I nove punti di controllo per angolo sono i rapporti noti della curva continua di Apple: tre
- * bezier cubiche per angolo, nessun arco.
+ * The nine control points per corner are the known ratios of the continuous curve: three cubic
+ * beziers per corner, no arcs.
  */
 class SquircleShape(private val radius: Dp) : Shape {
 
     override fun createOutline(size: Size, layoutDirection: LayoutDirection, density: Density): Outline {
-        // 1,528665 e' quanto l'angolo continuo "invade" ogni lato: su un elemento basso il raggio
-        // nominale non ci sta e va ridotto. Ridurlo e' meglio che ripiegare sull'angolo
-        // circolare a raggio pieno, che su una card bassa la trasformava in una pastiglia.
+        // 1.528665 is how far the continuous corner reaches along each edge: on a short element the
+        // nominal radius does not fit and is reduced, which looks better than falling back to a
+        // full-radius circular corner that turns a short card into a pill.
         val maxRadius = minOf(size.width, size.height) / 2f / CORNER_EXTENT
         val r = with(density) { radius.toPx() }.coerceIn(0f, maxRadius)
         if (r <= 0f) return Outline.Rectangle(size.toRect())
@@ -49,10 +49,9 @@ class SquircleShape(private val radius: Dp) : Shape {
     }
 
     /**
-     * Un angolo, in senso orario: [inDir] e' la direzione con cui il tracciato ci arriva,
-     * [outDir] quella con cui riparte. I punti si esprimono come "quanto indietro sul lato in
-     * entrata" e "quanto avanti sul lato in uscita", cosi' gli stessi rapporti servono tutti e
-     * quattro gli angoli senza riscriverli specchiati.
+     * One corner, clockwise: [inDir] is the direction the path arrives from, [outDir] the one it
+     * leaves by. Points are expressed as "how far back along the incoming edge" and "how far
+     * forward along the outgoing edge", so the same ratios serve all four corners unmirrored.
      */
     private fun corner(path: Path, c: Offset, inDir: Offset, outDir: Offset, r: Float, first: Boolean) {
         fun p(back: Float, forward: Float) = Offset(
@@ -84,7 +83,7 @@ class SquircleShape(private val radius: Dp) : Shape {
 val IslandShape: Shape = SquircleShape(IslandCornerRadius)
 val TileShape: Shape = SquircleShape(TileCornerRadius)
 
-/** Squircle piccolo per campi e controlli, dove il raggio grande sformerebbe l'elemento. */
+/** Small squircle for fields and controls, where a large radius would distort the element. */
 fun squircle(radius: Dp): Shape = SquircleShape(radius)
 
 object Spacing {
@@ -95,9 +94,9 @@ object Spacing {
     val xl = 24.dp
 }
 
-// Material3 vuole CornerBasedShape nei suoi Shapes (deve saper interpolare i raggi), quindi qui
-// restano angoli circolari: li usano solo i componenti Material che non abbiamo sostituito
-// (menu, dialog di sistema). Le superfici dell'app passano da IslandShape/TileShape.
+// Material3 requires CornerBasedShape in its Shapes (it interpolates the radii), so these stay
+// circular. They only affect the Material components not replaced here (menus, system dialogs);
+// the app surfaces use IslandShape/TileShape.
 val EinaShapes = Shapes(
     extraSmall = RoundedCornerShape(ButtonCornerRadius),
     small = RoundedCornerShape(ButtonCornerRadius),

@@ -28,8 +28,8 @@ fun islandBottomSpace(extra: Dp = Spacing.xl): Dp =
     IslandNavBarHeight + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + extra
 
 /**
- * Shell di schermata in stile island: background pieno, header fisso in alto, contenuto
- * scrollabile con gutter laterale costante e spazio finale per la nav flottante.
+ * Island screen shell: full background, fixed header, scrollable content with a constant side
+ * gutter and trailing space for the floating nav bar.
  */
 @Composable
 fun IslandScreen(
@@ -76,8 +76,8 @@ fun IslandScreen(
 }
 
 /**
- * Variante per liste lunghe: header fisso e slot libero (tipicamente una LazyColumn) sotto,
- * con lo stesso background e la stessa gestione degli inset.
+ * Variant for long lists: fixed header and a free slot below (typically a LazyColumn), with the
+ * same background and inset handling.
  */
 @Composable
 fun IslandListScreen(

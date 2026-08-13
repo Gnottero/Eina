@@ -2,22 +2,22 @@ package com.eina.app.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Palette definitiva: app solo in light mode.
-// Restyle: i neutri perdono la dominante marrone (il fondo #FBF6F2 ingialliva le foto degli
-// esercizi e faceva sembrare le isole bianche "sporche"). Ora sono grigi appena tiepidi, alla
-// maniera dei fondi raggruppati di iOS: il colore in pagina lo mette solo l'accento.
+// Final palette; the app is light-only.
+// The neutrals dropped their brown cast (the former #FBF6F2 background yellowed the exercise
+// artwork and made white islands look dirty). They are now barely warm greys, so the only colour
+// on a page comes from the accent.
 val LightBackground = Color(0xFFF4F3F1)
 val LightSurface = Color(0xFFFFFFFF)
 
-/** Accento primario: arancio tramonto. CTA, stati attivi, valori in evidenza. */
+/** Primary accent, sunset orange: CTAs, active states, headline values. */
 val AccentPrimary = Color(0xFFF97348)
 val AccentPrimaryDark = Color(0xFFD4501F)
 val AccentPrimarySoft = Color(0xFFFFEADF)
 
 /**
- * Rampa dell'accento, da ambra a magenta. Serve per le superfici grandi (hero della Dashboard,
- * anelli di progresso, marchio): un arancio pieno su un'area larga si legge come un blocco di
- * vernice, la rampa gli da' profondita' senza aggiungere colori estranei alla palette.
+ * Accent ramp, amber to magenta, for large surfaces (Dashboard hero, progress rings, the mark): a
+ * solid orange over a wide area reads as a block of paint, while the ramp adds depth without
+ * introducing colours foreign to the palette.
  */
 val AccentRampStart = Color(0xFFFFA23A)
 val AccentRampEnd = Color(0xFFF9436B)
@@ -25,10 +25,9 @@ val AccentRampEnd = Color(0xFFF9436B)
 val LightSurfaceSunken = Color(0xFFEFEEEB)
 
 /**
- * Incassato chiaro, per le superfici che stanno *dentro* una card bianca e occupano molto spazio:
- * la tabella delle serie del riepilogo e i campi di peso e ripetizioni. Con il grigio pieno quei
- * riquadri pesavano piu' dei numeri che contengono. Sul fondo della pagina resta
- * [LightSurfaceSunken]: li' un grigio piu' chiaro del fondo non si vedrebbe affatto.
+ * Light sunken surface for large areas *inside* a white card: the summary set table and the weight
+ * and reps fields. With the full grey those boxes weighed more than the numbers they hold. On the
+ * page background [LightSurfaceSunken] stays, since a lighter grey would be invisible there.
  */
 val LightSurfaceSunkenSoft = Color(0xFFF7F6F4)
 val LightTextSecondary = Color(0xFF7C7A75)
@@ -36,13 +35,11 @@ val LightOutlineSubtle = Color(0xFFE7E5E1)
 val LightOnBackground = Color(0xFF1C1B19)
 
 /**
- * Colore per grandezza misurata. Non e' una tavolozza nuova: sono gli stessi colori dei gruppi
- * muscolari, riusati con un significato fisso. Serve perche' le schermate erano bianche con un
- * solo arancio: ogni numero ha ora la sua tinta e le metriche si riconoscono a colpo d'occhio
- * anche senza leggere l'etichetta.
+ * One colour per measured quantity. Not a new palette: the muscle group colours reused with a
+ * fixed meaning, so metrics are recognisable without reading the label.
  *
- * Il colore sta sull'icona e sull'etichetta, mai sul numero: il valore resta nero, altrimenti in
- * una riga di tre metriche non si capisce piu' quale sia quella importante.
+ * The colour goes on the icon and the label, never on the number: in a row of three metrics a
+ * tinted value would hide which one matters.
  */
 object MetricColors {
     val Volume = AccentPrimary
@@ -51,8 +48,8 @@ object MetricColors {
     val Records = AccentRampEnd
     val Bodyweight = Color(0xFF20C997)
     val Streak = Color(0xFFF06595)
-    // Dati dell'orologio: il cuore prende il rosso della palette muscolare, le calorie l'ambra
-    // che apre la rampa dell'accento. Nessun colore nuovo in tavolozza.
+    // Watch data: the heart takes the red of the muscle palette, calories the amber that opens the
+    // accent ramp. No new colours.
     val Heart = Color(0xFFFF6B6B)
     val Calories = Color(0xFFFFA23A)
 }
@@ -65,9 +62,7 @@ object MuscleGroupColors {
     val Arms = Color(0xFFFFB020)
     val Core = Color(0xFF20C997)
     val Cardio = Color(0xFFF06595)
-    // Fase 32: il collo era l'unico muscolo della categoria "Altro", che aveva il grigio di
-    // chi non sa dove mettersi. Ora e' una categoria sua e ha un colore suo.
     val Neck = Color(0xFFA9746E)
-    // "Altro": grigio di proposito, non e' un gruppo muscolare ma la sua assenza.
+    // "Other" is deliberately grey: it is not a muscle group but the absence of one.
     val Other = Color(0xFF9E9E9E)
 }

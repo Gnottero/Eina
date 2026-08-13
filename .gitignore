@@ -11,7 +11,15 @@ local.properties
 app/build/
 build/
 
-# APK di release tenuti a portata di mano: un binario da 71 MB (quasi tutto
-# assets/media) non si comprime contro la versione precedente, quindi ogni build
-# committata peserebbe per intero sulla storia per sempre.
+# Release APKs kept at hand: a 71 MB binary (nearly all of it assets/media) does
+# not compress against the previous version, so every committed build would weigh
+# on the history whole, forever.
 release/
+
+# Working notes and agent scratch: instructions and the design plan stay local,
+# they are not part of the app's sources.
+CLAUDE.md
+PIANO_SVILUPPO_GYM_APP.md
+.claude/
+.claude.json
+CLAUDE.local.md

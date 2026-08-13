@@ -35,15 +35,14 @@ import java.util.Calendar
 import java.util.Date
 
 /**
- * Conferma di fine allenamento, con data e durata correggibili: un allenamento si registra spesso
- * dopo averlo fatto ("l'ho fatto ieri, lo scrivo adesso") e il cronometro non torna se lo si e'
- * lasciato correre a vuoto.
+ * Finish confirmation, with editable date and duration: a workout is often recorded after the fact,
+ * and the clock is wrong if it was left running.
  *
- * La data sposta solo il giorno: l'ora di inizio resta quella registrata, e la fine si ricalcola
- * dalla durata scelta.
+ * The date moves the day only: the start time stays as recorded and the end is derived from the
+ * chosen duration.
  *
- * Se la sessione e' senza esercizi non finisce nello storico ma viene eliminata: il foglio lo
- * dice e nasconde data e durata, che non verrebbero salvate da nessuna parte.
+ * A session without completed sets is deleted rather than saved: the sheet says so and hides date
+ * and duration, which would not be stored anywhere.
  */
 @OptIn(ExperimentalLayoutApi::class, ExperimentalFoundationApi::class)
 @Composable
@@ -53,7 +52,7 @@ fun FinishWorkoutSheet(
     isEmpty: Boolean,
     onConfirm: (startTime: Long, durationSeconds: Int) -> Unit,
     onDismiss: () -> Unit,
-    /** Allenamento gia' nello storico: non si sta chiudendo niente, si sposta quando e' avvenuto. */
+    /** Workout already in the history: nothing is closed, only its date and duration move. */
     editing: Boolean = false
 ) {
     val island = EinaTheme.island
@@ -70,7 +69,7 @@ fun FinishWorkoutSheet(
         title = stringResource(
             if (editing) R.string.edit_session_sheet_title else R.string.active_finish_confirm_title
         ),
-        // Col calendario aperto il foglio supera lo schermo.
+        // With the calendar open the sheet exceeds the screen height.
         scrollable = true
     ) {
         Text(
@@ -110,14 +109,14 @@ fun FinishWorkoutSheet(
                         onClick = { datePickerOpen = !datePickerOpen }
                     )
                 }
-                // Calendario nello stesso foglio e non in un secondo foglio sopra: due
-                // ModalBottomSheet sovrapposti si rubano il gesto di chiusura.
+                // Calendar inside the same sheet and not in a second one on top: two stacked
+                // ModalBottomSheets steal each other's dismiss gesture.
                 if (datePickerOpen) {
                     IslandCalendar(
                         selected = Instant.ofEpochMilli(start).atZone(zone).toLocalDate(),
                         onSelect = { picked ->
-                            // Mezzogiorno e non mezzanotte: withDateOf rimette comunque l'ora vera,
-                            // e cosi' uno scarto di fuso non fa scivolare il giorno.
+                            // Noon and not midnight: withDateOf restores the real time anyway, and
+                            // this keeps a time zone offset from shifting the day.
                             val millis = picked.atTime(12, 0).atZone(zone).toInstant().toEpochMilli()
                             start = withDateOf(millis, start)
                         },
@@ -146,7 +145,7 @@ fun FinishWorkoutSheet(
 
 }
 
-/** Riporta il giorno di `dateMillis` sull'orario di `timeMillis`: si cambia data, non ora. */
+/** Applies the day of [dateMillis] to the time of [timeMillis]: the date changes, the clock does not. */
 private fun withDateOf(dateMillis: Long, timeMillis: Long): Long {
     val date = Calendar.getInstance().apply { timeInMillis = dateMillis }
     return Calendar.getInstance().apply {
@@ -162,7 +161,7 @@ private fun shiftToDaysAgo(timeMillis: Long, daysAgo: Int): Long {
     return withDateOf(target.timeInMillis, timeMillis)
 }
 
-/** Giorni di calendario fra due istanti, non differenza di 24 ore: serve a evidenziare il chip. */
+/** Calendar days between two instants, not 24-hour spans; used to highlight the chips. */
 private fun daysBetween(from: Long, to: Long): Int {
     fun startOfDay(millis: Long) = Calendar.getInstance().apply {
         timeInMillis = millis

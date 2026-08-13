@@ -1,34 +1,33 @@
 #!/usr/bin/env python3
-"""Scarica le animazioni anatomiche (figura in posa, muscoli lavorati colorati) per gli
-esercizi del catalogo e le converte in WebP animate dentro app/src/main/assets/media/.
+"""Download the anatomical animations (posed figure, worked muscles coloured) for the catalog
+exercises and convert them to animated WebP under app/src/main/assets/media/.
 
-Fonte: https://github.com/omercotkd/exercises-gifs (MIT), file assets/<id>.gif.
-La corrispondenza fra i nomi del catalogo e gli id sta in tools/exercise_gifs.json ed e'
-curata a mano: i nomi delle due raccolte non combaciano.
+Source: https://github.com/omercotkd/exercises-gifs (MIT), files assets/<id>.gif.
+The mapping between catalog names and ids lives in tools/exercise_gifs.json and is curated by
+hand, since the two collections name things differently.
 
-Per ogni esercizio mappato scrive app/src/main/assets/media/<cartella>/anim.webp e cancella
-i due fotogrammi fotografici (0.webp / 1.webp) di free-exercise-db, che l'animazione
-sostituisce. Gli esercizi senza mappatura (valore null) restano com'erano.
+For every mapped exercise it writes app/src/main/assets/media/<folder>/anim.webp and deletes the
+two free-exercise-db photographic frames (0.webp / 1.webp) the animation replaces. Exercises
+without a mapping (null value) are left untouched.
 
-Le GIF di partenza sono 360x360, l'unica risoluzione che quella raccolta ha. La scheda
-esercizio pero' le disegna a tutta larghezza (~1050px su un telefono a densita' 3), quindi
-Android le ingrandisce di quasi 3x e si vedono i pixel. Per questo la conversione di default
-(Fase 23) passa da un upscale AI con realesrgan-ncnn-vulkan (realesrgan-x4plus 4x, poi giu' a
-720px) prima di ricomprimere: sono render 3D a tinte piatte, il modello ricostruisce i bordi
-invece di sfocarli. Conta ~5 s a esercizio.
+The source GIFs are 360x360, the only resolution that collection has. The exercise screen draws
+them full width (~1050px on a density-3 phone), so Android scales them up almost 3x and the pixels
+show. The default conversion therefore runs an AI upscale with realesrgan-ncnn-vulkan
+(realesrgan-x4plus 4x, then down to 720px) before recompressing: these are flat-shaded 3D renders,
+and the model reconstructs the edges instead of blurring them. Roughly 5 s per exercise.
 
-  --no-upscale   torna alla conversione diretta delle Fasi 19-21 (nessun ingrandimento).
-  --quality N    forza la qualita' lossy; senza upscale e senza -q la conversione e' lossless
-                 (l'animazione resta identica alla GIF di GitHub, come in Fase 21).
+  --no-upscale   direct conversion, with no upscaling.
+  --quality N    forces lossy quality; without upscale and without -q the conversion is lossless
+                 (the animation stays identical to the source GIF).
 
-A 720px il lossless costerebbe ~950 KB a file (assets oltre 250 MB), quindi con l'upscale la
-qualita' di default e' 90: ~180 KB a file, in linea col lossless a 360px di prima.
+At 720px lossless would cost ~950 KB per file (assets over 250 MB), so with the upscale the default
+quality is 90: ~180 KB per file, in line with the previous lossless 360px output.
 
-Uso:
+Usage:
     python3 tools/fetch_exercise_gifs.py [--no-upscale] [--width N] [--quality N] [--force]
 
-Serve ffmpeg con libwebp, Pillow e — salvo --no-upscale — realesrgan-ncnn-vulkan.
-Rilancialo solo se cambia il catalogo o la mappatura (salta i file gia' presenti); poi alza
+Requires ffmpeg with libwebp, Pillow and — unless --no-upscale — realesrgan-ncnn-vulkan.
+Re-run it only when the catalog or the mapping changes (existing files are skipped), then bump
 CATALOG_VERSION in ExerciseSeeder.
 """
 
@@ -53,9 +52,9 @@ UPSCALER = "realesrgan-ncnn-vulkan"
 
 def convert(gif_bytes, dest, width, quality):
     os.makedirs(os.path.dirname(dest), exist_ok=True)
-    # quality None = lossless: l'animazione resta quella originale di GitHub.
+    # quality None means lossless: the animation stays identical to the source GIF.
     codec = ["-lossless", "1"] if quality is None else ["-lossless", "0", "-q:v", str(quality)]
-    # ffmpeg legge la GIF da file e non da stdin: il demuxer gif vuole poter fare seek.
+    # ffmpeg reads the GIF from a file and not from stdin: the gif demuxer needs to seek.
     with tempfile.NamedTemporaryFile(suffix=".gif") as source:
         source.write(gif_bytes)
         source.flush()
@@ -63,7 +62,7 @@ def convert(gif_bytes, dest, width, quality):
             [
                 "ffmpeg", "-v", "error", "-y",
                 "-i", source.name,
-                # min(iw,width): la sorgente non si ingrandisce mai, si sfocherebbe e basta.
+                # min(iw,width): the source is never enlarged here, it would only blur.
                 "-vf", f"scale='min(iw,{width})':-1:flags=lanczos",
                 "-loop", "0",
                 "-c:v", "libwebp_anim",
@@ -76,12 +75,12 @@ def convert(gif_bytes, dest, width, quality):
 
 
 def upscale_convert(gif_bytes, dest, width, quality, model, scale):
-    """Come convert(), ma passa i fotogrammi per realesrgan prima di ricomprimerli.
+    """Like convert(), but runs the frames through realesrgan before recompressing them.
 
-    L'upscaler lavora su PNG in una cartella, non su una GIF: i fotogrammi si estraggono e si
-    rimontano con Pillow, che e' anche l'unico modo di riscrivere le durate per fotogramma —
-    queste GIF non hanno un frame rate costante (tengono 1000 ms sulla posa iniziale e 100 ms
-    sulle intermedie), e passare per un fps fisso ne cambierebbe il ritmo.
+    The upscaler works on PNGs in a folder and not on a GIF, so frames are extracted and
+    reassembled with Pillow — which is also the only way to rewrite per-frame durations. These
+    GIFs have no constant frame rate (1000 ms on the opening pose, 100 ms on the in-between
+    frames), and a fixed fps would change their rhythm.
     """
     from PIL import Image
 
@@ -95,7 +94,7 @@ def upscale_convert(gif_bytes, dest, width, quality, model, scale):
         for index in range(source.n_frames):
             source.seek(index)
             durations.append(source.info.get("duration", 100))
-            # Fondo bianco appiattito: l'upscaler ignora il canale alfa e lascerebbe aloni.
+            # Flattened onto white: the upscaler ignores the alpha channel and would leave halos.
             source.convert("RGB").save(os.path.join(raw, f"{index:04d}.png"))
         subprocess.run(
             [UPSCALER, "-i", raw, "-o", big, "-n", model, "-s", str(scale), "-f", "png"],
@@ -124,15 +123,15 @@ def upscale_convert(gif_bytes, dest, width, quality, model, scale):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--width", type=int, default=None, help="larghezza in uscita (720 con upscale, 360 senza)")
-    parser.add_argument("--quality", type=int, default=None, help="conversione lossy a questa qualita' (default: 90 con upscale, lossless senza)")
-    parser.add_argument("--no-upscale", dest="upscale", action="store_false", help="conversione diretta, senza realesrgan")
-    # x4plus ingrandisce 4x e poi si scende a 720: il sovracampionamento smussa gli artefatti
-    # meglio di un 2x diretto. realesr-animevideov3 con --scale 2 e' ~9x piu' veloce ma marca
-    # di piu' i contorni; realesrgan-x4plus-anime li annerisce proprio, cambia lo stile.
-    parser.add_argument("--model", default="realesrgan-x4plus", help="modello realesrgan")
-    parser.add_argument("--scale", type=int, default=4, help="fattore di ingrandimento del modello")
-    parser.add_argument("--force", action="store_true", help="riconverte anche cio' che c'e' gia'")
+    parser.add_argument("--width", type=int, default=None, help="output width (720 with upscale, 360 without)")
+    parser.add_argument("--quality", type=int, default=None, help="lossy conversion at this quality (default: 90 with upscale, lossless without)")
+    parser.add_argument("--no-upscale", dest="upscale", action="store_false", help="direct conversion, without realesrgan")
+    # x4plus upscales 4x and the result is scaled down to 720: oversampling smooths the artefacts
+    # better than a direct 2x. realesr-animevideov3 with --scale 2 is ~9x faster but hardens the
+    # outlines; realesrgan-x4plus-anime darkens them outright and changes the style.
+    parser.add_argument("--model", default="realesrgan-x4plus", help="realesrgan model")
+    parser.add_argument("--scale", type=int, default=4, help="upscaling factor of the model")
+    parser.add_argument("--force", action="store_true", help="reconvert files that already exist")
     args = parser.parse_args()
     if args.width is None:
         args.width = 720 if args.upscale else 360
@@ -175,7 +174,7 @@ def main():
         if index % 20 == 0:
             print(f"  {index}/{len(mapping)}")
 
-    # I fotogrammi fotografici servono solo dove non c'e' l'animazione.
+    # The photographic frames are only needed where no animation exists.
     removed = 0
     for name, gif_id in mapping.items():
         folder = folders.get(name)

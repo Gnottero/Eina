@@ -12,23 +12,19 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 /**
- * Formato di scambio delle routine: un file JSON che si manda per messaggio o email, pensato
- * per il personal trainer che consegna una scheda.
+ * Routine exchange format: a JSON file that can be sent by message or email.
  *
- * Gli esercizi viaggiano col loro nome inglese, che e' la chiave della libreria: chi importa
- * riusa l'esercizio che ha gia'. Il file porta comunque tipo di carico, muscoli e attrezzatura,
- * cosi' un esercizio inventato dal trainer si ricrea come esercizio custom invece di far
- * fallire l'import.
+ * Exercises travel with their English name, the library key, so the importing device reuses the
+ * exercise it already has. The file still carries weight type, muscles and equipment, so an
+ * exercise unknown to the library is recreated as a custom one instead of failing the import.
  *
- * Nessun id nel file: gli id sono locali al database di chi esporta e non significano niente
- * altrove.
+ * No ids: they are local to the exporting database and mean nothing elsewhere.
  */
 object RoutineTransfer {
 
     const val FORMAT = "eina.routine"
-    // v3: l'esercizio custom viaggia intero — traduzioni, quota di peso corporeo, nota di
-    // registrazione e immagine in base64 — invece delle sole quattro colonne che bastavano a
-    // riconoscere un esercizio di libreria. I file v1 e v2 si leggono ancora.
+    // v3: a custom exercise travels whole — translations, bodyweight factor, logging instructions
+    // and base64 image. Files at v1 and v2 are still readable.
     const val VERSION = 3
     const val MIME_TYPE = "application/json"
     const val FILE_EXTENSION = "json"
@@ -43,11 +39,11 @@ object RoutineTransfer {
         val sets: List<SetPayload>,
         val restSeconds: Int,
         val notes: String?,
-        /** Superset di appartenenza, come numero di gruppo. null = esercizio a se'. */
+        /** Superset group number; null means the exercise stands alone. */
         val supersetGroup: Int?,
         /**
-         * Esercizio inventato da chi esporta, non presente in nessuna libreria: chi importa non
-         * puo' riagganciarlo per nome e deve ricrearlo con tutto quel che segue.
+         * Exercise created by the exporting user and absent from any library: it cannot be matched
+         * by name and must be recreated from the fields below.
          */
         val isCustom: Boolean = false,
         val nameIt: String? = null,
@@ -56,11 +52,11 @@ object RoutineTransfer {
         val descriptionFr: String? = null,
         val loggingInstructions: String = "",
         val bodyweightFactor: Double = 1.0,
-        /** Immagine dell'esercizio custom, se c'era e se stava nel tetto di dimensione. */
+        /** Custom exercise image, if it existed and fit within the size cap. */
         val media: MediaPayload? = null
     )
 
-    /** Immagine di un esercizio custom dentro il file: byte in base64 piu' l'estensione originale. */
+    /** Custom exercise image inside the file: base64 bytes plus the original extension. */
     data class MediaPayload(val base64: String, val extension: String?)
 
     data class SetPayload(
@@ -82,7 +78,7 @@ object RoutineTransfer {
         routineExercises: List<RoutineExerciseEntity>,
         setsByRoutineExercise: Map<Long, List<RoutineSetEntity>>,
         exercisesById: Map<Long, ExerciseEntity>,
-        /** Immagini degli esercizi custom, per exerciseId: le legge il chiamante dal disco. */
+        /** Custom exercise images by exerciseId; the caller reads them from disk. */
         mediaByExerciseId: Map<Long, MediaPayload> = emptyMap()
     ): String {
         val exercises = JSONArray()
@@ -115,8 +111,8 @@ object RoutineTransfer {
                     put("restSeconds", routineExercise.restSeconds)
                     put("notes", routineExercise.notes ?: JSONObject.NULL)
                     put("supersetGroup", routineExercise.supersetGroup ?: JSONObject.NULL)
-                    // Un esercizio di libreria si riaggancia per nome e non ha bisogno d'altro;
-                    // uno custom va ricreato tale e quale, immagine compresa.
+                    // A library exercise is matched by name; a custom one must be recreated as is,
+                    // image included.
                     if (exercise.isCustom) {
                         put("isCustom", true)
                         put("nameIt", exercise.nameIt ?: JSONObject.NULL)
@@ -156,8 +152,8 @@ object RoutineTransfer {
     }
 
     /**
-     * Legge un file di scambio. Ritorna null se non e' una routine Eina o se e' scritta da una
-     * versione futura del formato: meglio dirlo che importare una scheda a meta'.
+     * Reads an exchange file. Returns null when it is not an Eina routine or was written by a
+     * newer version of the format: better to say so than to import half a routine.
      */
     fun decode(json: String): RoutinePayload? {
         val root = runCatching { JSONObject(json) }.getOrNull() ?: return null
@@ -180,10 +176,10 @@ object RoutineTransfer {
                 sets = item.readSets(),
                 restSeconds = item.optInt("restSeconds", 90).coerceIn(0, 3600),
                 notes = item.optNullableString("notes"),
-                // Campo nato dopo il formato v1: un file piu' vecchio semplicemente non ha superset.
+                // Added after v1: an older file simply has no supersets.
                 supersetGroup = item.optNullableInt("supersetGroup"),
-                // Campi del formato v3: assenti nei file piu' vecchi, dove un esercizio
-                // sconosciuto diventava comunque custom ma con i soli dati minimi.
+                // v3 fields, absent in older files, where an unknown exercise still became custom
+                // but with minimal data.
                 isCustom = item.optBoolean("isCustom", false),
                 nameIt = item.optNullableString("nameIt"),
                 nameFr = item.optNullableString("nameFr"),
@@ -206,8 +202,8 @@ object RoutineTransfer {
     }
 
     /**
-     * Serie dell'esercizio. Dal formato v2 sono un elenco; un file v1 porta solo targetSets/
-     * targetReps/targetWeight e diventa quel numero di serie normali tutte uguali.
+     * Exercise sets. From v2 on they are a list; a v1 file only carries targetSets/targetReps/
+     * targetWeight and expands into that many identical normal sets.
      */
     private fun JSONObject.readSets(): List<SetPayload> {
         val array = optJSONArray("sets")
@@ -228,13 +224,13 @@ object RoutineTransfer {
         return List(count) { SetPayload(targetReps = reps, targetWeight = weight, setType = SetType.NORMAL) }
     }
 
-    /** Immagine allegata: se il base64 e' illeggibile l'esercizio arriva comunque, senza figura. */
+    /** Attached image: if the base64 is unreadable the exercise still arrives, without it. */
     private fun JSONObject.readMedia(): MediaPayload? {
         val data = optString("data").takeIf { it.isNotBlank() } ?: return null
         return MediaPayload(base64 = data, extension = optNullableString("extension"))
     }
 
-    /** Byte dell'immagine, o null se il file porta un base64 rotto. */
+    /** Image bytes, or null when the file carries a broken base64 payload. */
     fun decodeMedia(media: MediaPayload): ByteArray? =
         runCatching { Base64.decode(media.base64, Base64.NO_WRAP) }.getOrNull()
 

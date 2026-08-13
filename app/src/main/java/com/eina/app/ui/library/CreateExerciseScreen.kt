@@ -51,8 +51,8 @@ import org.koin.androidx.compose.koinViewModel
 fun CreateExerciseScreen(
     onSaved: () -> Unit,
     onBack: (() -> Unit)? = null,
-    // Non nullo = si sta correggendo un esercizio custom: stesso form, cambia il titolo e il
-    // salvataggio riscrive la riga invece di aggiungerne una.
+    // Non-null means an existing custom exercise is being edited: same form, different title, and
+    // saving rewrites the row instead of adding one.
     exerciseId: Long? = null,
     viewModel: CreateExerciseViewModel = koinViewModel()
 ) {

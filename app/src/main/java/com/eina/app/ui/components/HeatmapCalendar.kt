@@ -22,9 +22,8 @@ import java.time.format.TextStyle
 import java.util.Locale
 
 /**
- * Heatmap stile GitHub: una colonna per settimana, una riga per giorno (lun-dom).
- * Intensita' = valore del giorno rapportato al massimo del periodo, in 4 gradini.
- * Canvas puro, nessuna dipendenza extra.
+ * GitHub-style heatmap: one column per week, one row per day (Monday to Sunday). Intensity is the
+ * day value against the period maximum, in four steps. Pure Canvas, no extra dependency.
  */
 @Composable
 fun HeatmapCalendar(
@@ -36,7 +35,7 @@ fun HeatmapCalendar(
 ) {
     val island = EinaTheme.island
     val trackColor = island.sunken
-    // Si parte dal lunedi' della settimana piu' vecchia mostrata, cosi' le colonne sono allineate.
+    // Starts on the Monday of the oldest week shown, so the columns stay aligned.
     val lastMonday = today.minusDays((today.dayOfWeek.value - 1).toLong())
     val firstMonday = lastMonday.minusWeeks((weeks - 1).toLong())
     val maxValue = valuesByDay
@@ -74,9 +73,9 @@ fun HeatmapCalendar(
                         1 -> color.copy(alpha = 0.25f)
                         2 -> color.copy(alpha = 0.45f)
                         3 -> color.copy(alpha = 0.7f)
-                        // Il giorno piu' pesante non e' un arancio piu' saturo ma la fine della
-                        // rampa: la scala sale di intensita' e poi cambia tinta, cosi' i picchi
-                        // si distinguono anche in mezzo a una settimana tutta piena.
+                        // The heaviest day is not a more saturated orange but the end of the ramp:
+                        // the scale rises in intensity and then shifts hue, so peaks stand out even
+                        // inside a fully trained week.
                         else -> island.accentRamp.last()
                     }
                     drawRoundRect(

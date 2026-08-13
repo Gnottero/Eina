@@ -40,8 +40,8 @@ import com.eina.app.ui.theme.Spacing
 import org.koin.androidx.compose.koinViewModel
 
 /**
- * Peso corporeo: ogni misura salvata qui diventa il bodyweightSnapshotKg delle set completate
- * successivamente (vedi WorkoutRepository.completeSet), quindi alimenta PR e volume a corpo libero.
+ * Bodyweight: every measurement saved here becomes the bodyweightSnapshotKg of the sets completed
+ * afterwards (see WorkoutRepository.completeSet), so it feeds bodyweight PRs and volume.
  */
 @Composable
 fun BodyWeightScreen(
@@ -53,7 +53,7 @@ fun BodyWeightScreen(
     val state by viewModel.uiState.collectAsState()
     var input by remember { mutableStateOf("") }
 
-    // Il grafico legge dal piu' vecchio al piu' recente: la lista arriva ordinata al contrario.
+    // The chart reads oldest to newest; the list arrives in the opposite order.
     val chronological = state.metrics.reversed()
 
     IslandScreen(

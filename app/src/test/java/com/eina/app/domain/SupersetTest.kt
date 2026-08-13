@@ -33,7 +33,7 @@ class SupersetTest {
 
         assertEquals(null, result.first { it.id == 1L }.group)
         assertEquals(null, result.first { it.id == 2L }.group)
-        // Chi esce non si sposta: resterebbe un movimento inspiegabile.
+        // An exercise leaving a round stays where it is: moving it would look arbitrary.
         assertEquals(listOf(1L, 2L, 3L), result.map { it.id })
     }
 

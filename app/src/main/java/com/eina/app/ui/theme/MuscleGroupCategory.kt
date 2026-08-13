@@ -6,7 +6,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import com.eina.app.R
 
-/** Raggruppa i muscoli grezzi del dataset (in inglese) nelle categorie definite in CLAUDE.md. */
+/** Groups the raw English muscle names of the dataset into the categories defined in CLAUDE.md. */
 enum class MuscleGroupCategory(@StringRes val labelRes: Int, val color: Color) {
     CHEST_PUSH(R.string.muscle_category_chest_push, MuscleGroupColors.ChestPush),
     BACK_PULL(R.string.muscle_category_back_pull, MuscleGroupColors.BackPull),
@@ -14,12 +14,9 @@ enum class MuscleGroupCategory(@StringRes val labelRes: Int, val color: Color) {
     SHOULDERS(R.string.muscle_category_shoulders, MuscleGroupColors.Shoulders),
     ARMS(R.string.muscle_category_arms, MuscleGroupColors.Arms),
     CORE(R.string.muscle_category_core, MuscleGroupColors.Core),
-    // Fase 32: il collo era finito in "Altro" perche' era l'unico muscolo fuori dalle sei
-    // categorie, e "Altro" con dentro una cosa sola non dice niente. Ora e' una categoria sua.
     NECK(R.string.muscle_category_neck, MuscleGroupColors.Neck),
-    // "Altro" resta, ma per quello che e': un movimento che non lavora nessuno dei gruppi
-    // elencati (mobilita', equilibrio, riscaldamento generale). E' anche dove cade un muscolo
-    // che il dataset non conosce.
+    // "Other" means a movement working none of the listed groups (mobility, balance, general
+    // warm-up). It is also where a muscle unknown to the dataset falls.
     OTHER(R.string.muscle_category_other, MuscleGroupColors.Other)
 }
 
@@ -44,19 +41,18 @@ private val muscleToCategory: Map<String, MuscleGroupCategory> = mapOf(
     "forearms" to MuscleGroupCategory.ARMS,
     "abdominals" to MuscleGroupCategory.CORE,
     "neck" to MuscleGroupCategory.NECK,
-    // Chiave dell'esercizio che non lavora nessuno dei gruppi elencati: la scrive il form degli
-    // esercizi custom quando si sceglie "Altro".
+    // Key written by the custom exercise form when "Other" is chosen.
     "other" to MuscleGroupCategory.OTHER
 )
 
-/** Categoria di un muscolo. Un nome che il dataset non conosce cade su "Altro". */
+/** Category of a muscle; a name unknown to the dataset falls back to "Other". */
 fun categoryFor(muscle: String): MuscleGroupCategory =
     muscleToCategory[muscle.lowercase()] ?: MuscleGroupCategory.OTHER
 
-/** Categoria "primaria" di un esercizio: quella del primo muscolo primario, per badge in lista. */
+/** Primary category of an exercise: the one of its first primary muscle. */
 fun primaryCategoryFor(muscleGroupsPrimary: List<String>): MuscleGroupCategory =
     muscleGroupsPrimary.firstOrNull()?.let { categoryFor(it) } ?: MuscleGroupCategory.OTHER
 
-/** Chiave muscolo canonica per categoria: usata quando l'utente sceglie una categoria nel form esercizio custom. */
+/** Canonical muscle key for a category, written when a category is picked in the custom form. */
 fun canonicalMuscleKey(category: MuscleGroupCategory): String =
     muscleToCategory.entries.firstOrNull { it.value == category }?.key ?: "neck"

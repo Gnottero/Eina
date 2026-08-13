@@ -45,20 +45,18 @@ import com.eina.app.ui.theme.label
 import com.eina.app.ui.theme.primaryCategoryFor
 
 /**
- * Scelta dell'esercizio da aggiungere: ricerca per nome, filtro per gruppo muscolare e miniatura
- * del primo fotogramma dell'animazione. Stesso foglio in allenamento e in editor routine — si
- * aggiunge un esercizio allo stesso modo ovunque.
+ * Exercise picker: search by name, muscle group filter and a thumbnail of the first animation
+ * frame. The same sheet is used by the workout screen and the routine editor.
  *
- * La miniatura vive solo qui: nelle liste dell'allenamento e della routine il nome basta, e
- * un'immagine accanto a ogni riga toglierebbe spazio ai numeri.
+ * The thumbnail lives here only: in the workout and routine lists the name is enough, and an image
+ * on every row would take space from the numbers.
  */
 @Composable
 fun ExercisePickerSheet(
     exercises: List<ExerciseEntity>,
     onPick: (ExerciseEntity) -> Unit,
     onDismiss: () -> Unit,
-    // Lo stesso foglio serve anche a sostituire un esercizio: cambia solo il titolo, perche' il
-    // gesto e' identico e una seconda schermata direbbe le stesse cose.
+    // The same sheet also replaces an exercise: only the title changes.
     title: String = stringResource(R.string.active_add_exercise_sheet_title)
 ) {
     val island = EinaTheme.island
@@ -66,9 +64,8 @@ fun ExercisePickerSheet(
     var category by remember { mutableStateOf<MuscleGroupCategory?>(null) }
 
     val locale = currentLocale()
-    // Ordine alfabetico nella lingua attiva: il database li tiene ordinati per nome inglese.
-    // L'ordinamento non dipende da cosa si sta digitando: si fa una volta sola sui 197 esercizi,
-    // altrimenti ogni tasto della ricerca riordinerebbe l'intera libreria.
+    // Alphabetical in the active language: the database sorts them by English name. The sort does
+    // not depend on the query, otherwise every keystroke would re-sort the whole library.
     val sorted = remember(exercises, locale) {
         exercises.sortedBy { it.exerciseName().localized(locale).lowercase(locale) }
     }
@@ -117,9 +114,8 @@ fun ExercisePickerSheet(
                 modifier = Modifier.padding(vertical = Spacing.lg)
             )
         } else {
-            // Altezza legata allo schermo e non i 380dp fissi di prima: su un telefono alto
-            // restava mezzo foglio vuoto sotto una finestrella di elenco, e ogni esercizio in
-            // piu' costava uno scorrimento.
+            // Height tied to the screen instead of a fixed 380dp: on a tall phone that left half
+            // the sheet empty under a small list window.
             val listHeight = (LocalConfiguration.current.screenHeightDp * 0.55f).dp
             LazyColumn(
                 modifier = Modifier.height(listHeight),
@@ -139,8 +135,8 @@ fun ExercisePickerSheet(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(Spacing.md)
                         ) {
-                            // Primo fotogramma dell'animazione: si riconosce il movimento senza
-                            // aprire la scheda, come nella libreria.
+                            // First animation frame, as in the library: the movement is
+                            // recognisable without opening the detail.
                             if (hasExerciseMedia(exercise.mediaUri)) {
                                 AsyncImage(
                                     model = exercise.mediaUri,
@@ -148,8 +144,8 @@ fun ExercisePickerSheet(
                                     contentScale = ContentScale.Crop,
                                     modifier = Modifier
                                         .size(48.dp)
-                                        // Raggio esplicito e non TileShape: su 48dp i 24dp della
-                                        // tile arrotondano fino a farla diventare un cerchio.
+                                        // Explicit radius, not TileShape: at 48dp its 24dp corners
+                                        // round the thumbnail into a circle.
                                         .clip(RoundedCornerShape(14.dp))
                                         .background(MaterialTheme.colorScheme.surface)
                                 )

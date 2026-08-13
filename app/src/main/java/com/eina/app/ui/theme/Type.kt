@@ -9,9 +9,9 @@ import androidx.compose.ui.unit.sp
 import com.eina.app.R
 
 /**
- * Inter (SIL Open Font License 1.1), bundlato in res/font. Fino al restyle il font era
- * FontFamily.Default, cioe' Roboto: perfettamente leggibile ma senza carattere, e con le cifre
- * di larghezza variabile che facevano ballare i numeri del cronometro e delle tabelle serie.
+ * Inter (SIL Open Font License 1.1), bundled in res/font. The former FontFamily.Default (Roboto)
+ * was readable but characterless, and its proportional digits made the stopwatch and set table
+ * numbers jitter.
  */
 val EinaFontFamily = FontFamily(
     Font(R.font.inter_regular, FontWeight.Normal),
@@ -21,9 +21,8 @@ val EinaFontFamily = FontFamily(
 )
 
 /**
- * Taglio "Display" di Inter: stessa famiglia, disegno stretto pensato per i corpi grandi
- * (interlettera piu' fitta, terminali piu' corti). Va usato solo dai titoli e dai numeroni,
- * come SF Pro Display sta a SF Pro Text — sotto i 20sp peggiora la lettura invece di aiutarla.
+ * Inter's "Display" cut: same family, tighter drawing meant for large sizes (closer letter spacing,
+ * shorter terminals). Reserved for titles and headline numbers — below 20sp it hurts readability.
  */
 val EinaDisplayFontFamily = FontFamily(
     Font(R.font.inter_display_semibold, FontWeight.SemiBold),
@@ -31,14 +30,13 @@ val EinaDisplayFontFamily = FontFamily(
 )
 
 /**
- * Cifre a larghezza fissa. Servono ovunque un numero cambi in continuazione (cronometro, timer
- * di recupero, durata dell'allenamento): con le cifre proporzionali la riga si allarga e si
- * stringe a ogni secondo.
+ * Tabular figures, needed wherever a number changes constantly (stopwatch, rest timer, workout
+ * duration): with proportional digits the line widens and narrows every second.
  */
 const val TabularFigures = "tnum"
 
 val EinaTypography = Typography(
-    // I numeroni delle metriche: corpo grande, interlettera negativa, taglio Display.
+    // Headline metric numbers: large size, negative tracking, Display cut.
     displayLarge = TextStyle(
         fontFamily = EinaDisplayFontFamily,
         fontWeight = FontWeight.Bold,
@@ -63,7 +61,7 @@ val EinaTypography = Typography(
         letterSpacing = (-0.8).sp,
         fontFeatureSettings = TabularFigures
     ),
-    // Titolo di schermata.
+    // Screen title.
     headlineMedium = TextStyle(
         fontFamily = EinaDisplayFontFamily,
         fontWeight = FontWeight.Bold,
@@ -125,7 +123,7 @@ val EinaTypography = Typography(
         fontSize = 14.sp,
         letterSpacing = (-0.1).sp
     ),
-    // Etichette minuscole in maiuscoletto: qui l'interlettera va allargata, non stretta.
+    // Tiny uppercase labels: here the tracking must be widened, not tightened.
     labelMedium = TextStyle(
         fontFamily = EinaFontFamily,
         fontWeight = FontWeight.Medium,

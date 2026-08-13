@@ -133,7 +133,7 @@ fun SessionDetailScreen(
     IslandScreen(
         header = {
             ScreenHeader(
-                // Titolo corto: "Allenamento completato" andava a capo e finiva sotto il tasto indietro.
+                // Short title: the completed-workout string wrapped under the back button.
                 title = if (justFinished) {
                     stringResource(R.string.session_completed)
                 } else {
@@ -141,8 +141,8 @@ fun SessionDetailScreen(
                 },
                 subtitle = summary?.let { session ->
                     buildString {
-                        // Data breve a fine allenamento: con la forma estesa il sottotitolo
-                        // andava a capo e la durata finiva da sola sulla seconda riga.
+                        // Short date right after a workout: the long form wrapped the subtitle and
+                        // pushed the duration onto a second line.
                         if (justFinished) append("${formatDayMonth(session.startTime)} · ")
                         append(formatTime(session.startTime))
                         session.durationMinutes?.let { append(" · ${formatDuration(it)}") }
@@ -152,8 +152,6 @@ fun SessionDetailScreen(
                 onBack = onBack,
                 trailing = if (summary == null) null else {
                     {
-                        // Correggere viene prima di condividere: e' l'azione che riguarda i dati,
-                        // l'altra li porta fuori.
                         IslandIconButton(
                             icon = Icons.Outlined.Edit,
                             contentDescription = stringResource(R.string.session_edit_cd),
@@ -179,7 +177,7 @@ fun SessionDetailScreen(
             return@IslandScreen
         }
 
-        // A fine allenamento lo streak viene prima di tutto: e' il numero che fa tornare.
+        // Right after a workout the streak comes first.
         if (justFinished) {
             StreakCard(weeks = state.streakWeeks)
         }
@@ -203,12 +201,10 @@ fun SessionDetailScreen(
             )
         }
 
-        // Dati dell'orologio, se c'erano: stanno nel riepilogo e non nella card da condividere,
-        // che resta una cosa fra sport e vanto, non una cartella clinica.
+        // Watch data, when present: shown in the summary only, never on the shareable card.
         state.vitals?.let { vitals -> VitalsCard(vitals = vitals) }
 
-        // Stessa lettura dell'allenamento: il giro si riconosce dalla lettera e dal contorno,
-        // assegnati nell'ordine in cui i superset compaiono nella sessione.
+        // Same reading as the workout screen: letters follow the order supersets appear in.
         val supersetLetters = Superset.letters(state.exercises.map { it.supersetGroup })
         state.exercises.forEachIndexed { index, exercise ->
             ExerciseSummaryCard(
@@ -218,8 +214,8 @@ fun SessionDetailScreen(
             )
         }
 
-        // Un allenamento andato bene e' gia' una scheda: qui si tiene, invece di ricopiarlo a
-        // mano nell'editor. Si apre subito la scheda creata, che e' dove si cambia il nome.
+        // A performed workout is already a plan: it is saved as a routine and the editor opens on
+        // it, which is where the name is changed.
         if (state.exercises.isNotEmpty()) {
             val routineName = summary.routineName ?: formatFullDate(summary.startTime)
             val createdMessage = stringResource(R.string.history_create_routine_done)
@@ -240,10 +236,7 @@ fun SessionDetailScreen(
     }
 }
 
-/**
- * Battiti e calorie letti da Health Connect per la finestra dell'allenamento: due riquadri e la
- * spezzata del cuore, che e' l'unico modo di leggere "com'e' andata" e non solo "quanto".
- */
+/** Heart rate and calories read from Health Connect for the workout window. */
 @Composable
 private fun VitalsCard(vitals: SessionVitals) {
     val island = EinaTheme.island
@@ -277,8 +270,7 @@ private fun VitalsCard(vitals: SessionVitals) {
                     label = stringResource(R.string.stat_heart_rate_avg),
                     value = vitals.avgBpm.toString(),
                     unit = stringResource(R.string.unit_bpm),
-                    // Il massimo sta sotto l'etichetta del riquadro: due riquadri per il cuore
-                    // rubavano lo spazio alle calorie senza dire molto di piu'.
+                    // Max sits under the tile label: a second heart tile would crowd out calories.
                     description = vitals.maxBpm?.let { stringResource(R.string.stat_heart_rate_max, it) },
                     tint = MetricColors.Heart,
                     modifier = Modifier.weight(1f)
@@ -305,7 +297,7 @@ private fun VitalsCard(vitals: SessionVitals) {
     }
 }
 
-/** Streak di settimane consecutive con almeno un allenamento, in evidenza a fine allenamento. */
+/** Streak of consecutive weeks with at least one workout, highlighted after finishing. */
 @Composable
 private fun StreakCard(weeks: Int) {
     IslandCard(
@@ -353,9 +345,9 @@ private fun StreakCard(weeks: Int) {
 }
 
 /**
- * Un blocco di lavoro della sessione: intestazione con posizione, nome e totali, poi la tabella
- * delle serie su superficie incassata. La chiave e' il workoutExerciseId, quindi lo stesso
- * esercizio ripetuto nella stessa sessione compare due volte, con i suoi numeri separati.
+ * One work block of the session: header with position, name and totals, then the set table. Rows
+ * are keyed by workoutExerciseId, so the same exercise repeated in a session appears twice with
+ * separate numbers.
  */
 @Composable
 private fun ExerciseSummaryCard(
@@ -364,8 +356,8 @@ private fun ExerciseSummaryCard(
     supersetLetter: String?
 ) {
     val island = EinaTheme.island
-    // workingSets e totalVolume riscorrono la lista a ogni chiamata: le serie di un allenamento
-    // gia' registrato non cambiano piu', quindi si calcolano una volta sola.
+    // workingSets and totalVolume walk the list on every call; the sets of a recorded workout no
+    // longer change, so both are computed once.
     val working = remember(exercise) { exercise.workingSets }
     val volume = remember(exercise) { totalVolume(exercise.sets) }
     val supersetTint = supersetLetter?.let { supersetColor(it) }
@@ -375,8 +367,8 @@ private fun ExerciseSummaryCard(
             .fillMaxWidth()
             .then(
                 if (supersetTint == null) Modifier
-                // TileShape e non IslandShape: e' la forma con cui IslandCard si disegna qui,
-                // e un contorno di forma diversa staccherebbe dal bordo della card.
+                // TileShape, the shape IslandCard draws with here: another one would not follow
+                // the card border.
                 else Modifier.border(2.dp, supersetTint, TileShape)
             ),
         contentPadding = PaddingValues(Spacing.lg),
@@ -429,7 +421,7 @@ private fun ExerciseSummaryCard(
                 .background(island.sunkenSoft)
                 .padding(vertical = Spacing.xs)
         ) {
-            // Come in sessione: il numero segue le sole serie di lavoro, i riscaldamenti portano W.
+            // As in the session: only working sets are numbered, warmups show W.
             var workingNumber = 0
             exercise.sets.forEach { set ->
                 if (set.setType.countsAsWorking) workingNumber++
@@ -439,7 +431,7 @@ private fun ExerciseSummaryCard(
     }
 }
 
-/** Riga serie: numero progressivo, valori allineati, badge solo quando dicono qualcosa. */
+/** Set row: number, aligned values, and badges only when they carry information. */
 @Composable
 private fun SetRow(number: Int, set: CompletedSetRow) {
     Row(
@@ -449,7 +441,7 @@ private fun SetRow(number: Int, set: CompletedSetRow) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(Spacing.md)
     ) {
-        // Numero o sigla del tipo, lo stesso segno della tabella in sessione.
+        // Number or type letter, the same marker used in the session table.
         SetTypeIndicator(
             type = set.setType,
             number = number,
@@ -471,13 +463,13 @@ private fun SetRow(number: Int, set: CompletedSetRow) {
 }
 
 /**
- * Foglio di condivisione: una sola immagine, con l'interruttore dello sfondo trasparente.
+ * Share sheet: a single image, with a transparent-background toggle.
  *
- * Con lo sfondo, l'immagine si regge da sola su qualsiasi supporto. Senza, resta il solo
- * testo: si salva nel rullino (e in parallelo finisce negli appunti), poi si apre Instagram,
- * si sceglie la propria foto di sfondo e lo si aggiunge come adesivo. E' il giro che fa
- * Strava, e resta l'unico modo di comporre foto propria + statistiche: l'intent ADD_TO_STORY
- * di Instagram accetta un adesivo ma impone lui lo sfondo.
+ * With a background the image stands on its own anywhere. Without one only the text remains: it is
+ * saved to the gallery (and copied to the clipboard), then Instagram opens so the user can pick
+ * their own photo and add it as a sticker. This detour is the only way to combine a personal photo
+ * with the stats, since Instagram's ADD_TO_STORY intent accepts a sticker but imposes the
+ * background.
  */
 @Composable
 private fun ShareSheet(
@@ -495,8 +487,8 @@ private fun ShareSheet(
         bitmap = withContext(Dispatchers.Default) { renderShareCard(context, data, transparent) }
     }
 
-    // Fino ad Android 9 scrivere nel rullino richiede un permesso esplicito; concesso,
-    // il salvataggio riparte da solo.
+    // Up to Android 9 writing to the gallery needs an explicit permission; once granted, the save
+    // resumes on its own.
     var pendingSave by remember { mutableStateOf(false) }
     val storagePermission = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -525,14 +517,14 @@ private fun ShareSheet(
         onDismiss()
     }
 
-    // Anche questo e' un menu flottante: i tasti prendono la forma dei fogli, non la pastiglia.
+    // Floating menu as well: buttons take the sheet shape, not the pill one.
     Dialog(onDismissRequest = onDismiss) {
         CompositionLocalProvider(LocalButtonShape provides SheetButtonShape) {
         IslandCard(modifier = Modifier.fillMaxWidth()) {
             Text(stringResource(R.string.share_title), style = MaterialTheme.typography.titleMedium)
 
-            // Fondo scuro dietro l'anteprima: senza sfondo l'immagine e' testo bianco sul
-            // nulla, su carta chiara non si vedrebbe affatto.
+            // Dark backdrop behind the preview: with no background the image is white text on
+            // nothing and would be invisible on the light surface.
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -616,12 +608,12 @@ private fun ShareSheet(
     }
 }
 
-/** Grigio scuro neutro: sta al posto della foto che l'utente mettera' sotto l'overlay. */
+/** Neutral dark grey, standing in for the photo the user will put under the overlay. */
 private val PreviewBackdrop = Color(0xFF2B2B2B)
 
 /**
- * Salva l'overlay nel rullino e lo mette anche negli appunti, cosi' funzionano entrambe le
- * strade dentro Instagram: prenderlo dalla galleria come adesivo, oppure incollarlo.
+ * Saves the overlay to the gallery and copies it to the clipboard, so both routes inside Instagram
+ * work: picking it from the gallery as a sticker, or pasting it.
  */
 private fun Context.saveOverlay(bitmap: Bitmap, fileName: String, openInstagram: Boolean) {
     val galleryUri = saveImageToGallery(this, bitmap, fileName)
@@ -629,8 +621,8 @@ private fun Context.saveOverlay(bitmap: Bitmap, fileName: String, openInstagram:
         toast(R.string.share_save_failed)
         return
     }
-    // La copia negli appunti passa dal FileProvider: l'Uri di MediaStore non e' leggibile
-    // da un'altra app senza un permesso esplicito.
+    // The clipboard copy goes through the FileProvider: a MediaStore Uri is not readable by
+    // another app without an explicit grant.
     val copied = copyImageToClipboard(this, saveShareImage(this, bitmap, fileName), getString(R.string.app_name))
     toast(if (copied) R.string.share_copied else R.string.share_saved)
 

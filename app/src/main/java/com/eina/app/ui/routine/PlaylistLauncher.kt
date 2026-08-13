@@ -16,13 +16,13 @@ private val spotifyPlaylistIdRegex = Regex("""open\.spotify\.com/playlist/([a-zA
 private const val PLAYBACK_KEY_DELAY_MS = 1500L
 
 /**
- * Apre linkedPlaylistUri secondo le regole del deep link definite in CLAUDE.md, con fallback al
- * browser, e avvia la riproduzione.
+ * Opens linkedPlaylistUri following the deep link rules defined in CLAUDE.md, falling back to the
+ * browser, and starts playback.
  *
- * DECISIONE: la riproduzione parte in due modi complementari, perche' nessuno dei due e' garantito.
- * Spotify accetta il suffisso ":play" sull'URI, che fa partire la playlist appena aperta; per tutto
- * il resto si manda il tasto multimediale PLAY (non PLAY_PAUSE, che metterebbe in pausa una
- * riproduzione gia' in corso) all'app che nel frattempo ha preso la sessione audio.
+ * DECISIONE: playback is triggered in two complementary ways, since neither is guaranteed. Spotify
+ * accepts a ":play" suffix on the URI, which starts the playlist as it opens; for everything else
+ * the PLAY media key is sent (not PLAY_PAUSE, which would pause an ongoing playback) to whichever
+ * app has taken the audio session in the meantime.
  */
 fun launchPlaylist(context: Context, uri: String, type: PlaylistType): Boolean {
     val intent = when (type) {
@@ -47,7 +47,7 @@ fun launchPlaylist(context: Context, uri: String, type: PlaylistType): Boolean {
         try {
             context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(uri)))
         } catch (e: ActivityNotFoundException) {
-            // Ne' l'app musicale ne' un browser: si segnala al chiamante invece di crashare.
+            // Neither the music app nor a browser: report it to the caller instead of crashing.
             return false
         }
     }

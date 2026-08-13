@@ -7,14 +7,14 @@ import android.net.Uri
 import androidx.browser.customtabs.CustomTabsIntent
 import androidx.core.graphics.toColorInt
 
-// Ko-fi invece di Buy Me a Coffee: BMC accetta solo Stripe per i nuovi account,
-// Ko-fi permette di incassare direttamente su PayPal.
+// Ko-fi instead of Buy Me a Coffee: BMC only accepts Stripe for new accounts, while Ko-fi pays out
+// directly to PayPal.
 const val DONATION_URL = "https://ko-fi.com/gnottero"
 
 /**
- * Apre la pagina donazioni in una Custom Tab, cosi' la si legge senza uscire dall'app.
- * Se nessun browser supporta le Custom Tab si ripiega su ACTION_VIEW; se manca anche un
- * browser (device senza, o disabilitato) non si fa nulla di piu' che non far crashare l'app.
+ * Opens the donation page in a Custom Tab, so it is read without leaving the app. If no browser
+ * supports Custom Tabs it falls back to ACTION_VIEW; with no browser at all it does nothing beyond
+ * not crashing.
  */
 fun launchDonationPage(context: Context) {
     val uri = Uri.parse(DONATION_URL)
@@ -33,7 +33,7 @@ fun launchDonationPage(context: Context) {
         try {
             context.startActivity(Intent(Intent.ACTION_VIEW, uri))
         } catch (e: ActivityNotFoundException) {
-            // Nessun browser installato: non c'e' un fallback sensato.
+            // No browser installed: there is no sensible fallback.
         }
     }
 }

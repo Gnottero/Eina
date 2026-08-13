@@ -71,13 +71,12 @@ fun DashboardScreen(
     IslandScreen(
         header = {
             ScreenHeader(
-                // La data sta sopra il titolo come riga minuscola, non sotto come sottotitolo:
-                // e' contesto, non un secondo titolo, e cosi' il titolo grande resta l'ancora.
+                // The date sits above the title as a tiny line, not below as a subtitle: it is
+                // context, so the large title stays the anchor.
                 eyebrow = formatFullDate(today),
                 title = stringResource(R.string.dashboard_title),
                 trailing = {
-                    // Il cronometro sta in testa alla Dashboard: e' un attrezzo da aprire in
-                    // fretta, non una voce di menu.
+                    // The stopwatch lives in the header: a tool to reach fast, not a menu entry.
                     StopwatchIconButton(
                         running = stopwatchState.running,
                         onClick = { showStopwatch = true }
@@ -92,9 +91,8 @@ fun DashboardScreen(
         },
         verticalArrangement = Arrangement.spacedBy(Spacing.md)
     ) {
-        // Hero: un'isola sola con l'anello dei giorni allenati e, accanto, i numeri della
-        // settimana. Prima erano due tile affiancate di pari peso e la schermata si apriva senza
-        // un punto di ingresso: ora l'occhio cade sull'anello e da li' scende ai numeri.
+        // Hero: a single island with the ring of trained days and the weekly numbers beside it.
+        // Two equally weighted tiles left the screen without an entry point.
         IslandCard(
             modifier = Modifier.fillMaxWidth(),
             shape = IslandShape,
@@ -147,7 +145,7 @@ fun DashboardScreen(
                         Text(
                             text = stringResource(R.string.unit_kg),
                             style = MaterialTheme.typography.labelLarge,
-                            // Stesso colore del numero: l'unita' ne fa parte.
+                            // Same colour as the number: the unit is part of it.
                             color = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier.padding(start = Spacing.xs, bottom = 5.dp)
                         )

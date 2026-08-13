@@ -14,20 +14,18 @@ import kotlinx.coroutines.launch
 import kotlin.math.ceil
 
 /**
- * Timer di recupero, fuori dal ViewModel dell'allenamento.
+ * Rest timer, kept outside the workout ViewModel.
  *
- * DECISIONE (come [com.eina.app.ui.components.StopwatchController]): lo stato e' l'istante di fine,
- * non un contatore decrementato a ogni tick. Due motivi:
- * - in background i `delay` vengono rallentati dal sistema, e al rientro il conto alla rovescia
- *   mostrava piu' tempo di quanto ne fosse davvero rimasto: qui il residuo si ricava sempre
- *   dall'orologio;
- * - vive come singleton (vedi AppModule), quindi uscire dall'allenamento in corso e rientrare
- *   non lo azzera piu' — prima moriva con il ViewModel della schermata.
+ * DECISIONE (as in [com.eina.app.ui.components.StopwatchController]): the state is the end instant
+ * and not a counter decremented on each tick. Two reasons:
+ * - in background the system slows the `delay` calls down, and on return the countdown showed more
+ *   time than was actually left; here the remainder always comes from the clock;
+ * - it lives as a singleton (see AppModule), so leaving the running workout and coming back no
+ *   longer resets it, as it did when it died with the screen ViewModel.
  *
- * Il tick pero' non basta a far suonare la fine: con l'app fuori dallo schermo il processo viene
- * congelato e i `delay` restano fermi. Per questo ogni recupero programma anche una sveglia di
- * sistema ([RestAlarmScheduler]); il primo dei due che arriva chiama [finish], che vale una
- * volta sola.
+ * The tick alone cannot sound the end: with the app off screen the process is frozen and the
+ * `delay` calls stall. Every rest therefore also schedules a system alarm ([RestAlarmScheduler]);
+ * whichever fires first calls [finish], which acts only once.
  */
 class RestTimerController(
     private val feedback: WorkoutFeedback,
@@ -45,7 +43,7 @@ class RestTimerController(
         schedule(System.currentTimeMillis() + totalSeconds * 1000L, totalSeconds)
     }
 
-    /** -15s / +15s: sposta l'istante di fine, non il residuo, cosi' resta legato all'orologio. */
+    /** -15s / +15s: moves the end instant and not the remainder, keeping it tied to the clock. */
     fun adjust(deltaSeconds: Int) {
         val current = _state.value ?: return
         val endAt = current.endAtMs + deltaSeconds * 1000L
@@ -53,15 +51,14 @@ class RestTimerController(
         if (remaining <= 0) finish() else schedule(endAt, maxOf(current.totalSeconds, remaining))
     }
 
-    /** Recupero saltato a mano: si spegne tutto senza suonare. */
+    /** Rest skipped by hand: everything stops without sounding. */
     fun skip() {
         stop()
     }
 
     /**
-     * Fine del recupero: suono e vibrazione, una volta sola. La chiamano sia il tick in-app sia
-     * la sveglia di sistema, e possono arrivare a pochi millisecondi di distanza — chi trova lo
-     * stato gia' spento non fa nulla.
+     * End of rest: sound and vibration, once. Called by both the in-app tick and the system alarm,
+     * which can arrive milliseconds apart — whichever finds the state already cleared does nothing.
      */
     fun finish() {
         synchronized(this) {
@@ -84,8 +81,8 @@ class RestTimerController(
         alarms.schedule(endAtMs)
         job = scope.launch {
             while (isActive) {
-                // Piu' fitto del secondo: il residuo viene dall'orologio, e un tick da 1s
-                // sfasato mostrerebbe lo stesso numero per quasi due secondi.
+                // Faster than one second: the remainder comes from the clock, and a 1s tick out of
+                // phase would show the same number for nearly two seconds.
                 delay(TICK_MS)
                 val current = _state.value ?: break
                 val remaining = remainingSecondsAt(current.endAtMs)

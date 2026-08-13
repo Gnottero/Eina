@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-/** Una routine con quel tanto di contenuto che serve alla card dell'elenco. */
+/** A routine with just enough content for the list card. */
 data class RoutineCardUi(
     val routine: RoutineEntity,
     val exerciseNames: List<ExerciseName>,
@@ -31,8 +31,8 @@ class RoutineListViewModel(
         routineRepository.observeRoutineSetCounts()
     ) { routines, previews, setCounts ->
         val byRoutine = previews.groupBy { it.routineId }
-        // Le serie si contano dalle righe di routine_sets: una scheda puo' avere esercizi con
-        // numeri di serie diversi, quindi non c'e' piu' un numero da moltiplicare.
+        // Sets are counted from the routine_sets rows: a routine can hold exercises with different
+        // set counts, so there is no single number to multiply.
         val setsByRoutine = setCounts.associate { it.routineId to it.setCount }
         routines.map { routine ->
             val rows = byRoutine[routine.id].orEmpty()
@@ -54,12 +54,12 @@ class RoutineListViewModel(
         viewModelScope.launch { routineRepository.deleteRoutine(routine) }
     }
 
-    /** Prepara il file di scambio della routine e lo passa al chiamante, che apre il chooser. */
+    /** Builds the routine exchange file and hands it to the caller, which opens the chooser. */
     fun exportRoutine(routineId: Long, onReady: (String?) -> Unit) {
         viewModelScope.launch { onReady(routineRepository.exportRoutine(routineId)) }
     }
 
-    /** Importa una routine da un file di scambio. `onDone` riceve false se il file non e' valido. */
+    /** Imports a routine from an exchange file; [onDone] receives false if the file is invalid. */
     fun importRoutine(json: String, onDone: (Boolean) -> Unit) {
         viewModelScope.launch { onDone(routineRepository.importRoutine(json) != null) }
     }

@@ -31,8 +31,8 @@ data class RoutineEditorUiState(
     val ready: Boolean = false
 )
 
-// flatMapLatest e' sperimentale ma stabile da anni: l'id della routine cambia una volta sola,
-// quando la bozza viene creata, e la scheda osservata deve seguirlo.
+// flatMapLatest is experimental but stable: the routine id changes once, when the draft is
+// created, and the observed routine has to follow it.
 @OptIn(ExperimentalCoroutinesApi::class)
 class RoutineEditorViewModel(
     private val repository: RoutineRepository,
@@ -49,20 +49,20 @@ class RoutineEditorViewModel(
         .flatMapLatest { id -> if (id == 0L) flowOf(emptyList()) else repository.observeRoutineExercises(id) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    /** Serie pianificate, raggruppate per esercizio della scheda: una riga per serie in tabella. */
+    /** Planned sets grouped by routine exercise: one table row per set. */
     val routineSets: StateFlow<Map<Long, List<RoutineSetEntity>>> = routineIdFlow
         .flatMapLatest { id -> if (id == 0L) flowOf(emptyList()) else repository.observeRoutineSets(id) }
         .map { sets -> sets.groupBy { it.routineExerciseId } }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
 
-    /** Tutta la libreria: alimenta il foglio di scelta dell'esercizio da aggiungere. */
+    /** Whole library, feeding the exercise picker sheet. */
     val availableExercises: StateFlow<List<ExerciseEntity>> = repository.observeExercises()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     /**
-     * Esercizi referenziati dalla routine: servono nome tradotto e tipo di carico (campo kg).
-     * Si pescano dalla libreria gia' osservata invece di una query per ogni voce della scheda:
-     * cambiare una serie faceva ripartire N letture sul database per riottenere gli stessi nomi.
+     * Exercises referenced by the routine, for their translated name and weight type. Taken from
+     * the already observed library instead of one query per row: editing a set used to trigger N
+     * database reads returning the same names.
      */
     val exercises: StateFlow<Map<Long, ExerciseEntity>> = availableExercises
         .map { library -> library.associateBy { it.id } }
@@ -71,8 +71,8 @@ class RoutineEditorViewModel(
     init {
         viewModelScope.launch {
             if (routineId == 0L) {
-                // DECISIONE: creiamo subito una routine "bozza" per avere un id valido a cui
-                // agganciare esercizi via FK prima che l'utente prema Salva.
+                // DECISIONE: a draft routine is created upfront to have a valid id exercises can
+                // reference through the foreign key before the user saves.
                 routineId = repository.saveRoutine(RoutineEntity(name = ""))
                 routineIdFlow.value = routineId
                 _uiState.update { it.copy(ready = true) }
@@ -113,8 +113,8 @@ class RoutineEditorViewModel(
     }
 
     /**
-     * Uscire senza salvare non deve lasciare in lista la bozza creata all'apertura:
-     * la si elimina solo se e' rimasta davvero vuota (nessun nome, nessun esercizio).
+     * Leaving without saving must not leave the draft created on open in the list: it is deleted
+     * only when it stayed genuinely empty (no name, no exercises).
      */
     fun discardIfEmpty(onDone: () -> Unit) {
         val state = _uiState.value
@@ -136,10 +136,7 @@ class RoutineEditorViewModel(
         }
     }
 
-    /**
-     * Cambia il movimento di una voce della scheda: serie, recupero, nota, posizione e superset
-     * restano quelli di prima.
-     */
+    /** Swaps the movement of a routine row; sets, rest, note, position and superset are kept. */
     fun replaceExercise(routineExercise: RoutineExerciseEntity, exerciseId: Long) {
         viewModelScope.launch { repository.replaceRoutineExercise(routineExercise, exerciseId) }
     }
@@ -147,7 +144,7 @@ class RoutineEditorViewModel(
     fun removeExercise(routineExercise: RoutineExerciseEntity) {
         viewModelScope.launch {
             repository.removeRoutineExercise(routineExercise)
-            // Tolto un compagno, un superset rimasto da solo non e' piu' un superset.
+            // A superset left with a single member is no longer a superset.
             val remaining = routineExercises.value.filterNot { it.id == routineExercise.id }
             val cleaned = Superset.dissolveOrphans(remaining.map { Superset.Member(it.id, it.supersetGroup) })
                 .associateBy({ it.id }, { it.group })
@@ -161,9 +158,9 @@ class RoutineEditorViewModel(
     }
 
     /**
-     * Superset dell'esercizio nella scheda: `group` null lo tira fuori dal giro. Chi entra si
-     * sposta accanto ai compagni (vedi [Superset.regroup]) e ne prende il recupero, che nel
-     * superset e' del giro e non del singolo esercizio.
+     * Superset of a routine exercise; a null [group] takes it out of the round. A joining exercise
+     * moves next to its members (see [Superset.regroup]) and takes their rest, which belongs to
+     * the round rather than to the single exercise.
      */
     fun setSupersetGroup(routineExercise: RoutineExerciseEntity, group: Int?) {
         viewModelScope.launch {
@@ -187,8 +184,8 @@ class RoutineEditorViewModel(
     }
 
     /**
-     * Ordine scelto trascinando le voci nel foglio di riordino: `order` e' la posizione in lista,
-     * quindi basta riscriverlo su chi si e' spostato davvero.
+     * Order chosen by dragging in the reorder sheet: `order` is the position in the list, so only
+     * the rows that actually moved are rewritten.
      */
     fun applyOrder(orderedRoutineExerciseIds: List<Long>) {
         viewModelScope.launch {
@@ -201,10 +198,10 @@ class RoutineEditorViewModel(
         }
     }
 
-    /** Numero di gruppo libero per un superset nuovo. */
+    /** First free group number for a new superset. */
     fun nextSupersetGroup(): Int = Superset.nextGroup(routineExercises.value.map { it.supersetGroup })
 
-    /** Nota dell'esercizio nella routine: viene copiata nella sessione a ogni avvio. */
+    /** Routine exercise note, copied into the session at every start. */
     fun updateNotes(routineExercise: RoutineExerciseEntity, notes: String?) {
         viewModelScope.launch {
             repository.updateRoutineExercise(
@@ -234,8 +231,8 @@ class RoutineEditorViewModel(
     fun updateRestSeconds(routineExercise: RoutineExerciseEntity, restSeconds: Int) {
         viewModelScope.launch {
             repository.updateRoutineExercise(routineExercise.copy(restSeconds = restSeconds))
-            // Il recupero di un superset e' del giro: cambiarlo su un esercizio lo cambia a tutti,
-            // altrimenti la pausa dipenderebbe da chi chiude il giro.
+            // Superset rest belongs to the round: changing it on one member changes it for all,
+            // otherwise the pause would depend on who closes the round.
             val group = routineExercise.supersetGroup ?: return@launch
             routineExercises.value
                 .filter { it.supersetGroup == group && it.id != routineExercise.id && it.restSeconds != restSeconds }

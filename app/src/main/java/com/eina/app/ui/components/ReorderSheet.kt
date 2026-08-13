@@ -42,26 +42,23 @@ import com.eina.app.ui.theme.TileShape
 import kotlin.math.roundToInt
 
 /**
- * Una voce riordinabile. La chiave e' una stringa e non un id: un superset viaggia come blocco
- * unico (vedi [com.eina.app.domain.Superset]) e non ha un id proprio da usare come chiave.
+ * A reorderable row. The key is a string and not an id: a superset travels as a single block
+ * (see [com.eina.app.domain.Superset]) and has no id of its own.
  */
 data class ReorderRow(
     val key: String,
     val title: String,
     val subtitle: String? = null,
-    /** Colore del giro, quando la riga e' un superset: la riga lo porta come contorno. */
+    /** Superset colour, drawn as the row border when the row is a round. */
     val tint: Color? = null
 )
 
 /**
- * Foglio per rimettere in ordine gli esercizi trascinandoli, in routine e in allenamento.
+ * Sheet to reorder exercises by dragging, used by both the routine editor and the workout screen.
+ * The whole list is under the thumb and the order is written once, on confirmation.
  *
- * Prima l'unico modo era "sposta su" / "sposta giu'" dal foglio delle azioni, una posizione per
- * volta e riaprendo il foglio ogni volta: spostare il quinto esercizio in cima erano otto tocchi.
- * Qui la lista sta tutta sotto il pollice e l'ordine si scrive una volta sola, alla conferma.
- *
- * Le righe hanno altezza fissa: la posizione di arrivo si ricava dividendo lo spostamento per
- * quell'altezza, senza dover misurare ogni riga durante il trascinamento.
+ * Rows have a fixed height, so the target position is the drag distance divided by that height,
+ * with no need to measure each row while dragging.
  */
 @Composable
 fun ReorderSheet(
@@ -87,17 +84,16 @@ fun ReorderSheet(
 
         Column(verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
             order.forEachIndexed { index, row ->
-                // key(): senza, spostando una riga il posto in composizione resterebbe l'indice e
-                // il riconoscitore di gesti passerebbe a un'altra riga, interrompendo il
-                // trascinamento appena la voce cambia posizione.
+                // key(): without it the composition slot stays the index, so the gesture detector
+                // would move to another row and the drag would break as soon as the row moves.
                 key(row.key) {
                     val dragging = row.key == draggedKey
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(ROW_HEIGHT)
-                            // La riga trascinata sta sopra le altre e le segue col dito: le altre si
-                            // riordinano sotto, cosi' si vede dove si sta per posare.
+                            // The dragged row floats above the others, which reorder underneath so
+                            // the drop position is visible.
                             .zIndex(if (dragging) 1f else 0f)
                             .graphicsLayer { translationY = if (dragging) dragOffset else 0f }
                             .clip(TileShape)
@@ -116,10 +112,9 @@ fun ReorderSheet(
                                     onDrag = { change, delta ->
                                         change.consume()
                                         dragOffset += delta.y
-                                        // Superata mezza riga la voce cambia posto subito, e lo
-                                        // scarto residuo resta sotto il dito: l'alternativa e'
-                                        // riordinare solo al rilascio, e fino ad allora non si
-                                        // capisce dove finira'.
+                                        // Past half a row the item swaps immediately and the
+                                        // leftover offset stays under the finger; reordering only
+                                        // on release would hide where it lands.
                                         val shift = (dragOffset / rowHeightPx).roundToInt()
                                         val from = order.indexOfFirst { it.key == row.key }
                                         val to = (from + shift).coerceIn(0, order.size - 1)

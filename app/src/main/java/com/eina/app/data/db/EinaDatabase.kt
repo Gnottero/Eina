@@ -36,9 +36,9 @@ abstract class EinaDatabase : RoomDatabase() {
         const val DATABASE_NAME = "eina.db"
 
         /**
-         * Note per esercizio: colonna aggiunta sia al template (routine) sia alla sessione, cosi'
-         * la nota puo' essere ritoccata durante l'allenamento senza sporcare la routine.
-         * Migrazione e non distruttiva: lo storico degli allenamenti non e' ricostruibile.
+         * Per-exercise notes, added to both the routine template and the session, so a note can be
+         * edited during a workout without touching the routine. Migrated rather than recreated:
+         * the workout history cannot be rebuilt.
          */
         val MIGRATION_1_2 = object : Migration(1, 2) {
             override fun migrate(db: SupportSQLiteDatabase) {
@@ -48,8 +48,8 @@ abstract class EinaDatabase : RoomDatabase() {
         }
 
         /**
-         * Descrizioni tradotte. Le colonne nascono vuote: le riempie ExerciseSeeder al
-         * primo avvio successivo, allineando la libreria al catalogo curato.
+         * Translated descriptions. The columns start empty and are filled by ExerciseSeeder on the
+         * next launch, when it aligns the library with the curated catalog.
          */
         val MIGRATION_2_3 = object : Migration(2, 3) {
             override fun migrate(db: SupportSQLiteDatabase) {
@@ -58,10 +58,7 @@ abstract class EinaDatabase : RoomDatabase() {
             }
         }
 
-        /**
-         * Nomi tradotti, stessa storia delle descrizioni: colonne vuote alla migrazione,
-         * le riempie ExerciseSeeder al primo avvio successivo.
-         */
+        /** Translated names; like the descriptions, filled by ExerciseSeeder on the next launch. */
         val MIGRATION_3_4 = object : Migration(3, 4) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE exercises ADD COLUMN nameIt TEXT")
@@ -70,11 +67,10 @@ abstract class EinaDatabase : RoomDatabase() {
         }
 
         /**
-         * Quota di peso corporeo sollevata (vedi ExerciseEntity.bodyweightFactor). Nasce a 1
-         * per tutti — il valore giusto per gli esercizi che sollevano davvero il corpo — e
-         * ExerciseSeeder porta gli altri al loro valore al primo avvio successivo. Il volume
-         * gia' salvato nello storico non si tocca: si ricalcola al volo dalle set, quindi i
-         * totali passati si aggiornano da soli.
+         * Lifted bodyweight share (see ExerciseEntity.bodyweightFactor). It starts at 1 for every
+         * exercise — the right value for those that do lift the body — and ExerciseSeeder corrects
+         * the others on the next launch. Stored volume is untouched: it is recomputed from the
+         * sets, so past totals fix themselves.
          */
         val MIGRATION_4_5 = object : Migration(4, 5) {
             override fun migrate(db: SupportSQLiteDatabase) {
@@ -83,10 +79,10 @@ abstract class EinaDatabase : RoomDatabase() {
         }
 
         /**
-         * `isWarmup` diventa `setType` (vedi [SetType]): il booleano sapeva dire solo
-         * riscaldamento si'/no, e cedimento e drop set non ci entravano. La colonna va sostituita,
-         * non aggiunta, quindi la tabella si ricrea: SQLite sotto API 30 non sa togliere colonne.
-         * Le serie gia' registrate diventano WARMUP o NORMAL, senza perdere nulla.
+         * `isWarmup` becomes `setType` (see [SetType]): the boolean could only say warmup yes/no,
+         * with no room for failure and drop sets. The column is replaced rather than added, so the
+         * table is recreated — SQLite below API 30 cannot drop columns. Recorded sets become
+         * WARMUP or NORMAL, losing nothing.
          */
         val MIGRATION_5_6 = object : Migration(5, 6) {
             override fun migrate(db: SupportSQLiteDatabase) {
@@ -129,9 +125,9 @@ abstract class EinaDatabase : RoomDatabase() {
         }
 
         /**
-         * Superset: un numero di gruppo sul template e sulla sessione, cosi' il giro si puo'
-         * comporre nella routine e ritoccare durante l'allenamento. Nasce a null — nessun
-         * esercizio gia' salvato entra in un superset senza che glielo si chieda.
+         * Supersets: a group number on both the template and the session, so a round can be
+         * composed in the routine and adjusted during the workout. It starts null, so no stored
+         * exercise joins a superset on its own.
          */
         val MIGRATION_6_7 = object : Migration(6, 7) {
             override fun migrate(db: SupportSQLiteDatabase) {
@@ -141,12 +137,11 @@ abstract class EinaDatabase : RoomDatabase() {
         }
 
         /**
-         * Le serie della routine diventano righe (`routine_sets`), una per serie, col loro tipo:
-         * la scheda puo' finalmente dire "un riscaldamento e due serie a cedimento" invece del
-         * solo numero di serie. Le tre colonne target sulla routine non servono piu' e vanno
-         * tolte, quindi `routine_exercises` si ricrea — SQLite sotto API 30 non sa togliere
-         * colonne. Ogni esercizio gia' salvato produce le sue `targetSets` righe NORMAL coi
-         * valori che aveva: nessuna scheda cambia forma.
+         * Routine sets become rows (`routine_sets`), one per set with its own type, so a routine
+         * can express "one warmup and two failure sets" instead of a plain set count. The three
+         * target columns on the routine are dropped, so `routine_exercises` is recreated — SQLite
+         * below API 30 cannot drop columns. Every stored exercise produces its `targetSets` NORMAL
+         * rows with the values it had, so no routine changes shape.
          */
         val MIGRATION_7_8 = object : Migration(7, 8) {
             override fun migrate(db: SupportSQLiteDatabase) {
@@ -167,7 +162,7 @@ abstract class EinaDatabase : RoomDatabase() {
                 db.execSQL(
                     "CREATE INDEX IF NOT EXISTS index_routine_sets_routineExerciseId ON routine_sets (routineExerciseId)"
                 )
-                // Una riga per serie pianificata: la CTE ricorsiva conta da 0 a targetSets-1.
+                // One row per planned set: the recursive CTE counts from 0 to targetSets-1.
                 db.execSQL(
                     """
                     INSERT INTO routine_sets (routineExerciseId, setIndex, targetReps, targetWeight, setType)
@@ -215,13 +210,8 @@ abstract class EinaDatabase : RoomDatabase() {
         }
 
         /**
-         * Dati dell'orologio sulla sessione: frequenza media e massima, calorie stimate e la
-         * serie dei battiti per la spezzata del riepilogo. Colonne nuove e nullable — gli
-         * allenamenti gia' registrati non hanno niente da leggere e restano com'erano.
-         */
-        /**
-         * Il recupero diventa una colonna dell'esercizio di sessione. Le sessioni gia' registrate
-         * lo prendono dalla loro prima serie, che e' esattamente da dove lo leggeva la UI.
+         * Rest becomes a column of the session exercise. Recorded sessions take it from their
+         * first set, which is exactly where the UI used to read it from.
          */
         val MIGRATION_9_10 = object : Migration(9, 10) {
             override fun migrate(db: SupportSQLiteDatabase) {
@@ -239,6 +229,11 @@ abstract class EinaDatabase : RoomDatabase() {
             }
         }
 
+        /**
+         * Watch data on the session: average and maximum heart rate, estimated calories and the
+         * sample series behind the summary chart. New nullable columns, so recorded workouts stay
+         * as they were.
+         */
         val MIGRATION_8_9 = object : Migration(8, 9) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE workout_sessions ADD COLUMN avgHeartRateBpm INTEGER")

@@ -24,16 +24,15 @@ class SettingsViewModel(
     val healthSyncEnabled: StateFlow<Boolean> = settings.healthSyncEnabled
 
     /**
-     * Health Connect installato su questo telefono: senza, la sezione non ha niente da offrire.
-     * Il valore si tiene invece di richiederlo a ogni lettura: dietro c'e' un'interrogazione al
-     * PackageManager e la schermata lo legge in composizione, quindi girava a ogni ridisegno. Si
-     * rilegge quando si torna dal foglio dei permessi, cioe' anche dopo aver installato Health
-     * Connect da li'.
+     * Whether Health Connect is installed; without it the section has nothing to offer. The value
+     * is cached rather than queried on every read: behind it is a PackageManager lookup and the
+     * screen reads it during composition. It is refreshed on return from the permission sheet,
+     * which also covers installing Health Connect from there.
      */
     private val _healthAvailable = MutableStateFlow(healthSync.isAvailable)
     val healthAvailable: StateFlow<Boolean> = _healthAvailable.asStateFlow()
 
-    /** Permessi salute da chiedere al sistema: li passa la schermata al contratto di Health Connect. */
+    /** Health permissions to request; the screen passes them to the Health Connect contract. */
     val healthPermissions: Set<String> get() = healthSync.permissions
 
     private val _healthGranted = MutableStateFlow(false)

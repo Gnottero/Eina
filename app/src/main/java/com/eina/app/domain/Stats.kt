@@ -9,12 +9,12 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 
-/** Riepilogo di una sessione, ricostruito dalle set completate. */
+/** Session summary, rebuilt from the completed sets. */
 data class SessionSummary(
     val sessionId: Long,
     val startTime: Long,
     val endTime: Long?,
-    /** Nome della routine seguita, se la sessione non era un allenamento libero. */
+    /** Name of the routine followed, unless the session was a free workout. */
     val routineName: String? = null,
     val exerciseNames: List<ExerciseName>,
     val setCount: Int,
@@ -26,7 +26,7 @@ data class SessionSummary(
         get() = endTime?.let { (it - startTime) / 60_000L }
 }
 
-/** Un record personale, con il valore gia' formattato secondo il weightType. */
+/** A personal record, to be rendered according to its weight type. */
 data class PrRecord(
     val exerciseId: Long,
     val exerciseName: ExerciseName,
@@ -54,11 +54,11 @@ private fun volumeOf(row: CompletedSetRow): Double = volumeForSet(
     row.bodyweightFactor
 )
 
-/** Volume in kg di una lista di set (le warmup non contano nel totale sollevato). */
+/** Volume in kg of a list of sets; warmups do not count towards the total lifted. */
 fun totalVolume(rows: List<CompletedSetRow>): Double =
     rows.filter { it.setType.countsAsWorking }.sumOf { volumeOf(it) }
 
-/** Riepiloghi di sessione ordinati dal piu' recente. */
+/** Session summaries, most recent first. */
 fun summarizeSessions(rows: List<CompletedSetRow>): List<SessionSummary> =
     rows.groupBy { it.sessionId }
         .map { (sessionId, sessionRows) ->
@@ -68,8 +68,8 @@ fun summarizeSessions(rows: List<CompletedSetRow>): List<SessionSummary> =
                 startTime = sessionRows.first().sessionStart,
                 endTime = sessionRows.first().sessionEnd,
                 routineName = sessionRows.first().routineName,
-                // Un esercizio ripetuto nella stessa sessione compare due volte: sono due blocchi
-                // di lavoro distinti, non un duplicato da collassare.
+                // An exercise repeated in the same session appears twice: they are two distinct
+                // work blocks, not a duplicate to collapse.
                 exerciseNames = sessionRows
                     .sortedBy { it.exerciseOrder }
                     .groupBy { it.workoutExerciseId }
@@ -83,7 +83,7 @@ fun summarizeSessions(rows: List<CompletedSetRow>): List<SessionSummary> =
         }
         .sortedByDescending { it.startTime }
 
-/** Volume per giorno di calendario (chiave = data locale della sessione). */
+/** Volume per calendar day, keyed by the local date of the session. */
 fun volumeByDay(
     rows: List<CompletedSetRow>,
     zone: ZoneId = ZoneId.systemDefault()
@@ -92,7 +92,7 @@ fun volumeByDay(
         .groupBy { epochMillisToLocalDate(it.sessionStart, zone) }
         .mapValues { (_, dayRows) -> dayRows.sumOf { volumeOf(it) } }
 
-/** Numero di set completate (non warmup) per giorno. */
+/** Number of completed working sets per day. */
 fun setsByDay(
     rows: List<CompletedSetRow>,
     zone: ZoneId = ZoneId.systemDefault()
@@ -101,17 +101,17 @@ fun setsByDay(
         .groupBy { epochMillisToLocalDate(it.sessionStart, zone) }
         .mapValues { (_, dayRows) -> dayRows.size }
 
-/** Giorni in cui almeno una set e' stata completata. */
+/** Days with at least one completed set. */
 fun trainingDays(
     rows: List<CompletedSetRow>,
     zone: ZoneId = ZoneId.systemDefault()
 ): Set<LocalDate> = rows.map { epochMillisToLocalDate(it.sessionStart, zone) }.toSet()
 
 /**
- * Streak = settimane consecutive con almeno un allenamento, fino alla settimana in corso (o a
- * quella scorsa, cosi' lo streak non si azzera prima che la settimana sia finita).
- * DECISIONE: unita' settimanale invece che giornaliera — allenarsi ogni giorno non e' l'obiettivo,
- * la costanza si misura sulla settimana.
+ * Streak: consecutive weeks with at least one workout, up to the current week (or the previous
+ * one, so the streak does not reset before the week is over).
+ * DECISIONE: weekly rather than daily — training every day is not the goal, consistency is
+ * measured over the week.
  */
 fun currentStreak(days: Set<LocalDate>, today: LocalDate = LocalDate.now()): Int {
     if (days.isEmpty()) return 0
@@ -130,13 +130,13 @@ fun currentStreak(days: Set<LocalDate>, today: LocalDate = LocalDate.now()): Int
     return streak
 }
 
-/** Lunedi' della settimana a cui appartiene la data. */
+/** Monday of the week the date belongs to. */
 private fun startOfWeek(date: LocalDate): LocalDate =
     date.minusDays((date.dayOfWeek.value - 1).toLong())
 
 /**
- * Ultimo PR per esercizio, dal piu' recente. Le set marcate isPR sono gia' state validate da
- * [isNewPR] al momento del salvataggio: qui si tiene solo la piu' recente per esercizio.
+ * Latest PR per exercise, most recent first. Sets flagged isPR were already validated by
+ * [isNewPR] when saved, so only the most recent one per exercise is kept.
  */
 fun personalRecords(rows: List<CompletedSetRow>): List<PrRecord> =
     rows.filter { it.isPR && it.setType.countsAsWorking }

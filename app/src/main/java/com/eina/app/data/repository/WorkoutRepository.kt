@@ -42,9 +42,8 @@ class WorkoutRepository(
     suspend fun insertExercise(exercise: ExerciseEntity): Long = exerciseDao.insert(exercise)
 
     /**
-     * Riscrive un esercizio custom. Solo custom: un esercizio di libreria lo riscriverebbe il
-     * seeder al primo avvio utile, quindi la modifica sparirebbe da sola. L'id resta lo stesso,
-     * cosi' routine e storico continuano a puntare alla stessa riga.
+     * Rewrites a custom exercise. Custom only: the seeder would overwrite a library one on the
+     * next launch. The id is preserved, so routines and history keep pointing at the same row.
      */
     suspend fun updateCustomExercise(exercise: ExerciseEntity): Boolean {
         if (!exercise.isCustom) return false
@@ -53,9 +52,9 @@ class WorkoutRepository(
     }
 
     /**
-     * Elimina un esercizio custom, se non lo usa nessuno. Ritorna false quando compare in una
-     * routine o in un allenamento gia' registrato: li' il nome serve ancora.
-     * Gli esercizi di libreria non si toccano: li riscriverebbe il seeder al primo avvio utile.
+     * Deletes a custom exercise if nothing uses it; returns false when it still appears in a
+     * routine or in a recorded workout. Library exercises are never deleted: the seeder would
+     * bring them back anyway.
      */
     suspend fun deleteCustomExercise(exercise: ExerciseEntity): Boolean {
         if (!exercise.isCustom) return false
@@ -64,22 +63,19 @@ class WorkoutRepository(
         return true
     }
 
-    /** Sessione ancora aperta, se esiste: alimenta il banner "Riprendi" e blocca nuovi avvii. */
+    /** Still-open session, if any: feeds the resume banner and blocks starting a second one. */
     fun observeActiveSession(): Flow<WorkoutSessionEntity?> = workoutSessionDao.observeActive()
 
-    /**
-     * Avvia un allenamento libero. Se ce n'e' gia' uno in corso non ne crea un secondo:
-     * ritorna quello aperto, cosi' il chiamante ci rientra invece di duplicarlo.
-     */
+    /** Starts a free workout, or returns the session already open instead of creating a second. */
     suspend fun startSession(): Long {
         workoutSessionDao.getActive()?.let { return it.id }
         return workoutSessionDao.insert(WorkoutSessionEntity(startTime = System.currentTimeMillis()))
     }
 
     /**
-     * Crea sessione legata alla routine e prepara esercizi/set vuoti.
-     * I valori della routine restano *target* (targetReps, recupero pianificato): non vengono
-     * scritti in `weight`/`actualReps`, cosi' una serie appena creata non risulta gia' svolta.
+     * Creates a session bound to a routine, with empty exercises and sets. Routine values stay
+     * targets (targetReps, planned rest) and are not written to `weight`/`actualReps`, so a fresh
+     * set is not reported as already done.
      */
     suspend fun startSessionFromRoutine(routineId: Long): Long {
         workoutSessionDao.getActive()?.let { return it.id }
@@ -94,15 +90,13 @@ class WorkoutRepository(
                     exerciseId = routineExercise.exerciseId,
                     order = index,
                     restSeconds = routineExercise.restSeconds,
-                    // La nota della routine parte come nota della sessione: modificarla durante
-                    // l'allenamento non deve riscrivere il template. Stessa storia per il
-                    // superset: il giro della scheda si puo' rifare in palestra senza toccarla.
+                    // Note and superset are copied from the routine: editing them during the
+                    // workout must not rewrite the template.
                     notes = routineExercise.notes,
                     supersetGroup = routineExercise.supersetGroup
                 )
             )
-            // Una serie della sessione per ogni serie della scheda, col suo tipo: il
-            // riscaldamento scritto in routine e' gia' segnato come tale in palestra.
+            // One session set per routine set, type included.
             routineSetDao.getForRoutineExercise(routineExercise.id).forEachIndexed { setIndex, routineSet ->
                 setEntryDao.insert(
                     SetEntryEntity(
@@ -119,15 +113,13 @@ class WorkoutRepository(
     }
 
     /**
-     * Chiude la sessione. `startTime` ed `endTime` arrivano dalla conferma di fine allenamento,
-     * dove sono correggibili: un allenamento fatto ieri va nello storico di ieri.
+     * Closes the session. [startTime] and [endTime] come from the finish sheet, where they can be
+     * corrected, so a workout done yesterday lands in yesterday's history.
      *
-     * Una sessione senza nemmeno una serie svolta non ha niente da raccontare: invece di salvarla
-     * viene eliminata, come se fosse stata annullata. Ritorna `false` in quel caso.
-     *
-     * Il criterio e' la serie svolta e non l'esercizio in lista: lo storico si disegna sulle
-     * serie completate, quindi un allenamento aperto, riempito di esercizi e mai fatto restava
-     * una riga invisibile — nello storico non compariva, ma continuava a esistere.
+     * A session without a single completed set is deleted instead of saved, and `false` is
+     * returned. The criterion is the completed set and not the listed exercise, because the
+     * history is drawn from completed sets: otherwise a session filled with exercises but never
+     * performed would linger as an invisible row.
      */
     suspend fun finishSession(
         sessionId: Long,
@@ -149,20 +141,15 @@ class WorkoutRepository(
         return true
     }
 
-    /**
-     * Annulla la sessione: la riga sparisce e con lei, per cascade, esercizi e serie registrate.
-     * Serve per l'allenamento aperto per sbaglio, che altrimenti resterebbe nello storico.
-     */
+    /** Cancels the session: the row is deleted and, by cascade, its exercises and sets. */
     suspend fun cancelSession(sessionId: Long) {
         workoutSessionDao.deleteById(sessionId)
     }
 
     /**
-     * Elimina un allenamento gia' registrato, con le sue serie. Stessa cancellazione di
-     * [cancelSession], ma parte dallo storico: si conferma prima, e' irreversibile.
-     *
-     * I record degli esercizi che c'erano dentro si rifanno: se il massimo di sempre stava in
-     * quella sessione, sparita lei il record torna a chi ce l'aveva prima.
+     * Deletes a recorded workout and its sets. PR flags of the exercises it contained are
+     * recomputed: if the all-time maximum was in that session, the record goes back to the
+     * previous holder.
      */
     suspend fun deleteSession(sessionId: Long) {
         val exerciseIds = exerciseIdsOfSession(sessionId)
@@ -170,10 +157,7 @@ class WorkoutRepository(
         recomputePrs(exerciseIds)
     }
 
-    /**
-     * Corregge data e durata di un allenamento gia' registrato: e' la stessa scelta del foglio di
-     * fine allenamento, riaperta dalla modifica di una sessione passata.
-     */
+    /** Corrects date and duration of a recorded workout, as chosen in the finish sheet. */
     suspend fun updateSessionTimes(sessionId: Long, startTime: Long, durationSeconds: Int) {
         val session = workoutSessionDao.getById(sessionId) ?: return
         workoutSessionDao.update(
@@ -185,9 +169,9 @@ class WorkoutRepository(
     }
 
     /**
-     * Rifa' i record degli esercizi indicati su tutto lo storico. Vedi
-     * [com.eina.app.domain.recomputePrFlags]: modificare un allenamento passato puo' creare o
-     * annullare record anche in sessioni diverse da quella toccata.
+     * Recomputes PR flags of the given exercises across the whole history: editing a past workout
+     * can create or void records in sessions other than the one touched
+     * (see [com.eina.app.domain.recomputePrFlags]).
      */
     suspend fun recomputePrs(exerciseIds: Collection<Long>) {
         exerciseIds.distinct().forEach { exerciseId ->
@@ -197,47 +181,41 @@ class WorkoutRepository(
         }
     }
 
-    /** Esercizi toccati da una sessione: la lista da passare a [recomputePrs] dopo averla corretta. */
+    /** Exercises touched by a session; the list to pass to [recomputePrs] after editing it. */
     suspend fun exerciseIdsOfSession(sessionId: Long): List<Long> =
         workoutExerciseDao.getForSessionOnce(sessionId).map { it.exerciseId }
 
-    /**
-     * Se la sessione ha almeno una serie svolta: e' quel che la rende un allenamento.
-     * Una query sola con EXISTS, non una lettura di serie per ogni esercizio in lista.
-     */
+    /** Whether the session has at least one completed set, in a single EXISTS query. */
     suspend fun hasCompletedSets(sessionId: Long): Boolean =
         setEntryDao.sessionHasCompletedSets(sessionId)
 
     /**
-     * Toglie le sessioni chiuse senza nemmeno una serie svolta. Non sono allenamenti: lo storico
-     * si disegna sulle serie completate, quindi erano righe invisibili che nessuna schermata
-     * poteva eliminare. Gira all'avvio dell'app e dopo aver corretto un allenamento passato,
-     * cioe' nei due punti in cui una riga del genere puo' trovarsi nel database — le vecchie
-     * versioni ne lasciavano, e svuotare tutte le serie di un allenamento e' un modo di crearne.
+     * Removes closed sessions without a single completed set: the history is drawn from completed
+     * sets, so these are invisible rows no screen can delete. Runs at app start and after editing
+     * a past workout, the two points where such a row can appear.
      *
-     * L'allenamento in corso non e' toccato: ha `endTime` nullo finche' non si preme "Termina".
-     * Ritorna quante ne ha eliminate.
+     * The live workout is untouched: its `endTime` stays null until it is finished. Returns how
+     * many rows were deleted.
      */
     suspend fun purgeEmptySessions(): Int = workoutSessionDao.deleteEmptySessions()
 
-    /** Cancella tutto lo storico, sessione in corso compresa. Irreversibile: si conferma prima. */
+    /** Deletes the whole history, live session included. Irreversible. */
     suspend fun deleteAllSessions() {
         workoutSessionDao.deleteAll()
     }
 
     suspend fun getSession(sessionId: Long): WorkoutSessionEntity? = workoutSessionDao.getById(sessionId)
 
-    /** La sessione osservata: il riepilogo si aggiorna quando arrivano i dati dell'orologio. */
+    /** Observed session: the summary refreshes when the watch data arrives. */
     fun observeSession(sessionId: Long): Flow<WorkoutSessionEntity?> = workoutSessionDao.observeById(sessionId)
 
-    /** Routine di partenza della sessione: serve il link playlist durante l'allenamento. */
+    /** Source routine of the session; the playlist link is read from it during the workout. */
     suspend fun getRoutine(routineId: Long): RoutineEntity? = routineDao.getById(routineId)
 
     /**
-     * Target della routine per exerciseId: servono alla UI come segnaposto, non come valori
-     * registrati. Peso e ripetizioni arrivano dalla prima serie di lavoro della scheda — le
-     * serie hanno ognuna i propri valori, ma a una serie aggiunta a mano in palestra serve un
-     * numero solo da proporre.
+     * Routine targets by exerciseId, used as placeholders and never as recorded values. Weight and
+     * reps come from the first working set of the routine: sets carry their own values, but a set
+     * added by hand in the gym needs a single number to suggest.
      */
     suspend fun getRoutineTargets(routineId: Long): Map<Long, RoutineTarget> =
         routineExerciseDao.getForRoutineOnce(routineId).associate { routineExercise ->
@@ -251,7 +229,7 @@ class WorkoutRepository(
         }
 
     /**
-     * La scheda ridotta a quel che si confronta con l'allenamento svolto: vedi
+     * The routine reduced to what is compared against the performed workout; see
      * [com.eina.app.domain.routineChanges].
      */
     suspend fun routinePlan(routineId: Long): List<PlanItem> =
@@ -265,11 +243,11 @@ class WorkoutRepository(
             )
         }
 
-    /** Cosa e' cambiato fra la scheda e l'allenamento: lista vuota se l'ha seguita alla lettera. */
+    /** What changed between routine and workout; empty when the routine was followed exactly. */
     suspend fun routineChangesFor(sessionId: Long, routineId: Long): List<RoutineChange> =
         routineChanges(routinePlan(routineId), sessionPlan(sessionId))
 
-    /** L'allenamento svolto nella stessa forma della scheda, per poterli confrontare. */
+    /** The performed workout in the same shape as the routine, so the two can be compared. */
     suspend fun sessionPlan(sessionId: Long): List<PlanItem> =
         workoutExerciseDao.getForSessionOnce(sessionId).mapNotNull { workoutExercise ->
             val exercise = exerciseDao.getById(workoutExercise.exerciseId) ?: return@mapNotNull null
@@ -283,17 +261,15 @@ class WorkoutRepository(
         }
 
     /**
-     * Riscrive la scheda com'e' andato l'allenamento: esercizi, ordine, superset, note, recupero
-     * e serie (numero e tipo). I target diventano i valori registrati, perche' una scheda
-     * aggiornata dopo un allenamento serve a ripartire da li' la volta dopo.
+     * Rewrites the routine from the workout: exercises, order, supersets, notes, rest and sets
+     * (count and type). Targets become the recorded values, so the next workout starts from there.
      *
-     * Le voci si rifanno da capo invece di correggerle una a una: le differenze possono essere
-     * di ogni genere (una voce in mezzo tolta, due aggiunte, l'ordine ribaltato) e un merge
-     * incrementale avrebbe piu' casi che righe.
+     * Rows are rebuilt from scratch rather than merged: the differences can be of any kind and an
+     * incremental merge would have more cases than rows.
      */
     suspend fun applySessionToRoutine(sessionId: Long, routineId: Long) {
         val sessionExercises = workoutExerciseDao.getForSessionOnce(sessionId)
-        // La cascade di routine_exercises porta via anche le sue routine_sets.
+        // The routine_exercises cascade takes its routine_sets with it.
         routineExerciseDao.getForRoutineOnce(routineId).forEach { routineExerciseDao.delete(it) }
         sessionExercises.forEachIndexed { index, workoutExercise ->
             val sets = setEntryDao.getForWorkoutExercise(workoutExercise.id)
@@ -312,7 +288,7 @@ class WorkoutRepository(
                     RoutineSetEntity(
                         routineExerciseId = routineExerciseId,
                         setIndex = setIndex,
-                        // Una serie lasciata a meta' non deve cancellare il target che c'era.
+                        // An unfinished set must not wipe the target it had.
                         targetReps = set.actualReps ?: set.targetReps,
                         targetWeight = set.weight,
                         setType = set.setType
@@ -323,11 +299,8 @@ class WorkoutRepository(
     }
 
     /**
-     * Fa di un allenamento gia' fatto una scheda nuova: quello che si e' fatto in palestra e'
-     * gia' un piano, e ricopiarlo a mano nell'editor era l'unico modo di tenerlo.
-     *
-     * Il grosso del lavoro e' [applySessionToRoutine], che qui parte da una scheda appena
-     * creata: la cancellazione con cui comincia non trova niente da cancellare.
+     * Turns a performed workout into a new routine. The work is done by [applySessionToRoutine],
+     * which here starts from a freshly created routine, so its initial delete finds nothing.
      */
     suspend fun createRoutineFromSession(sessionId: Long, name: String): Long? {
         if (workoutExerciseDao.getForSessionOnce(sessionId).isEmpty()) return null
@@ -345,7 +318,7 @@ class WorkoutRepository(
     suspend fun getLastTimeSets(exerciseId: Long, currentSessionId: Long): List<SetEntryEntity> =
         setEntryDao.getLastTimeSets(exerciseId, currentSessionId)
 
-    /** Ultimi peso/ripetizioni registrati per l'esercizio, in qualunque sessione. */
+    /** Last recorded weight and reps for the exercise, in any session. */
     suspend fun getLastRecordedValues(exerciseId: Long): Pair<Double?, Int?> =
         setEntryDao.getLastRecordedWeight(exerciseId) to setEntryDao.getLastRecordedReps(exerciseId)
 
@@ -369,24 +342,22 @@ class WorkoutRepository(
     }
 
     /**
-     * Sostituisce il movimento di una voce dell'allenamento: la panca diventa manubri perche' il
-     * castello e' occupato, senza rifare la voce da capo. La riga resta la stessa, quindi ordine,
-     * superset e note restano dov'erano — un esercizio in un giro ci resta.
+     * Swaps the movement of a workout row in place, keeping order, superset and notes.
      *
-     * Le serie sopravvivono come impianto (quante sono, di che tipo, con che recupero) ma i valori
-     * registrati vengono azzerati: peso e ripetizioni erano di un altro esercizio, e lasciarli
-     * li' li conterebbe nel volume e nella progressione del nuovo. Il record eventualmente
-     * assegnato decade per lo stesso motivo.
+     * The sets survive as a structure (how many, of which type, with which rest) but the recorded
+     * values are cleared: weight and reps belonged to another exercise and would otherwise count
+     * towards the volume and progression of the new one. Any assigned PR is dropped for the same
+     * reason.
      *
-     * Ritorna false se la voce non esiste o se l'esercizio scelto e' gia' quello.
+     * Returns false if the row does not exist or already holds that exercise.
      */
     suspend fun replaceExercise(workoutExerciseId: Long, newExerciseId: Long): Boolean {
         val current = workoutExerciseDao.getById(workoutExerciseId) ?: return false
         if (current.exerciseId == newExerciseId) return false
         workoutExerciseDao.update(current.copy(exerciseId = newExerciseId))
-        // Le serie si rifanno da capo invece di ripulirle riga per riga: i campi in tabella
-        // tengono il testo digitato finche' la serie ha lo stesso id, e ripulire il database
-        // lascerebbe a schermo i numeri del vecchio esercizio, pronti da confermare.
+        // Sets are recreated instead of cleared in place: the table fields keep the typed text as
+        // long as a set has the same id, so clearing only the database would leave the numbers of
+        // the old exercise on screen, ready to be confirmed.
         setEntryDao.getForWorkoutExercise(workoutExerciseId).forEach { set ->
             setEntryDao.deleteById(set.id)
             setEntryDao.insert(
@@ -408,7 +379,7 @@ class WorkoutRepository(
         workoutExerciseDao.update(current.copy(notes = notes))
     }
 
-    /** Recupero dell'esercizio in sessione: vedi [WorkoutExerciseEntity.restSeconds]. */
+    /** Rest of a session exercise; see [WorkoutExerciseEntity.restSeconds]. */
     suspend fun setExerciseRestSeconds(workoutExerciseId: Long, restSeconds: Int) {
         val current = workoutExerciseDao.getById(workoutExerciseId) ?: return
         if (current.restSeconds == restSeconds) return
@@ -420,17 +391,16 @@ class WorkoutRepository(
     }
 
     /**
-     * Riscrive la lista degli esercizi di sessione: la posizione nella lista *e'* il campo
-     * `order`, e con essa viaggiano superset e note.
+     * Rewrites the session exercise list: the position in the list is the `order` field, and
+     * supersets and notes travel with it.
      *
-     * Il confronto va fatto con la riga sul database, non con l'`order` di quella in arrivo: il
-     * chiamante costruisce le righe gia' numerate, quindi confrontarle con il proprio indice
-     * dava sempre "uguale" e non veniva scritto mai niente. Ordine e superset cambiati in
-     * palestra sparivano uscendo dall'allenamento, e al rientro tornava fuori la scheda.
+     * The comparison must be against the stored row and not the incoming `order`: the caller
+     * builds the rows already numbered, so comparing them with their own index always matched and
+     * nothing was ever written.
      */
     suspend fun reorderExercises(orderedWorkoutExercises: List<WorkoutExerciseEntity>) {
-        // Le righe salvate si leggono in blocco: una `getById` per voce erano N query per
-        // scoprire, quasi sempre, che non c'era niente da riscrivere.
+        // Stored rows are read in one go: a getById per row meant N queries to find out, almost
+        // always, that there was nothing to rewrite.
         val sessionId = orderedWorkoutExercises.firstOrNull()?.sessionId ?: return
         val stored = workoutExerciseDao.getForSessionOnce(sessionId).associateBy { it.id }
         orderedWorkoutExercises.forEachIndexed { index, workoutExercise ->
@@ -459,12 +429,12 @@ class WorkoutRepository(
     }
 
     /**
-     * Completa una set: applica bodyweight snapshot per i weightType che lo richiedono, calcola isPR
-     * confrontando con lo storico non-warmup, persiste. Ritorna la set aggiornata.
+     * Completes a set: stores the bodyweight snapshot for the weight types that need it, computes
+     * `isPR` against the non-warmup history and persists the row, returning the updated set.
      *
-     * `completedAt` si passa quando la serie non si sta chiudendo adesso: correggendo un
-     * allenamento del mese scorso, "adesso" la collocherebbe in cima allo storico e ne farebbe
-     * l'ultimo valore noto di quell'esercizio.
+     * [completedAt] is passed when the set is not being closed now: while editing a workout from
+     * last month, "now" would push it to the top of the history and make it the last known value
+     * for that exercise.
      */
     suspend fun completeSet(
         set: SetEntryEntity,
@@ -494,7 +464,7 @@ class WorkoutRepository(
     }
 }
 
-/** Valori della routine proposti in sessione: recupero dell'esercizio e target della prima serie. */
+/** Routine values suggested in a session: exercise rest and targets of the first working set. */
 data class RoutineTarget(
     val restSeconds: Int,
     val targetReps: Int?,

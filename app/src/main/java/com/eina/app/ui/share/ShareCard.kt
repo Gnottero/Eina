@@ -18,7 +18,7 @@ import com.eina.app.ui.components.formatDuration
 import com.eina.app.ui.components.formatTime
 import com.eina.app.ui.components.formatVolume
 
-/** Dati minimi per disegnare la card: nessuna dipendenza da Compose o dal DB. */
+/** Minimum data needed to draw the card, with no dependency on Compose or the database. */
 data class ShareCardData(
     val dateLabel: String,
     val durationLabel: String,
@@ -29,18 +29,18 @@ data class ShareCardData(
 
 fun shareCardDataOf(summary: SessionSummary): ShareCardData = ShareCardData(
     dateLabel = "${formatDayMonth(summary.startTime)} · ${formatTime(summary.startTime)}",
-    // Senza endTime la durata non e' ricostruibile: si stampa un trattino invece di un finto zero.
+    // Without endTime the duration is unknown: print a dash instead of a fake zero.
     durationLabel = summary.durationMinutes?.let { formatDuration(it) } ?: "—",
     volumeKg = summary.volumeKg,
     setCount = summary.setCount,
     prCount = summary.prCount
 )
 
-// --- Disegno ---------------------------------------------------------------
-// DECISIONE: la card e' disegnata con android.graphics invece di catturare una view Compose:
-// dimensione fissa e indipendente dallo schermo, dal tema attivo e dal ciclo di vita della UI.
-// Formato quadrato piccolo (720px): si appoggia sopra una foto in una storia senza coprirla e
-// resta leggibile anche in anteprima.
+// --- Drawing ---------------------------------------------------------------
+// DECISIONE: the card is drawn with android.graphics instead of capturing a Compose view, so its
+// size is fixed and independent of the screen, the active theme and the UI lifecycle. The small
+// square format (720px) sits on top of a story photo without covering it and stays readable in
+// preview.
 
 private const val CANVAS_SIZE = 720
 private const val MARGIN = 24f
@@ -54,16 +54,14 @@ private const val TILE_GAP = 20f
 private const val CARD_BG = 0xFFFFFFFF.toInt()
 private const val TILE_BG = 0xFFEFEEEB.toInt()
 private const val ACCENT = 0xFFF97348.toInt()
-// Rampa dell'accento, la stessa del tema (ambra → arancio → magenta): la portano i numeri che
-// contano e il filo sotto l'intestazione, cosi' l'immagine che gira sui social ha lo stesso
-// segno della app invece di un arancio piatto.
+// Accent ramp, the same as the theme (amber → orange → magenta), used by the headline numbers and
+// the rule under the header so the shared image carries the app's signature.
 private val ACCENT_RAMP = intArrayOf(0xFFFFA23A.toInt(), 0xFFF97348.toInt(), 0xFFF9436B.toInt())
 private const val TEXT = 0xFF1C1B19.toInt()
 private const val TEXT_SECONDARY = 0xFF7C7A75.toInt()
 
-// Inter, lo stesso font dell'app. L'immagine condivisa e' il pezzo che gira fuori dall'app:
-// disegnarla col sans di sistema (Roboto su un telefono, altro su un altro) la faceva sembrare
-// di un'altra applicazione. Caricato una volta sola: getFont apre il file ogni volta.
+// Inter, the same font as the app: drawing the shared image with the system sans made it look like
+// another application. Loaded once, since getFont opens the file on every call.
 private var interBold: Typeface? = null
 private var interRegular: Typeface? = null
 
@@ -72,8 +70,8 @@ private fun loadTypefaces(context: Context) {
     if (interRegular == null) interRegular = ResourcesCompat.getFont(context, R.font.inter_medium)
 }
 
-// Versione trasparente: il fondo e' la foto di chi condivide, quindi il testo va in bianco e
-// con un'ombra portata, l'unico modo di restare leggibile sia su cielo che su asfalto.
+// Transparent variant: the background is the user's photo, so text is white with a drop shadow —
+// the only way to stay readable over both sky and asphalt.
 private const val TEXT_ON_PHOTO = 0xFFFFFFFF.toInt()
 private const val TEXT_ON_PHOTO_SECONDARY = 0xCCFFFFFF.toInt()
 private const val TILE_BG_ON_PHOTO = 0x2EFFFFFF
@@ -97,9 +95,9 @@ private fun textPaint(
 private fun fill(color: Int) = Paint(Paint.ANTI_ALIAS_FLAG).apply { this.color = color }
 
 /**
- * Angolo continuo, gli stessi rapporti di [com.eina.app.ui.theme.SquircleShape]: la card e le
- * tessere dell'immagine condivisa devono avere la curva delle schermate, non quella di
- * `drawRoundRect`. Non si puo' riusare la classe Compose: qui si disegna con android.graphics.
+ * Continuous corner with the same ratios as [com.eina.app.ui.theme.SquircleShape]: the card and
+ * its tiles must follow the curve of the screens, not the one of `drawRoundRect`. The Compose
+ * class cannot be reused here, since drawing goes through android.graphics.
  */
 private fun squirclePath(rect: RectF, radius: Float): Path {
     val r = radius.coerceAtMost(minOf(rect.width(), rect.height()) / 2f / CORNER_EXTENT)
@@ -147,7 +145,7 @@ private fun corner(
     )
 }
 
-/** Sfumatura della rampa sul tratto orizzontale indicato. */
+/** Ramp gradient over the given horizontal span. */
 private fun rampShader(left: Float, right: Float, colors: IntArray) =
     LinearGradient(left, 0f, right, 0f, colors, null, Shader.TileMode.CLAMP)
 
@@ -155,7 +153,7 @@ private fun Canvas.drawRightAligned(text: String, right: Float, y: Float, paint:
     drawText(text, right - paint.measureText(text), y, paint)
 }
 
-/** Riduce il corpo finche' il testo non entra nella larghezza disponibile. */
+/** Shrinks the type size until the text fits the available width. */
 private fun fitted(text: String, maxWidth: Float, paint: TextPaint, minSize: Float): TextPaint {
     while (paint.textSize > minSize && paint.measureText(text) > maxWidth) {
         paint.textSize -= 2f
@@ -164,8 +162,8 @@ private fun fitted(text: String, maxWidth: Float, paint: TextPaint, minSize: Flo
 }
 
 /**
- * Marchio dell'app, disegnato dal vettoriale condiviso con l'icona di sistema
- * (res/drawable/ic_eina_logo.xml): un solo file da toccare se il logo cambia.
+ * App mark, drawn from the vector shared with the launcher icon
+ * (res/drawable/ic_eina_logo.xml), so a logo change touches a single file.
  */
 private fun Canvas.drawLogoMark(context: Context, left: Float, top: Float, size: Float) {
     val logo = ResourcesCompat.getDrawable(context.resources, R.drawable.ic_eina_logo, context.theme) ?: return
@@ -174,13 +172,11 @@ private fun Canvas.drawLogoMark(context: Context, left: Float, top: Float, size:
 }
 
 /**
- * Widget quadrato da storia: marchio, data e le quattro metriche essenziali in griglia 2x2
- * (durata, volume, serie, PR). Niente elenco esercizi: deve restare piccolo e leggibile.
+ * Square story widget: mark, date and the four essential metrics in a 2x2 grid (duration, volume,
+ * sets, PRs). No exercise list, so it stays small and readable.
  *
- * Un'immagine sola, con un interruttore: `transparent` toglie la tessera bianca e lascia il
- * solo testo su fondo vuoto, da appoggiare sopra una propria foto nella storia (il PNG
- * conserva il canale alfa). Il testo passa al bianco con ombra portata, l'unico modo di
- * restare leggibile sia su cielo che su asfalto.
+ * [transparent] drops the white card and leaves only the text on an empty background, to be laid
+ * over the user's own story photo (the PNG keeps its alpha channel).
  */
 fun renderShareCard(
     context: Context,
@@ -201,7 +197,7 @@ fun renderShareCard(
     val cardTop = MARGIN
     val cardLeft = MARGIN
     val cardRight = CANVAS_SIZE - MARGIN
-    // In trasparenza non si disegna nessun fondo: sotto il testo il bitmap resta vuoto.
+    // In transparent mode no background is drawn: the bitmap stays empty under the text.
     if (!onPhoto) {
         canvas.drawPath(
             squirclePath(RectF(cardLeft, cardTop, cardRight, cardTop + CARD_SIZE), CARD_RADIUS),
@@ -213,7 +209,7 @@ fun renderShareCard(
     val right = cardRight - PADDING
     val contentWidth = right - left
 
-    // Intestazione: marchio + nome a sinistra, data a destra.
+    // Header: mark and name on the left, date on the right.
     val logoSize = 44f
     val headerBaseline = cardTop + 96f
     canvas.drawLogoMark(context, left, headerBaseline - logoSize + 6f, logoSize)
@@ -230,13 +226,13 @@ fun renderShareCard(
         textPaint(22f, secondaryColor, shadow = onPhoto)
     )
 
-    // Filo della rampa al posto del capello grigio: e' la firma del tema.
+    // Ramp rule instead of a grey hairline: it is the theme signature.
     canvas.drawPath(
         squirclePath(RectF(left, cardTop + 128f, right, cardTop + 134f), 3f),
         Paint(Paint.ANTI_ALIAS_FLAG).apply { shader = rampShader(left, right, ramp) }
     )
 
-    // Griglia 2x2 di tessere: e' tutto il contenuto del widget.
+    // 2x2 tile grid: the whole content of the widget.
     val metrics = listOf(
         Triple(context.getString(R.string.share_card_duration), data.durationLabel, false),
         Triple(context.getString(R.string.share_card_volume), "${formatVolume(data.volumeKg)} kg", true),
@@ -264,9 +260,8 @@ fun renderShareCard(
             textPaint(72f, if (ramped) accentColor else textColor, bold = true, shadow = onPhoto),
             minSize = 40f
         )
-        // Il numero in evidenza porta la rampa in entrambe le varianti, come il filo
-        // dell'intestazione: si applica al tratto del testo, quindi va misurata sul testo e non
-        // sulla tessera.
+        // The headline number carries the ramp in both variants: the gradient paints the glyphs,
+        // so it must be measured on the text and not on the tile.
         if (ramped) {
             valuePaint.shader = rampShader(
                 tileLeft + 32f,

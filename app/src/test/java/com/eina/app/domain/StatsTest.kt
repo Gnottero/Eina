@@ -123,14 +123,14 @@ class StatsTest {
 
     @Test
     fun `currentStreak conta le settimane consecutive fino a questa`() {
-        // today = martedi' 10/3/2026: una sola sessione per settimana basta a tenere lo streak.
+        // today = Tuesday 10/3/2026: one session per week is enough to keep the streak.
         val days = setOf(today, today.minusWeeks(1), today.minusWeeks(2), today.minusWeeks(6))
         assertEquals(3, currentStreak(days, today))
     }
 
     @Test
     fun `piu allenamenti nella stessa settimana valgono una settimana sola`() {
-        // today = martedi': lunedi' 9 e martedi' 10 stanno nella stessa settimana.
+        // today = Tuesday: Monday the 9th and Tuesday the 10th are in the same week.
         val days = setOf(today, today.minusDays(1))
         assertEquals(1, currentStreak(days, today))
     }
@@ -168,9 +168,9 @@ class StatsTest {
     @Test
     fun `volume a corpo libero scala col fattore dell'esercizio`() {
         val rows = listOf(
-            // Trazioni: il corpo sale tutto, contano.
+            // Pull-up: the whole body rises, so it counts.
             row(1, today, weightType = WeightType.BODYWEIGHT, reps = 10, weight = null, bodyweight = 72.0),
-            // Crunch: il corpo non si alza, fattore 0, non gonfiano il totale.
+            // Crunch: the body does not rise, factor 0, so it never inflates the total.
             row(1, today, weightType = WeightType.BODYWEIGHT, setIndex = 1, reps = 30,
                 weight = null, bodyweight = 72.0, bodyweightFactor = 0.0),
             row(1, today, weightType = WeightType.BODYWEIGHT_PLUS_LOAD, setIndex = 2,

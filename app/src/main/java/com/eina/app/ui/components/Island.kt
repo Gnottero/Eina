@@ -47,10 +47,9 @@ import com.eina.app.ui.theme.TileShape
 import com.eina.app.ui.theme.squircle
 
 /**
- * Ombra dell'isola su due livelli, come le superfici di iOS: una diffusa e larga che da' la
- * distanza dal fondo, e una stretta e scura subito sotto il bordo che da' il contatto. Con la
- * sola ombra larga le card sembravano stampate sul fondo; con la sola stretta sembravano
- * ritagliate. Le due insieme costano un draw in piu' e si vedono.
+ * Two-layer island shadow: a wide diffuse one for the distance from the background, and a tight
+ * darker one under the edge for contact. Either alone reads wrong — printed on the background, or
+ * cut out of it — at the cost of one extra draw.
  */
 fun Modifier.islandShadow(
     elevation: Dp,
@@ -80,8 +79,8 @@ fun Modifier.islandShadow(elevation: Dp, shape: Shape): Modifier {
 }
 
 /**
- * Contenitore base dello stile island: superficie flottante, angoli generosi, ombra morbida.
- * Tutto il resto della UI (card, tile, barra di navigazione, timer) e' costruito su questo.
+ * Base container of the island style: floating surface, generous corners, soft shadow. Every other
+ * component (cards, tiles, nav bar, timer) is built on it.
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -104,8 +103,8 @@ fun IslandSurface(
             .background(color)
             .then(if (outlined) Modifier.border(1.dp, island.outlineSubtle, shape) else Modifier)
             .then(
-                // Il tocco lungo apre le azioni dell'elemento: ha preso il posto dei tre puntini,
-                // quindi va agganciato anche quando l'isola non ha un tocco breve suo.
+                // Long press opens the item actions, so it must be wired even when the island has
+                // no short click of its own.
                 if (onClick != null || onLongClick != null) {
                     Modifier.combinedClickable(
                         onLongClick = onLongClick?.let { { hapticTap(); it() } },
@@ -119,7 +118,7 @@ fun IslandSurface(
     )
 }
 
-/** Isola con padding interno e layout a colonna: il mattone piu' usato nelle schermate. */
+/** Island with inner padding and a column layout: the most used building block. */
 @Composable
 fun IslandCard(
     modifier: Modifier = Modifier,
@@ -151,8 +150,8 @@ fun IslandCard(
 }
 
 /**
- * Tile del "bento": icona + etichetta in alto, numero grande in basso.
- * `accentColor` non nullo = tile piena (stato in evidenza), altrimenti tile bianca.
+ * Bento tile: icon and label on top, large number below. A non-null [accentColor] makes the tile
+ * filled (highlighted state); otherwise it stays white.
  */
 @Composable
 fun StatTile(
@@ -161,11 +160,10 @@ fun StatTile(
     modifier: Modifier = Modifier,
     unit: String? = null,
     icon: ImageVector? = null,
-    /** Riga minuta sotto il numero: un secondo valore che non merita una tile sua (il massimo
-     * accanto alla media, per dire). */
+    /** Small line under the number: a secondary value not worth a tile of its own. */
     description: String? = null,
     accentColor: Color? = null,
-    /** Tinta della tile bianca: colora icona ed etichetta, non il numero. */
+    /** Tint of the white tile: colours icon and label, not the number. */
     tint: Color = MaterialTheme.colorScheme.primary,
     onClick: (() -> Unit)? = null
 ) {
@@ -173,8 +171,8 @@ fun StatTile(
     val filled = accentColor != null
     val contentColor = if (filled) Color.White else MaterialTheme.colorScheme.onSurface
     val labelColor = if (filled) Color.White.copy(alpha = 0.82f) else tint
-    // La tile piena non e' una campitura unita ma una rampa diagonale: su un rettangolo di
-    // questa taglia l'arancio pieno si legge come un adesivo.
+    // The filled tile uses a diagonal ramp instead of a flat fill: at this size a solid orange
+    // reads like a sticker.
     val fillBrush = accentColor?.let {
         Brush.linearGradient(if (it == MaterialTheme.colorScheme.primary) island.accentRamp else listOf(it, it))
     }
@@ -198,8 +196,8 @@ fun StatTile(
                 horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
             ) {
                 if (icon != null) {
-                    // L'icona sta in un tondo tenue invece che nuda accanto al testo: da' un
-                    // punto d'appoggio all'occhio e allinea tutte le tile alla stessa altezza.
+                    // The icon sits in a soft circle rather than bare next to the text, which also
+                    // aligns every tile to the same height.
                     Box(
                         modifier = Modifier
                             .size(26.dp)
@@ -238,8 +236,7 @@ fun StatTile(
                     Text(
                         text = unit,
                         style = MaterialTheme.typography.labelLarge,
-                        // Stesso colore del numero: l'unita' ne fa parte, tinta di suo si
-                        // leggeva come un'etichetta a se'.
+                        // Same colour as the number: tinted apart, the unit read as its own label.
                         color = contentColor,
                         modifier = Modifier.padding(bottom = 5.dp)
                     )
@@ -257,15 +254,15 @@ fun StatTile(
 }
 
 /**
- * Intestazione di schermata: titolo grande + sottotitolo, con back tondo opzionale a sinistra
- * e slot per un'azione tonda a destra.
+ * Screen header: large title and subtitle, with an optional round back button on the left and a
+ * slot for a round action on the right.
  */
 @Composable
 fun ScreenHeader(
     title: String,
     modifier: Modifier = Modifier,
     subtitle: String? = null,
-    /** Riga minuscola sopra il titolo (data, contesto): il taglio "MERCOLEDI 9 AGOSTO / Dashboard". */
+    /** Tiny line above the title (date, context), as in "WEDNESDAY 9 AUGUST / Dashboard". */
     eyebrow: String? = null,
     onBack: (() -> Unit)? = null,
     trailing: @Composable (RowScope.() -> Unit)? = null
@@ -285,7 +282,7 @@ fun ScreenHeader(
                 onClick = onBack
             )
         }
-        // Titolo e sottotitolo respirano: attaccati, la data e l'orario si leggevano come una riga sola.
+        // Title and subtitle need spacing: joined, date and time read as a single line.
         Column(
             modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.spacedBy(2.dp)
@@ -294,7 +291,7 @@ fun ScreenHeader(
                 Text(
                     text = eyebrow.uppercase(),
                     style = MaterialTheme.typography.labelSmall,
-                    // In accento, non in grigio: e' l'unico tocco di colore in testa alla pagina.
+                    // Accent, not grey: it is the only touch of colour at the top of the page.
                     color = MaterialTheme.colorScheme.primary,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
@@ -314,9 +311,9 @@ fun ScreenHeader(
 }
 
 /**
- * Titoletto di sezione fra due gruppi di isole, con azione opzionale: se si passa `actionIcon`
- * l'azione e' un bottone tondo (piu' compatto e meno rumoroso di un'etichetta), altrimenti
- * si usa `actionLabel` come testo. `actionLabel` resta comunque la descrizione accessibile.
+ * Section title between two groups of islands, with an optional action: with [actionIcon] the
+ * action is a round button, otherwise [actionLabel] is rendered as text. [actionLabel] is the
+ * accessible description in both cases.
  */
 @Composable
 fun SectionHeader(
@@ -324,7 +321,7 @@ fun SectionHeader(
     modifier: Modifier = Modifier,
     actionLabel: String? = null,
     actionIcon: ImageVector? = null,
-    /** Colore del filetto a sinistra del titolo: dice di che sezione si tratta. */
+    /** Colour of the rule left of the title, identifying the section. */
     tint: Color = MaterialTheme.colorScheme.primary,
     onAction: (() -> Unit)? = null
 ) {
@@ -335,7 +332,7 @@ fun SectionHeader(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
     ) {
-        // Filetto colorato: un titolo di sezione nero su fondo chiaro spariva fra le isole.
+        // Coloured rule: a plain black section title got lost between the islands.
         Box(
             modifier = Modifier
                 .size(width = 4.dp, height = 18.dp)
@@ -370,9 +367,8 @@ fun SectionHeader(
 }
 
 /**
- * Testata di una card: pastiglia tinta con l'icona, titolo, riga di supporto sotto. Serve a dare
- * un colore anche alle isole che contengono un grafico e non un numero — erano rettangoli bianchi
- * con due righe di testo nero, e a schermo intero la pagina risultava scolorita.
+ * Card header: tinted icon badge, title and supporting line. It gives colour to islands holding a
+ * chart rather than a number, which otherwise read as white rectangles with black text.
  */
 @Composable
 fun IslandCardHeader(
@@ -410,22 +406,22 @@ fun IslandCardHeader(
     }
 }
 
-/** Bottone tondo in stile island (usato negli header e come azione secondaria compatta). */
+/** Round island button, used in headers and as a compact secondary action. */
 @Composable
 fun IslandIconButton(
     icon: ImageVector,
     contentDescription: String?,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    // Spento non e' solo un altro colore: il tocco non deve nemmeno rispondere, altrimenti il
-    // tondo vibra e non succede niente (vedi "Avvia" con un allenamento gia' in corso).
+    // Disabled must not react to touch either: otherwise the button vibrates and nothing happens
+    // (as with "start" while a workout is already running).
     enabled: Boolean = true,
     size: Dp = 44.dp,
     containerColor: Color = MaterialTheme.colorScheme.surface,
     contentColor: Color = MaterialTheme.colorScheme.onSurface
 ) {
-    // Il tondo pieno d'accento (avvia routine, avvia allenamento) porta la stessa rampa della
-    // CTA: due arancioni diversi nella stessa schermata si notano.
+    // The accent-filled button carries the same ramp as the primary CTA: two different oranges on
+    // one screen are noticeable.
     val ramped = containerColor == MaterialTheme.colorScheme.primary
     val ramp = EinaTheme.island.accentRamp
     IslandSurface(
@@ -453,7 +449,7 @@ fun IslandIconButton(
     }
 }
 
-/** Stato vuoto coerente: icona tenue, titolo, testo di supporto. */
+/** Shared empty state: soft icon, title, supporting text. */
 @Composable
 fun IslandEmptyState(
     title: String,
@@ -468,8 +464,8 @@ fun IslandEmptyState(
         verticalArrangement = Arrangement.spacedBy(Spacing.sm)
     ) {
         if (icon != null) {
-            // Tondo tinto d'accento, non grigio: lo stato vuoto e' la prima cosa che vede chi
-            // apre l'app appena installata e non deve sembrare una schermata rotta.
+            // Accent circle rather than grey: the empty state is the first thing a new user sees
+            // and must not look like a broken screen.
             Box(
                 modifier = Modifier
                     .size(44.dp)

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <paths>
-    <!-- Le immagini di condivisione vivono solo in cache: usa e getta, niente permessi storage. -->
+    <!-- Share images live in the cache only: single-use, with no storage permission. -->
     <cache-path name="shared" path="shared/" />
 </paths>

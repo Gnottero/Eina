@@ -31,9 +31,9 @@ import com.eina.app.ui.theme.PillShape
 import com.eina.app.ui.theme.Spacing
 
 /**
- * Lettera che segna la serie: W riscaldamento, F cedimento, D drop set. Una serie normale non ha
- * lettera, tiene il suo numero progressivo. Sono sigle, non parole: restano uguali in tutte le
- * lingue, come su Hevy, cosi' la colonna resta larga 40dp.
+ * Letter marking the set: W warmup, F failure, D drop set. A normal set has no letter and keeps its
+ * number. They are initials, not words, so they stay the same in every language and the column can
+ * remain 40dp wide.
  */
 val SetType.glyph: String?
     get() = when (this) {
@@ -43,7 +43,7 @@ val SetType.glyph: String?
         SetType.DROP -> "D"
     }
 
-/** Colore del segno: giallo scalda, rosso cede, blu scarica. Il normale resta testo secondario. */
+/** Marker colour: yellow warms up, red fails, blue drops. A normal set stays secondary text. */
 @Composable
 fun setTypeAccent(type: SetType): Color = when (type) {
     SetType.WARMUP -> MuscleGroupColors.Arms
@@ -73,9 +73,9 @@ fun setTypeDescription(type: SetType): String = stringResource(
 )
 
 /**
- * Segno della serie in testa alla riga: lettera del tipo o numero progressivo, e "PR" quando la
- * serie e' un record. Una serie di tipo speciale che e' anche record tiene la sua lettera dentro
- * la pastiglia arancio: la lettera dice cosa e' stata, l'arancio dice che e' un record.
+ * Set marker at the head of the row: type letter or number, and "PR" when the set is a record. A
+ * special set that is also a record keeps its letter inside the accent pill: the letter says what
+ * it was, the pill says it is a record.
  */
 @Composable
 fun SetTypeIndicator(
@@ -88,8 +88,8 @@ fun SetTypeIndicator(
     val hapticTap = LocalHapticTap.current
     val accent = setTypeAccent(type)
     val text = type.glyph ?: if (isPR) stringResource(R.string.badge_pr) else number.toString()
-    // Il segno e' una sigla di una lettera: senza etichetta sull'azione, TalkBack leggerebbe
-    // "W, doppio tocco per attivare" senza dire cosa attiva.
+    // The marker is a single letter: without an action label TalkBack would announce "W, double
+    // tap to activate" without saying what it activates.
     val clickLabel = stringResource(R.string.set_type_cd)
 
     Box(
@@ -130,7 +130,7 @@ fun SetTypeIndicator(
     }
 }
 
-/** Foglio di scelta del tipo di serie: si apre toccando il segno in testa alla riga. */
+/** Set type picker sheet, opened by tapping the marker at the head of the row. */
 @Composable
 fun SetTypeSheet(
     current: SetType,
@@ -167,7 +167,7 @@ private fun SetTypeRow(type: SetType, selected: Boolean, onClick: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(Spacing.md)
     ) {
-        // La sigla al posto dell'icona: e' lo stesso segno che comparira' nella riga della serie.
+        // The initial instead of an icon: the same marker that will appear on the set row.
         Box(
             modifier = Modifier
                 .size(42.dp)

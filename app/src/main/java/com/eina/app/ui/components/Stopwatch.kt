@@ -32,13 +32,12 @@ import kotlinx.coroutines.flow.update
 import java.util.Locale
 
 /**
- * Cronometro libero, separato dal timer di recupero: serve per una plank, un giro di corsa, una
- * pausa cronometrata a mano.
+ * Free stopwatch, separate from the rest timer: for a plank, a lap, a manually timed pause.
  *
- * DECISIONE: nessun job che gira per conto suo. Lo stato e' l'istante di partenza piu' il tempo
- * gia' accumulato, quindi il conteggio resta giusto anche mentre nessuna schermata lo guarda —
- * e' la UI aperta a ridisegnarlo dieci volte al secondo. Vive come singleton (vedi AppModule),
- * cosi' avviarlo in Dashboard e ritrovarlo durante l'allenamento e' lo stesso cronometro.
+ * DECISIONE: no job running on its own. The state is the start instant plus the accumulated time,
+ * so the count stays correct while no screen is watching — the open UI redraws it ten times a
+ * second. It lives as a singleton (see AppModule), so starting it on the Dashboard and finding it
+ * during a workout is the same stopwatch.
  */
 class StopwatchController {
     private val _state = MutableStateFlow(StopwatchState())
@@ -67,11 +66,11 @@ data class StopwatchState(
     fun elapsedMs(now: Long = System.currentTimeMillis()): Long =
         accumulatedMs + if (running && startedAt != null) (now - startedAt).coerceAtLeast(0L) else 0L
 
-    /** Fermo e a zero: il tasto "Azzera" non ha niente da azzerare. */
+    /** Stopped and at zero: the reset button has nothing to reset. */
     val isIdle: Boolean get() = !running && accumulatedMs == 0L
 }
 
-/** "12:34.5" — decimi di secondo perche' un cronometro fermo al secondo sembra rotto. */
+/** "12:34.5" — tenths of a second, because a stopwatch ticking whole seconds looks broken. */
 fun formatStopwatch(elapsedMs: Long): String {
     val safe = elapsedMs.coerceAtLeast(0L)
     val minutes = safe / 60_000
@@ -81,8 +80,8 @@ fun formatStopwatch(elapsedMs: Long): String {
 }
 
 /**
- * Foglio del cronometro: un numero grande, avvio/pausa e azzeramento. Il conteggio a schermo
- * si aggiorna qui, non nel controller (vedi [StopwatchController]).
+ * Stopwatch sheet: one large number, start/pause and reset. The on-screen count is refreshed here
+ * and not in the controller (see [StopwatchController]).
  */
 @Composable
 fun StopwatchSheet(controller: StopwatchController, onDismiss: () -> Unit) {
@@ -132,8 +131,8 @@ fun StopwatchSheet(controller: StopwatchController, onDismiss: () -> Unit) {
 }
 
 /**
- * Tasto tondo che apre il cronometro. Acceso quando sta girando, cosi' si vede da fuori che c'e'
- * un conteggio in corso senza aprire il foglio.
+ * Round button opening the stopwatch. Highlighted while it runs, so a count in progress is visible
+ * without opening the sheet.
  */
 @Composable
 fun StopwatchIconButton(

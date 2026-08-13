@@ -4,47 +4,45 @@ enum class WeightType {
     FREE_WEIGHT, BODYWEIGHT, BODYWEIGHT_PLUS_LOAD, ASSISTED, MACHINE_STACK, TIME_BASED,
 
     /**
-     * Tapis roulant, cyclette, ellittica: non c'e' un carico da sollevare, si registrano
-     * distanza e tempo. Fase 27.
+     * Treadmill, bike, elliptical: there is no load to lift, distance and time are recorded.
      *
-     * DECISIONE: nessuna colonna nuova sulle serie. Come `actualReps` porta gia' i secondi
-     * degli esercizi a tempo, qui `weight` porta i chilometri e `actualReps` i minuti — la
-     * tabella e' la stessa, cambiano etichette e lettura. I minuti e non i secondi perche'
-     * un allenamento in tapis roulant si scrive "30", non "1800".
+     * DECISIONE: no new column on the sets. Just as `actualReps` already holds the seconds of
+     * timed exercises, here `weight` holds kilometres and `actualReps` minutes — same table, only
+     * labels and reading change. Minutes and not seconds, because a treadmill session is written
+     * as "30", not "1800".
      */
     DISTANCE_BASED
 }
 
 /**
- * Se la serie ha un carico da digitare. A corpo libero il peso e' il proprio (arriva da
- * `bodyweightSnapshotKg`), a tempo non esiste e sulla distanza il campo decimale porta i
- * chilometri: in tutti questi casi il campo kg sparisce dalla tabella invece di restare li'
- * a farsi ignorare.
+ * Whether the set has a load to type. For bodyweight the weight is the user's own (from
+ * `bodyweightSnapshotKg`), for timed exercises there is none, and for distance the decimal field
+ * holds kilometres: in all these cases the kg column disappears from the table.
  */
 val WeightType.usesWeight: Boolean
     get() = this != WeightType.BODYWEIGHT &&
         this != WeightType.TIME_BASED &&
         this != WeightType.DISTANCE_BASED
 
-/** Per gli esercizi a tempo `actualReps` sono secondi: cambia l'etichetta, non il campo. */
+/** For timed exercises `actualReps` holds seconds: the label changes, the field does not. */
 val WeightType.usesDuration: Boolean
     get() = this == WeightType.TIME_BASED
 
-/** Per gli esercizi a distanza `weight` sono chilometri e `actualReps` minuti. */
+/** For distance exercises `weight` holds kilometres and `actualReps` minutes. */
 val WeightType.usesDistance: Boolean
     get() = this == WeightType.DISTANCE_BASED
 
-/** Se la tabella mostra il campo decimale: kg per i carichi, km per la distanza. */
+/** Whether the table shows the decimal field: kg for loads, km for distance. */
 val WeightType.usesDecimalField: Boolean
     get() = usesWeight || usesDistance
 
 /**
- * Natura della singola serie. Il riscaldamento resta fuori da volume, PR e recupero; cedimento
- * e drop set sono serie di lavoro a tutti gli effetti, il segno serve a rileggerle nello storico.
+ * Nature of a single set. Warmups stay out of volume, PRs and rest; failure and drop sets are work
+ * sets in every respect, and their marker only helps reading the history.
  */
 enum class SetType { WARMUP, NORMAL, FAILURE, DROP }
 
-/** Una serie di riscaldamento non e' lavoro: non fa volume, non fa PR, non avvia il recupero. */
+/** A warmup is not work: no volume, no PR, no rest timer. */
 val SetType.countsAsWorking: Boolean
     get() = this != SetType.WARMUP
 

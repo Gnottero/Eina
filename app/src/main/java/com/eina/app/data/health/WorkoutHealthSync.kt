@@ -5,11 +5,10 @@ import com.eina.app.data.db.encodeHeartRateSamples
 import com.eina.app.data.prefs.SettingsRepository
 
 /**
- * Attacca alla sessione appena chiusa quel che l'orologio ha misurato nella stessa finestra.
+ * Attaches to a closed session what the watch measured over the same window.
  *
- * Si chiama due volte: a fine allenamento, e riaprendo il riepilogo. La seconda serve perche' un
- * orologio sincronizza con comodo — i battiti dell'ultima serie possono arrivare in Health
- * Connect qualche minuto dopo il "Termina".
+ * Called twice: when the workout ends and again when the summary is opened, because a watch syncs
+ * at its own pace and the last samples can reach Health Connect minutes later.
  */
 class WorkoutHealthSync(
     private val sessionDao: WorkoutSessionDao,
@@ -23,8 +22,8 @@ class WorkoutHealthSync(
     suspend fun hasPermissions(): Boolean = source.hasPermissions()
 
     /**
-     * Ritorna true se la sessione ha guadagnato qualcosa. False quando l'integrazione e' spenta,
-     * la sessione e' ancora aperta, o l'orologio non ha niente per quella finestra.
+     * Returns true if the session gained something. False when the integration is off, the session
+     * is still open, or the watch has nothing for that window.
      */
     suspend fun sync(sessionId: Long): Boolean {
         if (!settings.healthSyncEnabled.value) return false
@@ -32,10 +31,9 @@ class WorkoutHealthSync(
         val endTime = session.endTime ?: return false
         val vitals = source.readWorkoutVitals(session.startTime, endTime)
         if (vitals == null) {
-            // Niente da leggere. Se pero' la sessione porta ancora i dati di una lettura
-            // precedente, quelli vanno tolti: succede quando l'allenamento viene corretto e la
-            // finestra si sposta dove l'orologio non ha misurato niente. Solo col permesso in
-            // mano, altrimenti si cancellerebbe per il motivo sbagliato.
+            // Nothing to read. Data from an earlier read must be dropped, which happens when the
+            // workout is corrected and its window moves where the watch measured nothing. Only
+            // with the permission granted, or the deletion would happen for the wrong reason.
             val stale = session.avgHeartRateBpm != null || session.maxHeartRateBpm != null ||
                 session.caloriesKcal != null || session.heartRateSamples != null
             if (!stale || !source.hasPermissions()) return false
@@ -49,10 +47,9 @@ class WorkoutHealthSync(
             )
             return true
         }
-        // Quel che si legge adesso sostituisce quel che c'era, campo per campo, invece di
-        // tenere il vecchio dove il nuovo e' nullo: se l'allenamento e' stato corretto (data,
-        // ora, durata) la finestra non e' piu' la stessa, e i battiti di prima erano di
-        // un'altra mezz'ora. Una lettura che non trova niente non arriva fin qui.
+        // The new reading replaces the old one field by field instead of keeping previous values
+        // where the new ones are null: if the workout was corrected, the window is no longer the
+        // same and the old samples belonged to another half hour.
         val updated = session.copy(
             avgHeartRateBpm = vitals.avgBpm,
             maxHeartRateBpm = vitals.maxBpm,

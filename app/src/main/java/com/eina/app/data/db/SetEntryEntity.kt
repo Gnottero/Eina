@@ -15,12 +15,13 @@ data class SetEntryEntity(
     val workoutExerciseId: Long,
     val setIndex: Int,
     val targetReps: Int? = null,
-    val actualReps: Int? = null,        // per TIME_BASED: durata in secondi
+    val actualReps: Int? = null,        // TIME_BASED: duration in seconds; DISTANCE_BASED: minutes
     val weight: Double? = null,
     val restSecondsPlanned: Int,
     val setType: SetType = SetType.NORMAL,
     val completedAt: Long? = null,
     val isPR: Boolean = false,
-    val bodyweightSnapshotKg: Double? = null   // salvato al momento del set SOLO per BODYWEIGHT/BODYWEIGHT_PLUS_LOAD/ASSISTED,
-                                                 // evita join complessi su BodyMetric per ricostruire il peso storico
+    // Stored when the set is completed, only for BODYWEIGHT / BODYWEIGHT_PLUS_LOAD / ASSISTED:
+    // avoids joining BodyMetric over time windows to reconstruct the historical bodyweight.
+    val bodyweightSnapshotKg: Double? = null
 )

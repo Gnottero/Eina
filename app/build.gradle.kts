@@ -24,8 +24,8 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            // DECISIONE: la release usa la firma di debug. Non esiste ancora un keystore di
-            // distribuzione e senza firma l'APK non e' installabile per provare R8 sul device.
+            // DECISIONE: the release build uses the debug signature. There is no distribution
+            // keystore yet, and an unsigned APK cannot be installed to test R8 on a device.
             signingConfig = signingConfigs.getByName("debug")
         }
     }
@@ -41,7 +41,7 @@ android {
 
     buildFeatures {
         compose = true
-        // Serve alla schermata Info per mostrare la versione installata.
+        // Used by the About screen to show the installed version.
         buildConfig = true
     }
 
@@ -57,8 +57,8 @@ dependencies {
 
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
-    // lifecycle-runtime-ktx arriva con runtime-compose alla stessa versione: nessun uso diretto
-    // (niente lifecycleScope, niente repeatOnLifecycle) da giustificare una riga sua.
+    // lifecycle-runtime-ktx comes with runtime-compose at the same version, and there is no direct
+    // use (no lifecycleScope, no repeatOnLifecycle) to justify a line of its own.
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.6")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.6")
     implementation("androidx.activity:activity-compose:1.9.2")
@@ -66,7 +66,7 @@ dependencies {
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-graphics")
     implementation("androidx.compose.material3:material3")
-    // Necessaria per icone Outlined (FitnessCenter, ecc.) non presenti nel set core
+    // Needed for Outlined icons (FitnessCenter and friends) missing from the core set.
     implementation("androidx.compose.material:material-icons-extended")
     implementation("androidx.navigation:navigation-compose:2.8.1")
 
@@ -83,26 +83,24 @@ dependencies {
     implementation("io.coil-kt:coil-compose:2.7.0")
     implementation("io.coil-kt:coil-gif:2.7.0")
 
-    // Niente libreria di grafici: dalla Fase 5b le spezzate e le barre sono Canvas puro
-    // (ui/components/MiniLineChart, MiniBarChart, HeatmapCalendar, ActivityRing). Vico era
-    // rimasta nel build senza un solo import.
+    // No charting library: lines and bars are pure Canvas (ui/components/MiniLineChart,
+    // MiniBarChart, HeatmapCalendar, ActivityRing).
 
-    // Health Connect: frequenza cardiaca e calorie registrate dallo smartwatch. E' l'unico modo
-    // di leggere quei dati senza scrivere un'app companion per l'orologio, e resta local-first —
-    // i dati stanno gia' sul telefono, l'app li legge e basta.
-    // DECISIONE: 1.1.0-alpha10 e non la 1.1.0 stabile. Dalla beta01 la libreria pretende
-    // compileSdk 36 e AGP 8.9, cioe' un giro di aggiornamento del build che non c'entra niente
-    // con questa fase. L'alpha10 sta su compileSdk 35 e usa le stesse API che servono qui
-    // (getSdkStatus, readRecords, PermissionController).
+    // Health Connect: heart rate and calories recorded by the smartwatch. It is the only way to
+    // read that data without writing a companion app, and it stays local-first — the data is
+    // already on the phone and the app only reads it.
+    // DECISIONE: 1.1.0-alpha10 and not the stable 1.1.0. From beta01 the library requires
+    // compileSdk 36 and AGP 8.9, a build upgrade unrelated to this work; alpha10 runs on
+    // compileSdk 35 and exposes the same APIs used here (getSdkStatus, readRecords,
+    // PermissionController).
     implementation("androidx.health.connect:connect-client:1.1.0-alpha10")
 
     // Custom Tabs (donation link)
     implementation("androidx.browser:browser:1.8.0")
 
-    // I test sono unitari puri (dominio, converter, parsing) piu' un test DAO strumentato che usa
-    // Room.inMemoryDatabaseBuilder: niente Espresso, niente ui-test di Compose, niente
-    // room-testing (serve solo per MigrationTestHelper) e niente coroutines-test — le prove
-    // sospese girano con runBlocking.
+    // Tests are plain unit tests (domain, converters, parsing) plus one instrumented DAO test on
+    // Room.inMemoryDatabaseBuilder: no Espresso, no Compose ui-test, no room-testing (only needed
+    // for MigrationTestHelper) and no coroutines-test — suspending tests run with runBlocking.
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
     debugImplementation("androidx.compose.ui:ui-tooling")

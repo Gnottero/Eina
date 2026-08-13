@@ -18,12 +18,12 @@ import java.io.FileOutputStream
 
 private const val SHARED_DIR = "shared"
 
-/** Sottocartella in Immagini dove finiscono gli overlay salvati. */
+/** Sub-folder of Pictures where saved overlays land. */
 private const val GALLERY_FOLDER = "Eina"
 
 /**
- * Salva il bitmap in cache/shared e ne restituisce l'Uri esposto dal FileProvider.
- * La cartella viene ripulita prima di scrivere: l'immagine e' usa e getta.
+ * Saves the bitmap in cache/shared and returns the Uri exposed by the FileProvider. The folder is
+ * emptied before writing: the image is single-use.
  */
 fun saveShareImage(context: Context, bitmap: Bitmap, fileName: String): Uri {
     val dir = File(context.cacheDir, SHARED_DIR).apply {
@@ -38,13 +38,14 @@ fun saveShareImage(context: Context, bitmap: Bitmap, fileName: String): Uri {
 }
 
 /**
- * Copia il bitmap nella galleria, in Immagini/Eina, e ne restituisce l'Uri pubblico.
+ * Copies the bitmap to the gallery, under Pictures/Eina, and returns its public Uri.
  *
- * Serve al giro alla Strava: l'overlay va salvato prima, perche' e' dal rullino che Instagram
- * lo ripesca come adesivo sopra la foto di sfondo. PNG e non JPEG: la trasparenza e' il punto.
- * Da Android 10 basta MediaStore; sotto serve scrivere davvero il file nella cartella pubblica,
- * quindi il permesso di scrittura (dichiarato in manifest con maxSdkVersion 28).
- * Ritorna null se il salvataggio non riesce: il chiamante lo dice invece di fingere.
+ * The overlay must be saved first, because Instagram picks it from the gallery as a sticker over
+ * the background photo. PNG and not JPEG: transparency is the point. From Android 10 on MediaStore
+ * is enough; below that the file must really be written to the public folder, hence the write
+ * permission (declared in the manifest with maxSdkVersion 28).
+ *
+ * Returns null when the save fails, so the caller can say so instead of pretending.
  */
 fun saveImageToGallery(context: Context, bitmap: Bitmap, displayName: String): Uri? = runCatching {
     val resolver = context.contentResolver
@@ -78,12 +79,12 @@ fun saveImageToGallery(context: Context, bitmap: Bitmap, displayName: String): U
     uri
 }.getOrNull()
 
-/** Il permesso di scrittura serve solo fino ad Android 9: dopo ci pensa MediaStore. */
+/** The write permission is only needed up to Android 9; after that MediaStore handles it. */
 fun needsLegacyStoragePermission(): Boolean = Build.VERSION.SDK_INT < Build.VERSION_CODES.Q
 
 /**
- * Mette l'immagine negli appunti. Instagram, come le altre app di storie, offre "incolla"
- * quando trova un'immagine copiata: e' la scorciatoia per chi non vuole passare dal rullino.
+ * Puts the image on the clipboard. Instagram, like other story apps, offers "paste" when it finds a
+ * copied image: the shortcut for users who would rather skip the gallery.
  */
 fun copyImageToClipboard(context: Context, uri: Uri, label: String): Boolean = runCatching {
     val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
@@ -95,15 +96,14 @@ fun copyImageToClipboard(context: Context, uri: Uri, label: String): Boolean = r
 
 const val INSTAGRAM_PACKAGE = "com.instagram.android"
 
-/** Instagram installato: senza l'app il giro dell'overlay non ha dove finire. */
+/** Whether Instagram is installed; without it the overlay flow has nowhere to go. */
 fun isInstagramInstalled(context: Context): Boolean = runCatching {
     context.packageManager.getPackageInfo(INSTAGRAM_PACKAGE, 0)
 }.isSuccess
 
 /**
- * Apre Instagram sulla schermata di creazione storia, cosi' si arriva direttamente al punto
- * in cui si sceglie la foto di sfondo. Se quella schermata non e' raggiungibile si ripiega
- * sull'app in generale; se manca anche quella ritorna false.
+ * Opens Instagram on the story camera, right where the background photo is chosen. If that screen
+ * is unreachable it falls back to the app itself, and returns false when even that is missing.
  */
 fun openInstagramStoryCamera(context: Context): Boolean {
     val storyCamera = Intent(Intent.ACTION_VIEW, Uri.parse("instagram://story-camera"))
@@ -114,7 +114,7 @@ fun openInstagramStoryCamera(context: Context): Boolean {
     return runCatching { context.startActivity(launch) }.isSuccess
 }
 
-/** Chooser di sistema con l'immagine allegata e permesso di lettura temporaneo. */
+/** System chooser with the image attached and a temporary read grant. */
 fun shareImage(context: Context, uri: Uri, text: String? = null) {
     val send = Intent(Intent.ACTION_SEND).apply {
         type = "image/png"

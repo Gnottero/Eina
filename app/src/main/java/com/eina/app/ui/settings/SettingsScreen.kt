@@ -61,8 +61,8 @@ fun SettingsScreen(
     val healthSync by viewModel.healthSyncEnabled.collectAsState()
     val healthGranted by viewModel.healthGranted.collectAsState()
     val healthAvailable by viewModel.healthAvailable.collectAsState()
-    // Il permesso salute non passa dal contratto dei permessi runtime: Health Connect ha il suo,
-    // che apre la sua schermata di consenso.
+    // The health permission does not go through the runtime permission contract: Health Connect
+    // has its own, which opens its consent screen.
     val healthPermissionLauncher = rememberLauncherForActivityResult(
         contract = PermissionController.createRequestPermissionResultContract()
     ) { viewModel.refreshHealthPermissions() }
@@ -89,8 +89,8 @@ fun SettingsScreen(
                 style = MaterialTheme.typography.bodySmall,
                 color = island.textSecondary
             )
-            // FlowRow e non LazyRow: le lingue vanno a capo e si vedono tutte insieme,
-            // senza scorrimento laterale che ne nasconde una.
+            // FlowRow rather than LazyRow: the languages wrap and are all visible at once, with no
+            // horizontal scrolling hiding one of them.
             FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
                 verticalArrangement = Arrangement.spacedBy(Spacing.sm)
@@ -102,8 +102,8 @@ fun SettingsScreen(
                         onClick = {
                             if (entry != language) {
                                 viewModel.setLanguage(entry)
-                                // Le risorse della schermata sono gia' risolte: senza ricreare
-                                // l'Activity resterebbe tutto nella lingua precedente.
+                                // The screen resources are already resolved: without recreating the
+                                // Activity everything would stay in the previous language.
                                 (context as? Activity)?.recreate()
                             }
                         }
@@ -219,9 +219,8 @@ fun SettingsScreen(
     }
 
     if (confirmClear) {
-        // Operazione irreversibile: si conferma prima di toccare il database.
-        // "Annulla" resta neutro, non accentato: con la palette arancio un "Annulla" primario si
-        // confondeva col rosso di "Cancella" e le due azioni sembravano la stessa cosa.
+        // Irreversible: confirmed before touching the database. The dismiss action stays neutral,
+        // since an accented one was too close to the red of the destructive button.
         IslandAlertDialog(
             title = stringResource(R.string.settings_clear_confirm_title),
             text = stringResource(R.string.settings_clear_confirm_text),
@@ -262,8 +261,8 @@ private fun SettingSwitch(
         }
         Switch(
             checked = checked,
-            // Il tap sullo switch dell'aptica vibra anche quando lo si sta spegnendo: e' l'ultimo
-            // feedback prima che il canale si chiuda, e conferma che il comando e' passato.
+            // The haptics switch vibrates even while being turned off: it is the last feedback
+            // before the channel closes and confirms the tap went through.
             onCheckedChange = { hapticTap(); onCheckedChange(it) },
             colors = SwitchDefaults.colors(
                 checkedThumbColor = Color.White,

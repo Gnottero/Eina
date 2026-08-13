@@ -10,16 +10,15 @@ import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
 /**
- * Sveglia di fine recupero.
+ * Rest-timer alarm.
  *
- * Il conto alla rovescia vive in [RestTimerController], che pero' e' un coroutine dentro il
- * processo: appena l'app esce dallo schermo il sistema congela il processo e i `delay` smettono
- * di scorrere, quindi suono e vibrazione arrivavano solo rimettendo l'app in primo piano — cioe'
- * quando non servono piu'. AlarmManager e' l'unico modo di farsi risvegliare a tempo senza
- * tenere in piedi un servizio in primo piano per tutta la sessione.
+ * The countdown lives in [RestTimerController], but that is a coroutine inside the process: once
+ * the app leaves the screen the system freezes it and the `delay` calls stop advancing, so sound
+ * and vibration only arrived when the app came back to the foreground. AlarmManager is the only way
+ * to be woken on time without keeping a foreground service alive for the whole session.
  *
- * L'allarme e' un doppione del tick in-app, non il suo sostituto: chi dei due arriva primo chiama
- * [RestTimerController.finish], che agisce una volta sola.
+ * The alarm duplicates the in-app tick rather than replacing it: whichever fires first calls
+ * [RestTimerController.finish], which acts only once.
  */
 class RestAlarmScheduler(private val context: Context) {
 
@@ -28,9 +27,9 @@ class RestAlarmScheduler(private val context: Context) {
     fun schedule(triggerAtMs: Long) {
         val manager = alarmManager ?: return
         val intent = pendingIntent()
-        // setExactAndAllowWhileIdle attraversa il doze; senza il permesso di allarme esatto
-        // (revocabile su Android 12 e 13) si ripiega su un allarme inesatto, che arriva comunque
-        // con lo schermo acceso — il caso normale di chi sta guardando il telefono in palestra.
+        // setExactAndAllowWhileIdle survives doze; without the exact-alarm permission (revocable on
+        // Android 12 and 13) it falls back to an inexact alarm, which still arrives with the screen
+        // on — the common case in a gym.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !manager.canScheduleExactAlarms()) {
             manager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMs, intent)
         } else {
@@ -42,8 +41,8 @@ class RestAlarmScheduler(private val context: Context) {
         alarmManager?.cancel(pendingIntent())
     }
 
-    // Un solo allarme vivo alla volta: lo stesso PendingIntent (stesso request code, stessa
-    // action) viene riusato, quindi programmarne un altro sostituisce il precedente.
+    // One live alarm at a time: the same PendingIntent (same request code, same action) is reused,
+    // so scheduling another replaces the previous one.
     private fun pendingIntent(): PendingIntent = PendingIntent.getBroadcast(
         context,
         REQUEST_CODE,
@@ -56,7 +55,7 @@ class RestAlarmScheduler(private val context: Context) {
     }
 }
 
-/** Riceve la sveglia e chiude il recupero: e' il punto in cui suona e vibra ad app chiusa. */
+/** Receives the alarm and ends the rest: this is where sound and vibration fire in background. */
 class RestAlarmReceiver : BroadcastReceiver(), KoinComponent {
 
     private val controller: RestTimerController by inject()

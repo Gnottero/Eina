@@ -5,26 +5,24 @@ import com.eina.app.data.db.WeightType
 import com.eina.app.data.db.countsAsWorking
 
 /**
- * Ricalcola il flag `isPR` di tutte le serie di un esercizio.
+ * Recomputes the `isPR` flag of every set of an exercise.
  *
- * `isPR` e' l'unico dato di dominio che non si ricava da una query: viene scritto sulla riga nel
- * momento in cui la serie si chiude, confrontandola con quel che c'era prima. Finche' il passato
- * era immutabile bastava; da quando un allenamento gia' registrato si puo' correggere non basta
- * piu' — abbassare il carico di una serie del mese scorso lascerebbe il suo record in piedi, e
- * alzarlo non ne farebbe nascere uno.
+ * `isPR` is the only domain value not derived from a query: it is written on the row when the set
+ * is completed, comparing it with what came before. That was enough while the past was immutable;
+ * now that a recorded workout can be corrected it is not — lowering the load of a set from last
+ * month would leave its record standing, and raising it would not create one.
  *
- * Quindi si riparte da zero: le serie si scorrono in ordine di completamento e ognuna e' un
- * record se batte tutte quelle prima di lei, esattamente come [isNewPR] al momento del tocco. Il
- * riscaldamento non fa mai record e non entra nel confronto.
+ * So the flags are rebuilt from scratch: sets are walked in completion order and each is a record
+ * if it beats everything before it, exactly as [isNewPR] does live. Warmups never hold a record and
+ * stay out of the comparison.
  *
- * `sets` va passato completo (tutte le serie completate di quell'esercizio, in qualunque
- * sessione); l'ordine non conta, ci pensa la funzione. Ritorna le sole righe il cui flag cambia,
- * cosi' chi chiama scrive solo quelle.
+ * [sets] must be complete (every completed set of that exercise, in any session); the order does
+ * not matter, the function sorts them. Only the rows whose flag changes are returned, so the caller
+ * writes just those.
  */
 fun recomputePrFlags(weightType: WeightType, sets: List<SetEntryEntity>): List<SetEntryEntity> {
-    // A parita' di istante vince l'ordine della serie nella sua sessione: due serie chiuse nello
-    // stesso millisecondo esistono davvero (una sessione di prova, un import) e senza secondo
-    // criterio l'esito dipenderebbe dall'ordine con cui il database le restituisce.
+    // On equal instants the set index breaks the tie: sets completed in the same millisecond do
+    // occur, and without a second criterion the outcome would depend on the database row order.
     val ordered = sets.sortedWith(compareBy({ it.completedAt ?: 0L }, { it.setIndex }, { it.id }))
     val history = mutableListOf<SetEntryEntity>()
     val changed = mutableListOf<SetEntryEntity>()

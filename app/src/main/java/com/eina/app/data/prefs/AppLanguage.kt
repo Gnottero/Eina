@@ -8,10 +8,10 @@ import com.eina.app.R
 import java.util.Locale
 
 /**
- * Lingua dell'app. SYSTEM segue il telefono, le altre lo scavalcano.
+ * App language. SYSTEM follows the phone, the others override it.
  *
- * Le etichette delle lingue restano scritte nella lingua stessa ("Italiano", "Français"):
- * chi apre il menu per uscire da una lingua che non capisce deve poter riconoscere la propria.
+ * The language labels stay written in their own language ("Italiano", "Français"): whoever opens
+ * the menu to escape a language they do not read must be able to recognise their own.
  */
 enum class AppLanguage(val tag: String?, @StringRes val labelRes: Int) {
     SYSTEM(null, R.string.language_system),
@@ -25,12 +25,12 @@ enum class AppLanguage(val tag: String?, @StringRes val labelRes: Int) {
 }
 
 /**
- * Applica la lingua scelta senza passare da AppCompat: si riscrive la Configuration del
- * Context prima che l'Activity carichi le risorse. DECISIONE: e' una trentina di righe
- * contro una dipendenza (androidx.appcompat) che l'app, tutta Compose, non usa per altro.
+ * Applies the chosen language without AppCompat, by rewriting the Context Configuration before the
+ * Activity loads its resources. DECISIONE: some thirty lines against a dependency
+ * (androidx.appcompat) this all-Compose app does not otherwise use.
  *
- * Locale.setDefault serve oltre alla Configuration: java.time e String.format leggono da li',
- * non dalle risorse, e senza questo le date resterebbero nella lingua di sistema.
+ * Locale.setDefault is needed on top of the Configuration: java.time and String.format read from
+ * there and not from the resources, so without it dates would stay in the system language.
  */
 object AppLocale {
 
@@ -49,7 +49,7 @@ object AppLocale {
             .apply()
     }
 
-    /** Da chiamare in attachBaseContext, prima che vengano risolte le risorse. */
+    /** To be called from attachBaseContext, before any resource is resolved. */
     fun wrap(base: Context): Context {
         val locale = localeFor(stored(base))
         Locale.setDefault(locale)
@@ -62,7 +62,7 @@ object AppLocale {
 
     private fun localeFor(language: AppLanguage): Locale = language.tag
         ?.let { Locale.forLanguageTag(it) }
-        // Per SYSTEM serve la lingua del telefono, non quella gia' scavalcata dall'app:
-        // Resources.getSystem() e' l'unica che resta immune all'override.
+        // SYSTEM needs the phone language, not the one the app already overrode:
+        // Resources.getSystem() is the only source immune to the override.
         ?: Resources.getSystem().configuration.locales[0]
 }

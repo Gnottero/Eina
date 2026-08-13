@@ -9,8 +9,8 @@ import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 
-// DECISIONE: l'app e' solo in light mode (bianco + viola). Niente schema scuro e niente
-// aggancio a isSystemInDarkTheme: il tema scuro dell'OS non deve cambiare la palette.
+// DECISIONE: the app is light-only. No dark scheme and no isSystemInDarkTheme hook: the OS dark
+// theme must not change the palette.
 private val LightColors = lightColorScheme(
     primary = AccentPrimary,
     onPrimary = Color.White,
@@ -29,19 +29,19 @@ private val LightColors = lightColorScheme(
 )
 
 /**
- * Token extra dello stile "island" che Material3 non modella: colore/alpha dell'ombra morbida
- * delle isole e superficie incassata per tracce, chip inattive e campi di testo.
+ * Extra island tokens Material3 does not model: colour and alpha of the soft island shadow, and the
+ * sunken surface used by tracks, inactive chips and text fields.
  */
 @Immutable
 data class EinaIslandColors(
     val sunken: Color,
-    /** Incassato chiaro dentro le card bianche: vedi [LightSurfaceSunkenSoft]. */
+    /** Light sunken surface inside white cards; see [LightSurfaceSunkenSoft]. */
     val sunkenSoft: Color,
     val textSecondary: Color,
     val outlineSubtle: Color,
     val shadow: Color,
     val isDark: Boolean,
-    /** Rampa dell'accento (ambra -> magenta) per hero, anelli e marchio. */
+    /** Accent ramp (amber to magenta) for hero surfaces, rings and the mark. */
     val accentRamp: List<Color>
 )
 
@@ -50,7 +50,7 @@ private val LightIslandColors = EinaIslandColors(
     sunkenSoft = LightSurfaceSunkenSoft,
     textSecondary = LightTextSecondary,
     outlineSubtle = LightOutlineSubtle,
-    // Ombra neutra fredda: quella marrone tingeva il bianco delle isole di beige.
+    // Cool neutral shadow: the brown one tinted the white of the islands beige.
     shadow = Color(0xFF1A1714),
     isDark = false,
     accentRamp = listOf(AccentRampStart, AccentPrimary, AccentRampEnd)

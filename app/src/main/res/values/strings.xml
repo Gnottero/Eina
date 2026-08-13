@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Lingua di default: inglese. L'italiano vive in values-it, il francese in values-fr.
-  Un dispositivo con una lingua non coperta ricade qui invece che su una traduzione a caso.
+  Default language: English. Italian lives in values-it, French in values-fr.
+  A device set to an unsupported language falls back here instead of an arbitrary translation.
 -->
 <resources>
     <string name="app_name" translatable="false">Eina</string>
 
-    <!-- Navigazione -->
+    <!-- Navigation -->
     <string name="nav_dashboard">Dashboard</string>
     <string name="nav_workout">Train</string>
     <string name="nav_library">Exercises</string>
     <string name="nav_progress">Progress</string>
 
-    <!-- Azioni ricorrenti -->
+    <!-- Recurring actions -->
     <string name="action_back">Back</string>
     <string name="action_cancel">Cancel</string>
     <string name="action_delete">Delete</string>
@@ -27,7 +27,7 @@
     <string name="unit_kg" translatable="false">kg</string>
     <string name="unit_reps_value">%1$d reps</string>
 
-    <!-- Etichette metriche condivise -->
+    <!-- Shared metric labels -->
     <string name="stat_duration">Duration</string>
     <string name="stat_volume">Volume</string>
     <string name="stat_sets">Sets</string>
@@ -40,7 +40,7 @@
     <string name="stat_weight">Weight</string>
     <string name="stat_streak">Streak</string>
 
-    <!-- Date relative -->
+    <!-- Relative dates -->
     <string name="date_today">Today</string>
     <string name="date_yesterday">Yesterday</string>
 
@@ -59,7 +59,7 @@
     <string name="dashboard_empty_description">Start a session: the summary of your last one will show up here, with sets, volume and PRs.</string>
     <string name="dashboard_start_workout">Start workout</string>
 
-    <!-- Allena -->
+    <!-- Workout tab -->
     <string name="workout_title">Train</string>
     <string name="workout_subtitle">Go freestyle or follow a routine</string>
     <string name="workout_new_routine">New routine</string>
@@ -72,7 +72,7 @@
     <string name="workout_your_routines">Your routines</string>
     <string name="workout_free_name">Free workout</string>
 
-    <!-- Routine -->
+    <!-- Routines -->
     <string name="routine_empty_title">No routines</string>
     <string name="routine_empty_description">Create a routine to have sets, reps and rest ready to go.</string>
     <string name="routine_unnamed">Unnamed routine</string>
@@ -104,7 +104,7 @@
         <item quantity="other">%d PRs</item>
     </plurals>
 
-    <!-- Editor routine -->
+    <!-- Routine editor -->
     <string name="routine_editor_new_title">New routine</string>
     <string name="routine_editor_title">Routine</string>
     <string name="field_routine_name">Routine name</string>
@@ -126,7 +126,7 @@
     <string name="playlist_service">Service</string>
     <string name="playlist_none">No playlist</string>
 
-    <!-- Allenamento in corso -->
+    <!-- Running workout -->
     <string name="active_title">Workout in progress</string>
     <string name="active_empty_title">Empty session</string>
     <string name="active_empty_description">Add your first exercise to start logging sets.</string>
@@ -141,7 +141,7 @@
     <string name="active_finish_confirm_action">Finish</string>
     <string name="active_cancel_confirm_title">Cancel the workout?</string>
     <string name="active_cancel_confirm_text">The session and every set logged so far will be deleted. It won\'t reach your history.</string>
-    <!-- Bottone del dialogo, largo mezza riga: l'etichetta lunga ci veniva tagliata. -->
+    <!-- Dialog button, half a row wide: the long label was clipped in it. -->
     <string name="active_cancel_confirm_action">Delete</string>
     <string name="active_add_set">+ Add set</string>
     <string name="active_add_set_action">Add set</string>
@@ -170,7 +170,7 @@
     <string name="table_km">Km</string>
     <string name="table_minutes">Min</string>
 
-    <!-- Tipo di serie -->
+    <!-- Set type -->
     <string name="set_type_title">Set type</string>
     <string name="set_type_cd">Change set type</string>
     <string name="set_type_warmup">Warm-up</string>
@@ -193,7 +193,7 @@
     <string name="superset_action_none">Not in a superset</string>
     <string name="superset_rest_description">Applies to every exercise of the superset.</string>
 
-    <!-- Timer di recupero -->
+    <!-- Rest timer -->
     <string name="timer_rest">Rest</string>
     <string name="timer_minus_15" translatable="false">-15s</string>
     <string name="timer_plus_15" translatable="false">+15s</string>
@@ -204,7 +204,7 @@
     <string name="wheel_min">min</string>
     <string name="wheel_sec">sec</string>
 
-    <!-- Storico -->
+    <!-- History -->
     <string name="history_title">History</string>
     <string name="history_none">No workouts</string>
     <plurals name="history_count">
@@ -214,7 +214,7 @@
     <string name="history_empty_title">No workouts recorded</string>
     <string name="history_empty_description">Completed sessions show up here, most recent first.</string>
 
-    <!-- Dettaglio sessione -->
+    <!-- Session detail -->
     <string name="session_completed">Completed</string>
     <string name="session_fallback_title">Workout</string>
     <string name="session_share_cd">Share workout</string>
@@ -232,7 +232,7 @@
     <string name="session_preview_cd">Workout summary</string>
     <string name="share_chooser_title">Share workout</string>
 
-    <!-- Libreria esercizi -->
+    <!-- Exercise library -->
     <string name="library_title">Exercises</string>
     <string name="library_new_exercise">New exercise</string>
     <string name="library_search">Search exercise</string>
@@ -241,7 +241,7 @@
     <string name="exercise_description">Description</string>
     <string name="exercise_how_to_log">How to log it</string>
 
-    <!-- Nuovo esercizio -->
+    <!-- New exercise -->
     <string name="create_exercise_title">New exercise</string>
     <string name="create_exercise_subtitle">It will work like any library exercise</string>
     <string name="field_name">Name</string>
@@ -257,7 +257,7 @@
     <string name="error_media_copy">Image not copied: try again or pick another one.</string>
     <string name="error_no_gallery">No app on this phone can pick images.</string>
 
-    <!-- Tipi di carico -->
+    <!-- Weight types -->
     <string name="weight_type_free_weight">Free weight</string>
     <string name="weight_type_bodyweight">Bodyweight</string>
     <string name="weight_type_bodyweight_plus_load">Bodyweight + added load</string>
@@ -266,7 +266,7 @@
     <string name="weight_type_time_based">Time based</string>
     <string name="weight_type_distance_based">Distance based</string>
 
-    <!-- Come registrare, per tipo di carico -->
+    <!-- How to log, per weight type -->
     <string name="logging_free_weight">Enter the total weight lifted (bar + plates, or the number printed on the dumbbell/kettlebell).</string>
     <string name="logging_bodyweight">Your body is the load: nothing to enter, your last recorded body weight is used.</string>
     <string name="logging_bodyweight_plus_load">Enter the added load only: your body weight is summed automatically.</string>
@@ -275,7 +275,7 @@
     <string name="logging_time_based">Enter the duration in seconds instead of the reps.</string>
     <string name="logging_distance_based">Enter the distance in kilometres and the time in minutes: the record looks at both.</string>
 
-    <!-- Categorie muscolari -->
+    <!-- Muscle categories -->
     <string name="muscle_category_chest_push">Chest/Push</string>
     <string name="muscle_category_back_pull">Back/Pull</string>
     <string name="muscle_category_legs">Legs</string>
@@ -285,7 +285,7 @@
     <string name="muscle_category_other">Other</string>
     <string name="muscle_category_neck">Neck</string>
 
-    <!-- Muscoli del dataset -->
+    <!-- Dataset muscles -->
     <string name="muscle_chest">Chest</string>
     <string name="muscle_lats">Lats</string>
     <string name="muscle_middle_back">Middle back</string>
@@ -304,7 +304,7 @@
     <string name="muscle_adductors">Adductors</string>
     <string name="muscle_abductors">Abductors</string>
 
-    <!-- Attrezzatura del dataset -->
+    <!-- Dataset equipment -->
     <string name="equipment_barbell">Barbell</string>
     <string name="equipment_dumbbell">Dumbbell</string>
     <string name="equipment_cable">Cable</string>
@@ -318,7 +318,7 @@
     <string name="equipment_ez_curl_bar">EZ curl bar</string>
     <string name="equipment_other">Other</string>
 
-    <!-- Progressi -->
+    <!-- Progress -->
     <string name="progress_title">Progress</string>
     <string name="progress_subtitle">%1$s · %2$s kg total</string>
     <string name="progress_current_week">Current week</string>
@@ -330,7 +330,7 @@
     <string name="progress_pr_empty_description">Complete sets during a workout: new records show up here.</string>
     <string name="progress_body">Body</string>
 
-    <!-- Peso corporeo -->
+    <!-- Bodyweight -->
     <string name="bodyweight_title">Body weight</string>
     <string name="bodyweight_subtitle_last">Last measurement %1$s kg</string>
     <string name="bodyweight_subtitle_none">No measurement recorded</string>
@@ -343,7 +343,7 @@
     <string name="bodyweight_empty_description">Log your weight: it is used to compute volume and PRs for bodyweight exercises.</string>
     <string name="bodyweight_delete_cd">Delete measurement</string>
 
-    <!-- Impostazioni -->
+    <!-- Settings -->
     <string name="settings_title">Settings</string>
     <string name="settings_subtitle">Language, feedback and app behaviour</string>
     <string name="settings_section_language">Language</string>
@@ -389,7 +389,7 @@
     <string name="info_font">Font</string>
     <string name="info_font_value">Inter by Rasmus Andersson (SIL Open Font License 1.1).</string>
 
-    <!-- Card condivisibile (disegnata su Canvas, tutta maiuscola) -->
+    <!-- Shareable card (drawn on Canvas, all caps) -->
     <string name="share_card_duration">DURATION</string>
     <string name="share_card_volume">VOLUME</string>
     <string name="share_card_sets">SETS</string>
@@ -429,7 +429,7 @@
     <string name="library_delete_confirm_text">The exercise leaves the library for good.</string>
     <string name="library_delete_blocked">This exercise is still used by a routine or a recorded workout</string>
 
-    <!-- Cronometro (Fase 27) -->
+    <!-- Stopwatch -->
     <string name="stopwatch_title">Stopwatch</string>
     <string name="stopwatch_open_cd">Open the stopwatch</string>
     <string name="stopwatch_start">Start</string>
@@ -437,7 +437,7 @@
     <string name="stopwatch_resume">Resume</string>
     <string name="stopwatch_reset">Reset</string>
 
-    <!-- Progressione dell'esercizio (Fase 27) -->
+    <!-- Exercise progression -->
     <string name="exercise_progress_title">Progression</string>
     <string name="exercise_progress_empty">No set recorded yet: the chart shows up after the first workout with this exercise.</string>
     <string name="exercise_progress_weight">Weight (kg)</string>
@@ -445,7 +445,7 @@
     <string name="exercise_progress_seconds">Seconds</string>
     <string name="exercise_progress_distance">Distance (km)</string>
     <string name="exercise_progress_minutes">Minutes</string>
-    <!-- Proposta di aggiornare la scheda a fine allenamento -->
+    <!-- Offer to update the routine at the end of a workout -->
     <string name="routine_sync_title">Update the routine?</string>
     <string name="routine_sync_description">This workout did not follow \u201C%1$s\u201D. Want the routine to look like what you actually did?</string>
     <string name="routine_sync_description_generic">This workout did not follow the routine it started from. Want the routine to look like what you actually did?</string>

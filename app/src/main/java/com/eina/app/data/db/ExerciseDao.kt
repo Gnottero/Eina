@@ -36,8 +36,8 @@ interface ExerciseDao {
     suspend fun getByName(name: String): ExerciseEntity?
 
     /**
-     * Quante volte l'esercizio e' referenziato da routine e allenamenti: sopra zero non si
-     * cancella, altrimenti la foreign key salterebbe e lo storico perderebbe il suo nome.
+     * How many times the exercise is referenced by routines and workouts: above zero it is not
+     * deleted, or the foreign key would break and the history would lose its name.
      */
     @Query(
         """
@@ -55,10 +55,9 @@ interface ExerciseDao {
     suspend fun getLibraryExercises(): List<ExerciseEntity>
 
     /**
-     * Toglie dalla libreria gli esercizi usciti dal catalogo curato, ma solo se non li
-     * usa nessuno: uno rimasto dentro una routine o dentro un allenamento gia' registrato
-     * resta al suo posto, altrimenti la foreign key salterebbe e lo storico perderebbe
-     * il nome dell'esercizio.
+     * Removes from the library the exercises dropped from the curated catalog, but only when
+     * nothing uses them: one still referenced by a routine or a recorded workout stays, or the
+     * foreign key would break and the history would lose its name.
      */
     @Query(
         """

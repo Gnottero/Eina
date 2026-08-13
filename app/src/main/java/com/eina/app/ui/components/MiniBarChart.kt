@@ -22,8 +22,8 @@ import com.eina.app.ui.theme.EinaTheme
 import com.eina.app.ui.theme.Spacing
 
 /**
- * Grafico a barre arrotondate in stile reference: barre piene per i valori, traccia incassata
- * per i giorni vuoti. Canvas puro — nessuna dipendenza extra e nessun costo di avvio.
+ * Rounded bar chart: filled bars for the values, sunken track for the empty days. Pure Canvas, with
+ * no extra dependency and no startup cost.
  */
 @Composable
 fun MiniBarChart(
@@ -36,8 +36,7 @@ fun MiniBarChart(
 ) {
     val island = EinaTheme.island
     val trackColor = island.sunken
-    // Le barre prendono la rampa dell'accento; un colore passato a mano (per esempio quello di
-    // un gruppo muscolare) resta pieno.
+    // Bars take the accent ramp; a colour passed explicitly (a muscle group, say) stays flat.
     val ramp = if (barColor == MaterialTheme.colorScheme.primary) {
         island.accentRamp
     } else {
@@ -60,7 +59,7 @@ fun MiniBarChart(
                 val centerX = slot * index + slot / 2f
                 val left = centerX - barWidth / 2f
 
-                // Traccia di fondo: da' ritmo anche quando il valore e' zero.
+                // Background track: keeps the rhythm even where the value is zero.
                 drawRoundRect(
                     color = trackColor,
                     topLeft = Offset(left, 0f),
@@ -70,9 +69,8 @@ fun MiniBarChart(
 
                 val barHeight = (value / maxValue) * size.height
                 if (barHeight > 0f) {
-                    // La rampa e' verticale e calcolata sull'altezza piena del grafico, non
-                    // sulla singola barra: cosi' due barre di altezza diversa hanno lo stesso
-                    // colore alla stessa quota e il gruppo si legge come un blocco unico.
+                    // The ramp is vertical and computed over the full chart height, not per bar, so
+                    // bars of different heights share the same colour at the same level.
                     val brush = Brush.verticalGradient(
                         colors = ramp,
                         startY = 0f,

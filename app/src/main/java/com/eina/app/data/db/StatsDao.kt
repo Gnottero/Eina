@@ -6,22 +6,22 @@ import androidx.room.Query
 import kotlinx.coroutines.flow.Flow
 
 /**
- * Riga denormalizzata: una set completata con il contesto di sessione ed esercizio.
- * DECISIONE: statistiche (volume, PR, heatmap, storico) si calcolano in Kotlin su questa
- * singola query invece che con N query SQL aggregate — dataset locale piccolo, e la logica
- * di volume dipende dal weightType, gia' scritta in domain/PrCalculator.
+ * Denormalised row: a completed set with its session and exercise context.
+ * DECISIONE: statistics (volume, PRs, heatmap, history) are computed in Kotlin over this single
+ * query instead of N aggregate SQL queries — the local dataset is small and the volume logic
+ * depends on weightType, already written in domain/PrCalculator.
  */
 data class CompletedSetRow(
     val sessionId: Long,
     val sessionStart: Long,
     val sessionEnd: Long?,
-    // Identifica la voce di sessione, non l'esercizio di libreria: lo stesso esercizio ripetuto
-    // due volte nello stesso allenamento resta cosi' due blocchi distinti, non uno solo.
+    // Identifies the session row and not the library exercise, so the same exercise performed
+    // twice in one workout stays two distinct blocks.
     val workoutExerciseId: Long = 0,
     val exerciseOrder: Int = 0,
-    // Superset di appartenenza: serve al riepilogo per colorare i giri come in allenamento.
+    // Superset group: the summary uses it to colour the rounds as the workout screen does.
     val supersetGroup: Int? = null,
-    // Nome della routine da cui e' partita la sessione: null per un allenamento libero.
+    // Name of the routine the session started from; null for a free workout.
     val routineName: String? = null,
     val exerciseId: Long,
     @Embedded val exerciseName: ExerciseName,
@@ -84,7 +84,7 @@ interface StatsDao {
     )
     fun observeCompletedSetsForSession(sessionId: Long): Flow<List<CompletedSetRow>>
 
-    /** Storico di un solo esercizio: alimenta il grafico di progressione nella sua scheda. */
+    /** History of a single exercise, feeding the progression chart on its detail screen. */
     @Query(
         """
         SELECT ws.id AS sessionId, ws.startTime AS sessionStart, ws.endTime AS sessionEnd,

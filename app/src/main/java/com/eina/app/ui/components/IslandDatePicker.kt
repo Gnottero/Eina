@@ -40,12 +40,12 @@ import java.time.format.TextStyle
 import java.util.Locale
 
 /**
- * Calendario island: griglia di giorni tondi su superficie bianca, senza la cornice Material.
- * Il giorno scelto e' un cerchio pieno d'accento, oggi ha solo il contorno, i giorni fuori dal
- * limite (di norma il futuro) restano spenti e non si toccano.
+ * Island calendar: a grid of round days on a white surface, without the Material frame. The chosen
+ * day is a filled accent circle, today only gets an outline, and days out of range (normally the
+ * future) stay disabled.
  *
- * La settimana parte dal primo giorno della lingua attiva (lunedi' in Italia, domenica negli
- * Stati Uniti) e i nomi di mese e giorno arrivano da java.time con lo stesso Locale.
+ * The week starts on the first day of the active language, and month and day names come from
+ * java.time with the same Locale.
  */
 @Composable
 fun IslandCalendar(
@@ -104,7 +104,7 @@ fun IslandCalendar(
             }
         }
 
-        // Griglia fissa a 6 righe: cambiando mese le celle non ballano in verticale.
+        // Fixed six-row grid, so cells do not jump vertically when the month changes.
         val leading = leadingBlanks(month, firstDayOfWeek)
         val length = month.lengthOfMonth()
         Column(verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {

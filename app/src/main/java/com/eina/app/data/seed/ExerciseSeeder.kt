@@ -8,19 +8,16 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 /**
- * Allinea la libreria esercizi al catalogo curato in
- * app/src/main/assets/seed/exercises.json.
+ * Aligns the exercise library with the curated catalog in app/src/main/assets/seed/exercises.json.
  *
- * Non e' piu' un semplice "seed se vuoto": il catalogo e' passato dai 873 esercizi grezzi
- * di free-exercise-db a un sottoinsieme curato e tradotto, quindi chi aveva gia' l'app
- * installata va riallineato. La sincronizzazione avviene per nome:
- *   - i nomi nuovi si inseriscono,
- *   - quelli gia' presenti si aggiornano (descrizioni tradotte comprese),
- *   - quelli spariti dal catalogo si eliminano solo se non usati da routine o allenamenti.
- * Gli esercizi custom dell'utente non vengono mai toccati.
+ * More than a "seed if empty": the catalog evolves between releases, so existing installs must be
+ * realigned. Synchronisation happens by name:
+ *   - new names are inserted,
+ *   - existing ones are updated, translations included,
+ *   - names dropped from the catalog are deleted only if no routine or workout uses them.
+ * Custom exercises are never touched.
  *
- * Il lavoro si ripete solo quando cambia CATALOG_VERSION: a regime l'avvio non legge
- * nemmeno il JSON.
+ * The work runs only when CATALOG_VERSION changes; otherwise startup does not even read the JSON.
  */
 class ExerciseSeeder(
     private val context: Context,
@@ -41,13 +38,13 @@ class ExerciseSeeder(
         val (toUpdate, toInsert) = catalog.partition { it.name in existing }
 
         exerciseDao.insertAll(toInsert)
-        // copy(id = ...) e non insert-replace: sostituire la riga cambierebbe l'id e
-        // scollegherebbe routine e storico che puntano a quell'esercizio.
+        // copy(id = ...) instead of insert-replace: replacing the row would change the id and
+        // detach the routines and history pointing at that exercise.
         exerciseDao.updateAll(toUpdate.map { it.copy(id = existing.getValue(it.name).id) })
 
         val obsolete = existing.keys - catalog.map { it.name }.toSet()
         if (obsolete.isNotEmpty()) {
-            // SQLite ha un tetto ai parametri di una query: si cancella a blocchi.
+            // SQLite caps the parameters of a query, so deletion happens in chunks.
             obsolete.chunked(400).forEach { exerciseDao.deleteUnusedLibraryExercises(it) }
         }
 
@@ -61,12 +58,12 @@ class ExerciseSeeder(
         description = getString("description"),
         descriptionIt = optNullableString("descriptionIt"),
         descriptionFr = optNullableString("descriptionFr"),
-        // Vuota di proposito: per la libreria la spiegazione la fa weightType, tradotta
-        // in strings.xml. Vedi ExerciseEntity.loggingInstructions.
+        // Deliberately empty: for library exercises the wording comes from weightType via
+        // strings.xml. See ExerciseEntity.loggingInstructions.
         loggingInstructions = "",
         weightType = WeightType.valueOf(getString("weightType")),
-        // Assente per gli esercizi con un carico esterno: li' il peso corporeo non entra
-        // nel volume e il campo non viene guardato.
+        // Absent for exercises with an external load, where bodyweight does not enter the volume
+        // and the field is ignored.
         bodyweightFactor = optDouble("bodyweightFactor", 1.0),
         muscleGroupsPrimary = getJSONArray("muscleGroupsPrimary").toStringList(),
         muscleGroupsSecondary = getJSONArray("muscleGroupsSecondary").toStringList(),
@@ -77,14 +74,14 @@ class ExerciseSeeder(
     )
 
     /**
-     * Immagine bundlata dell'esercizio, o null se per quel movimento non c'e' niente in assets.
-     * Il catalogo cita i JPG originali di free-exercise-db ("Squat/0.jpg"); in assets, nella
-     * cartella con lo stesso nome, ci puo' essere:
-     *   - `anim.webp`: l'animazione anatomica coi muscoli lavorati colorati
-     *     (tools/fetch_exercise_gifs.py), che si preferisce sempre;
-     *   - `0.webp` / `1.webp`: i due fotogrammi fotografici (tools/fetch_exercise_media.py),
-     *     rimasti solo dove non esiste un'animazione adatta.
-     * Il secondo fotogramma lo ricava la UI per convenzione (ui/components/ExerciseAnimation.kt).
+     * Bundled image of the exercise, or null when the assets hold nothing for that movement.
+     * The catalog references the original free-exercise-db JPGs ("Squat/0.jpg"); the folder of the
+     * same name in assets may contain:
+     *   - `anim.webp`: the anatomical animation with the worked muscles coloured
+     *     (tools/fetch_exercise_gifs.py), always preferred;
+     *   - `0.webp` / `1.webp`: the two photographic frames (tools/fetch_exercise_media.py), left
+     *     only where no suitable animation exists.
+     * The UI derives the second frame by convention (ui/components/ExerciseAnimation.kt).
      */
     private fun bundledMediaUri(catalogPath: String?): String? {
         val path = catalogPath?.takeIf { it.isNotBlank() } ?: return null
@@ -96,7 +93,7 @@ class ExerciseSeeder(
         return "file:///android_asset/$assetPath"
     }
 
-    /** Elenco dei WebP presenti in assets/media: una lettura sola, poi si controlla in memoria. */
+    /** WebP files present in assets/media: listed once, then checked in memory. */
     private val bundledMedia: Set<String> by lazy {
         val folders = context.assets.list("media")?.toList().orEmpty()
         folders.flatMap { folder ->
@@ -114,7 +111,7 @@ class ExerciseSeeder(
         private const val PREFS_NAME = "eina_seed"
         private const val KEY_CATALOG_VERSION = "catalog_version"
 
-        /** Da alzare a ogni rigenerazione di exercises.json che cambia i contenuti. */
+        /** Bump on every regeneration of exercises.json that changes its content. */
         private const val CATALOG_VERSION = 8
     }
 }

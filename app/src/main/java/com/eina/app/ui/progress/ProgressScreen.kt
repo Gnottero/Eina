@@ -85,9 +85,9 @@ fun ProgressScreen(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(Spacing.md)
         ) {
-            // Volume e serie di tutto lo storico, non del giorno scelto: la settimana la
-            // raccontano gia' il grafico e la heatmap qui sotto, e due riquadri che si
-            // svuotavano a ogni giorno di riposo dicevano poco.
+            // Volume and sets over the whole history, not the selected day: the week is already
+            // told by the chart and heatmap below, and tiles emptying on every rest day said
+            // little.
             StatTile(
                 label = stringResource(R.string.stat_volume),
                 value = formatVolume(state.totalVolumeKg),
@@ -145,8 +145,8 @@ fun ProgressScreen(
             )
         } else {
             state.personalRecords.take(8).forEach { record ->
-                // Il record porta alla scheda dell'esercizio, dove c'e' il grafico della sua
-                // progressione: e' la domanda che viene subito dopo "quanto ho alzato".
+                // A record leads to the exercise detail and its progression chart, the question
+                // that follows "how much did I lift".
                 PrRow(record = record, onClick = { onExerciseClick(record.exerciseId) })
             }
         }

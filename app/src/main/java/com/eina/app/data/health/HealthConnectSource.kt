@@ -17,20 +17,17 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 /**
- * Quel che l'orologio ha misurato durante l'allenamento, letto da Health Connect.
+ * What the watch measured during the workout, read from Health Connect.
  *
- * Eina non parla con lo smartwatch: parla con il magazzino dove l'app dell'orologio (Galaxy Wear,
- * Fitbit, Zepp, Health Connect di Google…) deposita i suoi dati. Cosi' funziona con qualunque
- * orologio senza scrivere un'app companion, e resta local-first — nessuna rete, nessun account:
- * i dati sono gia' sul telefono e l'app li legge in sola lettura, sulla sola finestra
- * dell'allenamento.
+ * The app does not talk to the watch but to the store its companion app (Galaxy Wear, Fitbit,
+ * Zepp, Google Health Connect…) writes to. That works with any brand without a companion app and
+ * stays local-first: read-only access, restricted to the workout window.
  *
- * Se Health Connect non c'e' (telefono vecchio, provider non installato) o il permesso non e'
- * stato dato, ogni lettura torna null e l'app va avanti come prima.
+ * If Health Connect is missing or the permission was not granted, every read returns null.
  */
 class HealthConnectSource(private val context: Context) {
 
-    /** Permessi richiesti: battiti piu' le due forme di calorie, perche' non tutti scrivono le attive. */
+    /** Heart rate plus both calorie records: not every provider writes the active ones. */
     val permissions: Set<String> = setOf(
         HealthPermission.getReadPermission(HeartRateRecord::class),
         HealthPermission.getReadPermission(ActiveCaloriesBurnedRecord::class),
@@ -43,15 +40,14 @@ class HealthConnectSource(private val context: Context) {
     private val client: HealthConnectClient?
         get() = if (isAvailable) runCatching { HealthConnectClient.getOrCreate(context) }.getOrNull() else null
 
-    /** Vero solo se ci sono tutti e tre: con un permesso a meta' la lettura sarebbe monca. */
+    /** True only with all three permissions: a partial grant yields incomplete readings. */
     suspend fun hasPermissions(): Boolean = withContext(Dispatchers.IO) {
         hasPermissions(client)
     }
 
     /**
-     * Stessa domanda, ma con il client gia' in mano. Il getter [client] ricontrolla lo stato
-     * dell'SDK e richiama `getOrCreate` a ogni accesso: chi il client ce l'ha lo passa invece di
-     * farselo ricreare.
+     * Same check with the client already at hand: the [client] getter re-checks the SDK status and
+     * calls `getOrCreate` on every access.
      */
     private suspend fun hasPermissions(healthClient: HealthConnectClient?): Boolean {
         val granted = runCatching {
@@ -61,53 +57,41 @@ class HealthConnectSource(private val context: Context) {
     }
 
     /**
-     * Battiti e calorie fra [start] ed [end]. Ritorna null se non c'e' niente da leggere: nessun
-     * provider, nessun permesso, o semplicemente un allenamento fatto senza orologio al polso.
-     *
-     * Le calorie attive hanno la precedenza sulle totali: quelle totali comprendono il metabolismo
-     * basale, e sommarlo direbbe che si bruciano calorie stando fermi — vero, ma non e'
-     * l'allenamento.
+     * Heart rate and calories between [start] and [end]. Returns null when there is nothing to
+     * read: no provider, no permission, or a workout done without a watch.
      */
     suspend fun readWorkoutVitals(start: Long, end: Long): WorkoutVitals? = withContext(Dispatchers.IO) {
         if (end <= start) return@withContext null
         val healthClient = client ?: return@withContext null
         if (!hasPermissions(healthClient)) return@withContext null
 
-        // Prima di leggere si guarda *dove* stanno i dati. L'app dell'orologio dovrebbe
-        // depositarli con l'ora in cui li ha misurati, ma non tutte lo fanno: Mi Fitness, per
-        // dire, li stampiglia piu' avanti (sul telefono di prova un allenamento delle 08:00
-        // compariva in Health Connect alle 09:30, stessi battiti e stesse calorie). Chiedendo
-        // la finestra esatta si trovava il vuoto. [detectOffset] misura lo scarto e sposta la
-        // finestra di conseguenza; se i dati sono al loro posto lo scarto e' zero e non cambia
-        // niente.
+        // Some companion apps timestamp their records wrong: Mi Fitness writes them 90 minutes
+        // ahead (a 08:00 workout showed up at 09:30 with identical values), so the exact window
+        // finds nothing. [detectOffset] measures the shift; when data sits where it should, the
+        // offset is zero and nothing changes.
         val (offset, coverage) = detectOffset(healthClient, start, end)
         val shiftedStart = start + offset
         val shiftedEnd = end + offset
 
-        // La finestra dell'allenamento, quella vera: e' la stessa su cui Health Connect calcola
-        // i suoi numeri se gli si chiede lo stesso intervallo, quindi e' l'unica che rende media,
-        // massimo, calorie e spezzata confrontabili con quel che si legge nell'app di sistema.
+        // The real workout window: the same one Health Connect aggregates over, so average, max,
+        // calories and chart stay comparable with what the system app shows.
         val exactWindow = TimeRangeFilter.between(
             Instant.ofEpochMilli(shiftedStart),
             Instant.ofEpochMilli(shiftedEnd)
         )
-        // Ripiego coi soliti quindici minuti di margine, usato solo se dentro la finestra esatta
-        // non c'e' nemmeno un battito: i blocchi di una bracciale sono allineati alla mezz'ora e
-        // un allenamento corto puo' cadere fra due misurazioni. Allargare sempre, come si faceva
-        // prima, voleva dire mettere nella media mezz'ora che l'allenamento non contiene — ed e'
-        // proprio quello che faceva divergere il numero da Health Connect.
+        // Fallback with fifteen minutes of padding, used only when the exact window holds no
+        // sample at all: bands align their blocks to the half hour and a short workout can fall
+        // between two measurements. Always padding would fold into the average half an hour the
+        // workout does not contain.
         val paddedWindow = TimeRangeFilter.between(
             Instant.ofEpochMilli(shiftedStart - WINDOW_PADDING_MS),
             Instant.ofEpochMilli(shiftedEnd + WINDOW_PADDING_MS)
         )
 
-        // I numeri vengono dall'aggregazione, non dalla somma dei record letti a mano. Health
-        // Connect, aggregando, fa due cose che leggendo i record non si hanno: taglia i record
-        // a cavallo della finestra (le calorie sono spesso un blocco lungo, a volte dell'intera
-        // giornata) e soprattutto **deduplica per priorita' delle app**. Con l'orologio e il
-        // telefono che scrivono entrambi le calorie, sommare i record contava due volte lo
-        // stesso sforzo. Anche la media dei battiti era una media aritmetica dei campioni,
-        // quindi pesata su quanto fitto campiona ogni sorgente invece che sul tempo.
+        // Numbers come from aggregation, not from summing records by hand: aggregation clips
+        // records straddling the window (calorie records often span a whole day) and deduplicates
+        // by app priority, so a watch and a phone both writing calories are not counted twice.
+        // Averaging samples by hand would also weight the result by sampling density, not by time.
         suspend fun aggregateHeart(range: TimeRangeFilter) = runCatching {
             healthClient.aggregate(
                 AggregateRequest(
@@ -117,9 +101,8 @@ class HealthConnectSource(private val context: Context) {
             )
         }.getOrNull()
 
-        // Prima la finestra esatta; il margine si apre solo se li' dentro non c'e' niente, e in
-        // quel caso lo usano anche i campioni della spezzata, cosi' numeri e grafico raccontano
-        // sempre lo stesso intervallo.
+        // Exact window first; padding only if it is empty, and then the chart samples use it too,
+        // so numbers and graph always describe the same interval.
         val exactHeart = aggregateHeart(exactWindow)
         val usesPadding = exactHeart?.get(HeartRateRecord.BPM_AVG) == null
         val heartAggregate = if (usesPadding) aggregateHeart(paddedWindow) else exactHeart
@@ -140,24 +123,20 @@ class HealthConnectSource(private val context: Context) {
 
         val avgBpm = heartAggregate?.get(HeartRateRecord.BPM_AVG)?.toInt()
         val maxBpm = heartAggregate?.get(HeartRateRecord.BPM_MAX)?.toInt()
-        // Le attive hanno la precedenza sulle totali: quelle totali comprendono il metabolismo
-        // basale, e contarlo direbbe che l'allenamento ha bruciato anche lo stare fermi.
+        // Active calories win over total ones, which include basal metabolism and would credit
+        // the workout with calories burned at rest.
         val activeKcal = energyAggregate?.get(ActiveCaloriesBurnedRecord.ACTIVE_CALORIES_TOTAL)?.inKilocalories
         val rawKcal = activeKcal?.takeIf { it > 0.0 }
             ?: energyAggregate?.get(TotalCaloriesBurnedRecord.ENERGY_TOTAL)?.inKilocalories
 
-        // Le calorie si sommano, quindi un orologio che ha misurato solo un pezzo di
-        // allenamento produce un numero vero ma monco — e un numero monco, letto nel
-        // riepilogo, e' un numero sbagliato: novanta minuti di palestra che dicono "2 kcal"
-        // perche' la finestra sfiorava di un minuto l'ultimo blocco di dati. Sotto meta'
-        // allenamento coperto si preferisce non dire niente. La copertura arriva gia' misurata da
-        // [detectOffset], che per scegliere lo scarto ha dovuto leggere gli stessi intervalli:
-        // rileggerli qui era un secondo giro su Health Connect per ricalcolare lo stesso numero.
+        // Calories are a sum, so a watch that measured only part of the workout yields a true but
+        // truncated number — ninety minutes of training reported as "2 kcal" because the window
+        // grazed the last data block. Below half coverage nothing is shown. The coverage comes
+        // already measured from [detectOffset], which had to read the same intervals.
         val kcal = rawKcal?.takeIf { coverage >= MIN_COVERAGE }
 
-        // La spezzata invece vuole i singoli campioni, che l'aggregazione non da'. Si tiene una
-        // sola sorgente — quella che ha campionato piu' fitto, cioe' l'orologio — altrimenti
-        // due provider disegnano due tracce sovrapposte sullo stesso grafico.
+        // The chart needs single samples, which aggregation does not provide. Only one source is
+        // kept — the densest one, i.e. the watch — otherwise two providers draw overlapping lines.
         val byOrigin = runCatching {
             healthClient.readRecords(ReadRecordsRequest(HeartRateRecord::class, timeRangeFilter = heartWindow))
                 .records
@@ -167,8 +146,7 @@ class HealthConnectSource(private val context: Context) {
                         .flatMap { record -> record.samples }
                         .map { HeartRateSample(it.time.toEpochMilli(), it.beatsPerMinute.toInt()) }
                         .sortedBy { it.timeMillis }
-                        // Blocchi diversi della stessa sorgente si sovrappongono agli estremi e
-                        // ripetono lo stesso battito: sulla spezzata era un punto disegnato due volte.
+                        // Blocks of the same source overlap at their edges and repeat samples.
                         .distinctBy { it.timeMillis }
                 }
         }.getOrDefault(emptyMap())
@@ -176,14 +154,12 @@ class HealthConnectSource(private val context: Context) {
         val inWindow = byOrigin.mapValues { (_, samples) ->
             samples.filter { it.timeMillis in heartFrom..heartTo }
         }
-        // I campioni tornano all'ora dell'allenamento: la spezzata sta sotto le sue ore, non
-        // sotto quelle in cui l'app dell'orologio ha creduto di trovarsi.
+        // Samples are moved back to the workout clock, not the one the companion app used.
         val samples = inWindow.values.maxByOrNull { it.size }.orEmpty()
             .map { if (offset == 0L) it else it.copy(timeMillis = it.timeMillis - offset) }
 
-        // Due battiti in croce non fanno una media: con un orologio che campiona al minuto
-        // sono due minuti di allenamento, e il numero grande in pagina direbbe piu' di quel
-        // che sa.
+        // A couple of samples do not make an average: on a watch sampling once a minute that is
+        // two minutes of workout.
         val hasHeartRate = samples.size >= MIN_HR_SAMPLES
         if (!hasHeartRate && kcal == null) return@withContext null
         WorkoutVitals(
@@ -195,21 +171,17 @@ class HealthConnectSource(private val context: Context) {
     }
 
     /**
-     * Di quanto sono spostati i dati dell'orologio rispetto all'orologio del telefono.
+     * How far the watch data is shifted from the phone clock.
      *
-     * Zero quando i dati stanno dove dovrebbero, ed e' il caso normale: si prova prima la
-     * finestra esatta e se e' coperta si esce subito. Altrimenti si guarda in un giorno intorno
-     * all'allenamento, si prendono i blocchi di dati che l'orologio ha depositato e si prova ad
-     * allineare l'inizio di ognuno con l'inizio dell'allenamento. Lo scarto candidato si
-     * arrotonda al quarto d'ora — tutti i fusi del mondo sono multipli di quindici minuti, e
-     * arrotondare evita di rincorrere il secondo esatto in cui la bracciale ha aperto il blocco.
-     * Vince lo scarto che copre di piu' l'allenamento, a parita' il piu' piccolo; se nemmeno il
-     * migliore copre mezzo allenamento si torna a zero, cioe' "niente dati" invece di prendere
-     * la camminata di un'altra ora.
+     * Zero in the normal case: the exact window is tried first and, if covered, returned at once.
+     * Otherwise the search widens to a day around the workout, and each data block start is
+     * aligned with the workout start. The candidate offset is rounded to the quarter hour — every
+     * time zone is a multiple of fifteen minutes — and the offset covering most of the workout
+     * wins, the smallest one on a tie. If not even the best covers half the workout the offset
+     * stays zero, i.e. no data rather than someone's walk from another hour.
      *
-     * Torna anche la copertura raggiunta con lo scarto scelto: e' lo stesso numero che decide se
-     * le calorie valgono qualcosa, e misurarlo di nuovo dopo vorrebbe dire rileggere gli stessi
-     * intervalli da Health Connect.
+     * Also returns the coverage reached with the chosen offset, the same figure that decides
+     * whether the calories are worth showing.
      */
     private suspend fun detectOffset(client: HealthConnectClient, start: Long, end: Long): DataOffset {
         val exact = runCatching {
@@ -244,15 +216,15 @@ class HealthConnectSource(private val context: Context) {
                 bestCoverage = coverage
             }
         }
-        // Sotto la soglia si resta fermi: lo scarto e' zero, e la copertura da riportare torna a
-        // essere quella della finestra vera, non quella dello scarto scartato.
+        // Below the threshold nothing moves: offset zero, and the reported coverage is the one of
+        // the real window, not of the rejected offset.
         return if (bestCoverage >= MIN_COVERAGE) DataOffset(best, bestCoverage) else DataOffset(0L, exact)
     }
 
     /**
-     * Gli intervalli su cui l'orologio ha scritto calorie: sono la traccia di quando stava
-     * misurando, e servono sia a capire quanto ha coperto l'allenamento sia a ritrovare i dati
-     * quando sono stampigliati altrove. Le totali fanno da riserva a chi non scrive le attive.
+     * Intervals the watch wrote calories over: they trace when it was measuring, and serve both to
+     * compute coverage and to locate data stamped elsewhere. Total calories are the fallback for
+     * providers that do not write active ones.
      */
     private suspend fun readEnergyIntervals(
         client: HealthConnectClient,
@@ -270,27 +242,27 @@ class HealthConnectSource(private val context: Context) {
 }
 
 /**
- * Dove stanno i dati dell'orologio rispetto all'allenamento, e quanto ne coprono: [offset] e' lo
- * scarto da applicare alla finestra, [coverage] la quota di allenamento misurata con quello scarto.
+ * Where the watch data sits relative to the workout: [offset] is the shift to apply to the window,
+ * [coverage] the share of the workout measured with that shift.
  */
 private data class DataOffset(val offset: Long, val coverage: Double)
 
-/** Margine con cui si allarga la finestra dei battiti: vedi [HealthConnectSource.readWorkoutVitals]. */
+/** Padding applied to the heart rate window; see [HealthConnectSource.readWorkoutVitals]. */
 private const val WINDOW_PADDING_MS = 15 * 60 * 1000L
 
-/** Passo con cui si arrotonda lo scarto dei dati dell'orologio: vedi detectOffset. */
+/** Rounding step for the detected data offset; see detectOffset. */
 private const val QUARTER_HOUR_MS = 15 * 60 * 1000L
 
-/** Quanto lontano si cercano i dati quando nella finestra dell'allenamento non ce n'e'. */
+/** How far to look for data when the workout window holds none. */
 private const val MAX_OFFSET_MS = 24 * 60 * 60 * 1000L
 
-/** Quanto dell'allenamento l'orologio deve aver misurato perche' le calorie valgano qualcosa. */
+/** Share of the workout the watch must have measured for the calories to be meaningful. */
 private const val MIN_COVERAGE = 0.5
 
-/** Battiti minimi perche' media e massimo abbiano un senso. */
+/** Minimum samples for average and maximum to mean anything. */
 private const val MIN_HR_SAMPLES = 3
 
-/** Quota della finestra coperta dagli intervalli, contando una volta sola le sovrapposizioni. */
+/** Share of the window covered by the intervals, counting overlaps once. */
 private fun coveredShare(intervals: List<Pair<Long, Long>>, start: Long, end: Long): Double {
     val window = (end - start).toDouble()
     if (window <= 0.0) return 0.0
@@ -310,7 +282,7 @@ private fun coveredShare(intervals: List<Pair<Long, Long>>, start: Long, end: Lo
     return covered / window
 }
 
-/** Dati dell'orologio per una sessione: gia' ridotti a quel che il riepilogo mostra. */
+/** Watch data for a session, already reduced to what the summary shows. */
 data class WorkoutVitals(
     val samples: List<HeartRateSample>,
     val avgBpm: Int?,

@@ -45,7 +45,7 @@ class PrRecalculatorTest {
 
     @Test
     fun `abbassare il carico di una serie passata sposta il record`() {
-        // La serie 2 aveva il record; corretta a 65 kg, il massimo torna alla 3.
+        // Set 2 held the record; corrected to 65 kg, the maximum goes back to set 3.
         val sets = listOf(
             set(1, 60.0, 1_000, isPR = true),
             set(2, 65.0, 2_000, isPR = true),
@@ -67,7 +67,7 @@ class PrRecalculatorTest {
         val changed = recomputePrFlags(WeightType.FREE_WEIGHT, sets).associateBy { it.id }
 
         assertEquals(false, changed.getValue(1L).isPR)
-        // Il carico del riscaldamento non conta nel confronto: 80 kg resta un record.
+        // The warmup load stays out of the comparison: 80 kg is still a record.
         assertEquals(true, changed.getValue(2L).isPR)
     }
 

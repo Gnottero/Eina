@@ -6,11 +6,10 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 
 /**
- * Serie pianificata di un esercizio in una routine.
+ * Planned set of an exercise inside a routine.
  *
- * Fino alla Fase 25 la scheda diceva solo "3 serie da 10": un numero e basta, uguale per tutte.
- * Cosi' non si poteva scrivere un riscaldamento seguito da due serie a cedimento, che e' come le
- * schede sono fatte davvero. Ogni serie e' una riga, col suo tipo, come nell'allenamento.
+ * A plain set count ("3 sets of 10") could not express a warmup followed by two failure sets, which
+ * is how routines are actually written. Each set is a row with its own type, as in a workout.
  */
 @Entity(
     tableName = "routine_sets",
@@ -28,7 +27,7 @@ data class RoutineSetEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val routineExerciseId: Long,
     val setIndex: Int,
-    /** Per gli esercizi a tempo sono secondi, come `actualReps` in sessione. */
+    /** Seconds for timed exercises, as `actualReps` is in a session. */
     val targetReps: Int? = null,
     val targetWeight: Double? = null,
     val setType: SetType = SetType.NORMAL

@@ -30,8 +30,8 @@ import com.eina.app.ui.theme.PillShape
 import com.eina.app.ui.theme.Spacing
 
 /**
- * Timer di recupero come isola flottante sopra il contenuto: conto alla rovescia grande,
- * barra di avanzamento e controlli -15s / +15s / salta.
+ * Rest timer as an island floating above the content: large countdown, progress bar and the
+ * -15s / +15s / skip controls.
  */
 @Composable
 fun BottomTimerBar(

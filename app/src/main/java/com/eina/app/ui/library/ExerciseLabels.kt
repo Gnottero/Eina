@@ -11,13 +11,12 @@ import com.eina.app.data.db.exerciseName
 import java.util.Locale
 
 /**
- * Testi degli esercizi nella lingua attiva.
+ * Exercise labels in the active language.
  *
- * Il dataset arriva in inglese e resta in inglese nel database: muscoli e attrezzatura sono
- * chiavi ("chest", "barbell"), non etichette da mostrare. La traduzione avviene qui, al
- * momento di disegnare, cosi' cambiare lingua non richiede di riscrivere la libreria.
- * Una chiave sconosciuta (per esempio un esercizio custom con attrezzatura scritta a mano)
- * viene mostrata com'e' invece di sparire.
+ * The dataset arrives in English and stays English in the database: muscles and equipment are keys
+ * ("chest", "barbell"), not display labels. Translation happens here, at draw time, so switching
+ * language does not require rewriting the library. An unknown key — a custom exercise with
+ * hand-written equipment, say — is shown as is rather than dropped.
  */
 
 fun WeightType.labelRes(): Int = when (this) {
@@ -33,7 +32,7 @@ fun WeightType.labelRes(): Int = when (this) {
 @Composable
 fun WeightType.label(): String = LocalContext.current.getString(labelRes())
 
-/** Spiegazione di cosa scrivere nel campo peso: dipende solo dal tipo di carico. */
+/** What to type in the weight field; depends only on the weight type. */
 fun WeightType.loggingInstructionsRes(): Int = when (this) {
     WeightType.FREE_WEIGHT -> R.string.logging_free_weight
     WeightType.BODYWEIGHT -> R.string.logging_bodyweight
@@ -62,8 +61,8 @@ private val muscleLabels: Map<String, Int> = mapOf(
     "glutes" to R.string.muscle_glutes,
     "adductors" to R.string.muscle_adductors,
     "abductors" to R.string.muscle_abductors,
-    // Non e' un muscolo del dataset: e' la chiave dell'esercizio che non ne lavora nessuno di
-    // quelli elencati. Vedi MuscleGroupCategory.OTHER.
+    // Not a dataset muscle: the key of an exercise working none of the listed groups.
+    // See MuscleGroupCategory.OTHER.
     "other" to R.string.muscle_category_other
 )
 
@@ -94,11 +93,11 @@ fun Context.equipmentLabel(equipment: String): String =
 @Composable
 fun equipmentLabel(equipment: String): String = LocalContext.current.equipmentLabel(equipment)
 
-/** Locale con cui la UI sta disegnando: cambia con la lingua scelta in Impostazioni. */
+/** Locale the UI is drawing with; follows the language chosen in Settings. */
 @Composable
 fun currentLocale(): Locale = LocalContext.current.resources.configuration.locales[0]
 
-/** Nome dell'esercizio nella lingua attiva, con l'inglese come fallback. */
+/** Exercise name in the active language, falling back to English. */
 @Composable
 fun ExerciseName.localized(): String = localized(currentLocale())
 
@@ -106,8 +105,8 @@ fun ExerciseName.localized(): String = localized(currentLocale())
 fun ExerciseEntity.localizedName(): String = exerciseName().localized(currentLocale())
 
 /**
- * Descrizione nella lingua attiva, con l'inglese come rete di sicurezza: il catalogo e'
- * tradotto ma un esercizio custom, o uno tradotto solo a meta', non deve restare muto.
+ * Description in the active language, with English as a safety net: the catalog is translated, but
+ * a custom or half-translated exercise must not end up blank.
  */
 fun ExerciseEntity.localizedDescription(locale: Locale): String = when (locale.language) {
     "it" -> descriptionIt
@@ -119,8 +118,8 @@ fun ExerciseEntity.localizedDescription(locale: Locale): String = when (locale.l
 fun ExerciseEntity.localizedDescription(): String = localizedDescription(currentLocale())
 
 /**
- * Come registrare l'esercizio: la nota scritta a mano su un esercizio custom vince, gli
- * altri usano la spiegazione standard del loro tipo di carico.
+ * How to log the exercise: a hand-written note on a custom exercise wins, everything else uses the
+ * standard wording of its weight type.
  */
 @Composable
 fun ExerciseEntity.localizedLoggingInstructions(): String =

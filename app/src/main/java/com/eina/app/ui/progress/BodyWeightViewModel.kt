@@ -24,7 +24,7 @@ class BodyWeightViewModel(private val repository: StatsRepository) : ViewModel()
             BodyWeightUiState(
                 metrics = metrics,
                 latestKg = metrics.firstOrNull()?.bodyweightKg,
-                // Delta rispetto alla misura precedente: il segno dice la direzione, non un giudizio.
+                // Delta against the previous measurement: the sign shows direction, not judgement.
                 deltaKg = if (metrics.size >= 2) {
                     metrics[0].bodyweightKg - metrics[1].bodyweightKg
                 } else {

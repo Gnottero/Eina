@@ -39,14 +39,12 @@ import com.eina.app.ui.theme.PillShape
 import com.eina.app.ui.theme.Spacing
 
 /**
- * Forma dei bottoni nel contesto corrente. In pagina restano pastiglie; dentro un foglio
- * (vedi IslandBottomSheet) diventano squircle a raggio piccolo, che e' la forma dei bottoni
- * larghi di un foglio di sistema — una pastiglia alta 52dp larga tutto lo schermo si legge
- * come un'etichetta, non come un tasto.
+ * Button shape for the current context: pills on a page, small-radius squircles inside a sheet
+ * (see IslandBottomSheet), where a full-width 52dp pill reads as a label rather than a button.
  */
 val LocalButtonShape = compositionLocalOf<Shape> { PillShape }
 
-/** Azione primaria: piena accento, pill in pagina e squircle nei fogli. */
+/** Primary action: accent filled, pill on a page and squircle inside a sheet. */
 @Composable
 fun IslandButton(
     text: String,
@@ -60,8 +58,8 @@ fun IslandButton(
 ) {
     val hapticTap = LocalHapticTap.current
     val accent = MaterialTheme.colorScheme.primary
-    // L'azione primaria porta la rampa e una sua ombra colorata: e' l'unico elemento della
-    // pagina che deve chiamare il tocco, e un arancio piatto non lo faceva.
+    // The primary action carries the ramp and a coloured shadow: it is the one element on the page
+    // meant to attract the tap, and a flat orange did not.
     val ramped = enabled && containerColor == accent
     val fill = EinaTheme.island.accentRamp
     Button(
@@ -99,7 +97,7 @@ fun IslandButton(
             Icon(icon, contentDescription = null, modifier = Modifier.size(18.dp))
             Box(Modifier.size(Spacing.sm))
         }
-        // Niente a capo: nei bottoni affiancati (weight 1f) l'etichetta verrebbe spezzata.
+        // No wrapping: in side-by-side buttons (weight 1f) the label would be broken in two.
         Text(
             text = text,
             style = MaterialTheme.typography.titleMedium,
@@ -110,7 +108,7 @@ fun IslandButton(
     }
 }
 
-/** Azione secondaria: pill incassata, stesso ingombro della primaria. */
+/** Secondary action: sunken pill with the same footprint as the primary one. */
 @Composable
 fun IslandSecondaryButton(
     text: String,
@@ -133,7 +131,7 @@ fun IslandSecondaryButton(
     )
 }
 
-/** Chip filtro a pill: selezionata = tinta della categoria, altrimenti superficie incassata. */
+/** Pill filter chip: filled with the category colour when selected, tinted softly otherwise. */
 @Composable
 fun IslandChip(
     text: String,
@@ -143,9 +141,8 @@ fun IslandChip(
     accentColor: Color = MaterialTheme.colorScheme.primary
 ) {
     val hapticTap = LocalHapticTap.current
-    // Anche da spenta la chip porta il suo colore, tenue: la fila dei gruppi muscolari era una
-    // sequenza di pastiglie grigie tutte uguali, e il colore compariva solo dopo aver scelto.
-    // Selezionata diventa piena, cosi' la differenza fra scelto e non scelto resta netta.
+    // Even unselected the chip keeps its colour, softly: the muscle group row used to be a line of
+    // identical grey pills that only gained colour after a choice.
     Text(
         text = text,
         style = MaterialTheme.typography.labelLarge,
@@ -158,7 +155,7 @@ fun IslandChip(
     )
 }
 
-/** Campo di testo island: nessun bordo, superficie incassata, angoli morbidi. */
+/** Island text field: no border, sunken surface, soft corners. */
 @Composable
 fun IslandTextField(
     value: String,
@@ -170,8 +167,8 @@ fun IslandTextField(
     leadingIcon: ImageVector? = null,
     trailingIcon: @Composable (() -> Unit)? = null,
     readOnly: Boolean = false,
-    // Nei campi di ricerca l'etichetta non deve restare: appena si scrive sparisce e il testo
-    // digitato si prende tutta l'altezza della barra, invece di stringersi sotto l'etichetta.
+    // In search fields the label must not stay: it disappears as soon as text is typed, which then
+    // takes the whole height of the bar instead of squeezing under the label.
     labelAsPlaceholder: Boolean = false
 ) {
     val island = EinaTheme.island
@@ -209,8 +206,8 @@ fun IslandTextField(
 }
 
 /**
- * Campo numerico compatto in stile "tile": etichetta minuscola sopra, valore grande sotto.
- * Usato dove servono molti input piccoli affiancati (serie/reps/peso/recupero).
+ * Compact numeric tile field: tiny label on top, large value below. Used where many small inputs
+ * sit side by side (sets, reps, weight, rest).
  */
 @Composable
 fun IslandNumberField(
@@ -222,7 +219,7 @@ fun IslandNumberField(
 ) {
     val island = EinaTheme.island
     Column(modifier = modifier) {
-        // Etichetta opzionale: in una pila di righe identiche si stampa solo sulla prima.
+        // Optional label: in a stack of identical rows only the first one shows it.
         if (label != null) {
             Text(
                 text = label.uppercase(),
@@ -263,8 +260,7 @@ fun IslandNumberField(
 }
 
 /**
- * Selettore orizzontale a "giorni" (vedi reference Activity): elemento attivo = isola bianca
- * flottante sopra la traccia incassata.
+ * Horizontal day selector: the active item is a white island floating above the sunken track.
  */
 @Composable
 fun IslandSegmentedRow(

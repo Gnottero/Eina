@@ -21,8 +21,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 data class CreateExerciseUiState(
-    // Fase 32: lo stesso form crea e corregge. Non nullo = si sta modificando un esercizio
-    // custom che esiste gia', e il salvataggio riscrive quella riga invece di aggiungerne una.
+    // The same form creates and edits: when non-null an existing custom exercise is being edited,
+    // and saving rewrites that row instead of adding one.
     val exerciseId: Long? = null,
     val name: String = "",
     val description: String = "",
@@ -45,12 +45,12 @@ class CreateExerciseViewModel(
     private val _uiState = MutableStateFlow(CreateExerciseUiState())
     val uiState: StateFlow<CreateExerciseUiState> = _uiState
 
-    /** Colonne dell'esercizio che il form non mostra e che la modifica non deve perdere. */
+    /** Exercise columns the form does not show and editing must not lose. */
     private var editing: ExerciseEntity? = null
 
     /**
-     * Carica un esercizio custom nel form. Si chiama una volta sola: rileggerlo a ogni
-     * ricomposizione butterebbe via quello che si sta digitando.
+     * Loads a custom exercise into the form. Called once: re-reading it on every recomposition
+     * would discard what is being typed.
      */
     fun load(exerciseId: Long) {
         if (editing?.id == exerciseId) return
@@ -89,8 +89,8 @@ class CreateExerciseViewModel(
         val copied = copyMediaToInternalStorage(uri)
         _uiState.update {
             if (copied == null) {
-                // La copia puo' fallire su file remoti (Drive offline) o revocati: senza un
-                // messaggio l'utente vedeva solo l'anteprima non comparire.
+                // The copy can fail on remote (offline Drive) or revoked files; without a message
+                // the user would only see the preview never appear.
                 it.copy(mediaError = appContext.getString(R.string.error_media_copy))
             } else {
                 it.copy(mediaUri = copied, mediaError = null)
@@ -98,7 +98,7 @@ class CreateExerciseViewModel(
         }
     }
 
-    /** Nessuna app risponde alla richiesta di immagini: device senza galleria o picker disabilitato. */
+    /** No app answers the image request: device without a gallery, or the picker is disabled. */
     fun onMediaPickerUnavailable() = _uiState.update {
         it.copy(mediaError = appContext.getString(R.string.error_no_gallery))
     }
@@ -119,8 +119,8 @@ class CreateExerciseViewModel(
         val state = _uiState.value
         if (!state.canSave) return
         viewModelScope.launch {
-            // In modifica si parte dalla riga esistente: nomi e descrizioni tradotti e
-            // bodyweightFactor non stanno nel form e resterebbero indietro ricostruendola.
+            // Editing starts from the stored row: translated names and descriptions and the
+            // bodyweight factor are not in the form and would be lost by rebuilding it.
             val base = editing ?: ExerciseEntity(
                 name = "",
                 description = "",

@@ -53,8 +53,7 @@ fun WorkoutScreen(
     val importDone = stringResource(R.string.routine_import_done)
     val importFailed = stringResource(R.string.routine_import_failed)
 
-    // Selettore di sistema: la routine arriva come file, quindi non serve nessun permesso
-    // sullo storage ne' un formato proprietario.
+    // System picker: the routine arrives as a file, so no storage permission is needed.
     val importPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         val json = uri?.let { readRoutineFile(context, it) }
         if (json == null) {
@@ -72,8 +71,6 @@ fun WorkoutScreen(
                 title = stringResource(R.string.workout_title),
                 subtitle = stringResource(R.string.workout_subtitle),
                 trailing = {
-                    // Importare una scheda e' l'altra faccia dell'esportazione: sta accanto al
-                    // "+", perche' e' l'altro modo di farsi entrare una routine in casa.
                     IslandIconButton(
                         icon = Icons.Outlined.FileDownload,
                         contentDescription = stringResource(R.string.routine_import),
@@ -94,8 +91,8 @@ fun WorkoutScreen(
         val active = activeSession
 
         if (active != null) {
-            // Il tempo dell'allenamento scorre anche fuori dalla sua schermata: si misura da
-            // startTime, quindi il banner mostra la durata reale, non un contatore in pausa.
+            // The workout clock runs outside its own screen too: measured from startTime, so the
+            // banner shows the real duration and not a paused counter.
             var now by remember(active.id) { mutableLongStateOf(System.currentTimeMillis()) }
             LaunchedEffect(active.id) {
                 while (true) {
@@ -105,8 +102,8 @@ fun WorkoutScreen(
             }
             val elapsedSeconds = ((now - active.startTime) / 1000).coerceAtLeast(0)
 
-            // Con una sessione aperta l'unica azione possibile e' rientrarci: due allenamenti
-            // in parallelo renderebbero ambiguo dove finiscono le serie registrate.
+            // With a session open the only action is resuming it: two parallel workouts would make
+            // it ambiguous where the recorded sets belong.
             IslandCard(modifier = Modifier.fillMaxWidth()) {
                 Text(stringResource(R.string.workout_in_progress_title), style = MaterialTheme.typography.titleMedium)
                 Text(
@@ -142,7 +139,7 @@ fun WorkoutScreen(
             }
         }
 
-        // Nessuna azione qui: la creazione routine sta solo nel "+" dell'header, un punto solo.
+        // No action here: routine creation lives only in the header "+".
         SectionHeader(title = stringResource(R.string.workout_your_routines))
 
         RoutineListScreen(
@@ -154,7 +151,7 @@ fun WorkoutScreen(
     }
 }
 
-/** Durata dell'allenamento in corso: hh:mm:ss oltre l'ora, mm:ss sotto. */
+/** Duration of the running workout: hh:mm:ss past an hour, mm:ss below. */
 private fun formatElapsed(totalSeconds: Long): String {
     val hours = totalSeconds / 3600
     val minutes = (totalSeconds % 3600) / 60

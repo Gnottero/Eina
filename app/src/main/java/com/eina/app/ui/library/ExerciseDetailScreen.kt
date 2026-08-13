@@ -75,11 +75,11 @@ fun ExerciseDetailScreen(
             }
         }
 
-        // I muscoli lavorati li mostra l'animazione stessa, colorati sulla figura: qui restano
-        // solo le etichette, per chi cerca il nome del gruppo.
+        // The animation already shows the worked muscles coloured on the figure; only the labels
+        // remain here, for whoever wants the group name.
         IslandCard(modifier = Modifier.fillMaxWidth()) {
-            // FlowRow e non Row: esercizi come "Girata (clean)" hanno cinque muscoli secondari
-            // e su una riga sola l'ultimo finiva tagliato fuori dallo schermo.
+            // FlowRow and not Row: exercises like the clean have five secondary muscles, and on a
+            // single line the last one was clipped off screen.
             FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(Spacing.xs),
                 verticalArrangement = Arrangement.spacedBy(Spacing.xs),
@@ -125,12 +125,12 @@ fun ExerciseDetailScreen(
 }
 
 /**
- * Progressione dell'esercizio nel tempo, come per il peso corporeo: una spezzata per grandezza,
- * un punto per allenamento (la serie migliore, vedi [com.eina.app.domain.exerciseProgress]).
+ * Progression of the exercise over time, as for bodyweight: one line per quantity, one point per
+ * workout (the best set, see [com.eina.app.domain.exerciseProgress]).
  *
- * Le due grandezze sono quelle della tabella serie di quell'esercizio: carico e ripetizioni,
- * secondi a tempo, chilometri e minuti a distanza. Dove una delle due non si registra il
- * grafico non compare, invece di disegnare una linea piatta a zero.
+ * The two quantities are the ones its set table records: load and reps, seconds for timed
+ * exercises, kilometres and minutes for distance. Where one is not recorded the chart is omitted
+ * rather than drawing a flat line at zero.
  */
 @Composable
 private fun ProgressionCard(weightType: WeightType, points: List<ProgressPoint>) {

@@ -33,9 +33,9 @@ import com.eina.app.ui.theme.MetricColors
 import com.eina.app.ui.theme.Spacing
 
 /**
- * Card di riepilogo sessione in chiave minimale: una riga di intestazione (giorno, ora, chevron),
- * tre metriche incolonnate con etichetta piccola e numero grande, e gli esercizi su una riga sola.
- * Nessun riquadro interno e nessun divisore marcato: la gerarchia la fanno corpo del testo e spazio.
+ * Minimal session summary card: a header row (name, day, time, chevron), three metric columns with
+ * a small label and a large number, and the exercises on one line. No inner boxes and no heavy
+ * dividers: hierarchy comes from type size and spacing.
  */
 @Composable
 fun SessionSummaryCard(
@@ -59,8 +59,8 @@ fun SessionSummaryCard(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
         ) {
-            // Il titolo e' il nome della routine: dice cosa si e' fatto. Senza routine
-            // (allenamento libero) lo si scrive esplicitamente, non si lascia il vuoto.
+            // The title is the routine name; a free workout says so explicitly rather than showing
+            // an empty slot.
             Text(
                 text = summary.routineName ?: stringResource(R.string.workout_free_name),
                 style = MaterialTheme.typography.titleMedium,
@@ -68,7 +68,6 @@ fun SessionSummaryCard(
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f)
             )
-            // Quando: sul lato destro, in secondo piano rispetto al nome.
             Text(
                 text = "${context.formatRelativeDay(summary.startTime)} · ${formatTime(summary.startTime)}",
                 style = MaterialTheme.typography.bodyMedium,
@@ -116,7 +115,7 @@ fun SessionSummaryCard(
         }
 
         if (summary.exerciseNames.isNotEmpty()) {
-            // Una riga sola: la card e' un'anteprima, l'elenco completo sta nel dettaglio.
+            // One line only: the card is a preview, the full list lives in the detail screen.
             Text(
                 text = summary.exerciseNames.joinToString(" · ") { it.localized(locale) },
                 style = MaterialTheme.typography.bodyMedium,
@@ -128,15 +127,15 @@ fun SessionSummaryCard(
     }
 }
 
-/** Colonna metrica: etichetta piccola sopra, numero grande sotto con l'unita' in coda. */
+/** Metric column: small label on top, large number below with the unit trailing it. */
 @Composable
 private fun SummaryMetric(
     label: String,
     value: String,
     modifier: Modifier = Modifier,
     unit: String? = null,
-    // L'etichetta prende il colore della grandezza, il numero resta nero: colorare anche il
-    // numero avrebbe fatto sembrare tutt'e tre le metriche ugualmente urgenti.
+    // The label takes the metric colour and the number stays black: colouring the number too made
+    // all three metrics look equally urgent.
     tint: Color = MaterialTheme.colorScheme.primary
 ) {
     Column(
@@ -160,7 +159,7 @@ private fun SummaryMetric(
                 Text(
                     text = " $unit",
                     style = MaterialTheme.typography.labelMedium,
-                    // Stesso colore del numero: l'unita' ne fa parte, grigia sembrava spenta.
+                    // Same colour as the number: the unit is part of it and looked dim in grey.
                     color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.padding(bottom = 2.dp)
                 )
@@ -169,7 +168,7 @@ private fun SummaryMetric(
     }
 }
 
-/** Filo verticale fra due metriche: separa senza disegnare riquadri. */
+/** Vertical hairline between two metrics: separation without boxes. */
 @Composable
 private fun MetricDivider() {
     val island = EinaTheme.island

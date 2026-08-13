@@ -12,9 +12,8 @@ import java.io.File
 private const val ROUTINES_DIR = "shared/routines"
 
 /**
- * Scrive la routine in un file di cache e apre il chooser di sistema: da li' finisce su
- * WhatsApp, in una mail o nei file, che e' il modo in cui una scheda passa di mano.
- * Ritorna false se non c'e' nessuna app capace di riceverla.
+ * Writes the routine to a cache file and opens the system chooser, from where it reaches a
+ * messaging app, an email or the file manager. Returns false when no app can receive it.
  */
 fun shareRoutineFile(context: Context, fileName: String, json: String): Boolean {
     val dir = File(context.cacheDir, ROUTINES_DIR).apply {
@@ -43,8 +42,8 @@ fun readRoutineFile(context: Context, uri: Uri): String? = runCatching {
 }.getOrNull()
 
 /**
- * Nome del file di scambio: il nome della routine ripulito dai caratteri che i file system
- * non accettano, cosi' chi riceve capisce cosa sta aprendo.
+ * Exchange file name: the routine name stripped of characters file systems reject, so the
+ * recipient can tell what they are opening.
  */
 fun routineFileName(routineName: String): String =
     routineName.trim()

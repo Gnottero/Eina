@@ -21,16 +21,15 @@ import com.eina.app.ui.theme.EinaTheme
 import org.koin.compose.koinInject
 
 class MainActivity : ComponentActivity() {
-    // La lingua scelta in Impostazioni si applica qui, prima che vengano risolte le risorse.
-    // Cambiarla ricrea l'Activity e ripassa da questo punto.
+    // The language chosen in Settings is applied here, before any resource is resolved. Changing
+    // it recreates the Activity and comes back through this point.
     override fun attachBaseContext(newBase: Context) {
         super.attachBaseContext(AppLocale.wrap(newBase))
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // App solo in light mode: barre di sistema trasparenti con icone scure, anche se
-        // il sistema e' in tema scuro.
+        // Light-only app: transparent system bars with dark icons, even under an OS dark theme.
         enableEdgeToEdge(
             statusBarStyle = SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT),
             navigationBarStyle = SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT)

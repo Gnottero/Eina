@@ -9,24 +9,22 @@ data class WorkoutSessionEntity(
     val routineId: Long? = null,
     val startTime: Long,
     val endTime: Long? = null,
-    // Fase 29 (DB v9, MIGRATION_8_9): quel che l'orologio ha misurato mentre ci si allenava,
-    // letto da Health Connect a fine allenamento. Tutto nullable: senza orologio collegato, o
-    // senza permesso, la sessione resta quella di sempre.
+    // What the watch measured during the workout, read from Health Connect when it ends. All
+    // nullable: without a connected watch, or without the permission, the session is unchanged.
     val avgHeartRateBpm: Int? = null,
     val maxHeartRateBpm: Int? = null,
     val caloriesKcal: Double? = null,
     /**
-     * Battiti nel corso dell'allenamento, per la spezzata del riepilogo: coppie "istante:bpm"
-     * separate da virgola, in una colonna sola.
+     * Heart rate over the workout, for the summary chart: comma-separated "instant:bpm" pairs in a
+     * single column.
      *
-     * DECISIONE: niente tabella dei campioni. Sono dati di sola lettura, si mostrano solo nel
-     * riepilogo di quella sessione e nessuna query li interroga per valore — una tabella con
-     * la sua migrazione non pagherebbe se stessa.
+     * DECISIONE: no samples table. These are read-only data shown in one summary and never queried
+     * by value, so a table and its migration would not pay for themselves.
      */
     val heartRateSamples: String? = null
 )
 
-/** Campioni della frequenza cardiaca, letti dalla colonna compatta. */
+/** Heart rate samples, decoded from the compact column. */
 fun WorkoutSessionEntity.heartRateSeries(): List<HeartRateSample> =
     heartRateSamples?.split(',')
         ?.mapNotNull { chunk ->

@@ -1,6 +1,6 @@
 package com.eina.app.data.db
 
-// Codec JSON minimale per List<String> (no dipendenza esterna: solo array piatto di stringhe).
+// Minimal JSON codec for List<String>: a flat string array, with no external dependency.
 internal fun encodeStringListJson(items: List<String>): String {
     val sb = StringBuilder("[")
     items.forEachIndexed { index, item ->

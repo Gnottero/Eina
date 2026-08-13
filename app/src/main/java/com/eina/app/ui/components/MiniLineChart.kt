@@ -20,8 +20,8 @@ import com.eina.app.ui.theme.EinaTheme
 import com.eina.app.ui.theme.Spacing
 
 /**
- * Spezzata con area sfumata: usata per l'andamento del peso corporeo, dove conta la
- * tendenza e non il valore assoluto. Canvas puro come MiniBarChart.
+ * Line chart with a gradient area, used where the trend matters more than the absolute value.
+ * Pure Canvas, like MiniBarChart.
  */
 @Composable
 fun MiniLineChart(
@@ -49,14 +49,14 @@ fun MiniLineChart(
 
             fun pointAt(index: Int): Offset {
                 val x = if (values.size == 1) size.width / 2f else size.width * index / (values.size - 1)
-                // Valori tutti uguali: la linea sta a mezza altezza. Schiacciata sul fondo, dove
-                // finirebbe normalizzando su uno span inventato, si leggerebbe come uno zero.
+                // All values equal: the line sits at mid height. Flattened at the bottom, where
+                // normalising over an invented span would put it, it would read as a zero.
                 val ratio = if (span > 0f) (values[index] - min) / span else 0.5f
                 val y = padding + usable * (1f - ratio)
                 return Offset(x, y)
             }
 
-            // Linea di base incassata: da' riferimento anche con pochi punti.
+            // Sunken baseline: gives a reference even with few points.
             drawLine(
                 color = trackColor,
                 start = Offset(0f, size.height - padding),

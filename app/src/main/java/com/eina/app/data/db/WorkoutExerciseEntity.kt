@@ -16,14 +16,16 @@ data class WorkoutExerciseEntity(
     val exerciseId: Long,
     val order: Int,
     /**
-     * Recupero dell'esercizio in questa sessione. Sta qui e non solo sulle serie: il recupero si
-     * cambia in palestra, e leggerlo dalla prima serie lo faceva tornare al valore della scheda
-     * appena quella serie era gia' segnata (una serie svolta non si tocca piu').
+     * Rest of the exercise in this session. It lives here and not only on the sets: rest is changed
+     * in the gym, and reading it from the first set made it fall back to the routine value as soon
+     * as that set was completed, since a completed set is never rewritten.
      */
     val restSeconds: Int = 90,
-    /** Nota dell'esercizio in questa sessione: parte da quella della routine ed e' modificabile. */
+    /** Session note, inherited from the routine and editable here. */
     val notes: String? = null,
-    /** Superset di questa sessione: parte da quello della routine ed e' modificabile qui. Vedi
-     *  [RoutineExerciseEntity.supersetGroup]. */
+    /**
+     * Session superset, inherited from the routine and editable here.
+     * See [RoutineExerciseEntity.supersetGroup].
+     */
     val supersetGroup: Int? = null
 )

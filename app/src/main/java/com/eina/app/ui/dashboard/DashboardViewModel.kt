@@ -17,7 +17,7 @@ import java.time.LocalDate
 
 data class DashboardUiState(
     val weekSessions: Int = 0,
-    /** Giorni distinti allenati nella settimana in corso: e' quello che riempie l'anello. */
+    /** Distinct days trained in the current week, which is what fills the ring. */
     val weekDaysTrained: Int = 0,
     val weekVolumeKg: Double = 0.0,
     val weekVolumeByDay: List<Float> = List(7) { 0f },
@@ -38,8 +38,8 @@ class DashboardViewModel(repository: StatsRepository) : ViewModel() {
 
             DashboardUiState(
                 weekSessions = weekSessions.size,
-                // Due sessioni nello stesso giorno riempiono un settore solo: l'anello conta i
-                // giorni, non gli allenamenti, altrimenti si chiuderebbe in una domenica sola.
+                // Two sessions on the same day fill one segment: the ring counts days, not
+                // workouts, or it could close in a single Sunday.
                 weekDaysTrained = weekSessions
                     .map { epochMillisToLocalDate(it.startTime) }
                     .distinct()
@@ -51,13 +51,13 @@ class DashboardViewModel(repository: StatsRepository) : ViewModel() {
                 recentSessions = sessions.take(RECENT_SESSIONS)
             )
         }
-        // Il riepilogo si ricalcola su tutto lo storico a ogni emissione: fuori dal thread
-        // della UI, altrimenti con molte sessioni l'aggiornamento si sente.
+        // The summary is recomputed over the whole history on every emission, so it runs off the
+        // UI thread: with many sessions the update would otherwise be noticeable.
         .flowOn(Dispatchers.Default)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DashboardUiState())
 
     private companion object {
-        /** Quante sessioni recenti finiscono in Dashboard: il resto sta nello Storico. */
+        /** How many recent sessions reach the Dashboard; the rest live in the History. */
         const val RECENT_SESSIONS = 3
     }
 }

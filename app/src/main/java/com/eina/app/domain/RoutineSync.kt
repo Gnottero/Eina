@@ -3,10 +3,10 @@ package com.eina.app.domain
 import com.eina.app.data.db.ExerciseName
 
 /**
- * Una voce di scheda o di allenamento, ridotta a quel che si confronta fra le due. I valori di
- * peso e ripetizioni non ci sono: cambiano quasi sempre (e' il senso di allenarsi) e chiedere di
- * aggiornare la scheda a ogni chilo in piu' sarebbe una domanda a ogni allenamento. Qui si
- * guarda solo l'impianto: quali esercizi, in che ordine, con quante serie e che recupero.
+ * A routine or workout row, reduced to what the two are compared on. Weight and reps are left out:
+ * they change almost every time, and asking to update the routine over every extra kilo would mean
+ * a question after every workout. Only the structure is compared: which exercises, in what order,
+ * with how many sets and what rest.
  */
 data class PlanItem(
     val exerciseId: Long,
@@ -15,7 +15,7 @@ data class PlanItem(
     val restSeconds: Int
 )
 
-/** Una differenza fra la scheda e come e' andato l'allenamento, gia' pronta da elencare. */
+/** One difference between the routine and the performed workout, ready to be listed. */
 sealed interface RoutineChange {
     data class Added(val name: ExerciseName) : RoutineChange
     data class Removed(val name: ExerciseName) : RoutineChange
@@ -25,20 +25,20 @@ sealed interface RoutineChange {
 }
 
 /**
- * Cosa e' cambiato fra la scheda di partenza e l'allenamento appena chiuso.
+ * What changed between the source routine and the workout just closed.
  *
- * Il confronto e' per esercizio e non per posizione: spostare una voce non deve leggersi come
- * "tolto uno, aggiunto un altro". Lo stesso esercizio ripetuto due volte nella stessa scheda
- * resta due voci, quindi si confrontano le occorrenze una a una nell'ordine in cui compaiono.
+ * The comparison is per exercise and not per position, so moving a row does not read as "one
+ * removed, another added". The same exercise repeated twice stays two rows, so occurrences are
+ * matched one by one in the order they appear.
  *
- * Lista vuota = l'allenamento ha seguito la scheda, e non c'e' niente da chiedere.
+ * An empty list means the workout followed the routine and there is nothing to ask.
  */
 fun routineChanges(routine: List<PlanItem>, session: List<PlanItem>): List<RoutineChange> {
     val changes = mutableListOf<RoutineChange>()
     val routineByExercise = routine.groupBy { it.exerciseId }
     val sessionByExercise = session.groupBy { it.exerciseId }
 
-    // Ordine di lettura: prima quel che c'e' in allenamento, poi quel che e' rimasto fuori.
+    // Reading order: first what the workout contains, then what was left out.
     val exerciseIds = session.map { it.exerciseId }.distinct() +
         routine.map { it.exerciseId }.distinct().filterNot { sessionByExercise.containsKey(it) }
 
@@ -57,8 +57,8 @@ fun routineChanges(routine: List<PlanItem>, session: List<PlanItem>): List<Routi
         }
     }
 
-    // L'ordine si giudica sui soli esercizi rimasti in entrambe: aggiunte ed eliminazioni sono
-    // gia' state dette, e conterebbero due volte come "ordine diverso".
+    // Order is judged on the exercises present in both: additions and removals were already
+    // reported and would otherwise count twice as a reordering.
     val common = session.map { it.exerciseId }.filter { routineByExercise.containsKey(it) }
     val plannedCommon = routine.map { it.exerciseId }.filter { sessionByExercise.containsKey(it) }
     if (common.distinct() != plannedCommon.distinct()) changes += RoutineChange.Reordered

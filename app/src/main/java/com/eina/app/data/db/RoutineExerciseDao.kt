@@ -30,9 +30,9 @@ interface RoutineExerciseDao {
     fun getForRoutine(routineId: Long): Flow<List<RoutineExerciseEntity>>
 
     /**
-     * Le stesse righe, lette una volta sola. Chi non osserva la scheda ma la legge e basta
-     * (avvio sessione, export, confronto con l'allenamento) non deve registrare un osservatore
-     * dell'InvalidationTracker per poi disiscriverlo subito.
+     * The same rows, read once. Callers that only read the routine (session start, export,
+     * comparison with a workout) should not register an InvalidationTracker observer just to
+     * unregister it immediately.
      */
     @Query("SELECT * FROM routine_exercises WHERE routineId = :routineId ORDER BY `order` ASC")
     suspend fun getForRoutineOnce(routineId: Long): List<RoutineExerciseEntity>

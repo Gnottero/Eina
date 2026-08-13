@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
-"""Scarica i due fotogrammi di free-exercise-db per i 197 esercizi del catalogo curato e
-li converte in WebP dentro app/src/main/assets/media/.
+"""Download the two free-exercise-db frames for the curated catalog exercises and convert them
+to WebP under app/src/main/assets/media/.
 
-I due fotogrammi sono l'inizio e la fine del movimento: alternati in dissolvenza danno
-l'animazione della scheda esercizio (vedi ui/components/ExerciseAnimation.kt).
+The two frames are the start and the end of the movement: cross-faded they make the animation of
+the exercise screen (see ui/components/ExerciseAnimation.kt).
 
-Uso:
+Usage:
     python3 tools/fetch_exercise_media.py [--width 480] [--quality 70]
 
-Rilancialo solo se cambia il catalogo; il download salta i file gia' presenti.
-Serve ImageMagick (`magick`) con delegato WebP.
+Re-run it only when the catalog changes; existing files are skipped.
+Requires ImageMagick (`magick`) with the WebP delegate.
 """
 
 import argparse

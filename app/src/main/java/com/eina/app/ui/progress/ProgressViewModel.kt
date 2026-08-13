@@ -36,16 +36,16 @@ class ProgressViewModel(repository: StatsRepository) : ViewModel() {
     private val selectedDayIndex = MutableStateFlow(LocalDate.now().dayOfWeek.value - 1)
 
     /**
-     * Tutto quello che dipende dallo storico e non dal giorno scelto. Sta in un flusso suo perche'
-     * toccare un giorno della settimana non deve far ricalcolare record, streak e volumi di tutto
-     * lo storico: cambia solo quale colonna e' evidenziata.
+     * Everything depending on the history and not on the selected day. It lives in its own flow
+     * because tapping a weekday must not recompute records, streak and volumes over the whole
+     * history: only the highlighted column changes.
      */
     private val history: StateFlow<ProgressUiState> = combine(
         repository.observeCompletedSets(),
         repository.observeBodyMetrics()
     ) { rows, bodyMetrics ->
-        // La data si rilegge a ogni emissione: fissarla alla nascita del ViewModel lasciava la
-        // settimana ferma a ieri su un'app rimasta aperta oltre la mezzanotte.
+        // The date is re-read on every emission: fixing it at ViewModel creation left the week
+        // stuck on yesterday for an app kept open past midnight.
         val today = LocalDate.now()
         val startOfWeek = today.minusDays((today.dayOfWeek.value - 1).toLong())
         val volumePerDay = volumeByDay(rows)

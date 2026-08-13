@@ -14,8 +14,8 @@ import android.os.VibratorManager
 import com.eina.app.data.prefs.SettingsRepository
 
 /**
- * Feedback fisico dell'allenamento: beep di fine recupero, vibrazione e micro-feedback aptico.
- * Ogni canale e' disattivabile dalle impostazioni; se un canale e' spento la chiamata e' un no-op.
+ * Physical workout feedback: rest-timer beep, vibration and tap haptics. Each channel can be
+ * switched off in the settings, in which case the call is a no-op.
  */
 class WorkoutFeedback(
     private val context: Context,
@@ -31,30 +31,28 @@ class WorkoutFeedback(
         }
     }
 
-    /** Fine del timer di recupero: suono di notifica + doppia vibrazione. */
+    /** End of the rest timer: notification tone plus a double vibration. */
     fun restTimerFinished() {
         if (settings.timerSoundEnabled.value) playBeep()
         if (settings.timerVibrationEnabled.value) vibrateWaveform(longArrayOf(0, 220, 130, 220))
     }
 
     /**
-     * Micro-feedback su ogni tocco dei controlli. EFFECT_TICK e DEFAULT_AMPLITUDE risultano
-     * impercettibili su molti dispositivi: dove c'e' si preferisce l'effetto di sistema
-     * EFFECT_HEAVY_CLICK, che i vibratori lineari rendono come un colpo secco.
+     * Tap feedback on every control. EFFECT_TICK and DEFAULT_AMPLITUDE are imperceptible on many
+     * devices, so EFFECT_HEAVY_CLICK is preferred where available: linear actuators render it as a
+     * sharp knock.
      *
-     * Il predefinito pero' non e' garantito: sui motori a massa rotante (telefoni di fascia bassa,
-     * molti Android non di punta) `areEffectsSupported` risponde NO e certi firmware non fanno
-     * nessun ripiego — l'app chiede una vibrazione, non succede niente e nessuno segnala errore.
-     * Quindi lo si chiede solo se il dispositivo dice di saperlo fare, e altrimenti si scende a un
-     * one-shot: piu' lungo dove non c'e' controllo d'ampiezza, perche' un motore rotante deve
-     * partire prima di farsi sentire e 30 ms non bastano a percepirlo.
+     * That predefined effect is not guaranteed: on rotating-mass motors `areEffectsSupported`
+     * answers NO and some firmwares do not fall back at all — the app asks for a vibration and
+     * nothing happens, with no error. It is therefore requested only when the device claims
+     * support, otherwise a one-shot is used: longer without amplitude control, since a rotating
+     * motor has to spin up and 30 ms are not enough to feel it.
      */
     fun haptic() {
         if (!settings.hapticsEnabled.value) return
         val vibrator = vibrator?.takeIf { it.hasVibrator() } ?: return
-        // Canale non attenuato anche per i tap: sui canali "feedback" diversi produttori
-        // abbassano (o azzerano) l'ampiezza in base alle impostazioni di sistema, e il toggle
-        // dell'app non produceva nulla di percepibile. L'effetto resta comunque brevissimo.
+        // Taps go through the unattenuated channel too: on feedback channels several vendors lower
+        // or zero the amplitude, making the app switch produce nothing perceptible.
         vibrator.vibrateCompat(vibrator.tapEffect())
     }
 
@@ -70,8 +68,8 @@ class WorkoutFeedback(
     }
 
     /**
-     * Solo un NO esplicito conta come "non supportato": la domanda esiste da Android 11 e sotto
-     * quella versione (o con risposta UNKNOWN) tanto vale provare il predefinito.
+     * Only an explicit NO counts as unsupported: the query exists from Android 11 on, and below
+     * that version (or on UNKNOWN) the predefined effect is worth trying.
      */
     private fun Vibrator.supportsHeavyClick(): Boolean {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return true
@@ -87,10 +85,9 @@ class WorkoutFeedback(
     }
 
     /**
-     * Gli usage "touch" e "hardware feedback" vengono attenuati o azzerati dal sistema in base
-     * alle impostazioni del telefono: il toggle dell'app non produceva nulla di percepibile.
-     * Tutte le vibrazioni dell'app passano quindi dal canale non attenuato, restando pero'
-     * brevissime per i tap.
+     * The "touch" and "hardware feedback" usages are attenuated or zeroed by the system depending
+     * on the phone settings, so every vibration goes through the unattenuated channel, kept very
+     * short for taps.
      */
     private fun Vibrator.vibrateCompat(effect: VibrationEffect) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -101,7 +98,7 @@ class WorkoutFeedback(
         }
     }
 
-    /** Un'istanza sola: gli attributi non cambiano mai e ogni tap ne costruiva una nuova. */
+    /** Single instance: the attributes never change and every tap used to build a new one. */
     private val legacyAttributes: AudioAttributes by lazy {
         AudioAttributes.Builder()
             .setUsage(AudioAttributes.USAGE_ALARM)
@@ -109,8 +106,8 @@ class WorkoutFeedback(
             .build()
     }
 
-    // ToneGenerator non ha bisogno di asset audio: usa i toni di sistema e si rilascia da solo
-    // poco dopo la riproduzione, evitando di tenere aperta una AudioTrack per tutta la sessione.
+    // ToneGenerator needs no audio asset: it uses the system tones and is released shortly after
+    // playback, instead of holding an AudioTrack open for the whole session.
     private fun playBeep() {
         runCatching {
             val tone = ToneGenerator(AudioManager.STREAM_NOTIFICATION, TONE_VOLUME)

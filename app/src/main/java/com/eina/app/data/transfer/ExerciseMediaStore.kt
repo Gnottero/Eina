@@ -5,24 +5,22 @@ import java.io.File
 import java.util.UUID
 
 /**
- * Immagini degli esercizi custom nello storage interno, viste dal formato di scambio.
+ * Custom exercise images in internal storage, as seen by the exchange format.
  *
- * L'esercizio inventato dall'utente porta un `mediaUri` che e' un percorso assoluto nel suo
- * telefono: mandarlo dentro un file di routine non servirebbe a niente. Qui il byte dell'immagine
- * si legge per infilarlo nel JSON e si riscrive all'import, dove diventa un percorso nuovo, locale
- * a chi importa.
+ * A user-created exercise carries a `mediaUri` that is an absolute path on their phone, which means
+ * nothing inside a routine file. Here the image bytes are read to be embedded in the JSON and
+ * written back on import, where they become a new local path.
  *
- * Gli esercizi di libreria non passano di qui: il loro media e' bundlato negli asset e chi importa
- * ce l'ha gia'.
+ * Library exercises never pass through: their media is bundled in the assets.
  */
 class ExerciseMediaStore(private val context: Context) {
 
     /**
-     * Byte dell'immagine, o null se il file non esiste, non e' un file locale (un esercizio di
-     * libreria punta agli asset) o e' piu' grande di [MAX_MEDIA_BYTES].
+     * Image bytes, or null when the file does not exist, is not local (a library exercise points at
+     * the assets) or exceeds [MAX_MEDIA_BYTES].
      *
-     * Il tetto serve a non trasformare una scheda in un allegato da decine di MB: sopra la soglia
-     * l'esercizio viaggia lo stesso, senza immagine.
+     * The cap keeps a routine from becoming a tens-of-megabytes attachment: above it the exercise
+     * still travels, without its image.
      */
     fun read(mediaUri: String?): ByteArray? {
         val file = localFile(mediaUri) ?: return null
@@ -30,11 +28,11 @@ class ExerciseMediaStore(private val context: Context) {
         return runCatching { file.readBytes() }.getOrNull()
     }
 
-    /** Estensione del file, per rimetterla al posto giusto all'import (`gif`, `webp`, `png`…). */
+    /** File extension, to restore it on import (`gif`, `webp`, `png`…). */
     fun extensionOf(mediaUri: String?): String? =
         localFile(mediaUri)?.extension?.takeIf { it.isNotBlank() }
 
-    /** Scrive l'immagine importata accanto a quelle create sul telefono. Ritorna il percorso. */
+    /** Writes an imported image next to the ones created on this phone and returns its path. */
     fun write(bytes: ByteArray, extension: String?): String? = runCatching {
         val directory = File(context.filesDir, MEDIA_DIRECTORY).apply { mkdirs() }
         val destination = File(directory, "${UUID.randomUUID()}.${extension?.ifBlank { null } ?: "gif"}")
@@ -44,8 +42,8 @@ class ExerciseMediaStore(private val context: Context) {
 
     private fun localFile(mediaUri: String?): File? {
         val path = mediaUri?.takeIf { it.isNotBlank() } ?: return null
-        // Solo i file dell'app: un `file:///android_asset/...` di libreria non e' un File leggibile
-        // e non ha senso spedirlo.
+        // App files only: a library `file:///android_asset/...` is not a readable File and there is
+        // no point in sending it.
         if (!path.startsWith("/")) return null
         return File(path)
     }
@@ -53,7 +51,7 @@ class ExerciseMediaStore(private val context: Context) {
     companion object {
         const val MEDIA_DIRECTORY = "exercise_media"
 
-        /** 4 MB: una GIF di esercizio ci sta comoda, un video mascherato da GIF no. */
+        /** 4 MB: an exercise GIF fits comfortably, a video disguised as one does not. */
         const val MAX_MEDIA_BYTES = 4L * 1024 * 1024
     }
 }

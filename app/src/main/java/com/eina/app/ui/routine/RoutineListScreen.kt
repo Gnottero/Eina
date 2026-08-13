@@ -42,8 +42,8 @@ import com.eina.app.ui.theme.Spacing
 import org.koin.androidx.compose.koinViewModel
 
 /**
- * Elenco routine. Non-lazy di proposito: le routine sono poche e la schermata che lo contiene
- * e' gia' scrollabile (una LazyColumn annidata in uno scroll verticale non e' misurabile).
+ * Routine list. Deliberately non-lazy: routines are few and the enclosing screen already scrolls
+ * (a LazyColumn nested in a vertical scroll cannot be measured).
  */
 @Composable
 fun RoutineListScreen(
@@ -69,8 +69,8 @@ fun RoutineListScreen(
             routines.forEach { card ->
                 RoutineRow(
                     card = card,
-                    // Avviare una routine crea una NUOVA sessione: passare direttamente routine.id
-                    // apriva la sessione con quell'id, cioe' un allenamento vecchio gia' svolto.
+                    // Starting a routine creates a NEW session: passing routine.id straight through
+                    // opened the session with that id, i.e. an old recorded workout.
                     onStart = { viewModel.startSession(card.routine.id, onStartSession) },
                     onEdit = { onEditRoutine(card.routine.id) },
                     onDelete = { viewModel.deleteRoutine(card.routine) },
@@ -83,9 +83,8 @@ fun RoutineListScreen(
 }
 
 /**
- * Card routine minimale: nome, una riga di contenuto ("5 esercizi · 18 serie"), l'elenco degli
- * esercizi in grigio e un solo bottone tondo per avviare. Modifica ed eliminazione restano nel
- * foglio che si apre col tocco lungo, cosi' la card resta pulita.
+ * Minimal routine card: name, one content line ("5 exercises · 18 sets"), the exercise list in grey
+ * and a single round start button. Editing and deletion live in the long-press sheet.
  */
 @Composable
 private fun RoutineRow(
@@ -109,7 +108,7 @@ private fun RoutineRow(
         modifier = Modifier.fillMaxWidth(),
         contentPadding = PaddingValues(horizontal = Spacing.lg, vertical = Spacing.lg),
         verticalArrangement = Arrangement.spacedBy(Spacing.sm),
-        // Tocco sulla card: apre la routine (solo il tondo a destra la avvia).
+        // Tapping the card opens the routine; only the round button on the right starts it.
         onClick = onEdit,
         onLongClick = { actionsOpen = true }
     ) {
@@ -178,8 +177,8 @@ private fun RoutineRow(
                 label = stringResource(R.string.routine_edit),
                 onClick = { actionsOpen = false; onEdit() }
             )
-            // Esportare serve a chi la scheda la scrive per qualcun altro: il file va dove
-            // vuole l'utente (messaggio, mail, file), non su un servizio nostro.
+            // Export targets whoever writes a routine for someone else: the file goes wherever the
+            // user sends it, never to a service of ours.
             SheetActionRow(
                 icon = Icons.Outlined.IosShare,
                 label = stringResource(R.string.routine_export),
@@ -206,7 +205,7 @@ private fun RoutineRow(
     }
 
     if (confirmDelete) {
-        // L'eliminazione non e' annullabile: si conferma prima di toccare il database.
+        // Deletion cannot be undone, so it is confirmed before touching the database.
         IslandAlertDialog(
             title = stringResource(R.string.routine_delete_confirm_title, name),
             text = stringResource(R.string.routine_delete_confirm_text),
@@ -218,7 +217,7 @@ private fun RoutineRow(
     }
 }
 
-/** "5 esercizi · 18 serie", oppure l'invito a riempirla se e' ancora vuota. */
+/** "5 exercises · 18 sets", or the prompt to fill the routine while it is still empty. */
 @Composable
 private fun summaryLine(card: RoutineCardUi): String {
     if (card.exerciseCount == 0) return stringResource(R.string.routine_no_exercises)

@@ -41,10 +41,10 @@ import com.eina.app.ui.theme.Spacing
 import com.eina.app.ui.theme.TileShape
 
 /**
- * Intestazione della tabella serie, condivisa fra allenamento ed editor routine.
+ * Header of the set table, shared by the workout screen and the routine editor.
  *
- * In routine non c'e' niente da confrontare con "l'ultima volta" e non c'e' niente da spuntare:
- * la colonna precedente e il pulsante di fine serie si spengono, il resto e' la stessa tabella.
+ * A routine has nothing to compare against and nothing to check off, so the previous column and
+ * the completion button are switched off; the rest is the same table.
  */
 @Composable
 fun SetTableHeader(
@@ -53,8 +53,8 @@ fun SetTableHeader(
     trailingSlot: Boolean = true
 ) {
     Row(
-        // Stesso rientro laterale delle righe della tabella (vedi SetRow): senza, le colonne
-        // dell'intestazione partono 4dp piu' a sinistra e le etichette non stanno sopra i campi.
+        // Same horizontal inset as the table rows (see SetRow): otherwise the header columns start
+        // 4dp further left and the labels no longer sit above their fields.
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = Spacing.xs),
@@ -65,8 +65,8 @@ fun SetTableHeader(
         if (showPrevious) {
             TableLabel(stringResource(R.string.table_previous), Modifier.weight(previousColumnWeight(weightType)))
         }
-        // Senza carico da digitare la colonna kg non compare: lo spazio va alle ripetizioni.
-        // Sugli esercizi a distanza lo stesso campo decimale porta i chilometri.
+        // With no load to type the kg column is dropped and its space goes to the reps. For
+        // distance exercises the same decimal field holds kilometres.
         if (weightType.usesWeight) {
             TableLabel(stringResource(R.string.table_kg), Modifier.weight(1f))
         } else if (weightType.usesDistance) {
@@ -89,22 +89,21 @@ fun SetTableHeader(
 }
 
 /**
- * Larghezza della colonna "precedente". Sulla distanza il riepilogo e' lungo il doppio
- * ("5,2km·30" contro "60kg×8") e nella colonna stretta finiva tagliato a meta'.
+ * Width of the "previous" column. For distance the summary is twice as long ("5.2km·30" against
+ * "60kg×8") and got clipped in the narrow column.
  */
 fun previousColumnWeight(weightType: WeightType): Float =
     if (weightType.usesDistance) 1.7f else 1.1f
 
 /**
- * Riga di tabella che si butta via trascinandola verso sinistra.
+ * Table row deleted by dragging it to the left.
  *
- * Il tocco lungo restava l'unico modo di togliere una serie, e su un esercizio senza colonna kg
- * i campi numerici si prendono quasi tutta la riga: il gesto trovava solo qualche millimetro di
- * bordo. Lo scorrimento laterale non ha questo problema — i campi non lo intercettano — e non
- * toglie niente: il tocco lungo resta al suo posto per il resto delle azioni.
+ * Long press used to be the only way to remove a set, and on an exercise without the kg column the
+ * numeric fields take nearly the whole row, leaving millimetres of border for the gesture. A
+ * horizontal swipe is not intercepted by the fields, and the long press stays for the other
+ * actions.
  *
- * La soglia e' mezza riga invece del 50% di default con lancio: cosi' non si cancella una serie
- * di striscio mentre si scorre la pagina.
+ * The threshold is half the row, so a set is not deleted by brushing past it while scrolling.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -120,9 +119,8 @@ fun SwipeToDeleteSetRow(
                 hapticTap()
                 onDelete()
             }
-            // Non si conferma mai lo stato: la riga sparisce perche' il dato sparisce, e se la
-            // cancellazione non va in porto la riga torna al suo posto invece di restare
-            // fuori schermo.
+            // The state is never confirmed: the row disappears because the data does, and a failed
+            // deletion leaves it back in place instead of stranded off screen.
             false
         },
         positionalThreshold = { distance -> distance * 0.5f }
@@ -131,8 +129,8 @@ fun SwipeToDeleteSetRow(
         state = state,
         enableDismissFromStartToEnd = false,
         backgroundContent = {
-            // Il rosso si vede solo mentre si trascina: disegnato sempre, tingeva di rosa la
-            // riga ferma, che sopra non ha un fondo suo.
+            // The red only shows while dragging: drawn always, it tinted the resting row pink,
+            // which has no background of its own.
             if (state.dismissDirection == SwipeToDismissBoxValue.EndToStart) {
                 Box(
                     modifier = Modifier
@@ -153,7 +151,7 @@ fun SwipeToDeleteSetRow(
         },
         modifier = modifier,
         content = {
-            // La riga che scorre porta il suo fondo, se no il rosso si vede anche attraverso.
+            // The sliding row carries its own background, or the red shows through it.
             Box(
                 modifier = Modifier
                     .clip(TileShape)
@@ -178,8 +176,8 @@ fun TableLabel(text: String, modifier: Modifier = Modifier) {
 }
 
 /**
- * Campo numerico della tabella serie: nessuna etichetta, segnaposto grigio col valore target o
- * dell'ultima volta (che resta un suggerimento, non un dato registrato).
+ * Numeric field of the set table: no label, grey placeholder with the target or last-time value,
+ * which stays a suggestion and not a recorded datum.
  */
 @Composable
 fun SetValueField(

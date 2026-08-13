@@ -91,15 +91,15 @@ val appModule = module {
 
     single { ExerciseSeeder(get(), get()) }
 
-    // Dati dell'orologio: sorgente Health Connect e il pezzo che li attacca alla sessione.
+    // Watch data: the Health Connect source and the piece attaching it to a session.
     single { HealthConnectSource(androidContext()) }
     single { WorkoutHealthSync(sessionDao = get(), source = get(), settings = get()) }
 
-    // Cronometro condiviso: si avvia in Dashboard e si ritrova durante l'allenamento.
+    // Shared stopwatch: started on the Dashboard and found again during a workout.
     single { StopwatchController() }
 
-    // Recupero condiviso: sopravvive all'uscita dalla schermata dell'allenamento in corso, e
-    // la sveglia di sistema lo fa suonare anche ad app fuori dallo schermo.
+    // Shared rest timer: it survives leaving the workout screen, and the system alarm makes it
+    // sound even with the app off screen.
     single { RestAlarmScheduler(androidContext()) }
     single { RestTimerController(get(), get()) }
 

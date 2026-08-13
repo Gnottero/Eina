@@ -3,12 +3,12 @@ package com.eina.app.data.db
 import java.util.Locale
 
 /**
- * Nome di un esercizio nelle tre lingue.
+ * Name of an exercise in the three languages.
  *
- * Viaggia intero fino alla UI invece di essere risolto nel repository: la lingua si sceglie
- * al disegno, cosi' cambiarla ridisegna i nomi senza rifare le query. L'inglese e' anche la
- * chiave con cui il seeder riconosce l'esercizio, quindi non e' mai nullo ed e' il fallback
- * naturale per un esercizio custom o non ancora tradotto.
+ * It travels whole to the UI instead of being resolved in the repository: the language is picked at
+ * draw time, so changing it redraws the names without re-running the queries. English is also the
+ * key the seeder matches exercises by, so it is never null and is the natural fallback for a custom
+ * or untranslated exercise.
  */
 data class ExerciseName(
     val nameEn: String,
@@ -25,8 +25,8 @@ data class ExerciseName(
 fun ExerciseEntity.exerciseName(): ExerciseName = ExerciseName(name, nameIt, nameFr)
 
 /**
- * Ricerca per nome. Guarda tutte le lingue e non solo quella attiva: chi ha imparato un
- * esercizio col nome inglese lo cerca cosi' anche con l'app in italiano.
+ * Search by name. It looks at every language and not only the active one, so an exercise learned
+ * under its English name is still found with the app in another language.
  */
 fun ExerciseEntity.matchesQuery(query: String): Boolean =
     name.contains(query, ignoreCase = true) ||

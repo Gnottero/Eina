@@ -34,13 +34,12 @@ import com.eina.app.ui.theme.Spacing
 import com.eina.app.ui.theme.TileShape
 
 /**
- * A fine allenamento: la sessione e' partita da una scheda ma non l'ha seguita, e la domanda che
- * viene naturale e' "la scheda era sbagliata o era solo oggi?". La si fa qui, una volta sola, con
- * l'elenco di cosa e' cambiato — senza, l'unico modo di aggiornare la scheda era rifare a mano in
- * editor le stesse modifiche appena fatte in palestra.
+ * Asked when a session started from a routine but did not follow it: was the routine wrong, or was
+ * it just today? The question is asked once, with the list of what changed — without it, updating
+ * the routine meant redoing the same edits by hand in the editor.
  *
- * Non fare niente e' la scelta piu' probabile, quindi e' quella del tasto secondario, ma nessuna
- * delle due e' distruttiva: la scheda si puo' sempre correggere a mano.
+ * Doing nothing is the likelier choice and sits on the secondary button, but neither option is
+ * destructive: the routine can always be corrected by hand.
  */
 @Composable
 fun RoutineSyncSheet(
@@ -51,8 +50,8 @@ fun RoutineSyncSheet(
 ) {
     val island = EinaTheme.island
     IslandBottomSheet(
-        // Il foglio non si chiude toccando fuori: la domanda va risposta, altrimenti si resta
-        // sull'allenamento gia' chiuso senza sapere cosa e' successo alla scheda.
+        // The sheet does not dismiss on an outside tap: the question must be answered, or the user
+        // is left on a closed workout without knowing what happened to the routine.
         onDismiss = onKeep,
         title = stringResource(R.string.routine_sync_title),
         scrollable = true

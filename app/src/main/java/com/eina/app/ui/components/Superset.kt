@@ -32,8 +32,8 @@ import com.eina.app.ui.theme.PillShape
 import com.eina.app.ui.theme.Spacing
 
 /**
- * Colori dei superset: bastano a distinguere a colpo d'occhio i giri di uno stesso allenamento.
- * Sono presi dalla palette dei gruppi muscolari, non e' una tavolozza nuova.
+ * Superset colours, enough to tell the rounds of one workout apart at a glance. Taken from the
+ * muscle group palette rather than a new one.
  */
 private val SupersetColors = listOf(
     MuscleGroupColors.Shoulders,
@@ -43,20 +43,20 @@ private val SupersetColors = listOf(
     MuscleGroupColors.BackPull
 )
 
-/** Colore del superset dalla sua lettera: A e' sempre viola, B sempre verde acqua, e cosi' via. */
+/** Superset colour from its letter: A is always purple, B always teal, and so on. */
 fun supersetColor(letter: String): Color {
     val index = (letter.firstOrNull() ?: 'A') - 'A'
     return SupersetColors[((index % SupersetColors.size) + SupersetColors.size) % SupersetColors.size]
 }
 
-/** Un superset gia' esistente, come lo vede il foglio di scelta. */
+/** An existing superset, as the picker sheet sees it. */
 data class SupersetOption(
     val group: Int,
     val letter: String,
     val members: List<String>
 )
 
-/** Marchio del superset sulla card: lettera del giro, colore del giro. */
+/** Superset badge on a card: the round's letter in the round's colour. */
 @Composable
 fun SupersetBadge(letter: String, modifier: Modifier = Modifier) {
     val color = supersetColor(letter)
@@ -82,9 +82,8 @@ fun SupersetBadge(letter: String, modifier: Modifier = Modifier) {
 }
 
 /**
- * Scelta del superset per un esercizio: un giro nuovo, uno di quelli gia' aperti, o nessuno.
- * L'esercizio che entra in un giro si sposta accanto ai suoi compagni: un superset e' una
- * sequenza, non un insieme sparso per la lista.
+ * Superset choice for an exercise: a new round, one of the open ones, or none. An exercise joining
+ * a round moves next to its members, since a superset is a sequence and not a scattered set.
  */
 @Composable
 fun SupersetSheet(

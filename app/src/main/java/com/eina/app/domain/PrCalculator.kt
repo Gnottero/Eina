@@ -7,7 +7,7 @@ import com.eina.app.data.db.countsAsWorking
 fun isNewPR(
     weightType: WeightType,
     newSet: SetEntryEntity,
-    historicalSets: List<SetEntryEntity> // tutte le set non-warmup gia' completate per lo stesso exerciseId
+    historicalSets: List<SetEntryEntity> // every completed non-warmup set of the same exerciseId
 ): Boolean {
     if (!newSet.setType.countsAsWorking) return false
     return when (weightType) {
@@ -24,11 +24,11 @@ fun isNewPR(
         }
 
         WeightType.TIME_BASED ->
-            (newSet.actualReps ?: 0) > (historicalSets.maxOfOrNull { it.actualReps ?: 0 } ?: 0) // riusa actualReps come durata
+            (newSet.actualReps ?: 0) > (historicalSets.maxOfOrNull { it.actualReps ?: 0 } ?: 0) // actualReps holds the duration
 
-        // Distanza e tempo insieme: correre piu' lontano e' un record, ma anche correre la
-        // stessa distanza piu' in fretta lo e'. Quindi basta superare uno dei due — la
-        // distanza massima o la velocita' media massima — perche' la serie sia un PR.
+        // Distance and time together: running further is a record, and so is running the same
+        // distance faster, so beating either the maximum distance or the maximum average speed
+        // makes the set a PR.
         WeightType.DISTANCE_BASED -> {
             val newDistance = newSet.weight ?: 0.0
             if (newDistance <= 0.0) false
@@ -42,9 +42,9 @@ fun isNewPR(
 }
 
 /**
- * Velocita' media di una serie a distanza, in km/h: `weight` sono chilometri e `actualReps`
- * minuti (vedi [WeightType.DISTANCE_BASED]). Senza tempo registrato non c'e' velocita' da
- * confrontare e vale 0.
+ * Average speed of a distance set, in km/h: `weight` holds kilometres and `actualReps` minutes
+ * (see [WeightType.DISTANCE_BASED]). With no time recorded there is no speed to compare and the
+ * result is 0.
  */
 fun speedKmPerHour(set: SetEntryEntity): Double {
     val minutes = set.actualReps ?: 0
@@ -53,12 +53,12 @@ fun speedKmPerHour(set: SetEntryEntity): Double {
 }
 
 /**
- * Volume in kg di una set.
+ * Volume in kg of a set.
  *
- * Il peso corporeo conta solo per la quota che l'esercizio solleva davvero
- * ([ExerciseEntity.bodyweightFactor]): le trazioni tirano su tutto il corpo e vanno nel
- * totale, i crunch non lo alzano contro gravita' e valgono 0, altrimenti bastava fare
- * addominali per gonfiare il volume della sessione in proporzione a quanto si pesa.
+ * Bodyweight only counts for the share the exercise actually lifts
+ * ([com.eina.app.data.db.ExerciseEntity.bodyweightFactor]): pull-ups raise the whole body and enter
+ * the total, crunches raise nothing against gravity and count as 0 — otherwise sit-ups alone would
+ * inflate the session volume in proportion to the user's weight.
  */
 fun volumeForSet(weightType: WeightType, set: SetEntryEntity, bodyweightFactor: Double = 1.0): Double {
     val reps = set.actualReps ?: 0
@@ -73,6 +73,6 @@ fun volumeForSet(weightType: WeightType, set: SetEntryEntity, bodyweightFactor: 
         WeightType.ASSISTED ->
             (liftedBodyweight - (set.weight ?: 0.0)).coerceAtLeast(0.0) * reps
         WeightType.TIME_BASED, WeightType.DISTANCE_BASED ->
-            0.0 // tempo e distanza non si misurano in kg: fuori dal totale sollevato
+            0.0 // time and distance are not measured in kg: excluded from the lifted total
     }
 }

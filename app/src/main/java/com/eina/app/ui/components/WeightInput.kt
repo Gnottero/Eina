@@ -1,15 +1,15 @@
 package com.eina.app.ui.components
 
 /**
- * Tetto ai pesi digitabili, sia sul carico di una serie sia sul peso corporeo: oltre questa
- * soglia un valore e' quasi certamente un errore di battitura, e falserebbe volume e PR.
+ * Cap on typed weights, both for a set load and for bodyweight: above this threshold a value is
+ * almost certainly a typo, and it would skew volume and PRs.
  */
 const val MAX_WEIGHT_KG = 999.0
 
 /**
- * Ripulisce quello che si sta scrivendo in un campo peso: solo cifre e un separatore decimale,
- * e mai un valore oltre [MAX_WEIGHT_KG]. Se il nuovo carattere sfora, si tiene il testo precedente
- * invece di correggerlo di nascosto sotto le dita.
+ * Sanitises what is being typed in a weight field: digits and one decimal separator only, never
+ * above [MAX_WEIGHT_KG]. If the new character exceeds it the previous text is kept, rather than
+ * silently rewriting the field under the user's fingers.
  */
 fun sanitizeWeightInput(current: String, typed: String): String {
     val filtered = buildString {

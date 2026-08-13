@@ -1,24 +1,22 @@
 #!/usr/bin/env python3
-"""Riduce il seed completo di free-exercise-db al catalogo curato di Eina.
+"""Reduce the full free-exercise-db seed to the curated Eina catalog.
 
     python3 tools/curate_exercises.py
 
-Legge l'export integrale (eina_exercises_seed.json), tiene solo i nomi elencati in
-tools/common_exercises.txt e riscrive app/src/main/assets/seed/exercises.json.
+Reads the complete export (eina_exercises_seed.json), keeps only the names listed in
+tools/common_exercises.txt and rewrites app/src/main/assets/seed/exercises.json.
 
-Due cose spariscono rispetto all'export:
-  - `loggingInstructions`, che era una delle cinque frasi canoniche derivate da
-    `weightType`: ora vive in strings.xml e si traduce da sola con la UI;
-  - i campi di lavorazione dello script di conversione (`needsReview`,
-    `_originalCategory`), che al runtime non servivano a nessuno.
+Two things are dropped from the export:
+  - `loggingInstructions`, one of the five canonical sentences derived from `weightType`:
+    it now lives in strings.xml and follows the UI language;
+  - the conversion script's working fields (`needsReview`, `_originalCategory`), unused
+    at runtime.
 
-Le traduzioni delle descrizioni stanno in tools/translations/*.json, un file per blocco
-di lavorazione, ciascuno una mappa nome -> {it, fr}. Vengono innestate qui come
-`descriptionIt` / `descriptionFr`. I nomi tradotti stanno invece in un file unico,
-tools/exercise_names.json (stessa forma), e diventano `nameIt` / `nameFr`: il nome
-inglese resta la chiave con cui il seeder riconosce l'esercizio nel database.
-Un esercizio senza traduzione resta in inglese: mancare una lingua non deve toglierlo
-dal catalogo.
+Description translations live in tools/translations/*.json, one file per batch, each a
+name -> {it, fr} map, merged here as `descriptionIt` / `descriptionFr`. Translated names
+live in a single file, tools/exercise_names.json (same shape), and become `nameIt` /
+`nameFr`: the English name stays the key the seeder matches exercises by.
+An untranslated exercise stays in English rather than dropping out of the catalog.
 """
 
 import json
@@ -34,8 +32,8 @@ FACTORS_FILE = ROOT / "tools" / "bodyweight_factors.json"
 WEIGHT_TYPES_FILE = ROOT / "tools" / "weight_type_overrides.json"
 OUTPUT = ROOT / "app" / "src" / "main" / "assets" / "seed" / "exercises.json"
 
-# Solo per questi il peso corporeo entra nel conto del volume, quindi solo per questi
-# serve sapere quanta parte di quel peso viene davvero sollevata.
+# Bodyweight only enters the volume for these types, so only for these does the lifted share
+# need to be known.
 BODYWEIGHT_TYPES = ("BODYWEIGHT", "BODYWEIGHT_PLUS_LOAD", "ASSISTED")
 
 DROPPED_FIELDS = ("loggingInstructions", "needsReview", "_originalCategory")
@@ -57,7 +55,7 @@ def main():
     catalog = {e["name"]: e for e in json.loads(SOURCE.read_text(encoding="utf-8"))}
     wanted = read_whitelist()
 
-    # Un refuso nella whitelist toglierebbe un esercizio in silenzio: meglio fermarsi.
+    # A typo in the whitelist would silently drop an exercise, so stop instead.
     missing = [n for n in wanted if n not in catalog]
     if missing:
         sys.exit("Nomi non presenti nel dataset:\n  " + "\n  ".join(missing))
@@ -78,9 +76,9 @@ def main():
     if unknown_names:
         sys.exit("Nomi tradotti fuori dal dataset:\n  " + "\n  ".join(unknown_names))
 
-    # Il dataset originale conta tutto a ripetizioni con un pacco pesi: le macchine da cardio
-    # sono MACHINE_STACK e il plank e' BODYWEIGHT. Qui si riscrive il tipo di chi non ci sta
-    # (vedi weight_type_overrides.json).
+    # The original dataset counts everything as reps on a weight stack: cardio machines come out
+    # as MACHINE_STACK and the plank as BODYWEIGHT. The types that do not fit are rewritten here
+    # (see weight_type_overrides.json).
     type_overrides = {k: v for k, v in json.loads(WEIGHT_TYPES_FILE.read_text(encoding="utf-8")).items()
                       if not k.startswith("_")}
     unknown_overrides = [n for n in type_overrides if n not in catalog]
@@ -95,8 +93,8 @@ def main():
     unknown_factors = [n for n in factors if n not in catalog]
     if unknown_factors:
         sys.exit("Fattori di peso corporeo fuori dal dataset:\n  " + "\n  ".join(unknown_factors))
-    # Il fattore serve al tipo definitivo, non a quello del dataset: un plank riscritto a
-    # TIME_BASED non ha piu' un volume in kg da pesare.
+    # The factor applies to the final type and not the dataset one: a plank rewritten to
+    # TIME_BASED no longer has a volume in kg to weigh.
     senza_fattore = [n for n in wanted if weight_type_of(n) in BODYWEIGHT_TYPES and n not in factors]
     if senza_fattore:
         sys.exit("Manca il fattore di peso corporeo in bodyweight_factors.json:\n  " + "\n  ".join(senza_fattore))
@@ -106,8 +104,8 @@ def main():
         entry = {k: v for k, v in catalog[name].items() if k not in DROPPED_FIELDS}
         entry["weightType"] = weight_type_of(name)
         translated = translations.get(name, {})
-        # Due esercizi del dataset originale hanno la descrizione vuota: la chiave "en"
-        # nel file di traduzione permette di colmarla senza toccare l'export a monte.
+        # Two exercises in the original dataset have an empty description: the "en" key in the
+        # translation file fills it without touching the upstream export.
         if translated.get("en"):
             entry["description"] = translated["en"]
         if translated.get("it"):

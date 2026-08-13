@@ -6,8 +6,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 /**
- * Preferenze locali dell'app. DECISIONE: SharedPreferences invece di DataStore, per non
- * aggiungere una dipendenza a un solo pugno di flag booleani.
+ * Local app preferences. DECISIONE: SharedPreferences instead of DataStore, to avoid a dependency
+ * for a handful of boolean flags.
  */
 class SettingsRepository(private val context: Context) {
 
@@ -26,16 +26,16 @@ class SettingsRepository(private val context: Context) {
     val timerVibrationEnabled: StateFlow<Boolean> = _timerVibrationEnabled.asStateFlow()
 
     /**
-     * Lettura dei dati dell'orologio (battiti, calorie) da Health Connect. Acceso di suo: senza
-     * il permesso di sistema non legge comunque niente, quindi non serve un secondo cancello —
-     * l'interruttore serve a spegnerlo tenendo il permesso.
+     * Reading watch data (heart rate, calories) from Health Connect. On by default: without the
+     * system permission nothing is read anyway, so this switch exists to turn the feature off while
+     * keeping the permission.
      */
     private val _healthSyncEnabled = MutableStateFlow(prefs.getBoolean(KEY_HEALTH_SYNC, true))
     val healthSyncEnabled: StateFlow<Boolean> = _healthSyncEnabled.asStateFlow()
 
     /**
-     * La lingua non si applica da sola: le risorse sono gia' state risolte. Chi chiama
-     * ricrea l'Activity, cosi' attachBaseContext ripassa da AppLocale.wrap.
+     * The language does not apply on its own, since resources are already resolved: the caller
+     * recreates the Activity so attachBaseContext goes through AppLocale.wrap again.
      */
     fun setLanguage(language: AppLanguage) {
         AppLocale.store(context, language)

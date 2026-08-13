@@ -62,8 +62,8 @@ fun EinaNavHost() {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
 
-    // La nav flottante resta solo sui 4 tab principali: nelle schermate di dettaglio
-    // il contenuto usa tutta l'altezza (vedi allenamento in corso, con il suo timer).
+    // The floating nav bar only shows on the four main tabs; detail screens use the full height
+    // (see the running workout with its timer).
     val showNavBar = bottomNavDestinations.any { destination ->
         currentDestination?.hierarchy?.any { it.route == destination.route } == true
     }
@@ -102,9 +102,8 @@ fun EinaNavHost() {
                 RoutineEditorScreen(
                     routineId = routineId,
                     onBack = { navController.popBackStack() },
-                    // Il nome dell'esercizio apre la sua scheda, come nell'allenamento.
                     onOpenExercise = { exerciseId -> navController.navigate("library/exercise/$exerciseId") },
-                    // Salvata la routine si torna ad "Allena": l'editor e' un passaggio, non una destinazione.
+                    // Saving returns to the Workout tab: the editor is a step, not a destination.
                     onSaved = {
                         if (!navController.popBackStack(EinaDestination.Workout.route, inclusive = false)) {
                             navController.navigate(EinaDestination.Workout.route)
@@ -119,9 +118,9 @@ fun EinaNavHost() {
                 val sessionId = backStackEntry.arguments?.getLong("sessionId") ?: return@composable
                 ActiveWorkoutScreen(
                     sessionId = sessionId,
-                    // Uscire non chiude la sessione: resta aperta e si rientra da "Allena".
+                    // Exiting does not close the session: it stays open and is resumed from the tab.
                     onExit = { navController.popBackStack() },
-                    // Annullata, la sessione non esiste piu': si torna ad "Allena", non al riepilogo.
+                    // Once cancelled the session is gone: go back to the tab, not to the summary.
                     onCancelled = {
                         if (!navController.popBackStack(EinaDestination.Workout.route, inclusive = false)) {
                             navController.navigate(EinaDestination.Workout.route)
@@ -131,8 +130,6 @@ fun EinaNavHost() {
                         navController.navigate("library/exercise/$exerciseId")
                     },
                     onFinished = {
-                        // A fine allenamento si atterra sul riepilogo, con lo streak in evidenza
-                        // e l'immagine da condividere a portata di header.
                         navController.popBackStack(EinaDestination.Workout.route, inclusive = false)
                         navController.navigate("history/session/$sessionId?justFinished=true")
                     }
@@ -143,15 +140,15 @@ fun EinaNavHost() {
                 arguments = listOf(navArgument("sessionId") { type = NavType.LongType })
             ) { backStackEntry ->
                 val sessionId = backStackEntry.arguments?.getLong("sessionId") ?: return@composable
-                // Stessa schermata dell'allenamento in corso, in veste di correzione: vedi
-                // ActiveWorkoutScreen. Si torna sempre al riepilogo, che e' da dove si e' entrati.
+                // Same screen as the running workout, in editing mode (see ActiveWorkoutScreen);
+                // it always returns to the summary it was opened from.
                 ActiveWorkoutScreen(
                     sessionId = sessionId,
                     editing = true,
                     onFinished = { navController.popBackStack() },
                     onExit = { navController.popBackStack() },
-                    // L'allenamento non c'e' piu' (gli si sono tolte tutte le serie svolte):
-                    // si salta anche il suo riepilogo, che mostrerebbe una schermata vuota.
+                    // The workout is gone (every completed set was removed), so its summary is
+                    // skipped as well.
                     onCancelled = {
                         navController.popBackStack()
                         navController.popBackStack()
@@ -223,8 +220,7 @@ fun EinaNavHost() {
                     justFinished = backStackEntry.arguments?.getBoolean("justFinished") == true,
                     onBack = { navController.popBackStack() },
                     onEdit = { navController.navigate("workout/edit/$sessionId") },
-                    // La scheda appena creata si apre subito: e' li' che si cambia il nome, che
-                    // per ora e' quello dell'allenamento da cui e' nata.
+                    // The new routine opens right away: the editor is where its name is changed.
                     onRoutineCreated = { routineId -> navController.navigate("routines/edit/$routineId") }
                 )
             }
@@ -257,9 +253,9 @@ fun EinaNavHost() {
                         icon = iconFor(destination),
                         selected = currentDestination?.hierarchy?.any { it.route == destination.route } == true,
                         onClick = {
-                            // saveState/restoreState tengono in vita ViewModel e stato dei tab:
-                            // senza, ogni tocco ricostruiva la schermata da zero (nuova query
-                            // Room, scroll perso) e il cambio tab si sentiva lento.
+                            // saveState/restoreState keep the tab ViewModels and state alive:
+                            // without them every tap rebuilt the screen from scratch (new Room
+                            // query, lost scroll) and switching tabs felt slow.
                             navController.navigate(destination.route) {
                                 popUpTo(navController.graph.findStartDestination().id) {
                                     saveState = true
@@ -267,10 +263,9 @@ fun EinaNavHost() {
                                 launchSingleTop = true
                                 restoreState = true
                             }
-                            // Lo stato ripristinato puo' avere in cima un dettaglio aperto da quel
-                            // tab (Impostazioni, Storico): era il motivo per cui in Fase 15 il
-                            // salvataggio era stato tolto — il tab sembrava irraggiungibile.
-                            // Si conserva lo stato della radice e si buttano le schermate sopra.
+                            // The restored state can have a detail screen on top (Settings,
+                            // History), which made the tab look unreachable: the root state is
+                            // kept and the screens above it are dropped.
                             navController.popBackStack(destination.route, inclusive = false)
                         }
                     )

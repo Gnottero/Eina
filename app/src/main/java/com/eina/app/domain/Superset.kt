@@ -1,20 +1,19 @@
 package com.eina.app.domain
 
 /**
- * Superset: due o piu' esercizi eseguiti a giro, senza recupero in mezzo. Il legame e' un numero
- * di gruppo salvato su ogni esercizio (`supersetGroup`), uguale per i membri dello stesso giro:
- * cosi' un allenamento puo' contenere piu' superset diversi e un esercizio ne cambia con una
- * scrittura sola.
+ * Superset: two or more exercises performed as a round, with no rest in between. The link is a
+ * group number stored on each exercise (`supersetGroup`), equal for the members of a round, so a
+ * workout can hold several supersets and moving an exercise between them is a single write.
  *
- * Il numero non si mostra mai: a schermo il gruppo si legge come lettera (A, B, C…) nell'ordine
- * in cui compare nella lista, che e' quello che l'utente vede.
+ * The number is never shown: on screen a group reads as a letter (A, B, C…) assigned in the order
+ * it appears in the list.
  */
 object Superset {
 
-    /** Numero di gruppo libero: il piu' alto in uso piu' uno, cosi' non si riusa una lettera viva. */
+    /** Free group number: the highest in use plus one, so a live letter is never reused. */
     fun nextGroup(existing: List<Int?>): Int = (existing.filterNotNull().maxOrNull() ?: 0) + 1
 
-    /** Lettera per ogni gruppo, assegnata nell'ordine in cui i gruppi compaiono nella lista. */
+    /** Letter per group, assigned in the order the groups appear in the list. */
     fun letters(groupsInOrder: List<Int?>): Map<Int, String> {
         val distinct = groupsInOrder.filterNotNull().distinct()
         return distinct.mapIndexed { index, group ->
@@ -23,9 +22,8 @@ object Superset {
     }
 
     /**
-     * La lista spezzata in blocchi: un superset e' un blocco solo, gli altri esercizi uno a
-     * testa. E' l'unita' con cui si riordina (vedi il foglio di riordino): muovere un singolo
-     * membro lo staccherebbe dal giro, e un superset e' una sequenza.
+     * The list split into blocks: a superset is one block, every other exercise its own. This is
+     * the unit of reordering — moving a single member would detach it from its round.
      */
     fun blocksOf(members: List<Member>): List<List<Member>> {
         val blocks = mutableListOf<MutableList<Member>>()
@@ -41,8 +39,8 @@ object Superset {
     }
 
     /**
-     * Scioglie i giri rimasti con un solo esercizio. Serve dopo un'eliminazione: tolto il
-     * compagno, chi resta non sta facendo un superset con nessuno.
+     * Dissolves rounds left with a single exercise, as happens after a deletion: with no companion
+     * left, the survivor is not supersetting with anyone.
      */
     fun dissolveOrphans(members: List<Member>): List<Member> {
         val counts = members.mapNotNull { it.group }.groupingBy { it }.eachCount()
@@ -51,20 +49,19 @@ object Superset {
         }
     }
 
-    /** Un esercizio della lista, ridotto a quel che serve per comporre i giri. */
+    /** An exercise of the list, reduced to what composing the rounds needs. */
     data class Member(val id: Long, val group: Int?)
 
     /**
-     * Lista rimessa in ordine dopo che [movedId] e' entrato nel gruppo [group] (o ne e' uscito
-     * con `null`).
+     * The list reordered after [movedId] joined [group], or left it with a `null` group.
      *
-     * Due regole, ed entrambe servono a tenere il superset leggibile:
-     * - chi entra in un giro si sposta subito dopo l'ultimo dei suoi compagni, perche' un
-     *   superset e' una sequenza e non un insieme sparso per la lista;
-     * - un giro rimasto con un solo esercizio si scioglie. Fa eccezione il gruppo appena
-     *   scelto: "Nuovo superset" nasce per forza con un membro solo, e va lasciato crescere.
+     * Two rules, both there to keep a superset readable:
+     * - a joining exercise moves right after the last of its companions, since a superset is a
+     *   sequence and not a set scattered through the list;
+     * - a round left with a single exercise dissolves, except for the group just chosen: a new
+     *   superset necessarily starts with one member and must be allowed to grow.
      *
-     * L'ordine di ritorno e' quello nuovo: la posizione nella lista *e'* il campo `order`.
+     * The returned order is the new one: the position in the list is the `order` field.
      */
     fun regroup(members: List<Member>, movedId: Long, group: Int?): List<Member> {
         val movedIndex = members.indexOfFirst { it.id == movedId }
@@ -72,12 +69,11 @@ object Superset {
 
         val assigned = members.map { if (it.id == movedId) it.copy(group = group) else it }
         val reordered = if (group == null) {
-            // Uscendo dal giro l'esercizio resta dov'era: spostarlo sarebbe un movimento
-            // inspiegabile per chi guarda.
+            // Leaving a round, the exercise stays where it is: moving it would look arbitrary.
             assigned
         } else {
-            // I membri del giro si compattano in blocco dove comincia il giro, con l'ultimo
-            // arrivato in coda: cosi' non restano estranei incastrati fra un compagno e l'altro.
+            // Members are compacted into a block where the round begins, with the newcomer last,
+            // so no outsider stays wedged between two companions.
             val block = assigned.filter { it.group == group && it.id != movedId } +
                 assigned.first { it.id == movedId }
             val rest = assigned.filter { it.group != group }

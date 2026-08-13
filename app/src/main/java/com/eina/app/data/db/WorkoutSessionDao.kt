@@ -26,9 +26,8 @@ interface WorkoutSessionDao {
     fun getAll(): Flow<List<WorkoutSessionEntity>>
 
     /**
-     * Sessione ancora aperta: endTime resta null finche' l'utente non preme "Termina".
-     * Uscire dalla schermata non chiude nulla, quindi puo' esistere al massimo una sessione
-     * in corso e la si ritrova qui al rientro nell'app.
+     * Still-open session: endTime stays null until the workout is finished. Leaving the screen
+     * closes nothing, so at most one session can be running and it is found here on return.
      */
     @Query("SELECT * FROM workout_sessions WHERE endTime IS NULL ORDER BY startTime DESC LIMIT 1")
     fun observeActive(): Flow<WorkoutSessionEntity?>
@@ -40,12 +39,11 @@ interface WorkoutSessionDao {
     suspend fun deleteById(id: Long)
 
     /**
-     * Elimina le sessioni chiuse senza nemmeno una serie svolta: righe che lo storico non disegna
-     * (si basa sulle serie completate) ma che restavano nel database, invisibili e non
-     * cancellabili da nessuna schermata.
+     * Deletes closed sessions without a single completed set: rows the history never draws (it is
+     * built from completed sets) but which stayed in the database, invisible and undeletable.
      *
-     * `endTime IS NOT NULL` tiene fuori l'allenamento in corso, che di serie svolte non ne ha
-     * finche' non se ne chiude la prima. Ritorna quante ne ha tolte.
+     * `endTime IS NOT NULL` keeps the running workout out, since it has no completed set until the
+     * first one is closed. Returns how many rows were removed.
      */
     @Query(
         """
@@ -60,8 +58,8 @@ interface WorkoutSessionDao {
     suspend fun deleteEmptySessions(): Int
 
     /**
-     * Svuota lo storico. Esercizi e serie spariscono con le sessioni (ON DELETE CASCADE),
-     * routine, libreria e peso corporeo restano.
+     * Empties the history. Exercises and sets go with the sessions (ON DELETE CASCADE); routines,
+     * library and bodyweight stay.
      */
     @Query("DELETE FROM workout_sessions")
     suspend fun deleteAll()

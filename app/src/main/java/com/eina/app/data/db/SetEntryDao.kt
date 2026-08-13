@@ -14,13 +14,13 @@ interface SetEntryDao {
     @Update
     suspend fun update(setEntry: SetEntryEntity)
 
-    // Lettura una tantum e non Flow: nessun chiamante osserva le serie di un singolo esercizio,
-    // le prendevano tutti con `.first()`. Un Flow letto una volta sola registra e disiscrive un
-    // osservatore dell'InvalidationTracker per niente, e qui succedeva dentro cicli per esercizio.
+    // One-shot read and not a Flow: no caller observes the sets of a single exercise. A Flow read
+    // once registers and unregisters an InvalidationTracker observer for nothing, and that
+    // happened inside per-exercise loops.
     @Query("SELECT * FROM set_entries WHERE workoutExerciseId = :workoutExerciseId ORDER BY setIndex ASC")
     suspend fun getForWorkoutExercise(workoutExerciseId: Long): List<SetEntryEntity>
 
-    /** Se la sessione ha almeno una serie svolta: e' quel che la rende un allenamento. */
+    /** Whether the session has at least one completed set, which is what makes it a workout. */
     @Query(
         """
         SELECT EXISTS(
@@ -32,7 +32,7 @@ interface SetEntryDao {
     )
     suspend fun sessionHasCompletedSets(sessionId: Long): Boolean
 
-    // Tutte le set non-warmup completate per un esercizio, usate da isNewPR/volumeForSet.
+    // Every completed non-warmup set of an exercise, used by isNewPR and volumeForSet.
     @Query(
         """
         SELECT se.* FROM set_entries se
@@ -43,9 +43,9 @@ interface SetEntryDao {
     suspend fun getHistoricalSets(exerciseId: Long): List<SetEntryEntity>
 
     /**
-     * Tutte le serie completate di un esercizio, riscaldamenti compresi, in ordine di
-     * completamento: e' l'ingresso di [com.eina.app.domain.recomputePrFlags], che deve poter
-     * togliere il record anche a una serie diventata riscaldamento.
+     * Every completed set of an exercise, warmups included, in completion order: the input of
+     * [com.eina.app.domain.recomputePrFlags], which must be able to strip the record from a set
+     * that became a warmup.
      */
     @Query(
         """
@@ -57,7 +57,8 @@ interface SetEntryDao {
     )
     suspend fun getCompletedSetsForExercise(exerciseId: Long): List<SetEntryEntity>
 
-    // "Ultima volta": set della piu' recente WorkoutSession (per startTime, escludendo la sessione corrente) che contiene l'esercizio.
+    // "Last time": sets of the most recent session containing the exercise, by startTime and
+    // excluding the current one.
     @Query(
         """
         SELECT se.* FROM set_entries se
@@ -75,10 +76,8 @@ interface SetEntryDao {
     )
     suspend fun getLastTimeSets(exerciseId: Long, excludeSessionId: Long): List<SetEntryEntity>
 
-    // Ultimo peso e ultime ripetizioni effettivamente registrati per un esercizio, in qualunque
-    // sessione. Servono come ultimo segnaposto quando l'allenamento piu' recente con quell'esercizio
-    // non aveva il dato (es. serie chiusa senza peso): meglio proporre l'ultimo valore noto che
-    // lasciare il campo vuoto.
+    // Last weight and reps actually recorded for an exercise, in any session. They are the final
+    // placeholder when the most recent workout with that exercise did not record the value.
     @Query(
         """
         SELECT se.weight FROM set_entries se

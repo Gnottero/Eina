@@ -106,8 +106,7 @@ fun RoutineEditorScreen(
     val exercises by viewModel.exercises.collectAsState()
     val availableExercises by viewModel.availableExercises.collectAsState()
     val routineSets by viewModel.routineSets.collectAsState()
-    // Stesso foglio dell'allenamento: aggiungere un esercizio si fa allo stesso modo ovunque,
-    // senza saltare su una schermata a parte.
+    // Same sheet as the workout screen: adding an exercise works the same everywhere.
     var showPicker by remember { mutableStateOf(false) }
     var showReorder by remember { mutableStateOf(false) }
 
@@ -150,8 +149,7 @@ fun RoutineEditorScreen(
                 modifier = Modifier.fillMaxWidth()
             )
             Text(
-                // Il tasto "Riproduci" e' stato spostato nell'allenamento in corso: la musica
-                // serve mentre ci si allena, non mentre si compila la scheda.
+                // Playback lives in the running workout, not in the editor.
                 text = stringResource(R.string.routine_playlist_hint),
                 style = MaterialTheme.typography.bodySmall,
                 color = EinaTheme.island.textSecondary
@@ -166,7 +164,7 @@ fun RoutineEditorScreen(
                 description = stringResource(R.string.routine_editor_empty_description)
             )
         } else {
-            // Lettera del superset: segue l'ordine in cui i giri compaiono nella scheda.
+            // Superset letters follow the order the groups appear in the routine.
             val supersetLetters = Superset.letters(routineExercises.map { it.supersetGroup })
             val supersetOptions = routineExercises
                 .filter { it.supersetGroup != null }
@@ -232,7 +230,7 @@ fun RoutineEditorScreen(
     }
 
     if (showReorder) {
-        // Si trascinano blocchi: un superset e' una sequenza e si sposta intero.
+        // Blocks are dragged: a superset is a sequence and moves as a whole.
         ReorderSheet(
             title = stringResource(R.string.reorder_title),
             rows = routineBlocks(routineExercises, exercises),
@@ -243,15 +241,15 @@ fun RoutineEditorScreen(
 }
 
 /**
- * Gli esercizi della scheda visti come blocchi trascinabili, come in allenamento: la chiave della
- * riga sono gli id dei membri, cosi' l'ordine confermato si riappiattisce senza mappe a parte.
+ * Routine exercises as draggable blocks, as in the workout screen: the row key is the joined
+ * member ids, so the confirmed order can be flattened back without a separate map.
  */
 @Composable
 private fun routineBlocks(
     routineExercises: List<RoutineExerciseEntity>,
     exercises: Map<Long, ExerciseEntity>
 ): List<ReorderRow> {
-    // Dentro le lambda di map non si chiamano composable: nome e lettera si risolvono qui.
+    // Composables cannot be called inside the map lambdas: name and locale are resolved here.
     val context = LocalContext.current
     val locale = currentLocale()
     val letters = Superset.letters(routineExercises.map { it.supersetGroup })
@@ -304,8 +302,7 @@ private fun RoutineExerciseCard(
     var setActionsFor by remember { mutableStateOf<Long?>(null) }
     var setTypeFor by remember { mutableStateOf<Long?>(null) }
 
-    // Stessa card dell'allenamento: nessun tasto di servizio, le azioni stanno nel foglio che si
-    // apre col tocco lungo.
+    // Same card as the workout screen: no inline buttons, actions live in the long-press sheet.
     IslandCard(
         modifier = Modifier
             .fillMaxWidth()
@@ -342,7 +339,7 @@ private fun RoutineExerciseCard(
             Text(notes, style = MaterialTheme.typography.bodyMedium, color = island.textSecondary)
         }
 
-        // Il recupero non e' un numero da digitare: si sceglie coi rulli, come una sveglia.
+        // Rest is not typed but picked with wheels, like an alarm clock.
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(Spacing.xs),
@@ -369,12 +366,11 @@ private fun RoutineExerciseCard(
         }
 
         Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
-            // Niente colonna "precedente" e niente spunta: qui si pianifica, non si registra.
+            // No "previous" column and no check: this is planning, not recording.
             SetTableHeader(weightType = weightType, showPrevious = false, trailingSlot = false)
             var workingNumber = 0
             sets.forEach { set ->
                 if (set.setType.countsAsWorking) workingNumber++
-                // Come in allenamento: la serie si butta trascinandola a sinistra.
                 SwipeToDeleteSetRow(onDelete = { onRemoveSet(set) }) {
                     RoutineSetRow(
                         set = set,
@@ -469,8 +465,7 @@ private fun RoutineExerciseCard(
 
     setActionsFor?.let { setId ->
         val target = sets.find { it.id == setId }
-        // Titolo col numero che la serie porta in tabella: le warmup non hanno numero, quindi
-        // per loro resta il titolo generico.
+        // Title carries the number shown in the table; warmups have none and use the generic one.
         val number = sets.takeWhile { it.id != setId }.count { it.setType.countsAsWorking } + 1
         IslandBottomSheet(
             onDismiss = { setActionsFor = null },
@@ -493,7 +488,7 @@ private fun RoutineExerciseCard(
     }
 
     if (replaceSheetOpen) {
-        // Serie, recupero, nota e superset restano: cambia solo il movimento.
+        // Sets, rest, note and superset are kept: only the movement changes.
         ExercisePickerSheet(
             exercises = availableExercises,
             title = stringResource(R.string.action_replace_exercise),
@@ -540,8 +535,8 @@ private fun RoutineExerciseCard(
 }
 
 /**
- * Riga di una serie pianificata: stessa tabella dell'allenamento senza "precedente" e senza
- * spunta. Il segno in testa e' il comando che apre la scelta del tipo.
+ * Row of a planned set: the workout table without the "previous" column and the check. The marker
+ * on the left opens the set type picker.
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -554,8 +549,8 @@ private fun RoutineSetRow(
     onLongClick: () -> Unit
 ) {
     val hapticTap = LocalHapticTap.current
-    // Il testo digitato vive nella UI, non nel modello: passando ogni tasto per Double
-    // "52." diventerebbe "52.0" e il decimale successivo sarebbe impossibile da scrivere.
+    // The typed text lives in the UI, not in the model: routing every keystroke through Double
+    // would turn "52." into "52.0" and make the decimal digit impossible to type.
     var weightText by remember(set.id) { mutableStateOf(set.targetWeight?.let { formatTargetWeight(it) } ?: "") }
     var repsText by remember(set.id) { mutableStateOf(set.targetReps?.toString() ?: "") }
 
@@ -576,7 +571,7 @@ private fun RoutineSetRow(
             modifier = Modifier.width(40.dp)
         )
 
-        // Kg per i carichi, km per gli esercizi a distanza: stesso campo decimale.
+        // Kilograms for loads, kilometres for distance exercises: the same decimal field.
         if (weightType.usesDecimalField) {
             SetValueField(
                 value = weightText,
@@ -603,11 +598,11 @@ private fun RoutineSetRow(
     }
 }
 
-/** Target di peso: intero senza decimale inutile, cosi' il campo non nasce con "60.0". */
+/** Target weight without a pointless decimal, so the field does not start as "60.0". */
 private fun formatTargetWeight(value: Double): String =
     if (value % 1.0 == 0.0) value.toInt().toString() else value.toString()
 
-/** Nota della routine: promemoria sull'esecuzione, ereditata da ogni allenamento che la avvia. */
+/** Routine note, inherited by every workout started from it. */
 @Composable
 private fun RoutineNotesSheet(
     exerciseName: String,

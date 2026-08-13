@@ -83,9 +83,9 @@ class PrCalculatorTest {
     @Test
     fun `volume bodyweight scales with the exercise factor`() {
         val s = set(bodyweightSnapshotKg = 75.0, actualReps = 10)
-        // Crunch: il corpo non viene sollevato, quindi niente volume per quante se ne facciano.
+        // Crunch: the body is not lifted, so no volume however many are done.
         assertEquals(0.0, volumeForSet(WeightType.BODYWEIGHT, s, bodyweightFactor = 0.0), 0.0)
-        // Piegamenti: sulle braccia grava circa il 64% del peso.
+        // Push-up: about 64% of the bodyweight rests on the arms.
         assertEquals(480.0, volumeForSet(WeightType.BODYWEIGHT, s, bodyweightFactor = 0.64), 0.0)
     }
 

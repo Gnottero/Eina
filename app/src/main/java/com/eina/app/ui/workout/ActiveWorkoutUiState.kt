@@ -18,14 +18,13 @@ data class SessionSetUi(
     val completedAt: Long? = null,
     val isPR: Boolean = false,
     val bodyweightSnapshotKg: Double? = null,
-    /** Peso target della routine: solo segnaposto in UI, mai un valore registrato. */
+    /** Routine target weight: a UI placeholder only, never a recorded value. */
     val targetWeight: Double? = null,
-    /** Serie corrispondente dell'ultima volta, mostrata in colonna "Precedente". */
+    /** Matching set of the last workout, shown in the "previous" column. */
     val previous: SetEntryEntity? = null,
     /**
-     * Valori proposti per la serie: sono quelli stampati in grigio nei campi e quelli che
-     * vengono registrati se si chiude la serie senza digitare nulla. Vedi
-     * ActiveWorkoutViewModel.withSuggestions per la catena di ripiego.
+     * Suggested values: printed in grey in the fields and recorded if the set is completed without
+     * typing anything. See ActiveWorkoutViewModel.withSuggestions for the fallback chain.
      */
     val suggestedWeight: Double? = null,
     val suggestedReps: Int? = null
@@ -36,17 +35,17 @@ data class SessionExerciseUi(
     val exerciseId: Long,
     val name: ExerciseName,
     val weightType: WeightType,
-    /** Vedi ExerciseEntity.bodyweightFactor: serve al volume mostrato nell'header. */
+    /** See ExerciseEntity.bodyweightFactor; used by the volume shown in the header. */
     val bodyweightFactor: Double = 1.0,
     val order: Int,
     val restSeconds: Int = 90,
-    /** Nota dell'esercizio in questa sessione: ereditata dalla routine, modificabile qui. */
+    /** Note for this session, inherited from the routine and editable here. */
     val notes: String? = null,
-    /** Superset di appartenenza: vedi [com.eina.app.domain.Superset]. null = esercizio a se'. */
+    /** Superset group; see [com.eina.app.domain.Superset]. Null means the exercise stands alone. */
     val supersetGroup: Int? = null,
     val sets: List<SessionSetUi> = emptyList(),
     val lastTimeSets: List<SetEntryEntity> = emptyList(),
-    /** Ultimi valori registrati per questo esercizio, ovunque: ultimo anello dei segnaposto. */
+    /** Last values recorded for this exercise anywhere: the final link of the placeholder chain. */
     val lastRecordedWeight: Double? = null,
     val lastRecordedReps: Int? = null
 ) {
@@ -60,7 +59,7 @@ data class TimerUi(
 
 data class ActiveWorkoutUiState(
     val sessionId: Long,
-    /** Allenamento gia' registrato, aperto dallo storico per correggerlo. */
+    /** Recorded workout opened from the history for correction. */
     val isPast: Boolean = false,
     val startTime: Long = System.currentTimeMillis(),
     val elapsedSeconds: Int = 0,
@@ -68,13 +67,13 @@ data class ActiveWorkoutUiState(
     val availableExercises: List<ExerciseEntity> = emptyList(),
     val timer: TimerUi? = null,
     val isFinished: Boolean = false,
-    /** Routine di partenza, se la sessione ne aveva una: serve alla proposta di aggiornarla. */
+    /** Source routine, if any; needed to offer updating it at the end. */
     val routineId: Long? = null,
     val routineName: String? = null,
-    /** Playlist della routine di partenza: si riproduce da qui, non dall'editor della routine. */
+    /** Playlist of the source routine; played from here, not from the editor. */
     val playlistUri: String? = null,
     val playlistType: PlaylistType? = null,
-    /** Volume in kg delle sole serie completate, ricalcolato a ogni refresh. */
+    /** Volume in kg of the completed sets only, recomputed on every refresh. */
     val volumeKg: Double = 0.0
 ) {
     val totalSets: Int get() = exercises.sumOf { it.sets.size }

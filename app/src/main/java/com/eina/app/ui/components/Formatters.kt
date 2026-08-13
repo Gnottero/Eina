@@ -12,13 +12,12 @@ import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.util.Locale
 
-// I pattern di data restano gli stessi, cambia la lingua con cui java.time li riempie:
-// "12 mar" in italiano, "12 Mar" in inglese, "12 mars" in francese. Locale.getDefault()
-// segue la lingua scelta in Impostazioni, che MainActivity applica anche al processo.
-// Un formatter viene ricostruito solo quando la lingua cambia davvero.
-// I tre formatter viaggiano insieme in un oggetto solo, sostituito con una scrittura sola: il
-// riepilogo si formatta anche fuori dal thread della UI (vedi renderShareCard), e tre campi
-// riscritti uno alla volta si possono leggere a meta' da un altro thread.
+// The date patterns stay the same; only the language java.time fills them with changes.
+// Locale.getDefault() follows the language chosen in Settings, which MainActivity also applies to
+// the process, and the formatters are rebuilt only when it actually changes.
+// The three of them live in one object replaced by a single write: the summary is also formatted
+// off the UI thread (see renderShareCard), where three separately updated fields could be read
+// half-way through.
 private class Formatters(val locale: Locale) {
     val dayMonth: DateTimeFormatter = DateTimeFormatter.ofPattern("d MMM", locale)
     val fullDate: DateTimeFormatter = DateTimeFormatter.ofPattern("EEEE d MMMM", locale)
@@ -46,8 +45,8 @@ fun formatFullDate(date: LocalDate): String =
     date.format(formatters().fullDate).replaceFirstChar { it.uppercase() }
 
 /**
- * Iniziali dei giorni, da lunedi': "L M M G V S D" in italiano, "M T W T F S S" in inglese.
- * Le fornisce java.time a partire dalla lingua attiva, non una lista scritta a mano.
+ * Weekday initials starting on Monday ("M T W T F S S" in English), provided by java.time for the
+ * active language rather than a hand-written list.
  */
 fun weekDayInitials(): List<String> {
     val locale = Locale.getDefault()
@@ -62,7 +61,7 @@ fun formatTime(millis: Long): String =
     Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault()).toLocalTime()
         .format(formatters().time)
 
-/** Numero compatto: sopra i 1000 kg si passa a "12,4k" per non far esplodere le tile. */
+/** Compact number: above 1000 kg it switches to "12.4k" so the tiles keep their size. */
 fun formatVolume(kg: Double): String = when {
     kg <= 0.0 -> "0"
     kg >= 1000.0 -> String.format(Locale.getDefault(), "%.1fk", kg / 1000.0)
@@ -76,11 +75,11 @@ fun formatDecimal(value: Double): String =
         String.format(Locale.getDefault(), "%.1f", value)
     }
 
-// "h" e "min" si scrivono uguali nelle tre lingue: nessuna stringa da tradurre.
+// "h" and "min" are written the same in all three languages: nothing to translate.
 fun formatDuration(minutes: Long): String =
     if (minutes >= 60) "${minutes / 60}h ${minutes % 60}min" else "${minutes}min"
 
-/** Valore del PR letto secondo il weightType (kg, ripetizioni o secondi). */
+/** PR value rendered according to the weight type (kg, reps, seconds or distance). */
 fun Context.formatPrValue(record: PrRecord): String = when (record.weightType) {
     WeightType.FREE_WEIGHT, WeightType.MACHINE_STACK ->
         "${formatDecimal(record.weight ?: 0.0)} kg × ${record.reps ?: 0}"
@@ -101,8 +100,8 @@ fun Context.formatPrValue(record: PrRecord): String = when (record.weightType) {
 }
 
 /**
- * Serie a distanza: chilometri e minuti insieme, perche' ne' l'uno ne' l'altro da solo dice
- * com'e' andata (vedi [WeightType.DISTANCE_BASED]).
+ * Distance set: kilometres and minutes together, since neither alone describes the effort
+ * (see [WeightType.DISTANCE_BASED]).
  */
 fun formatDistanceAndTime(distanceKm: Double?, minutes: Int?): String {
     val distance = distanceKm?.let { "${formatDecimal(it)} km" }
@@ -110,7 +109,7 @@ fun formatDistanceAndTime(distanceKm: Double?, minutes: Int?): String {
     return listOfNotNull(distance, time).joinToString(" · ").ifBlank { "–" }
 }
 
-/** Relativo e breve: "oggi", "ieri", poi la data. */
+/** Short relative day: "today", "yesterday", then the date. */
 fun Context.formatRelativeDay(millis: Long, today: LocalDate = LocalDate.now()): String {
     val date = localDateOf(millis)
     return when (date) {

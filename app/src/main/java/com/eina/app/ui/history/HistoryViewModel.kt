@@ -30,28 +30,25 @@ class HistoryViewModel(
 ) : ViewModel() {
     val sessions: StateFlow<List<SessionSummary>> = repository.observeCompletedSets()
         .map { summarizeSessions(it) }
-        // Riepilogare tutto lo storico non e' lavoro da thread della UI.
+        // Summarising the whole history is not UI thread work.
         .flowOn(Dispatchers.Default)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
-    /**
-     * Elimina un singolo allenamento. Finora si poteva solo svuotare tutto lo storico, il che
-     * rendeva impossibile togliere una sessione sbagliata senza perdere anche le altre.
-     */
+    /** Deletes a single workout, PR flags included (see [WorkoutRepository.deleteSession]). */
     fun deleteSession(sessionId: Long) {
         viewModelScope.launch { workoutRepository.deleteSession(sessionId) }
     }
 }
 
 /**
- * Un blocco di lavoro della sessione con le sue set completate, in ordine. La chiave e'
- * workoutExerciseId: lo stesso esercizio svolto due volte nella stessa sessione resta due blocchi.
+ * One work block of the session with its completed sets, in order. Keyed by workoutExerciseId, so
+ * the same exercise performed twice in a session stays two blocks.
  */
 data class SessionExerciseDetail(
     val workoutExerciseId: Long,
     val exerciseId: Long,
     val exerciseName: ExerciseName,
-    /** Giro di appartenenza, come in allenamento: la lettera e il colore li assegna la UI. */
+    /** Superset group, as in the workout screen; letter and colour are assigned by the UI. */
     val supersetGroup: Int? = null,
     val sets: List<CompletedSetRow>
 ) {
@@ -62,11 +59,11 @@ data class SessionDetailUiState(
     val summary: SessionSummary? = null,
     val exercises: List<SessionExerciseDetail> = emptyList(),
     val streakWeeks: Int = 0,
-    /** Quel che l'orologio ha misurato, se c'era. Fuori dalla card condivisibile per scelta. */
+    /** What the watch measured, if anything; deliberately kept off the shareable card. */
     val vitals: SessionVitals? = null
 )
 
-/** Battiti e calorie di una sessione, gia' pronti da disegnare. */
+/** Heart rate and calories of a session, ready to render. */
 data class SessionVitals(
     val avgBpm: Int?,
     val maxBpm: Int?,
@@ -84,8 +81,8 @@ class SessionDetailViewModel(
 ) : ViewModel() {
 
     /**
-     * Fa una scheda nuova da questo allenamento. `onDone` riceve l'id della scheda creata, o
-     * null se la sessione non ha piu' nemmeno un esercizio da copiare.
+     * Creates a routine from this workout. [onDone] receives the id of the new routine, or null if
+     * the session no longer has a single exercise to copy.
      */
     fun createRoutine(name: String, onDone: (Long?) -> Unit) {
         viewModelScope.launch {
@@ -94,14 +91,14 @@ class SessionDetailViewModel(
     }
 
     init {
-        // Un orologio sincronizza con comodo: i battiti dell'ultima serie possono arrivare in
-        // Health Connect dopo il "Termina", quindi si riprova all'apertura del riepilogo.
+        // Watches sync at their own pace: the samples of the last set can reach Health Connect
+        // after the workout was finished, so the sync is retried when the summary opens.
         viewModelScope.launch { runCatching { healthSync.sync(sessionId) } }
     }
 
     val uiState: StateFlow<SessionDetailUiState> = combine(
         repository.observeSessionSets(sessionId),
-        // Lo streak si calcola su tutto lo storico: e' il numero che si mostra a fine allenamento.
+        // The streak is computed over the whole history.
         repository.observeCompletedSets(),
         workoutRepository.observeSession(sessionId)
     ) { rows, allRows, session ->
@@ -109,8 +106,8 @@ class SessionDetailViewModel(
             vitals = session?.toVitals()?.takeIf { it.hasData },
             summary = summarizeSessions(rows).firstOrNull(),
             exercises = rows
-                // groupBy tiene l'ordine di arrivo: ordinato qui, ogni blocco esce gia' in ordine
-                // di serie e non serve riordinarlo dentro.
+                // groupBy preserves input order, so sorting here leaves each block already ordered
+                // by set index.
                 .sortedWith(compareBy({ it.exerciseOrder }, { it.setIndex }))
                 .groupBy { it.workoutExerciseId }
                 .map { (workoutExerciseId, exerciseRows) ->

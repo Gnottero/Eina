@@ -17,8 +17,8 @@ import org.koin.core.context.startKoin
 class EinaApplication : Application() {
     private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
-    // Anche il Context dell'applicazione va nella lingua scelta: i ViewModel leggono le
-    // stringhe da li', non dall'Activity.
+    // The application Context follows the chosen language too: ViewModels read their strings from
+    // it, not from the Activity.
     override fun attachBaseContext(base: Context) {
         super.attachBaseContext(AppLocale.wrap(base))
     }
@@ -31,12 +31,12 @@ class EinaApplication : Application() {
         }
 
         applicationScope.launch {
-            // Il seed gira fuori dal main thread al primo avvio: se l'asset manca o e' malformato
-            // l'app resta usabile con la libreria vuota invece di crashare in partenza.
+            // The seed runs off the main thread on first launch: if the asset is missing or
+            // malformed the app stays usable with an empty library instead of crashing at start.
             runCatching { get<ExerciseSeeder>().seedIfEmpty() }
-            // Righe fantasma lasciate dalle versioni precedenti: allenamenti chiusi senza nemmeno
-            // una serie svolta, che lo storico non mostra e nessuna schermata puo' eliminare.
-            // Vedi WorkoutRepository.purgeEmptySessions.
+            // Ghost rows left by earlier versions: workouts closed without a single completed set,
+            // which the history never shows and no screen can delete.
+            // See WorkoutRepository.purgeEmptySessions.
             runCatching { get<WorkoutRepository>().purgeEmptySessions() }
         }
     }

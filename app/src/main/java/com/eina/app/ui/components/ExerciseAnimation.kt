@@ -30,16 +30,16 @@ import com.eina.app.ui.theme.TileShape
 import kotlinx.coroutines.delay
 
 /**
- * Animazione dell'esercizio.
+ * Exercise animation.
  *
- * Il catalogo ha due tipi di immagini (vedi ExerciseSeeder.bundledMediaUri):
- *   - `anim.webp`: la figura anatomica che esegue il movimento coi muscoli lavorati colorati,
- *     una WebP animata riprodotta cosi' com'e';
- *   - `0.webp` + `1.webp`: i due fotogrammi fotografici (inizio e fine del movimento) dei pochi
- *     esercizi senza animazione, alternati in dissolvenza.
+ * The catalog holds two kinds of media (see ExerciseSeeder.bundledMediaUri):
+ *   - `anim.webp`: the anatomical figure performing the movement with the worked muscles coloured,
+ *     an animated WebP played as is;
+ *   - `0.webp` + `1.webp`: the two photographic frames (start and end of the movement) of the few
+ *     exercises without an animation, cross-faded.
  *
- * Un esercizio custom ha un'immagine sola (quella scelta dalla galleria) e resta fermo. Senza
- * immagini il composable non disegna nulla: se ne accorge il chiamante con [hasExerciseMedia].
+ * A custom exercise has a single still image. With no media the composable draws nothing; callers
+ * check with [hasExerciseMedia].
  */
 @Composable
 fun ExerciseAnimation(
@@ -51,9 +51,9 @@ fun ExerciseAnimation(
     if (frames.isEmpty()) return
 
     val animated = isAnimatedMedia(mediaUri)
-    // Le animazioni anatomiche sono quadrate e su fondo bianco: riquadro quadrato e superficie
-    // dello stesso bianco della card, altrimenti restano due bande di superficie incassata ai
-    // lati della figura. Le foto, che riempiono il riquadro, tengono il fondo incassato.
+    // The anatomical animations are square on a white background, so the frame is square and uses
+    // the card white; otherwise two sunken bands would flank the figure. The photos fill their
+    // frame and keep the sunken background.
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -74,9 +74,8 @@ fun ExerciseAnimation(
 }
 
 /**
- * WebP animata. I decoder animati si chiedono sulla singola richiesta e non sull'ImageLoader
- * globale, cosi' le miniature della libreria restano ferme sul primo fotogramma senza far
- * girare 197 animazioni in una lista.
+ * Animated WebP. The animated decoders are requested per image and not on the global ImageLoader,
+ * so the library thumbnails stay on their first frame instead of running 197 animations in a list.
  */
 @Composable
 private fun AnimatedMedia(uri: String, modifier: Modifier = Modifier) {
@@ -88,8 +87,8 @@ private fun AnimatedMedia(uri: String, modifier: Modifier = Modifier) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                     ImageDecoderDecoder.Factory()
                 } else {
-                    // Sotto API 28 ImageDecoder non c'e': GifDecoder non legge le WebP animate,
-                    // che restano quindi sul primo fotogramma. Accettabile su Android 8.
+                    // ImageDecoder does not exist below API 28, and GifDecoder cannot read animated
+                    // WebP, so those stay on their first frame.
                     GifDecoder.Factory()
                 }
             )
@@ -138,11 +137,10 @@ private fun isAnimatedMedia(mediaUri: String?): Boolean =
     mediaUri != null && mediaUri.startsWith(BUNDLED_MEDIA_PREFIX) && mediaUri.endsWith(ANIMATION_SUFFIX)
 
 /**
- * Fotogrammi da mostrare per un esercizio. Un'animazione (`anim.webp`) e' un elemento solo; per
- * gli esercizi ancora fotografici il catalogo salva in `mediaUri` il primo fotogramma bundlato
- * (`file:///android_asset/media/.../0.webp`) e il secondo si ricava per convenzione dal nome:
- * nessuna colonna in piu' nel database. Un `mediaUri` qualunque (esercizio custom) resta
- * un'immagine sola.
+ * Frames to show for an exercise. An animation (`anim.webp`) is a single entry; for the still
+ * photographic exercises the catalog stores the first bundled frame in `mediaUri` and the second
+ * is derived from its name by convention, with no extra database column. Any other `mediaUri`
+ * (custom exercise) stays a single image.
  */
 private fun exerciseFrames(mediaUri: String?): List<String> {
     val uri = mediaUri?.takeIf { it.isNotBlank() } ?: return emptyList()

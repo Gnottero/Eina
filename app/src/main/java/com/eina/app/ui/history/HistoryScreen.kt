@@ -30,7 +30,7 @@ fun HistoryScreen(
     viewModel: HistoryViewModel = koinViewModel()
 ) {
     val sessions by viewModel.sessions.collectAsState()
-    // Come per routine ed esercizi: le azioni di un allenamento stanno nel foglio del tocco lungo.
+    // As for routines and exercises: workout actions live in the long-press sheet.
     var actionsFor by remember { mutableStateOf<Long?>(null) }
     var confirmDeleteFor by remember { mutableStateOf<Long?>(null) }
 
@@ -81,7 +81,7 @@ fun HistoryScreen(
     }
 
     confirmDeleteFor?.let { sessionId ->
-        // Le serie registrate spariscono con la sessione: si conferma prima di toccare il database.
+        // Recorded sets go with the session, so it is confirmed before touching the database.
         IslandAlertDialog(
             title = stringResource(R.string.history_delete_confirm_title),
             text = stringResource(R.string.history_delete_confirm_text),
