@@ -84,6 +84,7 @@ import com.eina.app.ui.components.previousColumnWeight
 import com.eina.app.ui.components.IslandEmptyState
 import com.eina.app.ui.components.IslandIconButton
 import com.eina.app.ui.components.IslandSecondaryButton
+import com.eina.app.ui.components.MetricTile
 import com.eina.app.ui.components.ReorderRow
 import com.eina.app.ui.components.ReorderSheet
 import com.eina.app.ui.components.IslandSurface
@@ -623,58 +624,6 @@ private fun SessionHeader(
 
     if (showStopwatch) {
         StopwatchSheet(controller = stopwatch, onDismiss = { showStopwatch = false })
-    }
-}
-
-@Composable
-private fun MetricTile(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    label: String,
-    value: String,
-    modifier: Modifier = Modifier,
-    unit: String? = null
-) {
-    val island = EinaTheme.island
-    Column(
-        modifier = modifier
-            .clip(TileShape)
-            .background(island.sunken)
-            .padding(horizontal = Spacing.lg, vertical = Spacing.md),
-        verticalArrangement = Arrangement.spacedBy(Spacing.xs)
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(Spacing.xs)
-        ) {
-            Icon(
-                icon,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(15.dp)
-            )
-            Text(
-                text = label.uppercase(),
-                style = MaterialTheme.typography.labelSmall,
-                color = island.textSecondary,
-                maxLines = 1
-            )
-        }
-        Row(verticalAlignment = Alignment.Bottom) {
-            Text(
-                text = value,
-                style = MaterialTheme.typography.headlineSmall,
-                maxLines = 1,
-                overflow = TextOverflow.Clip
-            )
-            if (unit != null) {
-                Text(
-                    text = " $unit",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.padding(bottom = 3.dp)
-                )
-            }
-        }
     }
 }
 

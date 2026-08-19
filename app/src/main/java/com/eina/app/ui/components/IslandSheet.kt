@@ -130,7 +130,7 @@ private val SheetRowShape: Shape = squircle(20.dp)
 
 /**
  * Action row of a sheet: full-width filled tile with a leading icon and a label. [destructive]
- * tints it red and it stays last in the list.
+ * turns the icon red and the row stays last in the list.
  *
  * The row is the tile itself (sunken background, continuous corner) rather than an icon badge on
  * white, so the touch target is visible.
@@ -147,16 +147,16 @@ fun SheetActionRow(
     val island = EinaTheme.island
     val hapticTap = LocalHapticTap.current
     val accent = MaterialTheme.colorScheme.primary
-    val labelColor = if (destructive) DestructiveRed else MaterialTheme.colorScheme.onSurface
-    // The icon carries the colour and the label stays black: tinting the text too made every entry
-    // look like a warning. The destructive row is the exception.
+    // The icon carries the colour and the label stays black, destructive rows included: a red
+    // label on a red-tinted tile made the whole row read as already dangerous. Here the bin alone
+    // is red, on the same surface as every other action.
     val iconColor = if (destructive) DestructiveRed else accent
 
     Row(
         modifier = modifier
             .fillMaxWidth()
             .clip(SheetRowShape)
-            .background(if (destructive) DestructiveRed.copy(alpha = 0.08f) else island.sunken)
+            .background(island.sunken)
             .clickable { hapticTap(); onClick() }
             .defaultMinSize(minHeight = 60.dp)
             .padding(horizontal = Spacing.lg, vertical = Spacing.md),
@@ -165,7 +165,7 @@ fun SheetActionRow(
     ) {
         Icon(icon, contentDescription = null, tint = iconColor, modifier = Modifier.size(22.dp))
         Column(modifier = Modifier.weight(1f)) {
-            Text(label, style = MaterialTheme.typography.titleSmall, color = labelColor)
+            Text(label, style = MaterialTheme.typography.titleSmall)
             if (description != null) {
                 Text(
                     description,

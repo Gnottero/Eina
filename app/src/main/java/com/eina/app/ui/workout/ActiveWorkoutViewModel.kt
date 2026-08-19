@@ -517,9 +517,11 @@ class ActiveWorkoutViewModel(
             )
             refreshSets(workoutExerciseId)
             feedback.haptic()
-            // In a superset rest belongs to the round: it starts only once every member has
-            // completed the set with the same index. On a past workout it never starts.
-            if (!isPast && completed.setType.countsAsWorking && isRoundComplete(workoutExerciseId, set.setIndex)) {
+            // Rest starts after every set, warmups included: a warmup is out of volume and PR,
+            // but between it and the next set one still waits. In a superset rest belongs to the
+            // round: it starts only once every member has completed the set with the same index.
+            // On a past workout it never starts.
+            if (!isPast && isRoundComplete(workoutExerciseId, set.setIndex)) {
                 startRestTimer(completed.restSecondsPlanned)
             }
         }

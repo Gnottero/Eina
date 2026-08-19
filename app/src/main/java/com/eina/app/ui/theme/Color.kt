@@ -22,16 +22,21 @@ val AccentPrimarySoft = Color(0xFFFFEADF)
 val AccentRampStart = Color(0xFFFFA23A)
 val AccentRampEnd = Color(0xFFF9436B)
 
-val LightSurfaceSunken = Color(0xFFEFEEEB)
+/**
+ * Sunken surface: tracks, inactive chips, fields, sheet rows. Kept a whisper away from white — the
+ * former #EFEEEB read as a grey panel laid on the card and weighed more than what it held. It is
+ * only ever used *inside* a white surface: on the page background it would be invisible, and the
+ * controls that sit there (see IslandSecondaryButton) are white islands with a thin outline.
+ */
+val LightSurfaceSunken = Color(0xFFF6F5F3)
 
 /**
- * Light sunken surface for large areas *inside* a white card: the summary set table and the weight
- * and reps fields. With the full grey those boxes weighed more than the numbers they hold. On the
- * page background [LightSurfaceSunken] stays, since a lighter grey would be invisible there.
+ * Even lighter sunken surface, for large areas *inside* a white card: the summary set table and the
+ * weight and reps fields. With the full grey those boxes weighed more than the numbers they hold.
  */
-val LightSurfaceSunkenSoft = Color(0xFFF7F6F4)
+val LightSurfaceSunkenSoft = Color(0xFFFAFAF8)
 val LightTextSecondary = Color(0xFF7C7A75)
-val LightOutlineSubtle = Color(0xFFE7E5E1)
+val LightOutlineSubtle = Color(0xFFEDECE9)
 val LightOnBackground = Color(0xFF1C1B19)
 
 /**

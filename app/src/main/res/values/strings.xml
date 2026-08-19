@@ -37,6 +37,9 @@
     <string name="unit_bpm" translatable="false">bpm</string>
     <string name="unit_kcal" translatable="false">kcal</string>
     <string name="session_vitals_title">From your watch</string>
+    <string name="session_notes_title">Comment</string>
+    <string name="session_notes_empty">How did it go? Tap to write it down.</string>
+    <string name="session_notes_field">Comment on the workout</string>
     <string name="stat_weight">Weight</string>
     <string name="stat_streak">Streak</string>
 
@@ -174,7 +177,7 @@
     <string name="set_type_title">Set type</string>
     <string name="set_type_cd">Change set type</string>
     <string name="set_type_warmup">Warm-up</string>
-    <string name="set_type_warmup_description">Out of volume, PRs and rest timer.</string>
+    <string name="set_type_warmup_description">Out of volume and PRs, rest timer still runs.</string>
     <string name="set_type_normal">Normal</string>
     <string name="set_type_normal_description">A working set, numbered.</string>
     <string name="set_type_failure">To failure</string>
@@ -349,6 +352,8 @@
     <string name="settings_section_language">Language</string>
     <string name="settings_language_title">App language</string>
     <string name="settings_language_description">Interface and exercise descriptions. Descriptions fall back to English where a translation is missing.</string>
+    <string name="settings_language_search">Search a language</string>
+    <string name="settings_language_search_empty">No language matches your search.</string>
     <string name="language_system">System</string>
     <string name="language_english" translatable="false">English</string>
     <string name="language_italian" translatable="false">Italiano</string>

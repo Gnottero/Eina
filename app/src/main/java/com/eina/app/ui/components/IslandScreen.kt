@@ -22,7 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import com.eina.app.ui.theme.Spacing
 
-/** Spazio da lasciare in fondo al contenuto perche' la nav flottante non copra l'ultima isola. */
+/** Trailing space so the floating nav bar does not cover the last island. */
 @Composable
 fun islandBottomSpace(extra: Dp = Spacing.xl): Dp =
     IslandNavBarHeight + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + extra
@@ -101,7 +101,7 @@ fun IslandListScreen(
     }
 }
 
-/** Padding di coda per le LazyColumn dentro [IslandListScreen]. */
+/** Trailing padding for the LazyColumns inside [IslandListScreen]. */
 @Composable
 fun islandListContentPadding(top: Dp = Spacing.sm): PaddingValues = PaddingValues(
     start = Spacing.xl,

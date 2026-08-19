@@ -28,6 +28,9 @@
     <string name="stat_heart_rate_max">Max %1$d bpm</string>
     <string name="stat_calories">Calories</string>
     <string name="session_vitals_title">Depuis la montre</string>
+    <string name="session_notes_title">Commentaire</string>
+    <string name="session_notes_empty">Comment s\'est passée la séance ? Touchez pour l\'écrire.</string>
+    <string name="session_notes_field">Commentaire sur la séance</string>
     <string name="stat_weight">Poids</string>
     <string name="stat_streak">Série</string>
 
@@ -164,7 +167,7 @@
     <string name="set_type_title">Type de série</string>
     <string name="set_type_cd">Changer le type de série</string>
     <string name="set_type_warmup">Échauffement</string>
-    <string name="set_type_warmup_description">Hors volume, records et récupération.</string>
+    <string name="set_type_warmup_description">Hors volume et records, la récupération démarre quand même.</string>
     <string name="set_type_normal">Normale</string>
     <string name="set_type_normal_description">Une série de travail, numérotée.</string>
     <string name="set_type_failure">Jusqu\'à l\'échec</string>
@@ -336,6 +339,8 @@
     <string name="settings_section_language">Langue</string>
     <string name="settings_language_title">Langue de l\'app</string>
     <string name="settings_language_description">Interface et descriptions des exercices. Là où la traduction manque, la description reste en anglais.</string>
+    <string name="settings_language_search">Chercher une langue</string>
+    <string name="settings_language_search_empty">Aucune langue ne correspond à la recherche.</string>
     <string name="language_system">Système</string>
     <string name="settings_section_timer">Minuteur de repos</string>
     <string name="settings_sound_title">Son en fin de repos</string>

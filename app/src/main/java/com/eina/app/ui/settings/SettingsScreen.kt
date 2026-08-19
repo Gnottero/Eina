@@ -4,13 +4,12 @@ import android.app.Activity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Coffee
 import androidx.compose.material.icons.outlined.DeleteSweep
+import androidx.compose.material.icons.outlined.Language
 import androidx.compose.material.icons.outlined.MonitorHeart
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
@@ -31,11 +30,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.eina.app.BuildConfig
 import com.eina.app.R
-import com.eina.app.data.prefs.AppLanguage
 import com.eina.app.ui.components.IslandAlertDialog
 import com.eina.app.ui.components.DestructiveRed
 import com.eina.app.ui.components.IslandCard
-import com.eina.app.ui.components.IslandChip
 import com.eina.app.ui.components.IslandScreen
 import com.eina.app.ui.components.IslandSecondaryButton
 import com.eina.app.ui.components.ScreenHeader
@@ -45,7 +42,6 @@ import com.eina.app.ui.theme.EinaTheme
 import com.eina.app.ui.theme.Spacing
 import org.koin.androidx.compose.koinViewModel
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun SettingsScreen(
     onBack: () -> Unit,
@@ -54,6 +50,7 @@ fun SettingsScreen(
     val island = EinaTheme.island
     val context = LocalContext.current
     var confirmClear by remember { mutableStateOf(false) }
+    var showLanguagePicker by remember { mutableStateOf(false) }
     val language by viewModel.language.collectAsState()
     val haptics by viewModel.hapticsEnabled.collectAsState()
     val sound by viewModel.timerSoundEnabled.collectAsState()
@@ -89,27 +86,14 @@ fun SettingsScreen(
                 style = MaterialTheme.typography.bodySmall,
                 color = island.textSecondary
             )
-            // FlowRow rather than LazyRow: the languages wrap and are all visible at once, with no
-            // horizontal scrolling hiding one of them.
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
-                verticalArrangement = Arrangement.spacedBy(Spacing.sm)
-            ) {
-                AppLanguage.entries.forEach { entry ->
-                    IslandChip(
-                        text = stringResource(entry.labelRes),
-                        selected = entry == language,
-                        onClick = {
-                            if (entry != language) {
-                                viewModel.setLanguage(entry)
-                                // The screen resources are already resolved: without recreating the
-                                // Activity everything would stay in the previous language.
-                                (context as? Activity)?.recreate()
-                            }
-                        }
-                    )
-                }
-            }
+            // A row that opens the picker, not a line of chips: the list scales to more languages
+            // without stretching this card, and it is searchable.
+            IslandSecondaryButton(
+                text = stringResource(language.labelRes),
+                icon = Icons.Outlined.Language,
+                onClick = { showLanguagePicker = true },
+                modifier = Modifier.fillMaxWidth()
+            )
         }
 
         SectionHeader(title = stringResource(R.string.settings_section_timer))
@@ -216,6 +200,22 @@ fun SettingsScreen(
             InfoRow(stringResource(R.string.info_icons), stringResource(R.string.info_icons_value))
             InfoRow(stringResource(R.string.info_font), stringResource(R.string.info_font_value))
         }
+    }
+
+    if (showLanguagePicker) {
+        LanguagePickerSheet(
+            current = language,
+            onSelect = { entry ->
+                showLanguagePicker = false
+                if (entry != language) {
+                    viewModel.setLanguage(entry)
+                    // The screen resources are already resolved: without recreating the Activity
+                    // everything would stay in the previous language.
+                    (context as? Activity)?.recreate()
+                }
+            },
+            onDismiss = { showLanguagePicker = false }
+        )
     }
 
     if (confirmClear) {

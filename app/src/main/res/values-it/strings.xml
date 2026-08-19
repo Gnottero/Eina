@@ -28,6 +28,9 @@
     <string name="stat_heart_rate_max">Massimo %1$d bpm</string>
     <string name="stat_calories">Calorie</string>
     <string name="session_vitals_title">Dall\'orologio</string>
+    <string name="session_notes_title">Commento</string>
+    <string name="session_notes_empty">Com\'è andata? Tocca per scriverlo.</string>
+    <string name="session_notes_field">Commento sull\'allenamento</string>
     <string name="stat_weight">Peso</string>
     <string name="stat_streak">Streak</string>
 
@@ -164,7 +167,7 @@
     <string name="set_type_title">Tipo di serie</string>
     <string name="set_type_cd">Cambia tipo di serie</string>
     <string name="set_type_warmup">Riscaldamento</string>
-    <string name="set_type_warmup_description">Fuori da volume, record e recupero.</string>
+    <string name="set_type_warmup_description">Fuori da volume e record, il recupero parte lo stesso.</string>
     <string name="set_type_normal">Normale</string>
     <string name="set_type_normal_description">Serie di lavoro, con il suo numero.</string>
     <string name="set_type_failure">A cedimento</string>
@@ -336,6 +339,8 @@
     <string name="settings_section_language">Lingua</string>
     <string name="settings_language_title">Lingua dell\'app</string>
     <string name="settings_language_description">Interfaccia e descrizioni degli esercizi. Dove manca la traduzione, la descrizione resta in inglese.</string>
+    <string name="settings_language_search">Cerca una lingua</string>
+    <string name="settings_language_search_empty">Nessuna lingua corrisponde alla ricerca.</string>
     <string name="language_system">Sistema</string>
     <string name="settings_section_timer">Timer di recupero</string>
     <string name="settings_sound_title">Suono a fine recupero</string>

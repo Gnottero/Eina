@@ -1,6 +1,7 @@
 package com.eina.app.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -54,7 +55,9 @@ fun IslandButton(
     enabled: Boolean = true,
     containerColor: Color = MaterialTheme.colorScheme.primary,
     contentColor: Color = Color.White,
-    shape: Shape = LocalButtonShape.current
+    shape: Shape = LocalButtonShape.current,
+    /** Thin outline drawn over the fill; how a white button stays readable on a white surface. */
+    borderColor: Color? = null
 ) {
     val hapticTap = LocalHapticTap.current
     val accent = MaterialTheme.colorScheme.primary
@@ -83,6 +86,10 @@ fun IslandButton(
                 } else {
                     Modifier
                 }
+            )
+            .then(
+                if (borderColor != null && enabled) Modifier.border(1.dp, borderColor, shape)
+                else Modifier
             ),
         elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp, pressedElevation = 0.dp),
         colors = ButtonDefaults.buttonColors(
@@ -108,7 +115,14 @@ fun IslandButton(
     }
 }
 
-/** Secondary action: sunken pill with the same footprint as the primary one. */
+/**
+ * Secondary action: white pill with a thin outline, same footprint as the primary one.
+ *
+ * It used to be filled with the sunken grey, which was the darkest thing on the page wherever the
+ * button sat on the background ("add exercise", "save as routine"). White plus an outline reads as
+ * one of the islands the rest of the app is made of, and keeps working on a white card too, where
+ * a fill this light would vanish.
+ */
 @Composable
 fun IslandSecondaryButton(
     text: String,
@@ -119,15 +133,17 @@ fun IslandSecondaryButton(
     contentColor: Color = MaterialTheme.colorScheme.onSurface,
     shape: Shape = LocalButtonShape.current
 ) {
+    val island = EinaTheme.island
     IslandButton(
         text = text,
         onClick = onClick,
         modifier = modifier,
         icon = icon,
         enabled = enabled,
-        containerColor = EinaTheme.island.sunken,
+        containerColor = MaterialTheme.colorScheme.surface,
         contentColor = contentColor,
-        shape = shape
+        shape = shape,
+        borderColor = island.outlineSubtle
     )
 }
 

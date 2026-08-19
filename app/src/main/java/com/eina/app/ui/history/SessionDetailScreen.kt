@@ -22,8 +22,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.Notes
 import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.FitnessCenter
+import androidx.compose.material.icons.outlined.KeyboardArrowDown
+import androidx.compose.material.icons.outlined.Repeat
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.Favorite
 import androidx.compose.material.icons.outlined.LocalFireDepartment
@@ -63,6 +67,7 @@ import com.eina.app.data.db.countsAsWorking
 import com.eina.app.data.db.usesDecimalField
 import com.eina.app.domain.Superset
 import com.eina.app.domain.totalVolume
+import com.eina.app.ui.components.IslandBottomSheet
 import com.eina.app.ui.components.IslandButton
 import com.eina.app.ui.components.LocalButtonShape
 import com.eina.app.ui.components.SheetButtonShape
@@ -70,8 +75,10 @@ import com.eina.app.ui.components.IslandCard
 import com.eina.app.ui.components.IslandEmptyState
 import com.eina.app.ui.components.IslandIconButton
 import com.eina.app.ui.components.IslandScreen
+import com.eina.app.ui.components.IslandSurface
+import com.eina.app.ui.components.MetricTile
+import com.eina.app.ui.components.IslandTextField
 import com.eina.app.ui.components.IslandSecondaryButton
-import com.eina.app.ui.components.ScreenHeader
 import com.eina.app.ui.components.SetTableHeader
 import com.eina.app.ui.components.SetTypeIndicator
 import com.eina.app.ui.components.MiniLineChart
@@ -119,6 +126,15 @@ fun SessionDetailScreen(
     val summary = state.summary
     val context = LocalContext.current
     var shareData by remember { mutableStateOf<ShareCardData?>(null) }
+    var editingNotes by remember { mutableStateOf(false) }
+
+    if (editingNotes) {
+        SessionNotesSheet(
+            notes = state.notes,
+            onSave = { viewModel.setNotes(it) },
+            onDismiss = { editingNotes = false }
+        )
+    }
 
     shareData?.let { data ->
         ShareSheet(
@@ -130,8 +146,9 @@ fun SessionDetailScreen(
 
     IslandScreen(
         header = {
-            ScreenHeader(
-                // Short title: the completed-workout string wrapped under the back button.
+            // Same header island as the workout screen: a summary is that screen with the
+            // recording taken away, so the shell it lives in must not be a different one.
+            SummaryHeader(
                 title = if (justFinished) {
                     stringResource(R.string.session_completed)
                 } else {
@@ -147,21 +164,14 @@ fun SessionDetailScreen(
                         session.routineName?.let { append(" · $it") }
                     }
                 },
+                volumeKg = summary?.volumeKg ?: 0.0,
+                setCount = summary?.setCount ?: 0,
                 onBack = onBack,
-                trailing = if (summary == null) null else {
-                    {
-                        IslandIconButton(
-                            icon = Icons.Outlined.Edit,
-                            contentDescription = stringResource(R.string.session_edit_cd),
-                            onClick = onEdit
-                        )
-                        IslandIconButton(
-                            icon = Icons.Outlined.Share,
-                            contentDescription = stringResource(R.string.session_share_cd),
-                            onClick = { shareData = shareCardDataOf(summary) }
-                        )
-                    }
-                }
+                onEdit = if (summary == null) null else onEdit,
+                onShare = if (summary == null) null else {
+                    { shareData = shareCardDataOf(summary) }
+                },
+                modifier = Modifier.padding(horizontal = Spacing.xl, vertical = Spacing.md)
             )
         },
         verticalArrangement = Arrangement.spacedBy(Spacing.md)
@@ -180,33 +190,17 @@ fun SessionDetailScreen(
             StreakCard(weeks = state.streakWeeks)
         }
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(Spacing.md)
-        ) {
-            StatTile(
-                label = stringResource(R.string.stat_volume),
-                value = formatVolume(summary.volumeKg),
-                unit = stringResource(R.string.unit_kg),
-                accentColor = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.weight(1f)
-            )
-            StatTile(
-                label = stringResource(R.string.stat_sets),
-                value = summary.setCount.toString(),
-                tint = MetricColors.Sets,
-                modifier = Modifier.weight(1f)
-            )
-        }
-
         // Watch data, when present: shown in the summary only, never on the shareable card.
         state.vitals?.let { vitals -> VitalsCard(vitals = vitals) }
 
+        // A comment on the workout: how it went, how one felt. Always shown, empty as an
+        // invitation to write, so it is one tap away right after finishing.
+        SessionNotesCard(notes = state.notes, onClick = { editingNotes = true })
+
         // Same reading as the workout screen: letters follow the order supersets appear in.
         val supersetLetters = Superset.letters(state.exercises.map { it.supersetGroup })
-        state.exercises.forEachIndexed { index, exercise ->
+        state.exercises.forEach { exercise ->
             ExerciseSummaryCard(
-                position = index + 1,
                 exercise = exercise,
                 supersetLetter = exercise.supersetGroup?.let { supersetLetters[it] }
             )
@@ -217,7 +211,9 @@ fun SessionDetailScreen(
         if (state.exercises.isNotEmpty()) {
             val routineName = summary.routineName ?: formatFullDate(summary.startTime)
             val createdMessage = stringResource(R.string.history_create_routine_done)
-            IslandSecondaryButton(
+            // Filled pill with the accent ramp, the same button that ends a workout: it is the
+            // one action of the page and read as a disabled tile in its sunken form.
+            IslandButton(
                 text = stringResource(R.string.history_create_routine),
                 icon = Icons.AutoMirrored.Outlined.PlaylistAdd,
                 onClick = {
@@ -231,6 +227,163 @@ fun SessionDetailScreen(
                 modifier = Modifier.fillMaxWidth()
             )
         }
+    }
+}
+
+/**
+ * Header island of the summary: the one the workout screen uses, with the live parts removed —
+ * no running clock, no progress bar, no finish button. Back, correct and share are the round
+ * buttons of the top row; volume and sets are the two headline tiles.
+ */
+@Composable
+private fun SummaryHeader(
+    title: String,
+    subtitle: String?,
+    volumeKg: Double,
+    setCount: Int,
+    onBack: () -> Unit,
+    onEdit: (() -> Unit)?,
+    onShare: (() -> Unit)?,
+    modifier: Modifier = Modifier
+) {
+    val island = EinaTheme.island
+    IslandSurface(modifier = modifier.fillMaxWidth(), shape = IslandShape, elevation = 10.dp) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(Spacing.lg),
+            verticalArrangement = Arrangement.spacedBy(Spacing.lg)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(Spacing.md)
+            ) {
+                IslandIconButton(
+                    icon = Icons.Outlined.KeyboardArrowDown,
+                    contentDescription = stringResource(R.string.action_back),
+                    onClick = onBack,
+                    containerColor = island.sunken,
+                    size = 40.dp
+                )
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.labelLarge,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    if (subtitle != null) {
+                        Text(
+                            text = subtitle,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = island.textSecondary,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                }
+                if (onEdit != null) {
+                    IslandIconButton(
+                        icon = Icons.Outlined.Edit,
+                        contentDescription = stringResource(R.string.session_edit_cd),
+                        onClick = onEdit,
+                        containerColor = island.sunken,
+                        size = 40.dp
+                    )
+                }
+                if (onShare != null) {
+                    IslandIconButton(
+                        icon = Icons.Outlined.Share,
+                        contentDescription = stringResource(R.string.session_share_cd),
+                        onClick = onShare,
+                        containerColor = island.sunken,
+                        size = 40.dp
+                    )
+                }
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.md)
+            ) {
+                MetricTile(
+                    icon = Icons.Outlined.FitnessCenter,
+                    label = stringResource(R.string.stat_volume),
+                    value = formatVolume(volumeKg),
+                    unit = stringResource(R.string.unit_kg),
+                    modifier = Modifier.weight(1f)
+                )
+                MetricTile(
+                    icon = Icons.Outlined.Repeat,
+                    label = stringResource(R.string.stat_sets),
+                    value = setCount.toString(),
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Free comment on the workout, written and re-read from the summary. With nothing written the card
+ * still stands, showing the prompt: an empty state here is the button to fill it.
+ */
+@Composable
+private fun SessionNotesCard(notes: String?, onClick: () -> Unit) {
+    val island = EinaTheme.island
+    val hapticTap = LocalHapticTap.current
+    IslandCard(
+        modifier = Modifier.fillMaxWidth(),
+        contentPadding = PaddingValues(Spacing.lg),
+        verticalArrangement = Arrangement.spacedBy(Spacing.sm),
+        onClick = { hapticTap(); onClick() }
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
+        ) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Outlined.Notes,
+                contentDescription = null,
+                tint = island.textSecondary,
+                modifier = Modifier.size(18.dp)
+            )
+            Text(
+                text = stringResource(R.string.session_notes_title),
+                style = MaterialTheme.typography.titleMedium
+            )
+        }
+        Text(
+            text = notes?.takeIf { it.isNotBlank() } ?: stringResource(R.string.session_notes_empty),
+            style = MaterialTheme.typography.bodyMedium,
+            color = if (notes.isNullOrBlank()) island.textSecondary else MaterialTheme.colorScheme.onSurface
+        )
+    }
+}
+
+/** Editor for the workout comment. */
+@Composable
+private fun SessionNotesSheet(
+    notes: String?,
+    onSave: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var text by remember { mutableStateOf(notes.orEmpty()) }
+
+    IslandBottomSheet(onDismiss = onDismiss, title = stringResource(R.string.session_notes_title)) {
+        IslandTextField(
+            value = text,
+            onValueChange = { text = it },
+            label = stringResource(R.string.session_notes_field),
+            singleLine = false,
+            modifier = Modifier.fillMaxWidth()
+        )
+        IslandButton(
+            text = stringResource(R.string.action_save_note),
+            onClick = { onSave(text); onDismiss() },
+            modifier = Modifier.fillMaxWidth()
+        )
     }
 }
 
@@ -343,13 +496,13 @@ private fun StreakCard(weeks: Int) {
 }
 
 /**
- * One work block of the session: header with position, name and totals, then the set table. Rows
- * are keyed by workoutExerciseId, so the same exercise repeated in a session appears twice with
- * separate numbers.
+ * One work block of the session: the exercise card of the workout screen with the recording taken
+ * away — same shape, same name in the accent, same table — but no fields, no check button and no
+ * "add set", since nothing here can be typed into. Blocks are keyed by workoutExerciseId, so the
+ * same exercise repeated in a session appears twice.
  */
 @Composable
 private fun ExerciseSummaryCard(
-    position: Int,
     exercise: SessionExerciseDetail,
     supersetLetter: String?
 ) {
@@ -365,64 +518,35 @@ private fun ExerciseSummaryCard(
             .fillMaxWidth()
             .then(
                 if (supersetTint == null) Modifier
-                // TileShape, the shape IslandCard draws with here: another one would not follow
-                // the card border.
-                else Modifier.border(2.dp, supersetTint, TileShape)
+                else Modifier.border(2.dp, supersetTint, IslandShape)
             ),
-        contentPadding = PaddingValues(Spacing.lg),
-        verticalArrangement = Arrangement.spacedBy(Spacing.md)
+        shape = IslandShape,
+        contentPadding = PaddingValues(horizontal = Spacing.lg, vertical = Spacing.xl),
+        verticalArrangement = Arrangement.spacedBy(Spacing.lg)
     ) {
         if (supersetLetter != null) {
             SupersetBadge(letter = supersetLetter)
         }
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(Spacing.md)
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(28.dp)
-                    .clip(RoundedCornerShape(percent = 50))
-                    .background(island.sunken),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = position.toString(),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = island.textSecondary
-                )
-            }
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = exercise.exerciseName.localized(),
-                    style = MaterialTheme.typography.titleMedium,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Text(
-                    text = buildString {
-                        append(pluralStringResource(R.plurals.set_count, working.size, working.size))
-                        if (volume > 0.0) append(" · ${formatVolume(volume)} kg")
-                    },
-                    style = MaterialTheme.typography.labelMedium,
-                    color = island.textSecondary
-                )
-            }
+        Column(verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+            Text(
+                text = exercise.exerciseName.localized(),
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.primary,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
+            Text(
+                text = buildString {
+                    append(pluralStringResource(R.plurals.set_count, working.size, working.size))
+                    if (volume > 0.0) append(" · ${formatVolume(volume)} kg")
+                },
+                style = MaterialTheme.typography.labelMedium,
+                color = island.textSecondary
+            )
         }
 
-        // Same table as the workout screen, without the fields: the summary is the routine sheet
-        // of what was actually done, so the columns sit where they sat while recording, and the
-        // values are plain text instead of sunken inputs — nothing here can be typed into.
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(TileShape)
-                .background(island.sunkenSoft)
-                .padding(horizontal = Spacing.sm, vertical = Spacing.sm),
-            verticalArrangement = Arrangement.spacedBy(Spacing.xs)
-        ) {
+        Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
             SetTableHeader(
                 weightType = exercise.weightType,
                 showPrevious = false,
@@ -444,7 +568,8 @@ private fun SetRow(number: Int, set: CompletedSetRow) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = Spacing.xs, vertical = Spacing.xs),
+            .clip(TileShape)
+            .padding(vertical = Spacing.sm, horizontal = Spacing.xs),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
     ) {
