@@ -29,6 +29,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -371,15 +372,20 @@ private fun RoutineExerciseCard(
             var workingNumber = 0
             sets.forEach { set ->
                 if (set.setType.countsAsWorking) workingNumber++
-                SwipeToDeleteSetRow(onDelete = { onRemoveSet(set) }) {
-                    RoutineSetRow(
-                        set = set,
-                        number = workingNumber,
-                        weightType = weightType,
-                        onValuesChange = { reps, weight -> onSetValuesChange(set, reps, weight) },
-                        onTypeClick = { setTypeFor = set.id },
-                        onLongClick = { setActionsFor = set.id }
-                    )
+                // Keyed by set id: without it the swipe state belongs to the position, so after a
+                // deletion it stays with the row that moved up and the last row can no longer be
+                // dragged away.
+                key(set.id) {
+                    SwipeToDeleteSetRow(onDelete = { onRemoveSet(set) }) {
+                        RoutineSetRow(
+                            set = set,
+                            number = workingNumber,
+                            weightType = weightType,
+                            onValuesChange = { reps, weight -> onSetValuesChange(set, reps, weight) },
+                            onTypeClick = { setTypeFor = set.id },
+                            onLongClick = { setActionsFor = set.id }
+                        )
+                    }
                 }
             }
         }

@@ -73,9 +73,11 @@ fun setTypeDescription(type: SetType): String = stringResource(
 )
 
 /**
- * Set marker at the head of the row: type letter or number, and "PR" when the set is a record. A
- * special set that is also a record keeps its letter inside the accent pill: the letter says what
- * it was, the pill says it is a record.
+ * Set marker at the head of the row: type letter or number, and "PR" when the set is a record.
+ *
+ * A record always shows the letters PR: on a failure or drop set the pill used to keep the type
+ * letter and only change colour, which said "record" to nobody. The type is not lost — its letter
+ * moves under the pill, in its own colour.
  */
 @Composable
 fun SetTypeIndicator(
@@ -87,7 +89,7 @@ fun SetTypeIndicator(
 ) {
     val hapticTap = LocalHapticTap.current
     val accent = setTypeAccent(type)
-    val text = type.glyph ?: if (isPR) stringResource(R.string.badge_pr) else number.toString()
+    val text = type.glyph ?: number.toString()
     // The marker is a single letter: without an action label TalkBack would announce "W, double
     // tap to activate" without saying what it activates.
     val clickLabel = stringResource(R.string.set_type_cd)
@@ -102,14 +104,26 @@ fun SetTypeIndicator(
         contentAlignment = Alignment.Center
     ) {
         when {
-            isPR -> Text(
-                text = text,
-                style = MaterialTheme.typography.labelSmall,
-                color = Color.White,
-                modifier = Modifier
-                    .background(MaterialTheme.colorScheme.primary, PillShape)
-                    .padding(horizontal = 7.dp, vertical = 3.dp)
-            )
+            isPR -> Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(1.dp)
+            ) {
+                Text(
+                    text = stringResource(R.string.badge_pr),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color.White,
+                    modifier = Modifier
+                        .background(MaterialTheme.colorScheme.primary, PillShape)
+                        .padding(horizontal = 7.dp, vertical = 3.dp)
+                )
+                type.glyph?.let { glyph ->
+                    Text(
+                        text = glyph,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = accent
+                    )
+                }
+            }
 
             type == SetType.NORMAL -> Text(
                 text = text,

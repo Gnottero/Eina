@@ -181,8 +181,9 @@ fun SheetActionRow(
  * Action confirmation: title, one explanatory line and two equally wide buttons.
  *
  * Replaces the Material AlertDialog, which right-aligned two backgroundless labels: small targets
- * in a corner, with only the text colour marking the dangerous one. Here the buttons are filled
- * and share the sheet button shape (see [SheetButtonShape]).
+ * in a corner, with only the text colour marking the dangerous one. Here the buttons are the ones
+ * the rest of the app uses — filled pills, primary carrying the accent ramp — instead of the
+ * small-radius rectangles that read as a stock Android dialog.
  */
 @Composable
 fun IslandAlertDialog(
@@ -214,7 +215,7 @@ fun IslandAlertDialog(
                     text = dismissLabel,
                     onClick = onDismiss,
                     modifier = Modifier.weight(1f),
-                    shape = SheetButtonShape
+                    shape = PillShape
                 )
                 IslandButton(
                     text = confirmLabel,
@@ -222,7 +223,7 @@ fun IslandAlertDialog(
                     modifier = Modifier.weight(1f),
                     // Red stays filled: it is the action that cannot be undone.
                     containerColor = if (destructive) DestructiveRed else MaterialTheme.colorScheme.primary,
-                    shape = SheetButtonShape
+                    shape = PillShape
                 )
             }
         }

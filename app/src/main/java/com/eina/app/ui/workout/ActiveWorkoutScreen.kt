@@ -45,6 +45,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -774,16 +775,21 @@ private fun ExerciseCard(
             var workingNumber = 0
             exercise.sets.forEach { set ->
                 if (set.setType.countsAsWorking) workingNumber++
-                SwipeToDeleteSetRow(onDelete = { onRemoveSet(set.id) }) {
-                    SetRow(
-                        set = set,
-                        number = workingNumber,
-                        weightType = exercise.weightType,
-                        onTypeClick = { onOpenSetType(set.id) },
-                        onValuesChange = { reps, weight -> onSetValuesChange(set.id, reps, weight) },
-                        onToggle = { onToggleSet(set.id, set.completedAt != null) },
-                        onLongClick = { onOpenSetActions(set.id) }
-                    )
+                // Keyed by set id: without it the swipe state belongs to the position, so after a
+                // deletion it stays with the row that moved up and the last row can no longer be
+                // dragged away.
+                key(set.id) {
+                    SwipeToDeleteSetRow(onDelete = { onRemoveSet(set.id) }) {
+                        SetRow(
+                            set = set,
+                            number = workingNumber,
+                            weightType = exercise.weightType,
+                            onTypeClick = { onOpenSetType(set.id) },
+                            onValuesChange = { reps, weight -> onSetValuesChange(set.id, reps, weight) },
+                            onToggle = { onToggleSet(set.id, set.completedAt != null) },
+                            onLongClick = { onOpenSetActions(set.id) }
+                        )
+                    }
                 }
             }
         }

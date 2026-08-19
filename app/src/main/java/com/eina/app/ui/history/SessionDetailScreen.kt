@@ -51,18 +51,18 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.core.content.ContextCompat
 import com.eina.app.R
 import com.eina.app.data.db.CompletedSetRow
-import com.eina.app.data.db.SetType
 import com.eina.app.data.db.WeightType
 import com.eina.app.data.db.countsAsWorking
+import com.eina.app.data.db.usesDecimalField
 import com.eina.app.domain.Superset
 import com.eina.app.domain.totalVolume
-import com.eina.app.ui.components.EinaBadge
 import com.eina.app.ui.components.IslandButton
 import com.eina.app.ui.components.LocalButtonShape
 import com.eina.app.ui.components.SheetButtonShape
@@ -72,16 +72,14 @@ import com.eina.app.ui.components.IslandIconButton
 import com.eina.app.ui.components.IslandScreen
 import com.eina.app.ui.components.IslandSecondaryButton
 import com.eina.app.ui.components.ScreenHeader
+import com.eina.app.ui.components.SetTableHeader
 import com.eina.app.ui.components.SetTypeIndicator
-import com.eina.app.ui.components.setTypeAccent
-import com.eina.app.ui.components.setTypeLabel
 import com.eina.app.ui.components.MiniLineChart
 import com.eina.app.ui.components.StatTile
 import com.eina.app.ui.components.SupersetBadge
 import com.eina.app.ui.components.supersetColor
 import com.eina.app.ui.components.formatDayMonth
 import com.eina.app.ui.components.formatDecimal
-import com.eina.app.ui.components.formatDistanceAndTime
 import com.eina.app.ui.components.formatDuration
 import com.eina.app.ui.components.formatFullDate
 import com.eina.app.ui.components.formatTime
@@ -414,13 +412,22 @@ private fun ExerciseSummaryCard(
             }
         }
 
+        // Same table as the workout screen, without the fields: the summary is the routine sheet
+        // of what was actually done, so the columns sit where they sat while recording, and the
+        // values are plain text instead of sunken inputs — nothing here can be typed into.
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(TileShape)
                 .background(island.sunkenSoft)
-                .padding(vertical = Spacing.xs)
+                .padding(horizontal = Spacing.sm, vertical = Spacing.sm),
+            verticalArrangement = Arrangement.spacedBy(Spacing.xs)
         ) {
+            SetTableHeader(
+                weightType = exercise.weightType,
+                showPrevious = false,
+                trailingSlot = false
+            )
             // As in the session: only working sets are numbered, warmups show W.
             var workingNumber = 0
             exercise.sets.forEach { set ->
@@ -431,34 +438,52 @@ private fun ExerciseSummaryCard(
     }
 }
 
-/** Set row: number, aligned values, and badges only when they carry information. */
+/** Set row of the summary: same columns as the recording table, read-only. */
 @Composable
 private fun SetRow(number: Int, set: CompletedSetRow) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = Spacing.md, vertical = Spacing.sm),
+            .padding(horizontal = Spacing.xs, vertical = Spacing.xs),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(Spacing.md)
+        horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
     ) {
-        // Number or type letter, the same marker used in the session table.
+        // Number or type letter, the same marker used in the session table; a record shows PR.
         SetTypeIndicator(
             type = set.setType,
             number = number,
-            isPR = false,
-            modifier = Modifier.width(32.dp)
+            isPR = set.isPR,
+            modifier = Modifier.width(40.dp)
         )
-        Text(
-            text = LocalContext.current.setLabel(set),
-            style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.weight(1f)
-        )
-        if (set.setType != SetType.NORMAL) {
-            EinaBadge(text = setTypeLabel(set.setType), color = setTypeAccent(set.setType))
+        if (set.weightType.usesDecimalField) {
+            SetValueText(text = decimalLabel(set), modifier = Modifier.weight(1f))
         }
-        if (set.isPR) {
-            EinaBadge(text = stringResource(R.string.badge_pr), color = MaterialTheme.colorScheme.primary)
-        }
+        SetValueText(text = "${set.actualReps ?: 0}", modifier = Modifier.weight(1f))
+    }
+}
+
+/** Recorded value: the field of the recording table with the input taken away. */
+@Composable
+private fun SetValueText(text: String, modifier: Modifier = Modifier) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.titleMedium,
+        textAlign = TextAlign.Center,
+        maxLines = 1,
+        modifier = modifier.padding(vertical = Spacing.xs)
+    )
+}
+
+/**
+ * Decimal column of a recorded set: kilograms, or kilometres for distance. Loads added to or taken
+ * off bodyweight keep their sign, which is the whole meaning of the number.
+ */
+private fun decimalLabel(set: CompletedSetRow): String {
+    val value = formatDecimal(set.weight ?: 0.0)
+    return when (set.weightType) {
+        WeightType.BODYWEIGHT_PLUS_LOAD -> "+$value"
+        WeightType.ASSISTED -> "-$value"
+        else -> value
     }
 }
 
@@ -635,13 +660,3 @@ private fun Context.toast(@StringRes message: Int) {
     Toast.makeText(this, message, Toast.LENGTH_LONG).show()
 }
 
-private fun Context.setLabel(set: CompletedSetRow): String = when (set.weightType) {
-    WeightType.TIME_BASED -> "${set.actualReps ?: 0} s"
-    WeightType.DISTANCE_BASED -> formatDistanceAndTime(set.weight, set.actualReps)
-    WeightType.BODYWEIGHT -> getString(R.string.unit_reps_value, set.actualReps ?: 0)
-    WeightType.BODYWEIGHT_PLUS_LOAD ->
-        "+${formatDecimal(set.weight ?: 0.0)} kg × ${set.actualReps ?: 0}"
-    WeightType.ASSISTED ->
-        "-${formatDecimal(set.weight ?: 0.0)} kg × ${set.actualReps ?: 0}"
-    else -> "${formatDecimal(set.weight ?: 0.0)} kg × ${set.actualReps ?: 0}"
-}

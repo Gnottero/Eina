@@ -25,9 +25,14 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -37,6 +42,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.eina.app.R
 import com.eina.app.ui.feedback.LocalHapticTap
 import com.eina.app.ui.theme.EinaTheme
@@ -297,7 +303,7 @@ fun ScreenHeader(
                     overflow = TextOverflow.Ellipsis
                 )
             }
-            Text(text = title, style = MaterialTheme.typography.headlineMedium)
+            HeaderTitle(title)
             if (subtitle != null) {
                 Text(
                     text = subtitle,
@@ -309,6 +315,38 @@ fun ScreenHeader(
         trailing?.invoke(this)
     }
 }
+
+/**
+ * Header title: one line that shrinks to fit rather than wrapping.
+ *
+ * The header keeps a back button and up to two round actions, so a long word ("Completato" in the
+ * summary of a workout just finished) was broken mid-word and left a single letter on the second
+ * line. It is drawn only once the size is settled: measuring at full size first would otherwise
+ * show one frame of the oversized title.
+ */
+@Composable
+private fun HeaderTitle(title: String) {
+    val base = MaterialTheme.typography.headlineMedium
+    var style by remember(title) { mutableStateOf(base) }
+    var settled by remember(title) { mutableStateOf(false) }
+    Text(
+        text = title,
+        style = style,
+        maxLines = 1,
+        softWrap = false,
+        modifier = Modifier.drawWithContent { if (settled) drawContent() },
+        onTextLayout = { layout ->
+            if (layout.didOverflowWidth && style.fontSize > MinHeaderTitleSize) {
+                style = style.copy(fontSize = style.fontSize * 0.92f)
+            } else {
+                settled = true
+            }
+        }
+    )
+}
+
+/** Floor of the header title: below this the title would be smaller than the subtitle. */
+private val MinHeaderTitleSize = 20.sp
 
 /**
  * Section title between two groups of islands, with an optional action: with [actionIcon] the

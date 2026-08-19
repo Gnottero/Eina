@@ -18,6 +18,7 @@ import com.eina.app.domain.Superset
 import com.eina.app.domain.volumeForSet
 import com.eina.app.ui.components.MAX_WEIGHT_KG
 import com.eina.app.ui.feedback.WorkoutFeedback
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -56,6 +57,9 @@ class ActiveWorkoutViewModel(
      * but a removed set may have held their PR, so their flags must be recomputed too.
      */
     private val touchedExerciseIds = mutableSetOf<Long>()
+
+    /** Pending PR recomputation after editing a completed set; see [schedulePrRecompute]. */
+    private var prRecomputeJob: Job? = null
 
     init {
         repository.observeExercises()
@@ -338,8 +342,15 @@ class ActiveWorkoutViewModel(
 
     fun removeSet(workoutExerciseId: Long, setId: Long) {
         viewModelScope.launch {
+            val exercise = _uiState.value.exercises.find { it.workoutExerciseId == workoutExerciseId }
             repository.removeSet(setId)
+            // The deleted set may have held the record: it goes back to the best one left.
+            exercise?.let {
+                touchedExerciseIds += it.exerciseId
+                repository.recomputePrs(listOf(it.exerciseId))
+            }
             refreshSets(workoutExerciseId)
+            recomputeVolume()
         }
     }
 
@@ -430,7 +441,15 @@ class ActiveWorkoutViewModel(
             )
         }
         recomputeVolume()
-        viewModelScope.launch { repository.updateSet(updated.toEntity(workoutExerciseId)) }
+        viewModelScope.launch {
+            repository.updateSet(updated.toEntity(workoutExerciseId))
+            // A warmup cannot hold a record, so the one it held goes back to the best set left.
+            if (set.completedAt != null) {
+                repository.recomputePrs(listOf(exercise.exerciseId))
+                touchedExerciseIds += exercise.exerciseId
+                refreshSets(workoutExerciseId)
+            }
+        }
     }
 
     fun updateSetValues(workoutExerciseId: Long, setId: Long, actualReps: Int?, weight: Double?) {
@@ -457,6 +476,24 @@ class ActiveWorkoutViewModel(
         recomputeVolume()
         viewModelScope.launch {
             repository.updateSet(updated.toEntity(workoutExerciseId))
+        }
+        // Correcting a set already checked off can create or void a record, and the badge lived on
+        // the row as it was written when the set was closed. The flags are recomputed, once the
+        // typing settles: this runs on every keystroke.
+        if (set.completedAt != null) schedulePrRecompute(workoutExerciseId, exercise.exerciseId)
+    }
+
+    /**
+     * Recomputes the PR flags of an exercise after a debounce and redraws its rows. Debounced
+     * because the caller is a keystroke: "8" on its way to "85" is a different record.
+     */
+    private fun schedulePrRecompute(workoutExerciseId: Long, exerciseId: Long) {
+        touchedExerciseIds += exerciseId
+        prRecomputeJob?.cancel()
+        prRecomputeJob = viewModelScope.launch {
+            delay(PR_RECOMPUTE_DEBOUNCE_MS)
+            repository.recomputePrs(listOf(exerciseId))
+            refreshSets(workoutExerciseId)
         }
     }
 
@@ -502,6 +539,10 @@ class ActiveWorkoutViewModel(
                     restSecondsPlanned = exercise.restSeconds
                 ).toEntity(workoutExerciseId)
             )
+            // Reopening a set takes it out of the history: if it held the record, the record goes
+            // back to the best set left.
+            repository.recomputePrs(listOf(exercise.exerciseId))
+            touchedExerciseIds += exercise.exerciseId
             refreshSets(workoutExerciseId)
         }
     }
@@ -648,6 +689,9 @@ class ActiveWorkoutViewModel(
          * a stride, used to keep exercises ordered relative to each other.
          */
         const val MAX_SETS_PER_EXERCISE = 10
+
+        /** Quiet time after the last keystroke before PR flags are recomputed. */
+        const val PR_RECOMPUTE_DEBOUNCE_MS = 400L
     }
 }
 

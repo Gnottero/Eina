@@ -3,6 +3,7 @@ package com.eina.app.ui.history
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.eina.app.data.db.CompletedSetRow
+import com.eina.app.data.db.WeightType
 import com.eina.app.data.db.countsAsWorking
 import com.eina.app.data.db.ExerciseName
 import com.eina.app.data.db.HeartRateSample
@@ -53,6 +54,9 @@ data class SessionExerciseDetail(
     val sets: List<CompletedSetRow>
 ) {
     val workingSets: List<CompletedSetRow> get() = sets.filter { it.setType.countsAsWorking }
+
+    /** Load type of the block: it is the same on every set, since it comes from the exercise. */
+    val weightType: WeightType get() = sets.firstOrNull()?.weightType ?: WeightType.FREE_WEIGHT
 }
 
 data class SessionDetailUiState(

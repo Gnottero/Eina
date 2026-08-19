@@ -104,6 +104,11 @@ fun previousColumnWeight(weightType: WeightType): Float =
  * actions.
  *
  * The threshold is half the row, so a set is not deleted by brushing past it while scrolling.
+ *
+ * Call it inside a `key(set.id)`: [rememberSwipeToDismissBoxState] captures [onDelete] on the first
+ * composition and never updates it, so a state kept by position goes on deleting the set that used
+ * to be there. After one deletion the last row was asking to delete an id that no longer existed,
+ * and nothing happened.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -129,14 +134,15 @@ fun SwipeToDeleteSetRow(
         state = state,
         enableDismissFromStartToEnd = false,
         backgroundContent = {
-            // The red only shows while dragging: drawn always, it tinted the resting row pink,
-            // which has no background of its own.
+            // Only shown while dragging: drawn always, the strip tinted the resting row, which
+            // has no background of its own. The strip is neutral and the bin carries the colour:
+            // a red wash under the row read as a state of the set and not as a pending gesture.
             if (state.dismissDirection == SwipeToDismissBoxValue.EndToStart) {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
                         .clip(TileShape)
-                        .background(DestructiveRed.copy(alpha = 0.12f))
+                        .background(EinaTheme.island.sunken)
                         .padding(horizontal = Spacing.lg),
                     contentAlignment = Alignment.CenterEnd
                 ) {
