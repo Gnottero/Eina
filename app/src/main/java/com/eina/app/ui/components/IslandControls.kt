@@ -140,10 +140,9 @@ fun IslandSecondaryButton(
         modifier = modifier,
         icon = icon,
         enabled = enabled,
-        containerColor = MaterialTheme.colorScheme.surface,
+        containerColor = island.sunken,
         contentColor = contentColor,
-        shape = shape,
-        borderColor = island.outlineSubtle
+        shape = shape
     )
 }
 

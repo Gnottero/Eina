@@ -850,11 +850,7 @@ private fun SetCheckButton(completed: Boolean, onClick: () -> Unit) {
         modifier = Modifier
             .size(42.dp)
             .clip(PillShape)
-            .background(if (completed) MaterialTheme.colorScheme.primary else Color.Transparent)
-            .then(
-                if (completed) Modifier
-                else Modifier.border(1.5.dp, island.outlineSubtle, PillShape)
-            )
+            .background(if (completed) MaterialTheme.colorScheme.primary else island.outlineSubtle)
             .clickable { hapticTap(); onClick() },
         contentAlignment = Alignment.Center
     ) {

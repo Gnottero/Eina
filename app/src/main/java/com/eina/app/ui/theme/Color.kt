@@ -3,10 +3,10 @@ package com.eina.app.ui.theme
 import androidx.compose.ui.graphics.Color
 
 // Final palette; the app is light-only.
-// The neutrals dropped their brown cast (the former #FBF6F2 background yellowed the exercise
-// artwork and made white islands look dirty). They are now barely warm greys, so the only colour
-// on a page comes from the accent.
-val LightBackground = Color(0xFFF4F3F1)
+// No neutral grey is left anywhere: the non-white surfaces are warm off-whites (cream page, ivory
+// sunken), so a page is made of paper and white islands and nothing on it reads as Android chrome.
+// They are warm but not tinted orange: the accent stays the only actual colour.
+val LightBackground = Color(0xFFF7F2ED)
 val LightSurface = Color(0xFFFFFFFF)
 
 /** Primary accent, sunset orange: CTAs, active states, headline values. */
@@ -23,20 +23,25 @@ val AccentRampStart = Color(0xFFFFA23A)
 val AccentRampEnd = Color(0xFFF9436B)
 
 /**
- * Sunken surface: tracks, inactive chips, fields, sheet rows. Kept a whisper away from white — the
- * former #EFEEEB read as a grey panel laid on the card and weighed more than what it held. It is
- * only ever used *inside* a white surface: on the page background it would be invisible, and the
- * controls that sit there (see IslandSecondaryButton) are white islands with a thin outline.
+ * Sunken surface: tracks, inactive chips, fields, sheet rows. A warm ivory instead of a grey: the
+ * neutral version was the only cold thing on a warm page and read as a panel laid on the card. It
+ * stays lighter than the page background, so the controls sitting there (see IslandSecondaryButton)
+ * are legible without the outline they used to need.
  */
-val LightSurfaceSunken = Color(0xFFF6F5F3)
+val LightSurfaceSunken = Color(0xFFFBF8F4)
 
 /**
  * Even lighter sunken surface, for large areas *inside* a white card: the summary set table and the
- * weight and reps fields. With the full grey those boxes weighed more than the numbers they hold.
+ * weight and reps fields. With the full tint those boxes would weigh more than the numbers they
+ * hold.
  */
-val LightSurfaceSunkenSoft = Color(0xFFFAFAF8)
-val LightTextSecondary = Color(0xFF7C7A75)
-val LightOutlineSubtle = Color(0xFFEDECE9)
+val LightSurfaceSunkenSoft = Color(0xFFFDFBF9)
+val LightTextSecondary = Color(0xFF8A7D75)
+/**
+ * Kept only as a *fill* for separators and disabled tracks. Nothing draws a hairline border with
+ * it any more: shape, shadow and tint carry the separation instead of a line.
+ */
+val LightOutlineSubtle = Color(0xFFF2ECE6)
 val LightOnBackground = Color(0xFF1C1B19)
 
 /**
@@ -68,6 +73,7 @@ object MuscleGroupColors {
     val Core = Color(0xFF20C997)
     val Cardio = Color(0xFFF06595)
     val Neck = Color(0xFFA9746E)
-    // "Other" is deliberately grey: it is not a muscle group but the absence of one.
-    val Other = Color(0xFF9E9E9E)
+    // "Other" is the quietest colour of the set: it is not a muscle group but the absence of one.
+    // Warm taupe rather than grey, so it belongs to the same palette as the rest.
+    val Other = Color(0xFFC0A99C)
 }

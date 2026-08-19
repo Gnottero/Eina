@@ -168,15 +168,11 @@ private fun SummaryMetric(
     }
 }
 
-/** Vertical hairline between two metrics: separation without boxes. */
+/**
+ * Gap between two metrics. It used to be a hairline; the line was the last thin rule left in the
+ * app, and at this size the space separates the two numbers on its own.
+ */
 @Composable
 private fun MetricDivider() {
-    val island = EinaTheme.island
-    Box(
-        modifier = Modifier
-            .padding(horizontal = Spacing.md)
-            .width(1.dp)
-            .height(32.dp)
-            .background(island.outlineSubtle)
-    )
+    Box(Modifier.width(Spacing.lg))
 }

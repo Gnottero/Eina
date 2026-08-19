@@ -141,7 +141,7 @@ private fun MonthArrow(
     androidx.compose.material3.Icon(
         imageVector = icon,
         contentDescription = contentDescription,
-        tint = if (enabled) MaterialTheme.colorScheme.onSurface else island.outlineSubtle,
+        tint = if (enabled) MaterialTheme.colorScheme.onSurface else island.textSecondary.copy(alpha = 0.4f),
         modifier = Modifier
             .clip(PillShape)
             .clickable(enabled = enabled) { tap(); onClick() }
@@ -189,7 +189,7 @@ private fun DayCell(
                 fontWeight = if (isSelected || isToday) FontWeight.SemiBold else FontWeight.Normal,
                 color = when {
                     isSelected -> MaterialTheme.colorScheme.onPrimary
-                    !enabled -> island.outlineSubtle
+                    !enabled -> island.textSecondary.copy(alpha = 0.4f)
                     else -> MaterialTheme.colorScheme.onSurface
                 }
             )

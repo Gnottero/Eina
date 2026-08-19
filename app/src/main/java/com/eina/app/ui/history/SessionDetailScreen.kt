@@ -709,8 +709,8 @@ private fun ShareSheet(
                         checkedThumbColor = Color.White,
                         checkedTrackColor = MaterialTheme.colorScheme.primary,
                         uncheckedThumbColor = Color.White,
-                        uncheckedTrackColor = island.sunken,
-                        uncheckedBorderColor = island.outlineSubtle
+                        uncheckedTrackColor = island.textSecondary.copy(alpha = 0.25f),
+                        uncheckedBorderColor = Color.Transparent
                     )
                 )
             }

@@ -2,7 +2,6 @@ package com.eina.app.ui.components
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -95,19 +94,16 @@ fun IslandSurface(
     shape: Shape = IslandShape,
     color: Color = MaterialTheme.colorScheme.surface,
     elevation: Dp = 10.dp,
-    outlined: Boolean = false,
     onClick: (() -> Unit)? = null,
     onLongClick: (() -> Unit)? = null,
     content: @Composable BoxScope.() -> Unit
 ) {
-    val island = EinaTheme.island
     val hapticTap = LocalHapticTap.current
     Box(
         modifier = modifier
             .islandShadow(elevation, shape)
             .clip(shape)
             .background(color)
-            .then(if (outlined) Modifier.border(1.dp, island.outlineSubtle, shape) else Modifier)
             .then(
                 // Long press opens the item actions, so it must be wired even when the island has
                 // no short click of its own.

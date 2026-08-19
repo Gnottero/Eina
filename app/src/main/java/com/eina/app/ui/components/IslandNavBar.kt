@@ -58,8 +58,7 @@ fun IslandNavBar(
         // Slightly translucent, so content scrolling underneath shows through and the bar floats
         // over the page instead of cutting it in two.
         color = MaterialTheme.colorScheme.surface.copy(alpha = 0.97f),
-        elevation = 18.dp,
-        outlined = true
+        elevation = 18.dp
     ) {
         Row(
             modifier = Modifier

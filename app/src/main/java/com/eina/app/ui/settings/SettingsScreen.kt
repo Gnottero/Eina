@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Coffee
 import androidx.compose.material.icons.outlined.DeleteSweep
@@ -96,7 +97,10 @@ fun SettingsScreen(
             )
         }
 
-        SectionHeader(title = stringResource(R.string.settings_section_timer))
+        SectionHeader(
+            title = stringResource(R.string.settings_section_timer),
+            modifier = Modifier.padding(top = Spacing.md)
+        )
 
         IslandCard(modifier = Modifier.fillMaxWidth()) {
             SettingSwitch(
@@ -114,7 +118,10 @@ fun SettingsScreen(
         }
 
         if (healthAvailable) {
-            SectionHeader(title = stringResource(R.string.settings_section_health))
+            SectionHeader(
+                title = stringResource(R.string.settings_section_health),
+                modifier = Modifier.padding(top = Spacing.md)
+            )
 
             IslandCard(modifier = Modifier.fillMaxWidth()) {
                 SettingSwitch(
@@ -139,7 +146,10 @@ fun SettingsScreen(
             }
         }
 
-        SectionHeader(title = stringResource(R.string.settings_section_haptics))
+        SectionHeader(
+            title = stringResource(R.string.settings_section_haptics),
+            modifier = Modifier.padding(top = Spacing.md)
+        )
 
         IslandCard(modifier = Modifier.fillMaxWidth()) {
             SettingSwitch(
@@ -150,7 +160,10 @@ fun SettingsScreen(
             )
         }
 
-        SectionHeader(title = stringResource(R.string.settings_section_support))
+        SectionHeader(
+            title = stringResource(R.string.settings_section_support),
+            modifier = Modifier.padding(top = Spacing.md)
+        )
 
         IslandCard(modifier = Modifier.fillMaxWidth()) {
             Text(
@@ -170,7 +183,10 @@ fun SettingsScreen(
             )
         }
 
-        SectionHeader(title = stringResource(R.string.settings_section_data))
+        SectionHeader(
+            title = stringResource(R.string.settings_section_data),
+            modifier = Modifier.padding(top = Spacing.md)
+        )
 
         IslandCard(modifier = Modifier.fillMaxWidth()) {
             Text(
@@ -191,7 +207,10 @@ fun SettingsScreen(
             )
         }
 
-        SectionHeader(title = stringResource(R.string.settings_section_info))
+        SectionHeader(
+            title = stringResource(R.string.settings_section_info),
+            modifier = Modifier.padding(top = Spacing.md)
+        )
 
         IslandCard(modifier = Modifier.fillMaxWidth()) {
             InfoRow(stringResource(R.string.info_version), BuildConfig.VERSION_NAME)
@@ -268,8 +287,8 @@ private fun SettingSwitch(
                 checkedThumbColor = Color.White,
                 checkedTrackColor = MaterialTheme.colorScheme.primary,
                 uncheckedThumbColor = Color.White,
-                uncheckedTrackColor = island.sunken,
-                uncheckedBorderColor = island.outlineSubtle
+                uncheckedTrackColor = island.textSecondary.copy(alpha = 0.25f),
+                uncheckedBorderColor = Color.Transparent
             )
         )
     }
