@@ -374,6 +374,12 @@ class WorkoutRepository(
         return true
     }
 
+    /** Free comment on the workout, written from the summary. Blank text clears it. */
+    suspend fun setSessionNotes(sessionId: Long, notes: String?) {
+        val current = workoutSessionDao.getById(sessionId) ?: return
+        workoutSessionDao.update(current.copy(notes = notes?.trim()?.takeIf { it.isNotEmpty() }))
+    }
+
     suspend fun setExerciseNotes(workoutExerciseId: Long, notes: String?) {
         val current = workoutExerciseDao.getById(workoutExerciseId) ?: return
         workoutExerciseDao.update(current.copy(notes = notes))

@@ -63,6 +63,8 @@ data class SessionDetailUiState(
     val summary: SessionSummary? = null,
     val exercises: List<SessionExerciseDetail> = emptyList(),
     val streakWeeks: Int = 0,
+    /** Free comment on the workout, written from this screen. */
+    val notes: String? = null,
     /** What the watch measured, if anything; deliberately kept off the shareable card. */
     val vitals: SessionVitals? = null
 )
@@ -94,6 +96,11 @@ class SessionDetailViewModel(
         }
     }
 
+    /** Saves the workout comment; blank text clears it. */
+    fun setNotes(notes: String) {
+        viewModelScope.launch { workoutRepository.setSessionNotes(sessionId, notes) }
+    }
+
     init {
         // Watches sync at their own pace: the samples of the last set can reach Health Connect
         // after the workout was finished, so the sync is retried when the summary opens.
@@ -108,6 +115,7 @@ class SessionDetailViewModel(
     ) { rows, allRows, session ->
         SessionDetailUiState(
             vitals = session?.toVitals()?.takeIf { it.hasData },
+            notes = session?.notes,
             summary = summarizeSessions(rows).firstOrNull(),
             exercises = rows
                 // groupBy preserves input order, so sorting here leaves each block already ordered

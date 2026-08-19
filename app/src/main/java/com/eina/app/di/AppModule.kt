@@ -43,7 +43,8 @@ val appModule = module {
                 EinaDatabase.MIGRATION_6_7,
                 EinaDatabase.MIGRATION_7_8,
                 EinaDatabase.MIGRATION_8_9,
-                EinaDatabase.MIGRATION_9_10
+                EinaDatabase.MIGRATION_9_10,
+                EinaDatabase.MIGRATION_10_11
             )
             .build()
     }

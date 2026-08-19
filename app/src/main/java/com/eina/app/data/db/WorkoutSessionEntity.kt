@@ -21,7 +21,9 @@ data class WorkoutSessionEntity(
      * DECISIONE: no samples table. These are read-only data shown in one summary and never queried
      * by value, so a table and its migration would not pay for themselves.
      */
-    val heartRateSamples: String? = null
+    val heartRateSamples: String? = null,
+    /** Free comment on the workout, written from the summary. Empty text is stored as null. */
+    val notes: String? = null
 )
 
 /** Heart rate samples, decoded from the compact column. */
