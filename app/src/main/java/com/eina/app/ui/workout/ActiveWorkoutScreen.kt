@@ -75,6 +75,11 @@ import com.eina.app.ui.components.IslandAlertDialog
 import com.eina.app.ui.components.IslandButton
 import com.eina.app.ui.components.IslandCard
 import com.eina.app.ui.components.ExercisePickerSheet
+import com.eina.app.ui.components.PreviousValueText
+import com.eina.app.ui.components.SetCheckSize
+import com.eina.app.ui.components.SetColumnGap
+import com.eina.app.ui.components.SetMarkerWidth
+import com.eina.app.ui.components.SetRowInset
 import com.eina.app.ui.components.SetTableHeader
 import com.eina.app.ui.components.SetValueField
 import com.eina.app.ui.components.SwipeToDeleteSetRow
@@ -189,14 +194,14 @@ fun ActiveWorkoutScreen(
                         if (kept) onExit() else onCancelled()
                     }
                 },
-                modifier = Modifier.padding(horizontal = Spacing.xl, vertical = Spacing.md)
+                modifier = Modifier.padding(horizontal = Spacing.gutter, vertical = Spacing.md)
             )
 
             LazyColumn(
                 modifier = Modifier.fillMaxWidth(),
                 contentPadding = PaddingValues(
-                    start = Spacing.xl,
-                    end = Spacing.xl,
+                    start = Spacing.gutter,
+                    end = Spacing.gutter,
                     top = Spacing.sm,
                     bottom = 220.dp
                 ),
@@ -258,7 +263,7 @@ fun ActiveWorkoutScreen(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .navigationBarsPadding()
-                    .padding(horizontal = Spacing.xl, vertical = Spacing.lg)
+                    .padding(horizontal = Spacing.gutter, vertical = Spacing.lg)
             )
         }
     }
@@ -655,7 +660,7 @@ private fun ExerciseCard(
                 else Modifier.border(2.dp, supersetTint, IslandShape)
             ),
         shape = IslandShape,
-        contentPadding = PaddingValues(horizontal = Spacing.lg, vertical = Spacing.xl),
+        contentPadding = PaddingValues(horizontal = Spacing.md, vertical = Spacing.xl),
         verticalArrangement = Arrangement.spacedBy(Spacing.lg),
         onLongClick = onOpenActions
     ) {
@@ -772,7 +777,6 @@ private fun SetRow(
     onTypeClick: () -> Unit,
     onLongClick: () -> Unit
 ) {
-    val island = EinaTheme.island
     val hapticTap = LocalHapticTap.current
     val completed = set.completedAt != null
 
@@ -788,9 +792,9 @@ private fun SetRow(
             .background(if (completed) MaterialTheme.colorScheme.primary.copy(alpha = 0.10f) else Color.Transparent)
             // Long press opens the set actions; the numeric fields keep their own taps.
             .combinedClickable(onLongClick = { hapticTap(); onLongClick() }, onClick = {})
-            .padding(vertical = Spacing.sm, horizontal = Spacing.xs),
+            .padding(vertical = Spacing.sm, horizontal = SetRowInset),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
+        horizontalArrangement = Arrangement.spacedBy(SetColumnGap)
     ) {
         // The set marker is also the control: tapping it opens the W / number / F / D picker.
         SetTypeIndicator(
@@ -798,15 +802,11 @@ private fun SetRow(
             number = number,
             isPR = set.isPR,
             onClick = onTypeClick,
-            modifier = Modifier.width(40.dp)
+            modifier = Modifier.width(SetMarkerWidth)
         )
 
-        Text(
+        PreviousValueText(
             text = set.previous?.let { formatPrevious(it, weightType) } ?: "—",
-            style = MaterialTheme.typography.bodyMedium,
-            color = island.textSecondary,
-            textAlign = TextAlign.Center,
-            maxLines = 1,
             modifier = Modifier.weight(previousColumnWeight(weightType))
         )
 
@@ -848,7 +848,7 @@ private fun SetCheckButton(completed: Boolean, onClick: () -> Unit) {
     val hapticTap = LocalHapticTap.current
     Box(
         modifier = Modifier
-            .size(42.dp)
+            .size(SetCheckSize)
             .clip(PillShape)
             .background(if (completed) MaterialTheme.colorScheme.primary else island.outlineSubtle)
             .clickable { hapticTap(); onClick() },

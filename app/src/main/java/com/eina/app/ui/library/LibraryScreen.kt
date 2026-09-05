@@ -109,12 +109,12 @@ fun LibraryScreen(
             leadingIcon = Icons.Outlined.Search,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = Spacing.xl)
+                .padding(horizontal = Spacing.gutter)
         )
 
         LazyRow(
             horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
-            contentPadding = PaddingValues(horizontal = Spacing.xl, vertical = Spacing.md)
+            contentPadding = PaddingValues(horizontal = Spacing.gutter, vertical = Spacing.md)
         ) {
             items(MuscleGroupCategory.entries) { category ->
                 IslandChip(
@@ -127,7 +127,7 @@ fun LibraryScreen(
         }
 
         if (exercises.isEmpty()) {
-            Box(modifier = Modifier.padding(horizontal = Spacing.xl)) {
+            Box(modifier = Modifier.padding(horizontal = Spacing.gutter)) {
                 IslandEmptyState(
                     title = stringResource(R.string.library_empty_title),
                     description = stringResource(R.string.library_empty_description)

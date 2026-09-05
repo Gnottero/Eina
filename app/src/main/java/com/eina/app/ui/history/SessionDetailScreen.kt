@@ -79,6 +79,9 @@ import com.eina.app.ui.components.IslandSurface
 import com.eina.app.ui.components.MetricTile
 import com.eina.app.ui.components.IslandTextField
 import com.eina.app.ui.components.IslandSecondaryButton
+import com.eina.app.ui.components.SetColumnGap
+import com.eina.app.ui.components.SetMarkerWidth
+import com.eina.app.ui.components.SetRowInset
 import com.eina.app.ui.components.SetTableHeader
 import com.eina.app.ui.components.SetTypeIndicator
 import com.eina.app.ui.components.MiniLineChart
@@ -171,7 +174,7 @@ fun SessionDetailScreen(
                 onShare = if (summary == null) null else {
                     { shareData = shareCardDataOf(summary) }
                 },
-                modifier = Modifier.padding(horizontal = Spacing.xl, vertical = Spacing.md)
+                modifier = Modifier.padding(horizontal = Spacing.gutter, vertical = Spacing.md)
             )
         },
         verticalArrangement = Arrangement.spacedBy(Spacing.md)
@@ -521,7 +524,7 @@ private fun ExerciseSummaryCard(
                 else Modifier.border(2.dp, supersetTint, IslandShape)
             ),
         shape = IslandShape,
-        contentPadding = PaddingValues(horizontal = Spacing.lg, vertical = Spacing.xl),
+        contentPadding = PaddingValues(horizontal = Spacing.md, vertical = Spacing.xl),
         verticalArrangement = Arrangement.spacedBy(Spacing.lg)
     ) {
         if (supersetLetter != null) {
@@ -569,16 +572,16 @@ private fun SetRow(number: Int, set: CompletedSetRow) {
         modifier = Modifier
             .fillMaxWidth()
             .clip(TileShape)
-            .padding(vertical = Spacing.sm, horizontal = Spacing.xs),
+            .padding(vertical = Spacing.sm, horizontal = SetRowInset),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
+        horizontalArrangement = Arrangement.spacedBy(SetColumnGap)
     ) {
         // Number or type letter, the same marker used in the session table; a record shows PR.
         SetTypeIndicator(
             type = set.setType,
             number = number,
             isPR = set.isPR,
-            modifier = Modifier.width(40.dp)
+            modifier = Modifier.width(SetMarkerWidth)
         )
         if (set.weightType.usesDecimalField) {
             SetValueText(text = decimalLabel(set), modifier = Modifier.weight(1f))

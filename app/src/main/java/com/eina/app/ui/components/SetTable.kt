@@ -21,14 +21,20 @@ import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.eina.app.R
 import com.eina.app.data.db.WeightType
 import com.eina.app.data.db.usesDistance
@@ -57,11 +63,11 @@ fun SetTableHeader(
         // 4dp further left and the labels no longer sit above their fields.
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = Spacing.xs),
+            .padding(horizontal = SetRowInset),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
+        horizontalArrangement = Arrangement.spacedBy(SetColumnGap)
     ) {
-        TableLabel(stringResource(R.string.table_set), Modifier.width(40.dp))
+        TableLabel(stringResource(R.string.table_set), Modifier.width(SetMarkerWidth))
         if (showPrevious) {
             TableLabel(stringResource(R.string.table_previous), Modifier.weight(previousColumnWeight(weightType)))
         }
@@ -83,7 +89,7 @@ fun SetTableHeader(
             Modifier.weight(1f)
         )
         if (trailingSlot) {
-            Box(Modifier.size(42.dp))
+            Box(Modifier.size(SetCheckSize))
         }
     }
 }
@@ -93,7 +99,53 @@ fun SetTableHeader(
  * "60kg×8") and got clipped in the narrow column.
  */
 fun previousColumnWeight(weightType: WeightType): Float =
-    if (weightType.usesDistance) 1.7f else 1.1f
+    if (weightType.usesDistance) 1.7f else 1.2f
+
+/**
+ * Fixed metrics of the set table, shared by the workout, the routine editor and the summary so the
+ * three tables keep the same columns.
+ *
+ * They are as small as the touch targets allow: on a 360dp phone with the kg column showing, every
+ * dp spent here is taken from the three value columns, which is what made "80kg×12" not fit.
+ */
+val SetMarkerWidth = 34.dp
+val SetCheckSize = 40.dp
+val SetColumnGap = Spacing.xs
+val SetRowInset = Spacing.xs
+
+/**
+ * Value of the "previous" column: one line that shrinks to fit rather than being cut.
+ *
+ * A [Text] with maxLines = 1 clips what does not fit, silently and without an ellipsis, so
+ * "80kg×12" was read as "80kg×1" — a wrong number, not a truncated one. The size is stepped down
+ * until the line fits, as [com.eina.app.ui.components.ScreenHeader] does with its title, and the
+ * text is only drawn once it has settled to avoid one oversized frame.
+ */
+@Composable
+fun PreviousValueText(text: String, modifier: Modifier = Modifier) {
+    val base = MaterialTheme.typography.bodyMedium
+    var style by remember(text) { mutableStateOf(base) }
+    var settled by remember(text) { mutableStateOf(false) }
+    Text(
+        text = text,
+        style = style,
+        color = EinaTheme.island.textSecondary,
+        textAlign = TextAlign.Center,
+        maxLines = 1,
+        softWrap = false,
+        modifier = modifier.drawWithContent { if (settled) drawContent() },
+        onTextLayout = { layout ->
+            if (layout.didOverflowWidth && style.fontSize > MinPreviousTextSize) {
+                style = style.copy(fontSize = style.fontSize * 0.92f)
+            } else {
+                settled = true
+            }
+        }
+    )
+}
+
+/** Floor of the "previous" value: below this it would be unreadable next to the fields. */
+private val MinPreviousTextSize = 10.sp
 
 /**
  * Table row deleted by dragging it to the left.

@@ -35,7 +35,7 @@ fun islandBottomSpace(extra: Dp = Spacing.xl): Dp =
 fun IslandScreen(
     modifier: Modifier = Modifier,
     header: @Composable (() -> Unit)? = null,
-    horizontalPadding: Dp = Spacing.xl,
+    horizontalPadding: Dp = Spacing.gutter,
     verticalArrangement: Arrangement.Vertical = Arrangement.spacedBy(Spacing.md),
     floatingBottom: @Composable (() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit
@@ -67,7 +67,7 @@ fun IslandScreen(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .padding(bottom = islandBottomSpace(extra = Spacing.sm))
-                    .padding(horizontal = Spacing.xl)
+                    .padding(horizontal = Spacing.gutter)
             ) {
                 floatingBottom()
             }
@@ -104,8 +104,8 @@ fun IslandListScreen(
 /** Trailing padding for the LazyColumns inside [IslandListScreen]. */
 @Composable
 fun islandListContentPadding(top: Dp = Spacing.sm): PaddingValues = PaddingValues(
-    start = Spacing.xl,
-    end = Spacing.xl,
+    start = Spacing.gutter,
+    end = Spacing.gutter,
     top = top,
     bottom = islandBottomSpace()
 )

@@ -92,6 +92,15 @@ object Spacing {
     val md = 12.dp
     val lg = 16.dp
     val xl = 24.dp
+
+    /**
+     * Side gutter of a screen: the space between the edge of the display and the islands.
+     *
+     * 16dp and not 24: on a 360dp-wide phone a 24dp gutter plus the 16dp padding of a card left
+     * the set table 272dp for five columns, and the "previous" cell cut "80kg×12" to "80kg×1".
+     * The islands still float — they just stop giving away a seventh of the screen.
+     */
+    val gutter = 16.dp
 }
 
 // Material3 requires CornerBasedShape in its Shapes (it interpolates the radii), so these stay

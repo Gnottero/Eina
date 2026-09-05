@@ -56,6 +56,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import com.eina.app.data.db.RoutineSetEntity
 import com.eina.app.data.db.SetType
 import com.eina.app.data.db.countsAsWorking
+import com.eina.app.ui.components.SetColumnGap
+import com.eina.app.ui.components.SetMarkerWidth
+import com.eina.app.ui.components.SetRowInset
 import com.eina.app.ui.components.SetTableHeader
 import com.eina.app.ui.components.SetTypeIndicator
 import com.eina.app.ui.components.SetTypeSheet
@@ -312,7 +315,7 @@ private fun RoutineExerciseCard(
                 else Modifier.border(2.dp, supersetTint, IslandShape)
             ),
         shape = IslandShape,
-        contentPadding = PaddingValues(horizontal = Spacing.lg, vertical = Spacing.xl),
+        contentPadding = PaddingValues(horizontal = Spacing.md, vertical = Spacing.xl),
         verticalArrangement = Arrangement.spacedBy(Spacing.lg),
         onLongClick = { actionsOpen = true }
     ) {
@@ -565,16 +568,16 @@ private fun RoutineSetRow(
             .fillMaxWidth()
             .clip(TileShape)
             .combinedClickable(onLongClick = { hapticTap(); onLongClick() }, onClick = {})
-            .padding(vertical = Spacing.sm, horizontal = Spacing.xs),
+            .padding(vertical = Spacing.sm, horizontal = SetRowInset),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
+        horizontalArrangement = Arrangement.spacedBy(SetColumnGap)
     ) {
         SetTypeIndicator(
             type = set.setType,
             number = number,
             isPR = false,
             onClick = onTypeClick,
-            modifier = Modifier.width(40.dp)
+            modifier = Modifier.width(SetMarkerWidth)
         )
 
         // Kilograms for loads, kilometres for distance exercises: the same decimal field.
