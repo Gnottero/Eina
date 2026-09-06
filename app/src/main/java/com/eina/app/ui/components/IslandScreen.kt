@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -103,12 +102,3 @@ fun IslandListScreen(
         }
     }
 }
-
-/** Trailing padding for the LazyColumns inside [IslandListScreen]. */
-@Composable
-fun islandListContentPadding(top: Dp = Spacing.sm): PaddingValues = PaddingValues(
-    start = Spacing.gutter,
-    end = Spacing.gutter,
-    top = top,
-    bottom = islandBottomSpace()
-)

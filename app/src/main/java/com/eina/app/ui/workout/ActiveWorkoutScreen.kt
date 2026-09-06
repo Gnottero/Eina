@@ -1,9 +1,6 @@
 package com.eina.app.ui.workout
 
 import android.widget.Toast
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -14,10 +11,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -41,7 +36,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
@@ -74,7 +68,6 @@ import com.eina.app.data.db.exerciseName
 import com.eina.app.data.db.usesDecimalField
 import com.eina.app.data.db.usesDistance
 import com.eina.app.data.db.usesWeight
-import com.eina.app.ui.components.DestructiveRed
 import com.eina.app.ui.components.IslandBottomSheet
 import com.eina.app.ui.components.IslandAlertDialog
 import com.eina.app.ui.components.IslandButton
@@ -104,7 +97,6 @@ import com.eina.app.ui.components.SetTypeIndicator
 import com.eina.app.ui.components.SetTypeSheet
 import com.eina.app.ui.components.SheetActionRow
 import com.eina.app.ui.components.StopwatchController
-import com.eina.app.ui.components.StopwatchIconButton
 import com.eina.app.ui.components.StopwatchSheet
 import com.eina.app.ui.components.SupersetBadge
 import com.eina.app.ui.components.SupersetOption
