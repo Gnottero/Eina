@@ -118,33 +118,30 @@ fun LibraryScreen(
                 contentPadding = PaddingValues(bottom = islandBottomSpace())
             ) {
                 item {
-                    Column(
-                        modifier = Modifier.padding(
-                            start = Spacing.md,
-                            end = Spacing.md,
-                            top = Spacing.md
-                        )
+                    IslandTextField(
+                        value = uiState.query,
+                        onValueChange = viewModel::onQueryChange,
+                        label = stringResource(R.string.library_search),
+                        labelAsPlaceholder = true,
+                        leadingIcon = Icons.Outlined.Search,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = Spacing.md, vertical = Spacing.md)
+                    )
+                    // The chips run from edge to edge of the island, not inside its padding: cut
+                    // at the padding, the last one lost a couple of letters and read as broken
+                    // rather than as a row that scrolls.
+                    LazyRow(
+                        horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
+                        contentPadding = PaddingValues(start = Spacing.md, end = Spacing.md, bottom = Spacing.md)
                     ) {
-                        IslandTextField(
-                            value = uiState.query,
-                            onValueChange = viewModel::onQueryChange,
-                            label = stringResource(R.string.library_search),
-                            labelAsPlaceholder = true,
-                            leadingIcon = Icons.Outlined.Search,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                        LazyRow(
-                            horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
-                            contentPadding = PaddingValues(vertical = Spacing.md)
-                        ) {
-                            items(MuscleGroupCategory.entries) { category ->
-                                IslandChip(
-                                    text = category.label(),
-                                    selected = uiState.selectedCategory == category,
-                                    accentColor = category.color,
-                                    onClick = { viewModel.onCategorySelected(category) }
-                                )
-                            }
+                        items(MuscleGroupCategory.entries) { category ->
+                            IslandChip(
+                                text = category.label(),
+                                selected = uiState.selectedCategory == category,
+                                accentColor = category.color,
+                                onClick = { viewModel.onCategorySelected(category) }
+                            )
                         }
                     }
                 }
@@ -240,6 +237,10 @@ private fun ExerciseListItem(
         modifier = Modifier.padding(horizontal = Spacing.sm),
         title = exercise.localizedName(),
         titleStyle = MaterialTheme.typography.bodyLarge,
+        // Two lines. On one, "Affondi camminati a corpo libero" and "Affondi camminati con
+        // bilanciere" both ellipsised to "Affondi camminati a corp…" and the list stopped
+        // distinguishing the movements it exists to list.
+        titleMaxLines = 2,
         subtitle = listOfNotNull(categoryLabel, equipment).joinToString(" · "),
         onClick = onClick,
         onLongClick = onLongClick,

@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 import java.time.LocalDate
+import java.time.temporal.ChronoUnit
 
 /**
  * Span the headline number is measured over. A week says whether today went well and a year says
@@ -70,11 +71,7 @@ class ProgressViewModel(repository: StatsRepository) : ViewModel() {
         ProgressUiState(
             period = selected,
             periodVolumeKg = volumeIn(volumePerDay, periodStart(selected, today), today),
-            previousVolumeKg = volumeIn(
-                volumePerDay,
-                periodStart(selected, previousPeriodDay(selected, today)),
-                periodEnd(selected, previousPeriodDay(selected, today))
-            ),
+            previousVolumeKg = previousVolume(volumePerDay, selected, today),
             chartValues = chartValues(volumePerDay, selected, today),
             chartHighlight = chartHighlight(selected, today),
             volumeByDay = volumePerDay,
@@ -118,6 +115,24 @@ class ProgressViewModel(repository: StatsRepository) : ViewModel() {
             ProgressPeriod.WEEK -> day.minusWeeks(1)
             ProgressPeriod.MONTH -> day.minusMonths(1)
             ProgressPeriod.YEAR -> day.minusYears(1)
+        }
+
+        /**
+         * The previous period, cut at the same point the current one has reached: six days into
+         * September against the whole of August read "-77%" every time a month turned over, which
+         * says something about the calendar and nothing about the training.
+         */
+        fun previousVolume(
+            byDay: Map<LocalDate, Double>,
+            period: ProgressPeriod,
+            today: LocalDate
+        ): Double {
+            val elapsed = ChronoUnit.DAYS.between(periodStart(period, today), today)
+            val previous = previousPeriodDay(period, today)
+            val from = periodStart(period, previous)
+            // A shorter previous period (February against March) stops at its own end.
+            val to = minOf(from.plusDays(elapsed), periodEnd(period, previous))
+            return volumeIn(byDay, from, to)
         }
 
         fun volumeIn(byDay: Map<LocalDate, Double>, from: LocalDate, to: LocalDate): Double =

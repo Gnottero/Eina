@@ -327,10 +327,10 @@
 
     <!-- Settings -->
     <string name="settings_title">Settings</string>
-    <string name="settings_subtitle">Language, feedback and app behaviour</string>
-    <string name="settings_section_language">Language</string>
+    <string name="settings_subtitle">No account, no server</string>
+    <string name="settings_section_language">App</string>
     <string name="settings_language_title">App language</string>
-    <string name="settings_language_description">Interface and exercise descriptions. Descriptions fall back to English where a translation is missing.</string>
+    <string name="settings_language_description">Interface and exercise descriptions</string>
     <string name="settings_language_search">Search a language</string>
     <string name="settings_language_search_empty">No language matches your search.</string>
     <string name="language_system">System</string>
@@ -339,21 +339,21 @@
     <string name="language_french" translatable="false">Français</string>
     <string name="settings_section_timer">Rest timer</string>
     <string name="settings_sound_title">Sound when rest ends</string>
-    <string name="settings_sound_description">Plays a short alert when the timer hits zero.</string>
+    <string name="settings_sound_description">A short alert when the timer hits zero</string>
     <string name="settings_vibration_title">Vibration when rest ends</string>
-    <string name="settings_vibration_description">Double buzz when the timer runs out.</string>
+    <string name="settings_vibration_description">Double buzz when the timer runs out</string>
     <string name="settings_section_health">Watch data</string>
     <string name="settings_health_title">Heart rate and calories</string>
-    <string name="settings_health_description">Reads what your watch recorded during the workout from Health Connect. Read only, workout window only, nothing leaves the phone.</string>
-    <string name="settings_health_permission_hint">Health Connect has not granted access yet.</string>
+    <string name="settings_health_description">Heart rate and calories from Health Connect</string>
+    <string name="settings_health_permission_hint">Access not granted yet</string>
     <string name="settings_health_permission_action">Allow access</string>
     <string name="settings_section_haptics">Haptic feedback</string>
     <string name="settings_haptics_title">Vibration on controls</string>
-    <string name="settings_haptics_description">A micro-buzz on every tap: buttons, chips, menus and set checks.</string>
+    <string name="settings_haptics_description">A micro-buzz on every tap</string>
     <string name="settings_donate_title">Buy me a coffee</string>
     <string name="settings_section_data">Data</string>
     <string name="settings_clear_title">Clear your history</string>
-    <string name="settings_clear_description">Deletes every recorded workout, sets included. Routines, exercises and body weight stay.</string>
+    <string name="settings_clear_description">Every recorded workout; routines stay</string>
     <string name="edit_session_save">Save changes</string>
     <string name="edit_session_sheet_title">Date and duration</string>
     <string name="edit_session_sheet_text">Move this workout to another day or correct how long it lasted. Sets, exercises and notes are already saved.</string>

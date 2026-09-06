@@ -45,7 +45,10 @@ fun IslandRow(
     trailing: @Composable (RowScope.() -> Unit)? = null,
     onClick: (() -> Unit)? = null,
     onLongClick: (() -> Unit)? = null,
-    titleStyle: androidx.compose.ui.text.TextStyle = MaterialTheme.typography.titleSmall
+    titleStyle: androidx.compose.ui.text.TextStyle = MaterialTheme.typography.titleSmall,
+    /** Two lines where names are user-written and long, as routines are. */
+    titleMaxLines: Int = 1,
+    subtitleMaxLines: Int = 1
 ) {
     val island = EinaTheme.island
     val hapticTap = LocalHapticTap.current
@@ -75,7 +78,7 @@ fun IslandRow(
             Text(
                 text = title,
                 style = titleStyle,
-                maxLines = 1,
+                maxLines = titleMaxLines,
                 overflow = TextOverflow.Ellipsis
             )
             if (subtitle != null) {
@@ -83,7 +86,7 @@ fun IslandRow(
                     text = subtitle,
                     style = MaterialTheme.typography.labelMedium,
                     color = island.textSecondary,
-                    maxLines = 1,
+                    maxLines = subtitleMaxLines,
                     overflow = TextOverflow.Ellipsis
                 )
             }

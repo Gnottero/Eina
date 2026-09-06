@@ -144,6 +144,9 @@ private fun RoutineRow(
     IslandRow(
         title = name,
         titleStyle = MaterialTheme.typography.titleMedium,
+        // Routine names are written by hand and run long ("Allenamento - Pausa pranzo"); one line
+        // cut most of them mid-word.
+        titleMaxLines = 2,
         subtitle = summaryLine(card),
         // Tapping the row opens the routine; only the round button on the right starts it.
         onClick = onEdit,

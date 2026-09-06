@@ -16,7 +16,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
@@ -47,7 +46,6 @@ import com.eina.app.ui.theme.EinaTheme
 import com.eina.app.ui.theme.IslandShape
 import com.eina.app.ui.theme.MetricColors
 import com.eina.app.ui.theme.Spacing
-import com.eina.app.ui.theme.squircle
 import java.time.Month
 import java.time.format.TextStyle
 import org.koin.androidx.compose.koinViewModel
@@ -219,7 +217,8 @@ private fun ChartBlock(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .clip(squircle(14.dp))
+            // No rounded clip: the block is full width and its label sits in the top-left corner,
+            // where a 14dp corner cut the first letter off ("PER GIORNO" lost its P).
             .then(
                 if (onClick == null) Modifier
                 else Modifier.clickable { hapticTap(); onClick() }

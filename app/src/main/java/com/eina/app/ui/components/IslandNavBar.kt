@@ -55,10 +55,11 @@ fun IslandNavBar(
             .fillMaxWidth()
             .padding(horizontal = Spacing.xl, vertical = Spacing.md),
         shape = PillShape,
-        // Slightly translucent, so content scrolling underneath shows through and the bar floats
-        // over the page instead of cutting it in two.
-        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.97f),
-        elevation = 18.dp
+        // Opaque. At 97% the bar let the list underneath print through it: over a white card the
+        // difference was invisible, but over a metric strip the numbers ghosted between the icons
+        // and the bar read as a smudge rather than as a thing floating above the page.
+        color = MaterialTheme.colorScheme.surface,
+        elevation = 14.dp
     ) {
         Row(
             modifier = Modifier

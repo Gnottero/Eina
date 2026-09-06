@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -18,12 +19,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Coffee
 import androidx.compose.material.icons.outlined.DeleteSweep
 import androidx.compose.material.icons.outlined.Flag
-import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Language
 import androidx.compose.material.icons.outlined.MonitorHeart
 import androidx.compose.material.icons.outlined.NotificationsActive
 import androidx.compose.material.icons.outlined.Vibration
-import androidx.compose.material.icons.outlined.VolumeUp
+import androidx.compose.material.icons.automirrored.outlined.VolumeUp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
@@ -43,6 +43,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.health.connect.client.PermissionController
 import com.eina.app.BuildConfig
@@ -122,7 +123,7 @@ fun SettingsScreen(
 
             SettingsGroup(stringResource(R.string.settings_section_timer))
             SettingRow(
-                icon = Icons.Outlined.VolumeUp,
+                icon = Icons.AutoMirrored.Outlined.VolumeUp,
                 label = stringResource(R.string.settings_sound_title),
                 hint = stringResource(R.string.settings_sound_description),
                 checked = sound,
@@ -248,7 +249,7 @@ private fun SettingsGroup(title: String) {
  */
 @Composable
 private fun SettingRow(
-    icon: ImageVector,
+    icon: ImageVector?,
     label: String,
     hint: String,
     modifier: Modifier = Modifier,
@@ -275,10 +276,24 @@ private fun SettingRow(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(Spacing.md)
     ) {
-        Icon(icon, contentDescription = null, tint = iconTint, modifier = Modifier.size(20.dp))
+        // Info rows carry no icon: five identical (i) glyphs down a column said nothing, and the
+        // spacer keeps their labels on the same line as the settings above them.
+        if (icon != null) {
+            Icon(icon, contentDescription = null, tint = iconTint, modifier = Modifier.size(20.dp))
+        } else {
+            Spacer(Modifier.size(20.dp))
+        }
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
             Text(label, style = MaterialTheme.typography.bodyLarge)
-            Text(hint, style = MaterialTheme.typography.labelMedium, color = island.textSecondary)
+            Text(
+                text = hint,
+                style = MaterialTheme.typography.labelMedium,
+                color = island.textSecondary,
+                // The hint is one short phrase; anything longer belongs on the screen it opens.
+                // Unbounded, a four-line description made the row taller than the group above it.
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
         }
         if (value != null) {
             Text(
@@ -307,12 +322,7 @@ private fun SettingRow(
 
 @Composable
 private fun InfoRow(label: String, value: String) {
-    SettingRow(
-        icon = Icons.Outlined.Info,
-        label = label,
-        hint = value,
-        iconTint = EinaTheme.island.textSecondary
-    )
+    SettingRow(icon = null, label = label, hint = value)
 }
 
 /** Foot of the settings island: the ramp, what the app costs, and the way to give anyway. */
