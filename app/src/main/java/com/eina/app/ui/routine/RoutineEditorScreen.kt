@@ -413,30 +413,6 @@ private fun RoutineExerciseCard(
     if (actionsOpen) {
         IslandBottomSheet(onDismiss = { actionsOpen = false }, title = exerciseName) {
             SheetActionRow(
-                icon = Icons.AutoMirrored.Outlined.Notes,
-                label = stringResource(if (routineExercise.notes.isNullOrBlank()) R.string.note_add else R.string.note_edit),
-                description = routineExercise.notes?.takeIf { it.isNotBlank() },
-                onClick = { actionsOpen = false; notesSheetOpen = true }
-            )
-            SheetActionRow(
-                icon = Icons.Outlined.Timer,
-                label = stringResource(R.string.rest_time_title),
-                description = formatClock(routineExercise.restSeconds),
-                onClick = { actionsOpen = false; restSheetOpen = true }
-            )
-            SheetActionRow(
-                icon = Icons.Outlined.Add,
-                label = stringResource(R.string.active_add_set),
-                onClick = { actionsOpen = false; onAddSet() }
-            )
-            SheetActionRow(
-                icon = Icons.Outlined.Repeat,
-                label = stringResource(R.string.superset_action),
-                description = supersetLetter?.let { stringResource(R.string.superset_badge, it) }
-                    ?: stringResource(R.string.superset_action_none),
-                onClick = { actionsOpen = false; supersetSheetOpen = true }
-            )
-            SheetActionRow(
                 icon = Icons.Outlined.SwapHoriz,
                 label = stringResource(R.string.action_replace_exercise),
                 description = stringResource(R.string.routine_replace_exercise_description),
@@ -450,6 +426,19 @@ private fun RoutineExerciseCard(
                     onClick = { actionsOpen = false; onReorder() }
                 )
             }
+            SheetActionRow(
+                icon = Icons.Outlined.Repeat,
+                label = stringResource(R.string.superset_action),
+                description = supersetLetter?.let { stringResource(R.string.superset_badge, it) }
+                    ?: stringResource(R.string.superset_action_none),
+                onClick = { actionsOpen = false; supersetSheetOpen = true }
+            )
+            SheetActionRow(
+                icon = Icons.AutoMirrored.Outlined.Notes,
+                label = stringResource(if (routineExercise.notes.isNullOrBlank()) R.string.note_add else R.string.note_edit),
+                description = routineExercise.notes?.takeIf { it.isNotBlank() },
+                onClick = { actionsOpen = false; notesSheetOpen = true }
+            )
             SheetActionRow(
                 icon = Icons.Outlined.Delete,
                 label = stringResource(R.string.action_remove_exercise),
