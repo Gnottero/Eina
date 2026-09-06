@@ -5,14 +5,14 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
@@ -38,11 +38,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.health.connect.client.PermissionController
@@ -52,7 +55,6 @@ import com.eina.app.ui.components.DestructiveRed
 import com.eina.app.ui.components.IslandAlertDialog
 import com.eina.app.ui.components.IslandBottomSheet
 import com.eina.app.ui.components.IslandCard
-import com.eina.app.ui.components.IslandChip
 import com.eina.app.ui.components.IslandScreen
 import com.eina.app.ui.components.RampBand
 import com.eina.app.ui.components.ScreenHeader
@@ -375,23 +377,90 @@ private fun DonationBlock(onDonate: () -> Unit) {
     }
 }
 
-/** Weekly goal: seven chips, because the answer is always a single digit. */
-@OptIn(ExperimentalLayoutApi::class)
+/**
+ * Weekly goal: seven tiles, one per day, filled up to the chosen one.
+ *
+ * Seven chips reading "1 day", "2 days"… were seven pills of different widths saying the same word
+ * six times over, and only the chosen one carried colour. Filled up to the choice the row reads as
+ * the ring it feeds: the answer is a quantity, not one option out of seven. The ramp is sampled
+ * across the whole row rather than repeated inside every tile, so the seven tiles are one gradient.
+ */
 @Composable
 private fun WeeklyGoalSheet(current: Int, onSelect: (Int) -> Unit, onDismiss: () -> Unit) {
+    val island = EinaTheme.island
     IslandBottomSheet(onDismiss = onDismiss, title = stringResource(R.string.settings_goal_sheet_title)) {
-        FlowRow(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
-            verticalArrangement = Arrangement.spacedBy(Spacing.sm)
+        Text(
+            text = stringResource(R.string.settings_goal_description),
+            style = MaterialTheme.typography.bodyMedium,
+            color = island.textSecondary
+        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = Spacing.sm),
+            horizontalArrangement = Arrangement.spacedBy(Spacing.xs)
         ) {
             (1..7).forEach { days ->
-                IslandChip(
-                    text = pluralStringResource(R.plurals.day_count, days, days),
-                    selected = days == current,
-                    onClick = { onSelect(days) }
+                GoalDayTile(
+                    days = days,
+                    index = days - 1,
+                    reached = days <= current,
+                    ramp = island.accentRamp,
+                    onClick = { onSelect(days) },
+                    modifier = Modifier.weight(1f)
                 )
             }
         }
+        Text(
+            text = pluralStringResource(R.plurals.day_count, current, current),
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = Spacing.sm),
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
+/** One day of the weekly goal. [index] places it in the ramp that runs across the whole row. */
+@Composable
+private fun GoalDayTile(
+    days: Int,
+    index: Int,
+    reached: Boolean,
+    ramp: List<Color>,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val island = EinaTheme.island
+    val hapticTap = LocalHapticTap.current
+    Box(
+        modifier = modifier
+            .height(52.dp)
+            .clip(squircle(16.dp))
+            .then(
+                if (reached) {
+                    Modifier.drawBehind {
+                        drawRect(
+                            Brush.horizontalGradient(
+                                colors = ramp,
+                                startX = -index * size.width,
+                                endX = (7 - index) * size.width
+                            )
+                        )
+                    }
+                } else {
+                    Modifier.background(island.sunken)
+                }
+            )
+            .clickable { hapticTap(); onClick() },
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = days.toString(),
+            style = MaterialTheme.typography.titleMedium,
+            color = if (reached) Color.White else island.textSecondary
+        )
     }
 }

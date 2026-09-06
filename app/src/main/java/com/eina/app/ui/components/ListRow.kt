@@ -48,7 +48,9 @@ fun IslandRow(
     titleStyle: androidx.compose.ui.text.TextStyle = MaterialTheme.typography.titleSmall,
     /** Two lines where names are user-written and long, as routines are. */
     titleMaxLines: Int = 1,
-    subtitleMaxLines: Int = 1
+    subtitleMaxLines: Int = 1,
+    /** Replaces the supporting line with a custom one, for rows whose subtitle carries colour. */
+    subtitleContent: @Composable (() -> Unit)? = null
 ) {
     val island = EinaTheme.island
     val hapticTap = LocalHapticTap.current
@@ -81,7 +83,9 @@ fun IslandRow(
                 maxLines = titleMaxLines,
                 overflow = TextOverflow.Ellipsis
             )
-            if (subtitle != null) {
+            if (subtitleContent != null) {
+                subtitleContent()
+            } else if (subtitle != null) {
                 Text(
                     text = subtitle,
                     style = MaterialTheme.typography.labelMedium,
@@ -114,5 +118,31 @@ fun RowLeadingTile(
             .background(color.copy(alpha = 0.15f)),
         contentAlignment = Alignment.Center,
         content = { content() }
+    )
+}
+
+/**
+ * Small tag on a row's supporting line. The muscle group carries its own colour, so a list read by
+ * scrolling is sorted by eye before it is read; the equipment stays neutral, because it is a
+ * property of the movement and not what the movement is.
+ */
+@Composable
+fun RowTag(
+    text: String,
+    color: Color,
+    modifier: Modifier = Modifier,
+    filled: Boolean = true
+) {
+    val island = EinaTheme.island
+    Text(
+        text = text,
+        style = MaterialTheme.typography.labelSmall,
+        color = if (filled) color else island.textSecondary,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+        modifier = modifier
+            .clip(squircle(8.dp))
+            .background(if (filled) color.copy(alpha = 0.14f) else island.sunken)
+            .padding(horizontal = 7.dp, vertical = 3.dp)
     )
 }

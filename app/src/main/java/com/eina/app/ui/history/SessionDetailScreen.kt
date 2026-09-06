@@ -22,11 +22,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.Notes
 import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.FitnessCenter
-import androidx.compose.material.icons.outlined.KeyboardArrowDown
 import androidx.compose.material.icons.outlined.Repeat
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.Favorite
@@ -263,7 +263,7 @@ private fun SummaryHeader(
                 horizontalArrangement = Arrangement.spacedBy(Spacing.md)
             ) {
                 IslandIconButton(
-                    icon = Icons.Outlined.KeyboardArrowDown,
+                    icon = Icons.AutoMirrored.Outlined.ArrowBack,
                     contentDescription = stringResource(R.string.action_back),
                     onClick = onBack,
                     containerColor = island.sunken,

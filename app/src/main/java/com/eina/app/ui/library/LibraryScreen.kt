@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -28,6 +29,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
@@ -47,6 +49,7 @@ import com.eina.app.ui.components.IslandListScreen
 import com.eina.app.ui.components.IslandRow
 import com.eina.app.ui.components.IslandTextField
 import com.eina.app.ui.components.RowLeadingTile
+import com.eina.app.ui.components.RowTag
 import com.eina.app.ui.components.ScreenHeader
 import com.eina.app.ui.components.SheetActionRow
 import com.eina.app.ui.components.hasExerciseMedia
@@ -241,7 +244,25 @@ private fun ExerciseListItem(
         // bilanciere" both ellipsised to "Affondi camminati a corp…" and the list stopped
         // distinguishing the movements it exists to list.
         titleMaxLines = 2,
-        subtitle = listOfNotNull(categoryLabel, equipment).joinToString(" · "),
+        // The group is a tag in its own colour instead of grey text: in a list of 197 movements the
+        // colour is what tells a pull day from a leg day before a single word is read.
+        subtitleContent = {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(Spacing.xs),
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(top = 3.dp)
+            ) {
+                RowTag(text = categoryLabel, color = category.color)
+                if (equipment != null) {
+                    RowTag(
+                        text = equipment,
+                        color = category.color,
+                        filled = false,
+                        modifier = Modifier.weight(1f, fill = false)
+                    )
+                }
+            }
+        },
         onClick = onClick,
         onLongClick = onLongClick,
         leading = {

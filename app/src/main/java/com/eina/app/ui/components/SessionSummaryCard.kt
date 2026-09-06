@@ -31,12 +31,14 @@ import com.eina.app.ui.theme.primaryCategoryFor
 import com.eina.app.ui.theme.squircle
 
 /**
- * Session summary card: one identifying line — coloured dot, routine name, when — over a sunken
- * block holding the three numbers a past workout is remembered by.
+ * Session summary card: coloured dot, routine name with the day under it, over a sunken block
+ * holding the three numbers a past workout is remembered by.
  *
  * The numbers used to sit loose on the white card, which made the card as tall as the hero of the
- * Dashboard for three figures. Boxed together they read as one measurement strip, and the card is
- * short enough that three of them fit under the hero without scrolling.
+ * Dashboard for three figures. Boxed together they read as one measurement strip. The name and the
+ * day are stacked rather than pushed to the two ends of one line: squeezed side by side a long
+ * routine name was ellipsised to make room for a date that is always the same width, and the card
+ * was so low that a list of workouts read as a table of figures.
  */
 @Composable
 fun SessionSummaryCard(
@@ -53,53 +55,55 @@ fun SessionSummaryCard(
 
     IslandCard(
         modifier = modifier.fillMaxWidth(),
-        contentPadding = PaddingValues(Spacing.md),
-        verticalArrangement = Arrangement.spacedBy(Spacing.sm),
+        contentPadding = PaddingValues(Spacing.lg),
+        verticalArrangement = Arrangement.spacedBy(Spacing.lg),
         onClick = onClick,
         onLongClick = onLongClick
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = Spacing.xs),
+            modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
         ) {
             Box(
                 modifier = Modifier
-                    .size(9.dp)
+                    .size(10.dp)
                     .clip(CircleShape)
                     .background(dotColor)
             )
-            // The title is the routine name; a free workout says so explicitly rather than showing
-            // an empty slot.
-            Text(
-                text = summary.routineName ?: stringResource(R.string.workout_free_name),
-                style = MaterialTheme.typography.titleMedium,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.weight(1f)
-            )
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                // The title is the routine name; a free workout says so explicitly rather than
+                // showing an empty slot.
+                Text(
+                    text = summary.routineName ?: stringResource(R.string.workout_free_name),
+                    style = MaterialTheme.typography.titleMedium,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    text = "${context.formatRelativeDay(summary.startTime)} · ${formatTime(summary.startTime)}",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = island.textSecondary,
+                    maxLines = 1
+                )
+            }
             if (summary.prCount > 0) {
                 EinaBadge(
                     text = pluralStringResource(R.plurals.pr_count, summary.prCount, summary.prCount),
                     color = MetricColors.Records
                 )
             }
-            Text(
-                text = "${context.formatRelativeDay(summary.startTime)} · ${formatTime(summary.startTime)}",
-                style = MaterialTheme.typography.labelMedium,
-                color = island.textSecondary,
-                maxLines = 1
-            )
         }
 
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(squircle(16.dp))
+                .clip(squircle(18.dp))
                 .background(island.sunken)
-                .padding(vertical = Spacing.sm, horizontal = Spacing.xs),
+                .padding(vertical = Spacing.md, horizontal = Spacing.xs),
             horizontalArrangement = Arrangement.spacedBy(Spacing.xs)
         ) {
             SummaryMetric(

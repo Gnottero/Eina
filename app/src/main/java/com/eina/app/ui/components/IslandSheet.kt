@@ -192,8 +192,7 @@ fun IslandAlertDialog(
     confirmLabel: String,
     onConfirm: () -> Unit,
     dismissLabel: String,
-    onDismiss: () -> Unit,
-    destructive: Boolean = true
+    onDismiss: () -> Unit
 ) {
     val island = EinaTheme.island
     Dialog(onDismissRequest = onDismiss) {
@@ -217,12 +216,14 @@ fun IslandAlertDialog(
                     modifier = Modifier.weight(1f),
                     shape = PillShape
                 )
+                // The confirm pill wears the app's ramp like every other primary action. A flat red
+                // one was the only button in the app painted a colour of its own, and it read as a
+                // system dialog dropped into the page; the warning is in the words, and the way back
+                // is the button next to it.
                 IslandButton(
                     text = confirmLabel,
                     onClick = onConfirm,
                     modifier = Modifier.weight(1f),
-                    // Red stays filled: it is the action that cannot be undone.
-                    containerColor = if (destructive) DestructiveRed else MaterialTheme.colorScheme.primary,
                     shape = PillShape
                 )
             }
