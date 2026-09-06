@@ -2,7 +2,7 @@
 <resources>
     <!-- Navigazione -->
     <string name="nav_dashboard">Dashboard</string>
-    <string name="nav_workout">Allena</string>
+    <string name="nav_workout">Allenamento</string>
     <string name="nav_library">Esercizi</string>
     <string name="nav_progress">Progressi</string>
 
@@ -44,8 +44,8 @@
     <string name="dashboard_empty_title">Nessun allenamento registrato</string>
     <string name="dashboard_empty_description">Avvia una sessione: qui comparirà il riepilogo dell\'ultima, con serie, volume e PR.</string>
 
-    <!-- Allena -->
-    <string name="workout_title">Allena</string>
+    <!-- Workout -->
+    <string name="workout_title">Allenamento</string>
     <string name="workout_new_routine">Nuova routine</string>
     <string name="workout_in_progress_description">Hai una sessione aperta. Riprendila o terminala per iniziarne una nuova.</string>
     <string name="workout_resume">Riprendi allenamento</string>
