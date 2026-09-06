@@ -28,15 +28,14 @@ import com.eina.app.ui.theme.EinaTheme
 import com.eina.app.ui.theme.MetricColors
 import com.eina.app.ui.theme.Spacing
 import com.eina.app.ui.theme.primaryCategoryFor
-import com.eina.app.ui.theme.squircle
 
 /**
- * Session summary card: coloured dot, routine name with the day under it, over a sunken block
- * holding the three numbers a past workout is remembered by.
+ * Session summary card: coloured dot, routine name with the day under it, over the three
+ * numbers a past workout is remembered by.
  *
- * The numbers used to sit loose on the white card, which made the card as tall as the hero of the
- * Dashboard for three figures. Boxed together they read as one measurement strip. The name and the
- * day are stacked rather than pushed to the two ends of one line: squeezed side by side a long
+ * The numbers sit loose on the white card: the sunken strip that used to hold them was the only
+ * grey block in a list of white cards, and it read as a table inside a card. The name and the day
+ * are stacked rather than pushed to the two ends of one line: squeezed side by side a long
  * routine name was ellipsised to make room for a date that is always the same width, and the card
  * was so low that a list of workouts read as a table of figures.
  */
@@ -101,9 +100,7 @@ fun SessionSummaryCard(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(squircle(18.dp))
-                .background(island.sunken)
-                .padding(vertical = Spacing.md, horizontal = Spacing.xs),
+                .padding(horizontal = Spacing.xs),
             horizontalArrangement = Arrangement.spacedBy(Spacing.xs)
         ) {
             SummaryMetric(
@@ -131,8 +128,8 @@ fun SessionSummaryCard(
 
 /**
  * Metric column: tiny label over a large number. Here the number takes the colour and the label
- * stays grey — the opposite of a metric tile, because inside the strip there is no icon to carry
- * the colour and three black numbers in a row read as a table.
+ * stays grey — the opposite of a metric tile, because here there is no icon to carry the colour
+ * and three black numbers in a row read as a table.
  */
 @Composable
 private fun SummaryMetric(
