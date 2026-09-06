@@ -4,8 +4,15 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.FitnessCenter
+import androidx.compose.material.icons.outlined.Pause
+import androidx.compose.material.icons.outlined.Repeat
+import androidx.compose.material.icons.outlined.Timer
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -18,15 +25,21 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.eina.app.R
+import com.eina.app.ui.components.DestructiveRed
 import com.eina.app.ui.components.HourMinuteWheelPicker
 import com.eina.app.ui.components.IslandBottomSheet
 import com.eina.app.ui.components.IslandButton
 import com.eina.app.ui.components.IslandCalendar
 import com.eina.app.ui.components.IslandCard
 import com.eina.app.ui.components.IslandChip
+import com.eina.app.ui.components.IslandSecondaryButton
+import com.eina.app.ui.components.MetricTile
 import com.eina.app.ui.components.SectionHeader
+import com.eina.app.ui.components.SheetActionRow
+import com.eina.app.ui.components.formatVolume
 import com.eina.app.ui.library.currentLocale
 import com.eina.app.ui.theme.EinaTheme
+import com.eina.app.ui.theme.MetricColors
 import com.eina.app.ui.theme.Spacing
 import java.text.DateFormat
 import java.time.Instant
@@ -50,8 +63,12 @@ fun FinishWorkoutSheet(
     startTime: Long,
     elapsedSeconds: Int,
     isEmpty: Boolean,
+    volumeKg: Double,
+    setCount: Int,
     onConfirm: (startTime: Long, durationSeconds: Int) -> Unit,
     onDismiss: () -> Unit,
+    /** Discards the whole session; live workouts only, and the confirmation is the caller's. */
+    onDelete: (() -> Unit)? = null,
     /** Workout already in the history: nothing is closed, only its date and duration move. */
     editing: Boolean = false
 ) {
@@ -73,16 +90,68 @@ fun FinishWorkoutSheet(
         scrollable = true
     ) {
         Text(
-            text = stringResource(
-                when {
-                    editing -> R.string.edit_session_sheet_text
-                    isEmpty -> R.string.active_finish_confirm_text_empty
-                    else -> R.string.active_finish_confirm_text
-                }
-            ),
+            // Says which of the two questions this is: the second one, about the routine, follows
+            // straight after and a sheet that reopens with different buttons reads as a mistake.
+            text = if (editing) {
+                stringResource(R.string.edit_session_sheet_text)
+            } else {
+                stringResource(
+                    R.string.finish_step_one,
+                    stringResource(
+                        if (isEmpty) R.string.active_finish_confirm_text_empty
+                        else R.string.active_finish_confirm_text
+                    )
+                )
+            },
             style = MaterialTheme.typography.bodyMedium,
             color = island.textSecondary
         )
+
+        // The three numbers of the session, before deciding what to do with it: an empty workout
+        // is recognisable here rather than after it has been saved.
+        if (!isEmpty) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
+            ) {
+                MetricTile(
+                    icon = Icons.Outlined.Timer,
+                    label = stringResource(R.string.stat_duration),
+                    value = formatDuration(duration),
+                    tint = MetricColors.Duration,
+                    centered = true,
+                    modifier = Modifier.weight(1f)
+                )
+                MetricTile(
+                    icon = Icons.Outlined.FitnessCenter,
+                    label = stringResource(R.string.stat_volume),
+                    value = formatVolume(volumeKg),
+                    unit = stringResource(R.string.unit_kg),
+                    tint = MetricColors.Volume,
+                    centered = true,
+                    modifier = Modifier.weight(1f)
+                )
+                MetricTile(
+                    icon = Icons.Outlined.Repeat,
+                    label = stringResource(R.string.stat_sets),
+                    value = setCount.toString(),
+                    tint = MetricColors.Sets,
+                    centered = true,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        }
+
+        // Leaving the sheet is a choice of its own, so it is a row and not just a tap outside:
+        // the session stays open and is picked up again from the Workout tab.
+        if (!editing) {
+            SheetActionRow(
+                icon = Icons.Outlined.Pause,
+                label = stringResource(R.string.active_finish_later),
+                description = stringResource(R.string.active_finish_later_description),
+                onClick = onDismiss
+            )
+        }
 
         if (!isEmpty) {
             SectionHeader(title = stringResource(R.string.finish_date))
@@ -134,13 +203,32 @@ fun FinishWorkoutSheet(
             )
         }
 
-        IslandButton(
-            text = stringResource(
-                if (editing) R.string.edit_session_save else R.string.active_finish_confirm_action
-            ),
-            onClick = { onConfirm(start, duration); onDismiss() },
-            modifier = Modifier.fillMaxWidth()
-        )
+        // Two ways out on one line: discard on the left, go on with the closing on the right. The
+        // destructive one keeps the sunken surface and only reddens its label — it still opens a
+        // confirmation, so it is not the point of no return.
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = Spacing.sm),
+            horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
+        ) {
+            if (onDelete != null) {
+                IslandSecondaryButton(
+                    text = stringResource(R.string.active_cancel_confirm_action),
+                    icon = Icons.Outlined.Delete,
+                    onClick = { onDismiss(); onDelete() },
+                    contentColor = DestructiveRed,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+            IslandButton(
+                text = stringResource(
+                    if (editing) R.string.edit_session_save else R.string.active_finish_confirm_action
+                ),
+                onClick = { onConfirm(start, duration); onDismiss() },
+                modifier = Modifier.weight(1f)
+            )
+        }
     }
 
 }

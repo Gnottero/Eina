@@ -5,11 +5,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.EmojiEvents
 import androidx.compose.material.icons.outlined.FitnessCenter
 import androidx.compose.material.icons.outlined.History
-import androidx.compose.material.icons.outlined.PlayArrow
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -23,16 +22,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.eina.app.R
 import com.eina.app.ui.components.ActivityRing
-import com.eina.app.ui.components.IslandButton
 import com.eina.app.ui.components.IslandCard
-import com.eina.app.ui.components.IslandCardHeader
 import com.eina.app.ui.components.IslandEmptyState
 import com.eina.app.ui.components.IslandIconButton
 import com.eina.app.ui.components.IslandScreen
+import com.eina.app.ui.components.MetricTile
 import com.eina.app.ui.components.MiniBarChart
 import com.eina.app.ui.components.ScreenHeader
 import com.eina.app.ui.components.SectionHeader
@@ -54,7 +51,6 @@ import org.koin.compose.koinInject
 
 @Composable
 fun DashboardScreen(
-    onStartWorkoutClick: () -> Unit = {},
     onHistoryClick: () -> Unit = {},
     onSessionClick: (Long) -> Unit = {},
     onSettingsClick: () -> Unit = {},
@@ -66,7 +62,6 @@ fun DashboardScreen(
     val stopwatchState by stopwatch.state.collectAsState()
     var showStopwatch by remember { mutableStateOf(false) }
     val today = LocalDate.now()
-    val hasWeekVolume = state.weekVolumeByDay.any { it > 0f }
 
     IslandScreen(
         header = {
@@ -91,89 +86,92 @@ fun DashboardScreen(
         },
         verticalArrangement = Arrangement.spacedBy(Spacing.md)
     ) {
-        // Hero: a single island with the ring of trained days and the weekly numbers beside it.
-        // Two equally weighted tiles left the screen without an entry point.
+        // One hero island for the whole week: the ring and the sentence that reads it, the two
+        // numbers, and the chart of the days. They used to be three separate islands saying the
+        // same thing, and the first screen of the app was a stack of white rectangles.
         IslandCard(
             modifier = Modifier.fillMaxWidth(),
             shape = IslandShape,
-            contentPadding = PaddingValues(Spacing.xl),
+            contentPadding = PaddingValues(Spacing.lg + Spacing.xs),
             verticalArrangement = Arrangement.spacedBy(Spacing.lg)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(Spacing.xl),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.lg),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(Spacing.sm)
+                ActivityRing(
+                    // Against the goal and no longer against seven: a ring that cannot be closed
+                    // is a progress bar that always looks late.
+                    progress = if (state.weekGoalDays == 0) 0f else {
+                        state.weekDaysTrained.toFloat() / state.weekGoalDays
+                    },
+                    diameter = 112.dp
                 ) {
-                    ActivityRing(progress = state.weekDaysTrained / 7f) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(
-                                text = state.weekDaysTrained.toString(),
-                                style = MaterialTheme.typography.displayMedium
-                            )
-                            Text(
-                                text = stringResource(R.string.dashboard_ring_total),
-                                style = MaterialTheme.typography.labelMedium,
-                                color = island.textSecondary
-                            )
-                        }
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = state.weekDaysTrained.toString(),
+                            style = MaterialTheme.typography.displaySmall
+                        )
+                        Text(
+                            text = stringResource(R.string.dashboard_ring_goal, state.weekGoalDays)
+                                .uppercase(),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = island.textSecondary
+                        )
                     }
-                    Text(
-                        text = stringResource(R.string.dashboard_ring_label),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = island.textSecondary,
-                        textAlign = TextAlign.Center
-                    )
                 }
                 Column(
                     modifier = Modifier.weight(1f),
                     verticalArrangement = Arrangement.spacedBy(Spacing.xs)
                 ) {
                     Text(
-                        text = stringResource(R.string.dashboard_hero_week).uppercase(),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MetricColors.Volume
-                    )
-                    Row(verticalAlignment = Alignment.Bottom) {
-                        Text(
-                            text = formatVolume(state.weekVolumeKg),
-                            style = MaterialTheme.typography.displaySmall
-                        )
-                        Text(
-                            text = stringResource(R.string.unit_kg),
-                            style = MaterialTheme.typography.labelLarge,
-                            // Same colour as the number: the unit is part of it.
-                            color = MaterialTheme.colorScheme.onSurface,
-                            modifier = Modifier.padding(start = Spacing.xs, bottom = 5.dp)
-                        )
-                    }
-                    Text(
                         text = pluralStringResource(
-                            R.plurals.session_count,
-                            state.weekSessions,
-                            state.weekSessions
+                            R.plurals.day_count,
+                            state.weekDaysTrained,
+                            state.weekDaysTrained
                         ),
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    Text(
+                        text = when {
+                            state.weekDaysTrained == 0 -> stringResource(R.string.dashboard_goal_none)
+                            state.goalDaysLeft == 0 -> stringResource(R.string.dashboard_goal_done)
+                            else -> pluralStringResource(
+                                R.plurals.dashboard_goal_left,
+                                state.goalDaysLeft,
+                                state.goalDaysLeft
+                            )
+                        },
                         style = MaterialTheme.typography.bodyMedium,
                         color = island.textSecondary
                     )
                 }
             }
-        }
 
-        IslandCard(modifier = Modifier.fillMaxWidth()) {
-            IslandCardHeader(
-                title = stringResource(R.string.dashboard_weekly_volume),
-                icon = Icons.Outlined.FitnessCenter,
-                tint = MetricColors.Volume,
-                subtitle = if (hasWeekVolume) {
-                    stringResource(R.string.dashboard_weekly_volume_value, formatVolume(state.weekVolumeKg))
-                } else {
-                    stringResource(R.string.dashboard_no_data)
-                }
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
+            ) {
+                MetricTile(
+                    icon = Icons.Outlined.FitnessCenter,
+                    label = stringResource(R.string.dashboard_week_volume),
+                    value = formatVolume(state.weekVolumeKg),
+                    unit = stringResource(R.string.unit_kg),
+                    tint = MetricColors.Volume,
+                    centered = true,
+                    modifier = Modifier.weight(1f)
+                )
+                MetricTile(
+                    icon = Icons.Outlined.EmojiEvents,
+                    label = stringResource(R.string.dashboard_week_prs),
+                    value = state.weekPrCount.toString(),
+                    tint = MetricColors.Records,
+                    centered = true,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+
             MiniBarChart(
                 values = state.weekVolumeByDay,
                 labels = weekDayInitials(),
@@ -203,13 +201,6 @@ fun DashboardScreen(
                 )
             }
         }
-
-        IslandButton(
-            text = stringResource(R.string.dashboard_start_workout),
-            icon = Icons.Outlined.PlayArrow,
-            onClick = onStartWorkoutClick,
-            modifier = Modifier.fillMaxWidth()
-        )
     }
 
     if (showStopwatch) {

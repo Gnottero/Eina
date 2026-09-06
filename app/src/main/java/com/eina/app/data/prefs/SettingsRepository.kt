@@ -34,12 +34,25 @@ class SettingsRepository(private val context: Context) {
     val healthSyncEnabled: StateFlow<Boolean> = _healthSyncEnabled.asStateFlow()
 
     /**
+     * Days per week the Dashboard ring is drawn against. DECISIONE: four by default — the ring has
+     * to be closable to mean anything, and seven made every week look like a failure.
+     */
+    private val _weeklyGoalDays = MutableStateFlow(prefs.getInt(KEY_WEEKLY_GOAL, DEFAULT_WEEKLY_GOAL))
+    val weeklyGoalDays: StateFlow<Int> = _weeklyGoalDays.asStateFlow()
+
+    /**
      * The language does not apply on its own, since resources are already resolved: the caller
      * recreates the Activity so attachBaseContext goes through AppLocale.wrap again.
      */
     fun setLanguage(language: AppLanguage) {
         AppLocale.store(context, language)
         _language.value = language
+    }
+
+    fun setWeeklyGoalDays(days: Int) {
+        val clamped = days.coerceIn(1, 7)
+        prefs.edit().putInt(KEY_WEEKLY_GOAL, clamped).apply()
+        _weeklyGoalDays.value = clamped
     }
 
     fun setHapticsEnabled(enabled: Boolean) = update(KEY_HAPTICS, enabled, _hapticsEnabled)
@@ -61,5 +74,7 @@ class SettingsRepository(private val context: Context) {
         const val KEY_TIMER_SOUND = "timer_sound_enabled"
         const val KEY_TIMER_VIBRATION = "timer_vibration_enabled"
         const val KEY_HEALTH_SYNC = "health_sync_enabled"
+        const val KEY_WEEKLY_GOAL = "weekly_goal_days"
+        const val DEFAULT_WEEKLY_GOAL = 4
     }
 }

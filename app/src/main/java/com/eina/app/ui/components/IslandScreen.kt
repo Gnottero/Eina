@@ -20,6 +20,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import com.eina.app.ui.theme.Spacing
 
 /** Trailing space so the floating nav bar does not cover the last island. */
@@ -57,7 +58,9 @@ fun IslandScreen(
                     .weight(1f)
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = horizontalPadding)
-                    .padding(bottom = islandBottomSpace()),
+                    // The floating CTA sits above the nav bar, so the scroll has to clear both or
+                    // the last island ends up under the button.
+                    .padding(bottom = islandBottomSpace(extra = if (floatingBottom != null) 76.dp else Spacing.xl)),
                 verticalArrangement = verticalArrangement,
                 content = content
             )

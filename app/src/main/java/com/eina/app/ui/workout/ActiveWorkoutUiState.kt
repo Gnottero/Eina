@@ -78,5 +78,8 @@ data class ActiveWorkoutUiState(
 ) {
     val totalSets: Int get() = exercises.sumOf { it.sets.size }
     val completedSets: Int get() = exercises.sumOf { it.completedSets }
+    /** Exercises with at least one set closed: the "3 of 6" on the session band. */
+    val exercisesDone: Int get() = exercises.count { it.completedSets > 0 }
+    val prCount: Int get() = exercises.sumOf { ex -> ex.sets.count { it.isPR && it.completedAt != null } }
     val progress: Float get() = if (totalSets == 0) 0f else completedSets.toFloat() / totalSets
 }

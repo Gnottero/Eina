@@ -16,7 +16,9 @@ import kotlinx.coroutines.launch
 data class RoutineCardUi(
     val routine: RoutineEntity,
     val exerciseNames: List<ExerciseName>,
-    val setCount: Int
+    val setCount: Int,
+    /** Muscle worked by most of the routine's exercises; colours the square in the list. */
+    val dominantMuscle: String? = null
 ) {
     val exerciseCount: Int get() = exerciseNames.size
 }
@@ -39,7 +41,13 @@ class RoutineListViewModel(
             RoutineCardUi(
                 routine = routine,
                 exerciseNames = rows.map { it.exerciseName },
-                setCount = setsByRoutine[routine.id] ?: 0
+                setCount = setsByRoutine[routine.id] ?: 0,
+                dominantMuscle = rows
+                    .mapNotNull { it.muscleGroupsPrimary.firstOrNull() }
+                    .groupingBy { it }
+                    .eachCount()
+                    .maxByOrNull { it.value }
+                    ?.key
             )
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())

@@ -12,7 +12,10 @@ import kotlinx.coroutines.flow.Flow
 /** Riga per l'anteprima di una routine nell'elenco: nome dell'esercizio in scheda. */
 data class RoutineExercisePreviewRow(
     val routineId: Long,
-    @Embedded val exerciseName: ExerciseName
+    @Embedded val exerciseName: ExerciseName,
+    // Primary muscles: the routine row is opened by a square tinted with the group the routine
+    // works most, so a list of names is scannable by colour.
+    val muscleGroupsPrimary: List<String> = emptyList()
 )
 
 @Dao
@@ -40,7 +43,8 @@ interface RoutineExerciseDao {
     @Query(
         """
         SELECT re.routineId AS routineId,
-               e.name AS nameEn, e.nameIt AS nameIt, e.nameFr AS nameFr
+               e.name AS nameEn, e.nameIt AS nameIt, e.nameFr AS nameFr,
+               e.muscleGroupsPrimary AS muscleGroupsPrimary
         FROM routine_exercises re
         INNER JOIN exercises e ON re.exerciseId = e.id
         ORDER BY re.routineId ASC, re.`order` ASC

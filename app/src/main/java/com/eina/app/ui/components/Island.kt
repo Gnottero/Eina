@@ -49,7 +49,6 @@ import com.eina.app.ui.theme.IslandShape
 import com.eina.app.ui.theme.PillShape
 import com.eina.app.ui.theme.Spacing
 import com.eina.app.ui.theme.TileShape
-import com.eina.app.ui.theme.squircle
 
 /**
  * Two-layer island shadow: a wide diffuse one for the distance from the background, and a tight
@@ -396,46 +395,6 @@ fun SectionHeader(
                     .clickable { hapticTap(); onAction() }
                     .padding(horizontal = Spacing.sm, vertical = Spacing.xs)
             )
-        }
-    }
-}
-
-/**
- * Card header: tinted icon badge, title and supporting line. It gives colour to islands holding a
- * chart rather than a number, which otherwise read as white rectangles with black text.
- */
-@Composable
-fun IslandCardHeader(
-    title: String,
-    icon: ImageVector,
-    modifier: Modifier = Modifier,
-    subtitle: String? = null,
-    tint: Color = MaterialTheme.colorScheme.primary
-) {
-    val island = EinaTheme.island
-    Row(
-        modifier = modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(Spacing.md)
-    ) {
-        Box(
-            modifier = Modifier
-                .size(34.dp)
-                .clip(squircle(11.dp))
-                .background(tint.copy(alpha = 0.14f)),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(18.dp))
-        }
-        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
-            Text(title, style = MaterialTheme.typography.titleMedium)
-            if (subtitle != null) {
-                Text(
-                    text = subtitle,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = island.textSecondary
-                )
-            }
         }
     }
 }

@@ -2,6 +2,7 @@ package com.eina.app.ui.workout
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -9,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Repeat
 import androidx.compose.material.icons.outlined.SwapVert
@@ -24,12 +26,14 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.eina.app.R
 import com.eina.app.domain.RoutineChange
+import com.eina.app.ui.components.DestructiveRed
 import com.eina.app.ui.components.IslandBottomSheet
 import com.eina.app.ui.components.IslandButton
 import com.eina.app.ui.components.IslandSecondaryButton
 import com.eina.app.ui.components.formatClock
 import com.eina.app.ui.library.localized
 import com.eina.app.ui.theme.EinaTheme
+import com.eina.app.ui.theme.PillShape
 import com.eina.app.ui.theme.Spacing
 import com.eina.app.ui.theme.TileShape
 
@@ -57,9 +61,10 @@ fun RoutineSyncSheet(
         scrollable = true
     ) {
         Text(
+            // Second of the two questions that close a workout; the first one said so too.
             text = routineName
-                ?.let { stringResource(R.string.routine_sync_description, it) }
-                ?: stringResource(R.string.routine_sync_description_generic),
+                ?.let { stringResource(R.string.finish_step_two, it) }
+                ?: stringResource(R.string.finish_step_two_generic),
             style = MaterialTheme.typography.bodyMedium,
             color = island.textSecondary
         )
@@ -68,9 +73,9 @@ fun RoutineSyncSheet(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(TileShape)
-                .background(island.sunkenSoft)
-                .padding(vertical = Spacing.sm),
-            verticalArrangement = Arrangement.spacedBy(Spacing.xs)
+                .background(island.sunken)
+                .padding(Spacing.md),
+            verticalArrangement = Arrangement.spacedBy(Spacing.md)
         ) {
             changes.forEach { change -> ChangeRow(change) }
         }
@@ -81,16 +86,26 @@ fun RoutineSyncSheet(
             color = island.textSecondary
         )
 
-        IslandButton(
-            text = stringResource(R.string.routine_sync_apply),
-            onClick = onUpdate,
-            modifier = Modifier.fillMaxWidth()
-        )
-        IslandSecondaryButton(
-            text = stringResource(R.string.routine_sync_keep),
-            onClick = onKeep,
-            modifier = Modifier.fillMaxWidth()
-        )
+        // Side by side rather than stacked: the two answers are equal in weight, and one above the
+        // other read as a recommendation and its afterthought.
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = Spacing.sm),
+            horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
+        ) {
+            IslandSecondaryButton(
+                text = stringResource(R.string.routine_sync_keep),
+                onClick = onKeep,
+                modifier = Modifier.weight(1f)
+            )
+            IslandButton(
+                text = stringResource(R.string.routine_sync_apply),
+                icon = Icons.Outlined.Check,
+                onClick = onUpdate,
+                modifier = Modifier.weight(1f)
+            )
+        }
     }
 }
 
@@ -117,19 +132,32 @@ private fun ChangeRow(change: RoutineChange) {
         )
         RoutineChange.Reordered -> stringResource(R.string.routine_sync_reordered)
     }
+    // The icon sits in a tinted disc and takes the colour of what happened: removed is the only
+    // red one. A column of identical grey glyphs said nothing the sentence did not already say.
+    val tint = when (change) {
+        is RoutineChange.Removed -> DestructiveRed
+        is RoutineChange.Added -> MaterialTheme.colorScheme.primary
+        else -> island.textSecondary
+    }
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = Spacing.lg, vertical = Spacing.xs),
+        modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(Spacing.md)
     ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = island.textSecondary,
-            modifier = Modifier.size(18.dp)
-        )
+        Box(
+            modifier = Modifier
+                .size(24.dp)
+                .clip(PillShape)
+                .background(tint.copy(alpha = 0.14f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = tint,
+                modifier = Modifier.size(14.dp)
+            )
+        }
         Text(text = text, style = MaterialTheme.typography.bodyMedium)
     }
 }

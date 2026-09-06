@@ -27,6 +27,9 @@ data class CompletedSetRow(
     @Embedded val exerciseName: ExerciseName,
     val weightType: WeightType,
     val bodyweightFactor: Double,
+    // Primary muscles of the exercise: the history card colours its dot by the muscle group the
+    // session worked most, which is the only thing that tells two routines apart at a glance.
+    val muscleGroupsPrimary: List<String> = emptyList(),
     val setIndex: Int,
     val actualReps: Int?,
     val weight: Double?,
@@ -46,6 +49,7 @@ interface StatsDao {
                r.name AS routineName,
                e.id AS exerciseId, e.weightType AS weightType,
                e.bodyweightFactor AS bodyweightFactor,
+               e.muscleGroupsPrimary AS muscleGroupsPrimary,
                e.name AS nameEn, e.nameIt AS nameIt, e.nameFr AS nameFr,
                se.setIndex AS setIndex, se.actualReps AS actualReps, se.weight AS weight,
                se.bodyweightSnapshotKg AS bodyweightSnapshotKg, se.setType AS setType,
@@ -69,6 +73,7 @@ interface StatsDao {
                r.name AS routineName,
                e.id AS exerciseId, e.weightType AS weightType,
                e.bodyweightFactor AS bodyweightFactor,
+               e.muscleGroupsPrimary AS muscleGroupsPrimary,
                e.name AS nameEn, e.nameIt AS nameIt, e.nameFr AS nameFr,
                se.setIndex AS setIndex, se.actualReps AS actualReps, se.weight AS weight,
                se.bodyweightSnapshotKg AS bodyweightSnapshotKg, se.setType AS setType,
@@ -93,6 +98,7 @@ interface StatsDao {
                r.name AS routineName,
                e.id AS exerciseId, e.weightType AS weightType,
                e.bodyweightFactor AS bodyweightFactor,
+               e.muscleGroupsPrimary AS muscleGroupsPrimary,
                e.name AS nameEn, e.nameIt AS nameIt, e.nameFr AS nameFr,
                se.setIndex AS setIndex, se.actualReps AS actualReps, se.weight AS weight,
                se.bodyweightSnapshotKg AS bodyweightSnapshotKg, se.setType AS setType,

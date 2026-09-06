@@ -104,7 +104,7 @@ val appModule = module {
     single { RestAlarmScheduler(androidContext()) }
     single { RestTimerController(get(), get()) }
 
-    viewModel { WorkoutViewModel(get()) }
+    viewModel { WorkoutViewModel(get(), get()) }
     viewModel { (sessionId: Long, isPast: Boolean) ->
         ActiveWorkoutViewModel(get(), get(), get(), get(), sessionId, isPast)
     }
@@ -113,7 +113,7 @@ val appModule = module {
     viewModel { CreateExerciseViewModel(get(), androidContext()) }
     viewModel { RoutineListViewModel(get(), get()) }
     viewModel { (routineId: Long) -> RoutineEditorViewModel(get(), androidContext(), routineId) }
-    viewModel { DashboardViewModel(get()) }
+    viewModel { DashboardViewModel(get(), get()) }
     viewModel { ProgressViewModel(get()) }
     viewModel { BodyWeightViewModel(get()) }
     viewModel { HistoryViewModel(get(), get()) }

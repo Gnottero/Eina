@@ -31,8 +31,6 @@
     <string name="session_notes_title">Commento</string>
     <string name="session_notes_empty">Com\'è andata? Tocca per scriverlo.</string>
     <string name="session_notes_field">Commento sull\'allenamento</string>
-    <string name="stat_weight">Peso</string>
-    <string name="stat_streak">Streak</string>
 
     <!-- Date relative -->
     <string name="date_today">Oggi</string>
@@ -41,28 +39,17 @@
     <!-- Dashboard -->
     <string name="dashboard_title">Dashboard</string>
     <string name="dashboard_settings">Impostazioni</string>
-    <string name="dashboard_ring_label">Giorni allenati</string>
-    <string name="dashboard_ring_total">su 7</string>
-    <string name="dashboard_hero_week">Questa settimana</string>
-    <string name="dashboard_weekly_volume">Volume settimanale</string>
-    <string name="dashboard_weekly_volume_value">%1$s kg sollevati questa settimana</string>
-    <string name="dashboard_no_data">Nessun dato ancora</string>
     <string name="dashboard_recent">Ultimi allenamenti</string>
     <string name="dashboard_history">Storico</string>
     <string name="dashboard_empty_title">Nessun allenamento registrato</string>
     <string name="dashboard_empty_description">Avvia una sessione: qui comparirà il riepilogo dell\'ultima, con serie, volume e PR.</string>
-    <string name="dashboard_start_workout">Inizia allenamento</string>
 
     <!-- Allena -->
     <string name="workout_title">Allena</string>
-    <string name="workout_subtitle">Parti libero o segui una routine</string>
     <string name="workout_new_routine">Nuova routine</string>
-    <string name="workout_in_progress_title">Allenamento in corso</string>
     <string name="workout_in_progress_description">Hai una sessione aperta. Riprendila o terminala per iniziarne una nuova.</string>
     <string name="workout_resume">Riprendi allenamento</string>
     <string name="workout_free_title">Allenamento libero</string>
-    <string name="workout_free_description">Aggiungi esercizi mentre ti alleni, senza pianificare nulla.</string>
-    <string name="workout_start_now">Inizia ora</string>
     <string name="workout_your_routines">Le tue routine</string>
     <string name="workout_free_name">Allenamento libero</string>
 
@@ -124,11 +111,9 @@
     <string name="active_title">Allenamento in corso</string>
     <string name="active_empty_title">Sessione vuota</string>
     <string name="active_empty_description">Aggiungi il primo esercizio per iniziare a registrare le serie.</string>
-    <string name="active_exit_cd">Esci senza terminare</string>
     <string name="active_play_playlist_cd">Riproduci playlist</string>
     <string name="active_playlist_error">Nessuna app per aprire la playlist.</string>
     <string name="active_finish">Termina allenamento</string>
-    <string name="active_cancel">Annulla allenamento</string>
     <string name="active_finish_confirm_title">Terminare l\'allenamento?</string>
     <string name="active_finish_confirm_text">La sessione verrà chiusa e salvata nello storico.</string>
     <string name="active_finish_confirm_text_empty">La sessione non ha serie svolte: verrà eliminata invece che salvata nello storico.</string>
@@ -310,15 +295,9 @@
 
     <!-- Progressi -->
     <string name="progress_title">Progressi</string>
-    <string name="progress_subtitle">%1$s · %2$s kg totali</string>
-    <string name="progress_current_week">Settimana corrente</string>
-    <string name="progress_volume_per_day">Volume per giorno</string>
-    <string name="progress_consistency">Costanza</string>
-    <string name="progress_last_weeks">Ultime %1$d settimane</string>
     <string name="progress_prs">Record personali</string>
     <string name="progress_pr_empty_title">Ancora nessun PR</string>
     <string name="progress_pr_empty_description">Completa le serie durante un allenamento: i nuovi record compaiono qui.</string>
-    <string name="progress_body">Corpo</string>
 
     <!-- Peso corporeo -->
     <string name="bodyweight_title">Peso corporeo</string>
@@ -355,13 +334,10 @@
     <string name="settings_section_haptics">Feedback aptico</string>
     <string name="settings_haptics_title">Vibrazione sui comandi</string>
     <string name="settings_haptics_description">Micro-vibrazione a ogni tocco: bottoni, chip, menu e check delle serie.</string>
-    <string name="settings_section_support">Sostieni Eina</string>
     <string name="settings_donate_title">Offrimi un caffè</string>
-    <string name="settings_donate_description">Eina resta gratuita e senza account: la donazione è volontaria e non sblocca nulla.</string>
     <string name="settings_section_data">Dati</string>
     <string name="settings_clear_title">Cancella lo storico</string>
     <string name="settings_clear_description">Elimina tutti gli allenamenti registrati, serie comprese. Routine, esercizi e peso corporeo restano.</string>
-    <string name="settings_clear_button">Cancella storico allenamenti</string>
     <string name="edit_session_save">Salva modifiche</string>
     <string name="edit_session_sheet_title">Data e durata</string>
     <string name="edit_session_sheet_text">Sposta l\'allenamento in un altro giorno o correggi quanto e\' durato. Serie, esercizi e note sono gia\' salvati.</string>
@@ -435,8 +411,6 @@
     <string name="exercise_progress_minutes">Minuti</string>
     <!-- Proposta di aggiornare la scheda a fine allenamento -->
     <string name="routine_sync_title">Aggiorno la scheda?</string>
-    <string name="routine_sync_description">Questo allenamento non ha seguito \u201C%1$s\u201D. Vuoi che la scheda diventi come hai fatto davvero?</string>
-    <string name="routine_sync_description_generic">Questo allenamento non ha seguito la scheda da cui \u00E8 partito. Vuoi che la scheda diventi come hai fatto davvero?</string>
     <string name="routine_sync_added">Aggiunto: %1$s</string>
     <string name="routine_sync_removed">Tolto: %1$s</string>
     <string name="routine_sync_sets">%1$s: da %2$d a %3$d serie</string>
@@ -450,4 +424,58 @@
     <string name="library_edit_custom">Modifica esercizio</string>
     <string name="history_create_routine">Salva come scheda</string>
     <string name="history_create_routine_done">Scheda creata</string>
+
+    <!-- Direzione B: isole eroe, liste raggruppate, fine allenamento in due passi -->
+    <string name="stat_records">Record</string>
+    <plurals name="day_count">
+        <item quantity="one">%d giorno</item>
+        <item quantity="other">%d giorni</item>
+    </plurals>
+    <string name="dashboard_ring_goal">di %1$d</string>
+    <plurals name="dashboard_goal_left">
+        <item quantity="one">%d ancora per chiudere la settimana.</item>
+        <item quantity="other">%d ancora per chiudere la settimana.</item>
+    </plurals>
+    <string name="dashboard_goal_done">Settimana chiusa.</string>
+    <string name="dashboard_goal_none">Questa settimana non hai ancora registrato niente.</string>
+    <string name="dashboard_week_volume">Volume settimana</string>
+    <string name="dashboard_week_prs">Record nuovi</string>
+    <string name="workout_session_open">Sessione aperta</string>
+    <string name="workout_eyebrow_open">%1$s · sessione aperta</string>
+    <string name="workout_routines_hint">Tieni premuto per modificare, esportare o eliminare</string>
+    <string name="active_progress">%1$d di %2$d esercizi</string>
+    <string name="active_actions">Azioni</string>
+    <string name="timer_next_set">Poi: serie %1$d</string>
+    <string name="timer_next_set_value">Poi: serie %1$d · %2$s</string>
+    <string name="finish_step_one">Passo 1 di 2 · %1$s</string>
+    <string name="finish_step_two">Passo 2 di 2 · rispetto a %1$s</string>
+    <string name="finish_step_two_generic">Passo 2 di 2</string>
+    <string name="active_finish_later">Continua più tardi</string>
+    <string name="active_finish_later_description">La sessione resta aperta</string>
+    <string name="progress_period_week">Settimana</string>
+    <string name="progress_period_month">Mese</string>
+    <string name="progress_period_year">Anno</string>
+    <string name="progress_total_volume">Volume totale · %1$s</string>
+    <string name="progress_this_week">questa settimana</string>
+    <string name="progress_this_month">questo mese</string>
+    <string name="progress_this_year">quest\'anno</string>
+    <string name="progress_delta_up">+%1$d%% sul periodo precedente</string>
+    <string name="progress_delta_down">%1$d%% sul periodo precedente</string>
+    <string name="progress_delta_none">Non c\'è ancora un periodo da confrontare</string>
+    <string name="progress_per_day">Per giorno</string>
+    <string name="progress_per_week">Per settimana</string>
+    <string name="progress_per_month">Per mese</string>
+    <string name="progress_days_trained">Giorni allenati</string>
+    <string name="progress_bodyweight">Peso corporeo</string>
+    <string name="settings_goal_title">Obiettivo settimanale</string>
+    <string name="settings_goal_description">Riempie l\'anello della Dashboard</string>
+    <string name="settings_goal_sheet_title">Giorni a settimana</string>
+    <string name="settings_language_value">Lingua</string>
+    <string name="settings_donate_headline">Eina è gratis e resta gratis</string>
+    <string name="settings_donate_body">Nessun abbonamento, nessuna pubblicità, nessun dato che esce dal telefono.</string>
+    <plurals name="routine_count">
+        <item quantity="one">%d scheda</item>
+        <item quantity="other">%d schede</item>
+    </plurals>
+    <string name="progress_bodyweight_empty">Registra il peso per vedere l\'andamento.</string>
 </resources>

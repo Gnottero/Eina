@@ -1,80 +1,113 @@
 package com.eina.app.ui.routine
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ListAlt
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.EditNote
+import androidx.compose.material.icons.outlined.FitnessCenter
 import androidx.compose.material.icons.outlined.IosShare
 import androidx.compose.material.icons.outlined.PlayArrow
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import android.widget.Toast
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.eina.app.R
 import com.eina.app.data.db.RoutineEntity
-import com.eina.app.ui.components.IslandBottomSheet
 import com.eina.app.ui.components.IslandAlertDialog
+import com.eina.app.ui.components.IslandBottomSheet
 import com.eina.app.ui.components.IslandCard
 import com.eina.app.ui.components.IslandEmptyState
 import com.eina.app.ui.components.IslandIconButton
+import com.eina.app.ui.components.IslandRow
+import com.eina.app.ui.components.RowLeadingTile
 import com.eina.app.ui.components.SheetActionRow
-import com.eina.app.ui.library.currentLocale
 import com.eina.app.ui.theme.EinaTheme
+import com.eina.app.ui.theme.IslandShape
 import com.eina.app.ui.theme.Spacing
-import org.koin.androidx.compose.koinViewModel
+import com.eina.app.ui.theme.primaryCategoryFor
 
 /**
- * Routine list. Deliberately non-lazy: routines are few and the enclosing screen already scrolls
- * (a LazyColumn nested in a vertical scroll cannot be measured).
+ * The routines, as rows of a single island: a title, a line telling what the list is for, and one
+ * low row per routine.
+ *
+ * They used to be a stack of white cards, one shadow and 12dp of air each, holding a name and a
+ * grey line of exercise names. The list is short and always the same shape, so the island holds it
+ * whole and the eye runs down it instead of counting rectangles.
  */
 @Composable
-fun RoutineListScreen(
+fun RoutineListSection(
+    routines: List<RoutineCardUi>,
     onStartSession: (Long) -> Unit,
     onEditRoutine: (Long) -> Unit,
+    onDeleteRoutine: (RoutineEntity) -> Unit,
+    onExportRoutine: (Long, (String?) -> Unit) -> Unit,
     modifier: Modifier = Modifier,
-    startBlocked: Boolean = false,
-    viewModel: RoutineListViewModel = koinViewModel()
+    startBlocked: Boolean = false
 ) {
-    val routines by viewModel.routines.collectAsState()
+    val island = EinaTheme.island
 
-    Column(
+    if (routines.isEmpty()) {
+        IslandEmptyState(
+            modifier = modifier,
+            title = stringResource(R.string.routine_empty_title),
+            description = stringResource(R.string.routine_empty_description),
+            icon = Icons.AutoMirrored.Outlined.ListAlt
+        )
+        return
+    }
+
+    IslandCard(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(Spacing.md)
+        shape = IslandShape,
+        contentPadding = PaddingValues(bottom = Spacing.md),
+        verticalArrangement = Arrangement.spacedBy(Spacing.xs)
     ) {
-        if (routines.isEmpty()) {
-            IslandEmptyState(
-                title = stringResource(R.string.routine_empty_title),
-                description = stringResource(R.string.routine_empty_description),
-                icon = Icons.AutoMirrored.Outlined.ListAlt
+        Column(
+            modifier = Modifier.padding(
+                start = Spacing.lg,
+                end = Spacing.lg,
+                top = Spacing.lg,
+                bottom = Spacing.xs
+            ),
+            verticalArrangement = Arrangement.spacedBy(2.dp)
+        ) {
+            Text(
+                text = stringResource(R.string.workout_your_routines),
+                style = MaterialTheme.typography.titleLarge
             )
-        } else {
+            Text(
+                text = stringResource(R.string.workout_routines_hint),
+                style = MaterialTheme.typography.bodyMedium,
+                color = island.textSecondary
+            )
+        }
+        Column(modifier = Modifier.padding(horizontal = Spacing.sm)) {
             routines.forEach { card ->
                 RoutineRow(
                     card = card,
                     // Starting a routine creates a NEW session: passing routine.id straight through
                     // opened the session with that id, i.e. an old recorded workout.
-                    onStart = { viewModel.startSession(card.routine.id, onStartSession) },
+                    onStart = { onStartSession(card.routine.id) },
                     onEdit = { onEditRoutine(card.routine.id) },
-                    onDelete = { viewModel.deleteRoutine(card.routine) },
-                    onExport = { onExported -> viewModel.exportRoutine(card.routine.id, onExported) },
+                    onDelete = { onDeleteRoutine(card.routine) },
+                    onExport = { onExported -> onExportRoutine(card.routine.id, onExported) },
                     startEnabled = !startBlocked
                 )
             }
@@ -83,8 +116,12 @@ fun RoutineListScreen(
 }
 
 /**
- * Minimal routine card: name, one content line ("5 exercises · 18 sets"), the exercise list in grey
- * and a single round start button. Editing and deletion live in the long-press sheet.
+ * Routine row: a square tinted with the muscle group the routine works most, the name, the count of
+ * exercises and sets, and the round button that starts it.
+ *
+ * The round button stays even though the design draws a chevron there: starting a routine is the
+ * one thing this screen exists for, and burying it one screen deep would cost a tap on every
+ * workout. Tapping the row still opens the routine, and the long press still holds the rest.
  */
 @Composable
 private fun RoutineRow(
@@ -97,49 +134,37 @@ private fun RoutineRow(
 ) {
     val context = LocalContext.current
     val island = EinaTheme.island
-    val locale = currentLocale()
     val routine: RoutineEntity = card.routine
     val name = routine.name.ifBlank { stringResource(R.string.routine_unnamed) }
+    val color = primaryCategoryFor(listOfNotNull(card.dominantMuscle)).color
     var actionsOpen by remember { mutableStateOf(false) }
     var confirmDelete by remember { mutableStateOf(false) }
     val exportFailed = stringResource(R.string.routine_export_failed)
 
-    IslandCard(
-        modifier = Modifier.fillMaxWidth(),
-        contentPadding = PaddingValues(horizontal = Spacing.lg, vertical = Spacing.lg),
-        verticalArrangement = Arrangement.spacedBy(Spacing.sm),
-        // Tapping the card opens the routine; only the round button on the right starts it.
+    IslandRow(
+        title = name,
+        titleStyle = MaterialTheme.typography.titleMedium,
+        subtitle = summaryLine(card),
+        // Tapping the row opens the routine; only the round button on the right starts it.
         onClick = onEdit,
-        onLongClick = { actionsOpen = true }
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(Spacing.md)
-        ) {
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(Spacing.xs)
-            ) {
-                Text(
-                    text = name,
-                    style = MaterialTheme.typography.titleMedium,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Text(
-                    text = summaryLine(card),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = island.textSecondary,
-                    maxLines = 1
+        onLongClick = { actionsOpen = true },
+        leading = {
+            RowLeadingTile(color = color) {
+                Icon(
+                    imageVector = Icons.Outlined.FitnessCenter,
+                    contentDescription = null,
+                    tint = color,
+                    modifier = Modifier.size(20.dp)
                 )
             }
+        },
+        trailing = {
             IslandIconButton(
                 icon = Icons.Outlined.PlayArrow,
                 contentDescription = stringResource(R.string.routine_start_cd, name),
                 onClick = onStart,
                 enabled = startEnabled,
-                size = 48.dp,
+                size = 40.dp,
                 containerColor = if (startEnabled) {
                     MaterialTheme.colorScheme.primary
                 } else {
@@ -148,27 +173,7 @@ private fun RoutineRow(
                 contentColor = if (startEnabled) Color.White else island.textSecondary
             )
         }
-
-        if (card.exerciseNames.isNotEmpty()) {
-            Text(
-                text = card.exerciseNames.joinToString(" · ") { it.localized(locale) },
-                style = MaterialTheme.typography.bodyMedium,
-                color = island.textSecondary,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
-            )
-        }
-
-        routine.notes?.takeIf { it.isNotBlank() }?.let {
-            Text(
-                text = it,
-                style = MaterialTheme.typography.bodySmall,
-                color = island.textSecondary,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
-            )
-        }
-    }
+    )
 
     if (actionsOpen) {
         IslandBottomSheet(onDismiss = { actionsOpen = false }, title = name) {

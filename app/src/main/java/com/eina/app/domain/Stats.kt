@@ -20,7 +20,12 @@ data class SessionSummary(
     val setCount: Int,
     val totalReps: Int,
     val volumeKg: Double,
-    val prCount: Int
+    val prCount: Int,
+    /**
+     * Primary muscle worked by most of the session's exercises, used only to colour the dot on the
+     * history card. Null when the session says nothing about it.
+     */
+    val dominantMuscle: String? = null
 ) {
     val durationMinutes: Long?
         get() = endTime?.let { (it - startTime) / 60_000L }
@@ -78,7 +83,17 @@ fun summarizeSessions(rows: List<CompletedSetRow>): List<SessionSummary> =
                 setCount = working.size,
                 totalReps = working.sumOf { it.actualReps ?: 0 },
                 volumeKg = working.sumOf { volumeOf(it) },
-                prCount = working.count { it.isPR }
+                prCount = working.count { it.isPR },
+                // Counted per exercise and not per set: an exercise carried through eight sets
+                // would otherwise outweigh three different movements.
+                dominantMuscle = sessionRows
+                    .groupBy { it.workoutExerciseId }
+                    .values
+                    .mapNotNull { it.first().muscleGroupsPrimary.firstOrNull() }
+                    .groupingBy { it }
+                    .eachCount()
+                    .maxByOrNull { it.value }
+                    ?.key
             )
         }
         .sortedByDescending { it.startTime }

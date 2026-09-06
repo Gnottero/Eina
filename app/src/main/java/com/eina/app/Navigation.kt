@@ -75,7 +75,6 @@ fun EinaNavHost() {
         ) {
             composable(EinaDestination.Dashboard.route) {
                 DashboardScreen(
-                    onStartWorkoutClick = { navController.navigate(EinaDestination.Workout.route) },
                     onHistoryClick = { navController.navigate("history") },
                     onSessionClick = { sessionId -> navController.navigate("history/session/$sessionId") },
                     onSettingsClick = { navController.navigate("settings") }

@@ -61,6 +61,14 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.eina.app.R
+import androidx.compose.material.icons.outlined.EmojiEvents
+import androidx.compose.material.icons.outlined.MoreHoriz
+import androidx.compose.material.icons.outlined.Remove
+import androidx.compose.material.icons.outlined.SkipNext
+import com.eina.app.ui.components.ActivityRing
+import com.eina.app.ui.components.RampBand
+import com.eina.app.ui.components.ScreenHeader
+import com.eina.app.ui.theme.MetricColors
 import com.eina.app.data.db.PlaylistType
 import com.eina.app.data.db.WeightType
 import com.eina.app.data.db.countsAsWorking
@@ -68,7 +76,6 @@ import com.eina.app.data.db.exerciseName
 import com.eina.app.data.db.usesDecimalField
 import com.eina.app.data.db.usesDistance
 import com.eina.app.data.db.usesWeight
-import com.eina.app.ui.components.BottomTimerBar
 import com.eina.app.ui.components.DestructiveRed
 import com.eina.app.ui.components.IslandBottomSheet
 import com.eina.app.ui.components.IslandAlertDialog
@@ -153,6 +160,7 @@ fun ActiveWorkoutScreen(
     // them before the session is closed.
     var routineChanges by remember { mutableStateOf<List<RoutineChange>>(emptyList()) }
     var confirmCancel by remember { mutableStateOf(false) }
+    var sessionActionsOpen by remember { mutableStateOf(false) }
 
     // Sheets are keyed by id and not by the exercise snapshot, so they keep showing fresh data
     // when a set changes while they are open.
@@ -175,26 +183,30 @@ fun ActiveWorkoutScreen(
                 .fillMaxSize()
                 .statusBarsPadding()
         ) {
-            SessionHeader(
-                elapsedSeconds = state.elapsedSeconds,
-                volumeKg = state.volumeKg,
-                progress = state.progress,
-                playlistUri = state.playlistUri,
-                playlistType = state.playlistType,
-                editing = editing,
-                startTime = state.startTime,
-                onFinish = { confirmFinish = true },
-                onCancel = { confirmCancel = true },
+            // The same header every other screen carries: round back, small context line, large
+            // title, one round action. The workout used to open with an island of its own that
+            // repeated the app bar's job and pushed the first exercise below the fold.
+            ScreenHeader(
+                eyebrow = formatFullDate(state.startTime),
+                title = stringResource(
+                    if (editing) R.string.edit_session_sheet_title else R.string.active_title
+                ),
                 // Leaving the editor still saves: edits are written set by set, so skipping the
                 // save would leave stale PR flags behind. If every completed set was removed the
                 // session no longer exists and there is no summary to go back to.
-                onExit = {
+                onBack = {
                     if (!editing) onExit()
                     else viewModel.saveEdits(state.startTime, state.elapsedSeconds) { kept ->
                         if (kept) onExit() else onCancelled()
                     }
                 },
-                modifier = Modifier.padding(horizontal = Spacing.gutter, vertical = Spacing.md)
+                trailing = {
+                    IslandIconButton(
+                        icon = Icons.Outlined.MoreHoriz,
+                        contentDescription = stringResource(R.string.active_actions),
+                        onClick = { sessionActionsOpen = true }
+                    )
+                }
             )
 
             LazyColumn(
@@ -203,10 +215,22 @@ fun ActiveWorkoutScreen(
                     start = Spacing.gutter,
                     end = Spacing.gutter,
                     top = Spacing.sm,
-                    bottom = 220.dp
+                    bottom = 240.dp
                 ),
                 verticalArrangement = Arrangement.spacedBy(Spacing.md)
             ) {
+                item {
+                    SessionIsland(
+                        routineName = state.routineName,
+                        elapsedSeconds = state.elapsedSeconds,
+                        exercisesDone = state.exercisesDone,
+                        exerciseCount = state.exercises.size,
+                        volumeKg = state.volumeKg,
+                        setCount = state.completedSets,
+                        prCount = state.prCount
+                    )
+                }
+
                 if (state.exercises.isEmpty()) {
                     item {
                         IslandEmptyState(
@@ -252,20 +276,41 @@ fun ActiveWorkoutScreen(
             }
         }
 
-        // The rest timer floats above the list instead of being docked to the bottom edge.
-        state.timer?.let { timer ->
-            BottomTimerBar(
-                remainingSeconds = timer.remainingSeconds,
-                totalSeconds = timer.totalSeconds,
-                onMinus15 = { viewModel.adjustTimer(-15) },
-                onPlus15 = { viewModel.adjustTimer(15) },
-                onSkip = { viewModel.skipTimer() },
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .navigationBarsPadding()
-                    .padding(horizontal = Spacing.gutter, vertical = Spacing.lg)
+        // Rest timer and finish action float above the list instead of being docked to the bottom
+        // edge. The finish button used to live in the header island, at the top of a screen whose
+        // whole point is what happens at the bottom of it.
+        Column(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .navigationBarsPadding()
+                .padding(horizontal = Spacing.gutter, vertical = Spacing.lg),
+            verticalArrangement = Arrangement.spacedBy(Spacing.sm)
+        ) {
+            state.timer?.let { timer ->
+                RestTimerIsland(
+                    remainingSeconds = timer.remainingSeconds,
+                    totalSeconds = timer.totalSeconds,
+                    nextSet = nextSetHint(state),
+                    onMinus15 = { viewModel.adjustTimer(-15) },
+                    onPlus15 = { viewModel.adjustTimer(15) },
+                    onSkip = { viewModel.skipTimer() }
+                )
+            }
+            IslandButton(
+                text = stringResource(if (editing) R.string.edit_session_save else R.string.active_finish),
+                icon = Icons.Outlined.Check,
+                onClick = { confirmFinish = true },
+                modifier = Modifier.fillMaxWidth()
             )
         }
+    }
+
+    if (sessionActionsOpen) {
+        SessionActionsSheet(
+            playlistUri = state.playlistUri,
+            playlistType = state.playlistType,
+            onDismiss = { sessionActionsOpen = false }
+        )
     }
 
     if (showPicker) {
@@ -432,6 +477,11 @@ fun ActiveWorkoutScreen(
             // A session without completed sets is deleted rather than saved, even if it has
             // exercises.
             isEmpty = state.completedSets == 0 && !editing,
+            volumeKg = state.volumeKg,
+            setCount = state.completedSets,
+            // Discarding the workout sits next to closing it: this is the moment the choice is
+            // made, and the confirmation dialog still stands between the two.
+            onDelete = if (editing) null else ({ confirmCancel = true }),
             editing = editing,
             onConfirm = { startTime, duration ->
                 if (editing) {
@@ -486,149 +536,243 @@ fun ActiveWorkoutScreen(
 /** Reference to a single set inside the session; keys the long-press actions sheet. */
 private data class SetRef(val workoutExerciseId: Long, val setId: Long)
 
-/** Session header: duration and volume as headline metrics, progress bar, and the finish action. */
+/**
+ * The session, as the head of the list: a coloured band with the routine, how far along it is and
+ * the running clock, over the three numbers being recorded.
+ *
+ * It scrolls with the exercises instead of sitting fixed above them. A workout is read from the
+ * top once and then worked through set by set: keeping the clock pinned cost a fifth of the screen
+ * for a number nobody watches while lifting.
+ */
 @Composable
-private fun SessionHeader(
+private fun SessionIsland(
+    routineName: String?,
     elapsedSeconds: Int,
+    exercisesDone: Int,
+    exerciseCount: Int,
     volumeKg: Double,
-    progress: Float,
-    playlistUri: String?,
-    playlistType: PlaylistType?,
-    editing: Boolean,
-    startTime: Long,
-    onFinish: () -> Unit,
-    onCancel: () -> Unit,
-    onExit: () -> Unit,
-    modifier: Modifier = Modifier
+    setCount: Int,
+    prCount: Int
 ) {
-    val island = EinaTheme.island
-    val context = LocalContext.current
-    val stopwatch: StopwatchController = koinInject()
-    val stopwatchState by stopwatch.state.collectAsState()
-    var showStopwatch by remember { mutableStateOf(false) }
-    // Progress jumps one set at a time; animating the bar keeps those steps readable.
-    val animatedProgress by animateFloatAsState(
-        targetValue = progress.coerceIn(0f, 1f),
-        animationSpec = tween(durationMillis = 450, easing = FastOutSlowInEasing),
-        label = "sessionProgress"
-    )
-
-    IslandSurface(modifier = modifier.fillMaxWidth(), shape = IslandShape, elevation = 10.dp) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(Spacing.lg),
-            verticalArrangement = Arrangement.spacedBy(Spacing.lg)
+    IslandCard(
+        modifier = Modifier.fillMaxWidth(),
+        shape = IslandShape,
+        contentPadding = PaddingValues(0.dp),
+        verticalArrangement = Arrangement.spacedBy(0.dp)
+    ) {
+        RampBand(
+            contentPadding = PaddingValues(horizontal = Spacing.lg + Spacing.xs, vertical = Spacing.lg),
+            verticalArrangement = Arrangement.spacedBy(Spacing.xs)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(Spacing.md)
+                horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
             ) {
-                // Exiting leaves the workout running; it is resumed from the Workout tab.
-                IslandIconButton(
-                    icon = Icons.Outlined.KeyboardArrowDown,
-                    contentDescription = stringResource(R.string.active_exit_cd),
-                    onClick = onExit,
-                    containerColor = island.sunken,
-                    size = 40.dp
-                )
                 Text(
-                    // When editing, the date is the only way to tell which workout is open.
-                    text = if (editing) formatFullDate(startTime) else stringResource(R.string.active_title),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = island.textSecondary,
+                    text = routineName?.takeIf { it.isNotBlank() }
+                        ?: stringResource(R.string.workout_free_name),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = Color.White,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f)
                 )
-                if (playlistType != null && !playlistUri.isNullOrBlank()) {
-                    IslandIconButton(
-                        icon = Icons.Outlined.MusicNote,
-                        contentDescription = stringResource(R.string.active_play_playlist_cd),
-                        onClick = {
-                            // Neither a music app nor a browser: say so instead of doing nothing.
-                            if (!launchPlaylist(context, playlistUri, playlistType)) {
-                                Toast.makeText(
-                                    context,
-                                    context.getString(R.string.active_playlist_error),
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            }
-                        },
-                        containerColor = island.sunken,
-                        size = 40.dp
-                    )
-                }
-                // Same stopwatch as the Dashboard: a count started earlier keeps running here.
-                StopwatchIconButton(
-                    running = stopwatchState.running,
-                    onClick = { showStopwatch = true },
-                    containerColor = island.sunken,
-                    size = 40.dp
-                )
-            }
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(Spacing.md)
-            ) {
-                MetricTile(
-                    icon = Icons.Outlined.Timer,
-                    label = stringResource(R.string.stat_duration),
-                    value = formatDuration(elapsedSeconds),
-                    modifier = Modifier.weight(1f)
-                )
-                MetricTile(
-                    icon = Icons.Outlined.FitnessCenter,
-                    label = stringResource(R.string.stat_volume),
-                    value = formatVolumeValue(volumeKg),
-                    unit = stringResource(R.string.unit_kg),
-                    modifier = Modifier.weight(1f)
-                )
-            }
-
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(8.dp)
-                    .clip(PillShape)
-                    .background(island.sunken)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxHeight()
-                        .fillMaxWidth(animatedProgress)
-                        .clip(PillShape)
-                        .background(MaterialTheme.colorScheme.primary)
-                )
-            }
-
-            IslandButton(
-                text = stringResource(if (editing) R.string.edit_session_save else R.string.active_finish),
-                onClick = onFinish,
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            // Cancelling only applies to a live session; a saved workout is deleted from history.
-            if (!editing) {
                 Text(
-                    text = stringResource(R.string.active_cancel),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = DestructiveRed,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(PillShape)
-                        .clickable { onCancel() }
-                        .padding(vertical = Spacing.sm)
+                    text = stringResource(R.string.active_progress, exercisesDone, exerciseCount),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = Color.White,
+                    maxLines = 1
                 )
             }
+            Text(
+                text = formatDuration(elapsedSeconds),
+                style = MaterialTheme.typography.displayMedium,
+                color = Color.White
+            )
         }
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = Spacing.md, vertical = Spacing.md),
+            horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
+        ) {
+            MetricTile(
+                icon = Icons.Outlined.FitnessCenter,
+                label = stringResource(R.string.stat_volume),
+                value = formatVolumeValue(volumeKg),
+                unit = stringResource(R.string.unit_kg),
+                tint = MetricColors.Volume,
+                centered = true,
+                modifier = Modifier.weight(1f)
+            )
+            MetricTile(
+                icon = Icons.Outlined.Repeat,
+                label = stringResource(R.string.stat_sets),
+                value = setCount.toString(),
+                tint = MetricColors.Sets,
+                centered = true,
+                modifier = Modifier.weight(1f)
+            )
+            MetricTile(
+                icon = Icons.Outlined.EmojiEvents,
+                label = stringResource(R.string.stat_records),
+                value = prCount.toString(),
+                tint = MetricColors.Records,
+                centered = true,
+                modifier = Modifier.weight(1f)
+            )
+        }
+    }
+}
+
+/**
+ * What the header used to carry beside the clock — the playlist and the stopwatch — now behind its
+ * one round action. They are used once per workout, and as buttons they took the same room as the
+ * clock they sat next to. Discarding the session is not here: it belongs to the sheet that closes
+ * the workout, where the alternative to it is on the same line.
+ */
+@Composable
+private fun SessionActionsSheet(
+    playlistUri: String?,
+    playlistType: PlaylistType?,
+    onDismiss: () -> Unit
+) {
+    val context = LocalContext.current
+    val stopwatch: StopwatchController = koinInject()
+    var showStopwatch by remember { mutableStateOf(false) }
+
+    IslandBottomSheet(onDismiss = onDismiss, title = stringResource(R.string.active_actions)) {
+        if (playlistType != null && !playlistUri.isNullOrBlank()) {
+            SheetActionRow(
+                icon = Icons.Outlined.MusicNote,
+                label = stringResource(R.string.active_play_playlist_cd),
+                onClick = {
+                    onDismiss()
+                    // Neither a music app nor a browser: say so instead of doing nothing.
+                    if (!launchPlaylist(context, playlistUri, playlistType)) {
+                        Toast.makeText(
+                            context,
+                            context.getString(R.string.active_playlist_error),
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }
+            )
+        }
+        // Same stopwatch as the Dashboard: a count started earlier keeps running here.
+        SheetActionRow(
+            icon = Icons.Outlined.Timer,
+            label = stringResource(R.string.stopwatch_title),
+            onClick = { showStopwatch = true }
+        )
     }
 
     if (showStopwatch) {
         StopwatchSheet(controller = stopwatch, onDismiss = { showStopwatch = false })
+    }
+}
+
+/**
+ * Rest timer: a ring counting down, what comes after it, and the controls.
+ *
+ * The countdown used to be a number over a straight bar. Round, it says the same thing in a third
+ * of the width, which is what leaves room on the line for the set waiting at the end of it — the
+ * question actually being asked during a rest.
+ */
+@Composable
+private fun RestTimerIsland(
+    remainingSeconds: Int,
+    totalSeconds: Int,
+    nextSet: String?,
+    onMinus15: () -> Unit,
+    onPlus15: () -> Unit,
+    onSkip: () -> Unit
+) {
+    val island = EinaTheme.island
+    IslandSurface(modifier = Modifier.fillMaxWidth(), shape = IslandShape, elevation = 18.dp) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = Spacing.md, vertical = Spacing.md),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
+        ) {
+            ActivityRing(
+                progress = if (totalSeconds > 0) remainingSeconds.toFloat() / totalSeconds else 0f,
+                diameter = 56.dp,
+                strokeWidth = 7.dp
+            ) {
+                Text(
+                    text = formatDuration(remainingSeconds),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(1.dp)
+            ) {
+                Text(stringResource(R.string.timer_rest), style = MaterialTheme.typography.titleSmall)
+                if (nextSet != null) {
+                    Text(
+                        text = nextSet,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = island.textSecondary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
+            IslandIconButton(
+                icon = Icons.Outlined.Remove,
+                contentDescription = stringResource(R.string.timer_minus_15),
+                onClick = onMinus15,
+                containerColor = island.sunken,
+                size = 40.dp
+            )
+            IslandIconButton(
+                icon = Icons.Outlined.Add,
+                contentDescription = stringResource(R.string.timer_plus_15),
+                onClick = onPlus15,
+                containerColor = island.sunken,
+                size = 40.dp
+            )
+            IslandIconButton(
+                icon = Icons.Outlined.SkipNext,
+                contentDescription = stringResource(R.string.timer_skip),
+                onClick = onSkip,
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = Color.White,
+                size = 40.dp
+            )
+        }
+    }
+}
+
+/**
+ * The set the rest is being taken for: the first one still open, with the weight already suggested
+ * for it. Null when nothing is left to do, in which case the timer says only "rest".
+ */
+@Composable
+private fun nextSetHint(state: ActiveWorkoutUiState): String? {
+    val exercise = state.exercises.firstOrNull { ex -> ex.sets.any { it.completedAt == null } }
+        ?: return null
+    val set = exercise.sets.first { it.completedAt == null }
+    val number = exercise.sets
+        .takeWhile { it.id != set.id }
+        .count { it.setType.countsAsWorking } + 1
+    val weight = (set.weight ?: set.suggestedWeight ?: set.targetWeight)
+        ?.takeIf { exercise.weightType.usesWeight }
+    return if (weight == null) {
+        stringResource(R.string.timer_next_set, number)
+    } else {
+        stringResource(
+            R.string.timer_next_set_value,
+            number,
+            "${formatDecimal(weight)} ${stringResource(R.string.unit_kg)}"
+        )
     }
 }
 
@@ -960,7 +1104,7 @@ private fun ExerciseNotesSheet(
     }
 }
 
-private fun formatDuration(totalSeconds: Int): String {
+internal fun formatDuration(totalSeconds: Int): String {
     val safe = totalSeconds.coerceAtLeast(0)
     val hours = safe / 3600
     val minutes = (safe % 3600) / 60
@@ -969,7 +1113,7 @@ private fun formatDuration(totalSeconds: Int): String {
 }
 
 /** Volume as an integer with thousands separator; the unit is printed by the tile. */
-private fun formatVolumeValue(kg: Double): String =
+internal fun formatVolumeValue(kg: Double): String =
     "%,d".format(kg.toLong()).replace(',', '.')
 
 private fun formatNumber(value: Double): String =

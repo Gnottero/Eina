@@ -13,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -32,15 +33,24 @@ fun MetricTile(
     label: String,
     value: String,
     modifier: Modifier = Modifier,
-    unit: String? = null
+    unit: String? = null,
+    /** Icon colour; the number stays black, so a row of tiles is told apart without reading it. */
+    tint: Color = MaterialTheme.colorScheme.primary,
+    /**
+     * Centred content. Three tiles side by side on a 360dp phone are narrower than their label, and
+     * left-aligned they read as three ragged columns instead of one row of measurements.
+     */
+    centered: Boolean = false
 ) {
     val island = EinaTheme.island
+    val alignment = if (centered) Alignment.CenterHorizontally else Alignment.Start
     Column(
         modifier = modifier
             .clip(TileShape)
             .background(island.sunken)
-            .padding(horizontal = Spacing.lg, vertical = Spacing.md),
-        verticalArrangement = Arrangement.spacedBy(Spacing.xs)
+            .padding(horizontal = Spacing.md, vertical = Spacing.md),
+        verticalArrangement = Arrangement.spacedBy(Spacing.xs),
+        horizontalAlignment = alignment
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -49,7 +59,7 @@ fun MetricTile(
             Icon(
                 icon,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
+                tint = tint,
                 modifier = Modifier.size(15.dp)
             )
             Text(
