@@ -34,7 +34,6 @@ import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.FitnessCenter
 import androidx.compose.material.icons.outlined.MusicNote
 import androidx.compose.material.icons.outlined.Repeat
-import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.SwapHoriz
 import androidx.compose.material.icons.outlined.SwapVert
 import androidx.compose.material.icons.outlined.Timer
@@ -328,19 +327,11 @@ fun ActiveWorkoutScreen(
             exercise = actionsSheetExercise,
             // Nothing to reorder with a single block (one exercise, or one superset).
             canReorder = supersetBlocks(state.exercises, supersetLetters).size > 1,
-            onOpenExercise = {
-                onOpenExercise(actionsSheetExercise.exerciseId)
-                actionsSheetFor = null
-            },
             onEditNotes = {
                 notesSheetFor = actionsSheetExercise.workoutExerciseId
                 actionsSheetFor = null
             },
             onReorder = { showReorder = true; actionsSheetFor = null },
-            onEditRest = {
-                restSheetFor = actionsSheetExercise.workoutExerciseId
-                actionsSheetFor = null
-            },
             onEditSuperset = {
                 supersetSheetFor = actionsSheetExercise.workoutExerciseId
                 actionsSheetFor = null
@@ -350,7 +341,6 @@ fun ActiveWorkoutScreen(
                 actionsSheetFor = null
             },
             supersetLetter = actionsSheetExercise.supersetGroup?.let { supersetLetters[it] },
-            onAddSet = { viewModel.addSet(actionsSheetExercise.workoutExerciseId); actionsSheetFor = null },
             onRemove = { viewModel.removeExercise(actionsSheetExercise.workoutExerciseId); actionsSheetFor = null },
             onDismiss = { actionsSheetFor = null }
         )
@@ -1013,52 +1003,20 @@ private fun SetCheckButton(completed: Boolean, onClick: () -> Unit) {
 private fun ExerciseActionsSheet(
     exercise: SessionExerciseUi,
     canReorder: Boolean,
-    onOpenExercise: () -> Unit,
     onEditNotes: () -> Unit,
     onReorder: () -> Unit,
-    onEditRest: () -> Unit,
     onEditSuperset: () -> Unit,
     onReplace: () -> Unit,
     supersetLetter: String?,
-    onAddSet: () -> Unit,
     onRemove: () -> Unit,
     onDismiss: () -> Unit
 ) {
     IslandBottomSheet(onDismiss = onDismiss, title = exercise.name.localized()) {
         SheetActionRow(
-            icon = Icons.Outlined.Search,
-            label = stringResource(R.string.active_open_exercise),
-            onClick = onOpenExercise
-        )
-        SheetActionRow(
-            icon = Icons.AutoMirrored.Outlined.Notes,
-            label = stringResource(if (exercise.notes.isNullOrBlank()) R.string.note_add else R.string.note_edit),
-            description = exercise.notes?.takeIf { it.isNotBlank() },
-            onClick = onEditNotes
-        )
-        SheetActionRow(
-            icon = Icons.Outlined.Timer,
-            label = stringResource(R.string.rest_time_title),
-            description = formatDuration(exercise.restSeconds),
-            onClick = onEditRest
-        )
-        SheetActionRow(
-            icon = Icons.Outlined.Repeat,
-            label = stringResource(R.string.superset_action),
-            description = supersetLetter?.let { stringResource(R.string.superset_badge, it) }
-                ?: stringResource(R.string.superset_action_none),
-            onClick = onEditSuperset
-        )
-        SheetActionRow(
             icon = Icons.Outlined.SwapHoriz,
             label = stringResource(R.string.action_replace_exercise),
             description = stringResource(R.string.active_replace_exercise_description),
             onClick = onReplace
-        )
-        SheetActionRow(
-            icon = Icons.Outlined.Add,
-            label = stringResource(R.string.active_add_set_action),
-            onClick = onAddSet
         )
         if (canReorder) {
             SheetActionRow(
@@ -1068,6 +1026,19 @@ private fun ExerciseActionsSheet(
                 onClick = onReorder
             )
         }
+        SheetActionRow(
+            icon = Icons.Outlined.Repeat,
+            label = stringResource(R.string.superset_action),
+            description = supersetLetter?.let { stringResource(R.string.superset_badge, it) }
+                ?: stringResource(R.string.superset_action_none),
+            onClick = onEditSuperset
+        )
+        SheetActionRow(
+            icon = Icons.AutoMirrored.Outlined.Notes,
+            label = stringResource(if (exercise.notes.isNullOrBlank()) R.string.note_add else R.string.note_edit),
+            description = exercise.notes?.takeIf { it.isNotBlank() },
+            onClick = onEditNotes
+        )
         SheetActionRow(
             icon = Icons.Outlined.Delete,
             label = stringResource(R.string.action_remove_exercise),

@@ -122,9 +122,7 @@
     <string name="active_cancel_confirm_text">La sessione e le serie registrate finora verranno eliminate. Non finirà nello storico.</string>
     <string name="active_cancel_confirm_action">Elimina</string>
     <string name="active_add_set">+ Aggiungi serie</string>
-    <string name="active_add_set_action">Aggiungi serie</string>
     <string name="active_undo_set_cd">Annulla serie</string>
-    <string name="active_open_exercise">Apri scheda esercizio</string>
     <string name="action_reorder">Riordina esercizi</string>
     <string name="reorder_action_description">Trascinali nell\'ordine che vuoi</string>
     <string name="reorder_title">Ordine degli esercizi</string>

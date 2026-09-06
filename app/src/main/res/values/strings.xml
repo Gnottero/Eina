@@ -132,9 +132,7 @@
     <!-- Dialog button, half a row wide: the long label was clipped in it. -->
     <string name="active_cancel_confirm_action">Delete</string>
     <string name="active_add_set">+ Add set</string>
-    <string name="active_add_set_action">Add set</string>
     <string name="active_undo_set_cd">Undo set</string>
-    <string name="active_open_exercise">Open exercise sheet</string>
     <string name="action_reorder">Reorder exercises</string>
     <string name="reorder_action_description">Drag them into the order you want</string>
     <string name="reorder_title">Order of exercises</string>

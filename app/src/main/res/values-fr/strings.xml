@@ -122,9 +122,7 @@
     <string name="active_cancel_confirm_text">La séance et toutes les séries enregistrées jusqu\'ici seront supprimées. Elle n\'ira pas dans l\'historique.</string>
     <string name="active_cancel_confirm_action">Supprimer</string>
     <string name="active_add_set">+ Ajouter une série</string>
-    <string name="active_add_set_action">Ajouter une série</string>
     <string name="active_undo_set_cd">Annuler la série</string>
-    <string name="active_open_exercise">Ouvrir la fiche de l\'exercice</string>
     <string name="action_reorder">Réorganiser les exercices</string>
     <string name="reorder_action_description">Faites-les glisser dans l\'ordre voulu</string>
     <string name="reorder_title">Ordre des exercices</string>
