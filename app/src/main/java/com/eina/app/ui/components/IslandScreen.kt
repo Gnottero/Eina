@@ -16,16 +16,25 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.eina.app.ui.theme.Spacing
 
+/**
+ * Whether the floating nav bar is on screen. Detail screens do not carry it, and reserving its
+ * height there left a hand's width of empty page under the last island.
+ */
+val LocalIslandNavBar = staticCompositionLocalOf { true }
+
 /** Trailing space so the floating nav bar does not cover the last island. */
 @Composable
-fun islandBottomSpace(extra: Dp = Spacing.xl): Dp =
-    IslandNavBarHeight + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + extra
+fun islandBottomSpace(extra: Dp = Spacing.md): Dp {
+    val navBar = if (LocalIslandNavBar.current) IslandNavBarHeight else 0.dp
+    return navBar + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + extra
+}
 
 /**
  * Island screen shell: full background, fixed header, scrollable content with a constant side
@@ -59,7 +68,7 @@ fun IslandScreen(
                     .padding(horizontal = horizontalPadding)
                     // The floating CTA sits above the nav bar, so the scroll has to clear both or
                     // the last island ends up under the button.
-                    .padding(bottom = islandBottomSpace(extra = if (floatingBottom != null) 76.dp else Spacing.xl)),
+                    .padding(bottom = islandBottomSpace(extra = if (floatingBottom != null) 76.dp else Spacing.md)),
                 verticalArrangement = verticalArrangement,
                 content = content
             )

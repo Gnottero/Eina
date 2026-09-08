@@ -140,18 +140,19 @@ private fun SummaryMetric(
     tint: Color = MaterialTheme.colorScheme.primary
 ) {
     val island = EinaTheme.island
-    Column(
+    MetricColumn(
         modifier = modifier,
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(2.dp)
-    ) {
-        Text(
-            text = label.uppercase(),
-            style = MaterialTheme.typography.labelSmall,
-            color = island.textSecondary,
-            maxLines = 1
-        )
-        Row(verticalAlignment = Alignment.Bottom) {
+        gap = 2.dp,
+        unitBottomPadding = 2.dp,
+        label = {
+            Text(
+                text = label.uppercase(),
+                style = MaterialTheme.typography.labelSmall,
+                color = island.textSecondary,
+                maxLines = 1
+            )
+        },
+        value = {
             Text(
                 text = value,
                 style = MaterialTheme.typography.titleLarge,
@@ -159,14 +160,15 @@ private fun SummaryMetric(
                 maxLines = 1,
                 overflow = TextOverflow.Clip
             )
-            if (unit != null) {
+        },
+        unit = unit?.let {
+            {
                 Text(
-                    text = " $unit",
+                    text = " $it",
                     style = MaterialTheme.typography.labelMedium,
-                    color = island.textSecondary,
-                    modifier = Modifier.padding(bottom = 2.dp)
+                    color = island.textSecondary
                 )
             }
         }
-    }
+    )
 }

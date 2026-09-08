@@ -17,7 +17,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         SetEntryEntity::class,
         BodyMetricEntity::class
     ],
-    version = 11,
+    version = 12,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -236,6 +236,18 @@ abstract class EinaDatabase : RoomDatabase() {
         val MIGRATION_10_11 = object : Migration(10, 11) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE workout_sessions ADD COLUMN notes TEXT")
+            }
+        }
+
+        /**
+         * The routine load is a property of each planned set. Previously a session retained only
+         * reps and reused the first working-set load for every row, so a lighter warmup immediately
+         * received the working weight. Existing sessions keep the old fallback through a nullable
+         * column; newly created sessions preserve each exact target.
+         */
+        val MIGRATION_11_12 = object : Migration(11, 12) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE set_entries ADD COLUMN targetWeight REAL")
             }
         }
 

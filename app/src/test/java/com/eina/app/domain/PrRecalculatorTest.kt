@@ -58,7 +58,7 @@ class PrRecalculatorTest {
     }
 
     @Test
-    fun `un riscaldamento non tiene ne' assegna record`() {
+    fun `un riscaldamento tiene e assegna record come le altre serie`() {
         val sets = listOf(
             set(1, 100.0, 1_000, isPR = true, setType = SetType.WARMUP),
             set(2, 80.0, 2_000)
@@ -66,9 +66,8 @@ class PrRecalculatorTest {
 
         val changed = recomputePrFlags(WeightType.FREE_WEIGHT, sets).associateBy { it.id }
 
-        assertEquals(false, changed.getValue(1L).isPR)
-        // The warmup load stays out of the comparison: 80 kg is still a record.
-        assertEquals(true, changed.getValue(2L).isPR)
+        // The 100 kg warmup keeps the record it already held, so 80 kg afterwards is not one.
+        assertEquals(emptySet<Long>(), changed.keys)
     }
 
     @Test

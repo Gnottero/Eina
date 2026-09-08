@@ -26,9 +26,10 @@ class PrCalculatorTest {
     )
 
     @Test
-    fun `warmup set is never a PR`() {
+    fun `a warmup holds a record like any other set`() {
         val newSet = set(weight = 100.0, setType = SetType.WARMUP)
-        assertFalse(isNewPR(WeightType.FREE_WEIGHT, newSet, emptyList()))
+        assertTrue(isNewPR(WeightType.FREE_WEIGHT, newSet, emptyList()))
+        assertFalse(isNewPR(WeightType.FREE_WEIGHT, newSet, listOf(set(weight = 120.0))))
     }
 
     @Test

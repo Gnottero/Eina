@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.FitnessCenter
-import androidx.compose.material.icons.outlined.Pause
 import androidx.compose.material.icons.outlined.Repeat
 import androidx.compose.material.icons.outlined.Timer
 import androidx.compose.material3.MaterialTheme
@@ -35,7 +34,6 @@ import com.eina.app.ui.components.IslandChip
 import com.eina.app.ui.components.IslandSecondaryButton
 import com.eina.app.ui.components.MetricTile
 import com.eina.app.ui.components.SectionHeader
-import com.eina.app.ui.components.SheetActionRow
 import com.eina.app.ui.components.formatVolume
 import com.eina.app.ui.library.currentLocale
 import com.eina.app.ui.theme.EinaTheme
@@ -140,17 +138,6 @@ fun FinishWorkoutSheet(
                     modifier = Modifier.weight(1f)
                 )
             }
-        }
-
-        // Leaving the sheet is a choice of its own, so it is a row and not just a tap outside:
-        // the session stays open and is picked up again from the Workout tab.
-        if (!editing) {
-            SheetActionRow(
-                icon = Icons.Outlined.Pause,
-                label = stringResource(R.string.active_finish_later),
-                description = stringResource(R.string.active_finish_later_description),
-                onClick = onDismiss
-            )
         }
 
         if (!isEmpty) {

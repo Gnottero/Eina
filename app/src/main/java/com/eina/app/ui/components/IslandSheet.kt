@@ -33,6 +33,9 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.layout.layout
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.offset
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -42,6 +45,22 @@ import com.eina.app.ui.theme.IslandShape
 import com.eina.app.ui.theme.PillShape
 import com.eina.app.ui.theme.Spacing
 import com.eina.app.ui.theme.squircle
+
+/** Side gutter of the sheet content; a row that has to reach the sheet edges subtracts it. */
+val SheetHorizontalPadding: Dp = Spacing.xl
+
+/**
+ * Lets a horizontally scrolling row run from edge to edge of the sheet instead of stopping inside
+ * its gutter. Clipped at the gutter, the last chip loses a couple of letters and reads as broken
+ * rather than as a row that scrolls; the row re-adds the gutter as content padding.
+ */
+fun Modifier.sheetEdgeToEdge(gutter: Dp = SheetHorizontalPadding): Modifier = layout { measurable, constraints ->
+    val extra = gutter.roundToPx() * 2
+    val placeable = measurable.measure(constraints.offset(horizontal = extra))
+    layout(placeable.width - extra, placeable.height) {
+        placeable.place(-gutter.roundToPx(), 0)
+    }
+}
 
 /**
  * Bottom sheet in island style: large top corners, white surface, custom handle. Used instead of
@@ -87,7 +106,7 @@ fun IslandBottomSheet(
                     .nestedScroll(SheetContentNestedScroll)
                     .then(if (scrollable) Modifier.verticalScroll(scrollState) else Modifier)
                     .navigationBarsPadding()
-                    .padding(horizontal = Spacing.xl)
+                    .padding(horizontal = SheetHorizontalPadding)
                     .padding(bottom = Spacing.lg),
                 verticalArrangement = Arrangement.spacedBy(Spacing.sm)
             ) {

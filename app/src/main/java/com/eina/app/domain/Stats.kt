@@ -59,9 +59,8 @@ private fun volumeOf(row: CompletedSetRow): Double = volumeForSet(
     row.bodyweightFactor
 )
 
-/** Volume in kg of a list of sets; warmups do not count towards the total lifted. */
-fun totalVolume(rows: List<CompletedSetRow>): Double =
-    rows.filter { it.setType.countsAsWorking }.sumOf { volumeOf(it) }
+/** Volume in kg of a list of sets, warmups included: those kilograms were lifted too. */
+fun totalVolume(rows: List<CompletedSetRow>): Double = rows.sumOf { volumeOf(it) }
 
 /** Session summaries, most recent first. */
 fun summarizeSessions(rows: List<CompletedSetRow>): List<SessionSummary> =
@@ -80,10 +79,12 @@ fun summarizeSessions(rows: List<CompletedSetRow>): List<SessionSummary> =
                     .groupBy { it.workoutExerciseId }
                     .values
                     .map { it.first().exerciseName },
+                // Warmups are not counted as work sets, but their load enters the volume and
+                // their records count like any other.
                 setCount = working.size,
                 totalReps = working.sumOf { it.actualReps ?: 0 },
-                volumeKg = working.sumOf { volumeOf(it) },
-                prCount = working.count { it.isPR },
+                volumeKg = sessionRows.sumOf { volumeOf(it) },
+                prCount = sessionRows.count { it.isPR },
                 // Counted per exercise and not per set: an exercise carried through eight sets
                 // would otherwise outweigh three different movements.
                 dominantMuscle = sessionRows
@@ -103,8 +104,7 @@ fun volumeByDay(
     rows: List<CompletedSetRow>,
     zone: ZoneId = ZoneId.systemDefault()
 ): Map<LocalDate, Double> =
-    rows.filter { it.setType.countsAsWorking }
-        .groupBy { epochMillisToLocalDate(it.sessionStart, zone) }
+    rows.groupBy { epochMillisToLocalDate(it.sessionStart, zone) }
         .mapValues { (_, dayRows) -> dayRows.sumOf { volumeOf(it) } }
 
 /** Number of completed working sets per day. */
@@ -154,7 +154,7 @@ private fun startOfWeek(date: LocalDate): LocalDate =
  * [isNewPR] when saved, so only the most recent one per exercise is kept.
  */
 fun personalRecords(rows: List<CompletedSetRow>): List<PrRecord> =
-    rows.filter { it.isPR && it.setType.countsAsWorking }
+    rows.filter { it.isPR }
         .groupBy { it.exerciseId }
         .map { (_, prRows) ->
             val best = prRows.maxBy { it.completedAt }

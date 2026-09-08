@@ -15,6 +15,8 @@ data class SetEntryEntity(
     val workoutExerciseId: Long,
     val setIndex: Int,
     val targetReps: Int? = null,
+    /** Per-set routine load, kept separate from the value actually recorded by the user. */
+    val targetWeight: Double? = null,
     val actualReps: Int? = null,        // TIME_BASED: duration in seconds; DISTANCE_BASED: minutes
     val weight: Double? = null,
     val restSecondsPlanned: Int,

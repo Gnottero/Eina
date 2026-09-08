@@ -31,8 +31,8 @@ import com.eina.app.ui.theme.Spacing
 
 /** Height reserved for the floating nav bar; screens use it as trailing content padding. */
 // Measured on the real layout: 12dp outer margin + 8dp inner padding + 46dp item, per side.
-// Underestimating it leaves the last island hidden behind the bar.
-val IslandNavBarHeight = 92.dp
+// Rounding it up left a strip of empty page under the last island on every tab.
+val IslandNavBarHeight = 86.dp
 
 data class IslandNavItem(
     val label: String,

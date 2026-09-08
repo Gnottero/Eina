@@ -53,13 +53,13 @@ class StatsTest {
     private val today: LocalDate = LocalDate.of(2026, 3, 10)
 
     @Test
-    fun `totalVolume esclude le warmup`() {
+    fun `totalVolume conta anche le warmup`() {
         val rows = listOf(
             row(1, today, setIndex = 0, reps = 10, weight = 50.0),
             row(1, today, setIndex = 1, reps = 8, weight = 60.0),
             row(1, today, setIndex = 2, reps = 15, weight = 20.0, setType = SetType.WARMUP)
         )
-        assertEquals(980.0, totalVolume(rows), 0.001)
+        assertEquals(1280.0, totalVolume(rows), 0.001)
     }
 
     @Test
@@ -69,8 +69,10 @@ class StatsTest {
             row(1, today, setIndex = 1, reps = 8, weight = 30.0, setType = SetType.DROP),
             row(1, today, setIndex = 2, reps = 15, weight = 20.0, setType = SetType.WARMUP)
         )
-        assertEquals(740.0, totalVolume(rows), 0.001)
+        assertEquals(1040.0, totalVolume(rows), 0.001)
+        // The warmup adds its kilograms but does not take a number among the work sets.
         assertEquals(2, summarizeSessions(rows).first().setCount)
+        assertEquals(1040.0, summarizeSessions(rows).first().volumeKg, 0.001)
     }
 
     @Test
@@ -197,12 +199,12 @@ class ExerciseProgressTest {
     }
 
     @Test
-    fun `warmup sets stay out of the progression`() {
+    fun `warmup sets take part in the progression`() {
         val rows = listOf(
             row(sessionId = 1, date = LocalDate.of(2026, 1, 5), weight = 100.0, setType = SetType.WARMUP),
             row(sessionId = 1, date = LocalDate.of(2026, 1, 5), setIndex = 1, weight = 60.0)
         )
-        assertEquals(60.0, exerciseProgress(rows).single().weight!!, 0.0)
+        assertEquals(100.0, exerciseProgress(rows).single().weight!!, 0.0)
     }
 
     @Test

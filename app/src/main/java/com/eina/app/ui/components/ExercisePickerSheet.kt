@@ -88,9 +88,15 @@ fun ExercisePickerSheet(
             modifier = Modifier.fillMaxWidth()
         )
 
+        // The chips run from edge to edge of the sheet, not inside its gutter: cut at the gutter,
+        // the last one lost a couple of letters and read as broken rather than as a scrolling row.
         LazyRow(
+            modifier = Modifier.sheetEdgeToEdge(),
             horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
-            contentPadding = PaddingValues(vertical = Spacing.sm)
+            contentPadding = PaddingValues(
+                horizontal = SheetHorizontalPadding,
+                vertical = Spacing.sm
+            )
         ) {
             items(MuscleGroupCategory.entries) { entry ->
                 IslandChip(

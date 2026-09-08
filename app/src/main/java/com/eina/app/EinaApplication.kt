@@ -3,6 +3,7 @@ package com.eina.app
 import android.app.Application
 import android.content.Context
 import com.eina.app.data.prefs.AppLocale
+import com.eina.app.data.prefs.SettingsRepository
 import com.eina.app.data.repository.WorkoutRepository
 import com.eina.app.data.seed.ExerciseSeeder
 import com.eina.app.di.appModule
@@ -38,6 +39,12 @@ class EinaApplication : Application() {
             // which the history never shows and no screen can delete.
             // See WorkoutRepository.purgeEmptySessions.
             runCatching { get<WorkoutRepository>().purgeEmptySessions() }
+            // Once, on the first launch after warmups started counting towards records.
+            runCatching {
+                if (get<SettingsRepository>().consumePrBackfill()) {
+                    get<WorkoutRepository>().recomputeAllPrs()
+                }
+            }
         }
     }
 }

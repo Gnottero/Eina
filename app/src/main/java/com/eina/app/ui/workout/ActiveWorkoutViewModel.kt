@@ -142,8 +142,9 @@ class ActiveWorkoutViewModel(
     ): SessionExerciseUi {
         val lastTimeSets = repository.getLastTimeSets(exercise.id, sessionId)
         val (lastWeight, lastReps) = repository.getLastRecordedValues(exercise.id)
+        val storedSets = repository.getSetsForWorkoutExercise(workoutExercise.id)
         val sets = withSuggestions(
-            repository.getSetsForWorkoutExercise(workoutExercise.id).map { it.toUi(exercise.id, lastTimeSets) },
+            alignPreviousSets(storedSets.map { it.toUi(exercise.id) }, lastTimeSets),
             lastWeight,
             lastReps,
             exercise.weightType
@@ -170,8 +171,10 @@ class ActiveWorkoutViewModel(
     private suspend fun refreshSets(workoutExerciseId: Long) {
         val exercise = _uiState.value.exercises.find { it.workoutExerciseId == workoutExerciseId } ?: return
         val sets = withSuggestions(
-            repository.getSetsForWorkoutExercise(workoutExerciseId)
-                .map { it.toUi(exercise.exerciseId, exercise.lastTimeSets) },
+            alignPreviousSets(
+                repository.getSetsForWorkoutExercise(workoutExerciseId).map { it.toUi(exercise.exerciseId) },
+                exercise.lastTimeSets
+            ),
             exercise.lastRecordedWeight,
             exercise.lastRecordedReps,
             exercise.weightType
@@ -189,14 +192,14 @@ class ActiveWorkoutViewModel(
     private fun recomputeVolume() {
         _uiState.update { state ->
             val volume = state.exercises.sumOf { ex ->
-                ex.sets.filter { it.completedAt != null && it.setType.countsAsWorking }
+                ex.sets.filter { it.completedAt != null }
                     .sumOf { volumeForSet(ex.weightType, it.toEntity(ex.workoutExerciseId), ex.bodyweightFactor) }
             }
             state.copy(volumeKg = volume)
         }
     }
 
-    private fun SetEntryEntity.toUi(exerciseId: Long, lastTimeSets: List<SetEntryEntity>) = SessionSetUi(
+    private fun SetEntryEntity.toUi(exerciseId: Long) = SessionSetUi(
         id = id,
         setIndex = setIndex,
         targetReps = targetReps ?: routineTargets[exerciseId]?.targetReps,
@@ -207,9 +210,25 @@ class ActiveWorkoutViewModel(
         completedAt = completedAt,
         isPR = isPR,
         bodyweightSnapshotKg = bodyweightSnapshotKg,
-        targetWeight = routineTargets[exerciseId]?.targetWeight,
-        previous = lastTimeSets.getOrNull(setIndex)
+        targetWeight = targetWeight ?: routineTargets[exerciseId]?.targetWeight
     )
+
+    /**
+     * Aligns history by logical position rather than the raw row index. A warmup added before the
+     * working sets must match the previous warmup (if present), while the first working set still
+     * matches the previous first working set instead of being shifted by one.
+     */
+    private fun alignPreviousSets(
+        sets: List<SessionSetUi>,
+        previousSets: List<SetEntryEntity>
+    ): List<SessionSetUi> {
+        val currentTypes = sets.map { it.setType }
+        val previousTypes = previousSets.map { it.setType }
+        return sets.mapIndexed { index, set ->
+            val previousIndex = matchingSetIndex(index, currentTypes, previousTypes)
+            set.copy(previous = previousIndex?.let(previousSets::get))
+        }
+    }
 
     /**
      * Fills the suggested values set by set. Fallback order: the same set of the last workout, then
@@ -424,26 +443,34 @@ class ActiveWorkoutViewModel(
     }
 
     /**
-     * Set type (warmup, normal, failure, drop). Changing it on a completed set moves it in or out
-     * of the volume, so the total is recomputed at once; an assigned PR survives, except when the
-     * set becomes a warmup, which cannot hold a record.
+     * Set type (warmup, normal, failure, drop). It only changes how the row reads: volume and
+     * records look at the kilograms, not at the label, so nothing is recomputed on the flags here.
      */
     fun setSetType(workoutExerciseId: Long, setId: Long, type: SetType) {
         val exercise = _uiState.value.exercises.find { it.workoutExerciseId == workoutExerciseId } ?: return
         val set = exercise.sets.find { it.id == setId } ?: return
-        val updated = set.copy(setType = type, isPR = set.isPR && type.countsAsWorking)
+        val updated = set.copy(setType = type)
         _uiState.update { state ->
             state.copy(
                 exercises = state.exercises.map { ex ->
                     if (ex.workoutExerciseId != workoutExerciseId) ex
-                    else ex.copy(sets = ex.sets.map { if (it.id == setId) updated else it })
+                    else ex.copy(
+                        sets = withSuggestions(
+                            alignPreviousSets(
+                                ex.sets.map { if (it.id == setId) updated else it },
+                                ex.lastTimeSets
+                            ),
+                            ex.lastRecordedWeight,
+                            ex.lastRecordedReps,
+                            ex.weightType
+                        )
+                    )
                 }
             )
         }
         recomputeVolume()
         viewModelScope.launch {
             repository.updateSet(updated.toEntity(workoutExerciseId))
-            // A warmup cannot hold a record, so the one it held goes back to the best set left.
             if (set.completedAt != null) {
                 repository.recomputePrs(listOf(exercise.exerciseId))
                 touchedExerciseIds += exercise.exerciseId
@@ -519,9 +546,9 @@ class ActiveWorkoutViewModel(
             feedback.haptic()
             // Rest starts after every set, warmups included: a warmup is out of volume and PR,
             // but between it and the next set one still waits. In a superset rest belongs to the
-            // round: it starts only once every member has completed the set with the same index.
+            // round: it starts only once every member has completed the corresponding logical set.
             // On a past workout it never starts.
-            if (!isPast && isRoundComplete(workoutExerciseId, set.setIndex)) {
+            if (!isPast && isRoundComplete(workoutExerciseId, completed.id)) {
                 startRestTimer(completed.restSecondsPlanned)
             }
         }
@@ -564,18 +591,26 @@ class ActiveWorkoutViewModel(
     }
 
     /**
-     * A round is over when every superset member has completed the set with the same index.
-     * Members with fewer sets do not block it. Outside a superset the round is the single set,
-     * so it is always complete.
+     * A round is over when every superset member has completed the corresponding logical set.
+     * Warmups align with warmups and working sets align with working sets, so inserting a warmup
+     * in only one member does not shift every subsequent round. Members without a corresponding
+     * set do not block it. Outside a superset the round is the single set, so it is always complete.
      */
-    private fun isRoundComplete(workoutExerciseId: Long, setIndex: Int): Boolean {
+    private fun isRoundComplete(workoutExerciseId: Long, setId: Long): Boolean {
         val exercise = _uiState.value.exercises.find { it.workoutExerciseId == workoutExerciseId } ?: return true
         if (exercise.supersetGroup == null) return true
+        val currentIndex = exercise.sets.indexOfFirst { it.id == setId }
+        if (currentIndex < 0) return true
+        val currentTypes = exercise.sets.map { it.setType }
         return _uiState.value.exercises
             .filter { it.supersetGroup == exercise.supersetGroup }
             .all { companion ->
-                val set = companion.sets.getOrNull(setIndex) ?: return@all true
-                set.completedAt != null
+                val companionIndex = matchingSetIndex(
+                    currentIndex,
+                    currentTypes,
+                    companion.sets.map { it.setType }
+                ) ?: return@all true
+                companion.sets[companionIndex].completedAt != null
             }
     }
 
@@ -710,6 +745,7 @@ private fun SessionSetUi.toEntity(workoutExerciseId: Long) = SetEntryEntity(
     workoutExerciseId = workoutExerciseId,
     setIndex = setIndex,
     targetReps = targetReps,
+    targetWeight = targetWeight,
     actualReps = actualReps,
     weight = weight,
     restSecondsPlanned = restSecondsPlanned,
@@ -718,3 +754,21 @@ private fun SessionSetUi.toEntity(workoutExerciseId: Long) = SetEntryEntity(
     isPR = isPR,
     bodyweightSnapshotKg = bodyweightSnapshotKg
 )
+
+/**
+ * Index of the set occupying the same logical slot in another list. Warmups have their own slots;
+ * normal, failure and drop sets share the working-set sequence. This keeps history suggestions and
+ * superset rounds aligned even when the two lists contain different mixes of set types.
+ */
+internal fun matchingSetIndex(
+    currentIndex: Int,
+    currentTypes: List<SetType>,
+    candidateTypes: List<SetType>
+): Int? {
+    val currentType = currentTypes.getOrNull(currentIndex) ?: return null
+    val isWorking = currentType.countsAsWorking
+    val ordinal = currentTypes.take(currentIndex).count { it.countsAsWorking == isWorking }
+    return candidateTypes.indices
+        .filter { candidateTypes[it].countsAsWorking == isWorking }
+        .getOrNull(ordinal)
+}

@@ -237,7 +237,7 @@ private fun SettingsGroup(title: String) {
         modifier = Modifier.padding(
             start = Spacing.lg,
             end = Spacing.lg,
-            top = Spacing.lg,
+            top = Spacing.md,
             bottom = Spacing.xs
         )
     )
@@ -272,7 +272,9 @@ private fun SettingRow(
             .clip(squircle(18.dp))
             .then(if (rowClick == null) Modifier else Modifier.clickable { hapticTap(); rowClick() })
             .defaultMinSize(minHeight = 56.dp)
-            .padding(horizontal = Spacing.md, vertical = Spacing.md),
+            // The row already stands 56dp tall: 16dp of padding on top of that made every setting
+            // a block of its own and pushed half the list under the fold.
+            .padding(horizontal = Spacing.md, vertical = Spacing.sm),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(Spacing.md)
     ) {

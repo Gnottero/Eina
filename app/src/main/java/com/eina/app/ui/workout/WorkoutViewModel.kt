@@ -49,7 +49,7 @@ class WorkoutViewModel(
                     OpenSessionUi(
                         volumeKg = totalVolume(rows),
                         setCount = working.size,
-                        prCount = working.count { it.isPR },
+                        prCount = rows.count { it.isPR },
                         // Completed sets only name the exercises already touched, so the total
                         // comes from the session itself.
                         exercisesDone = rows.mapTo(HashSet()) { it.workoutExerciseId }.size,

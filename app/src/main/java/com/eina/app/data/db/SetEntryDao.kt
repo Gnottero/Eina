@@ -32,12 +32,12 @@ interface SetEntryDao {
     )
     suspend fun sessionHasCompletedSets(sessionId: Long): Boolean
 
-    // Every completed non-warmup set of an exercise, used by isNewPR and volumeForSet.
+    // Every completed set of an exercise, used by isNewPR and volumeForSet.
     @Query(
         """
         SELECT se.* FROM set_entries se
         INNER JOIN workout_exercises we ON se.workoutExerciseId = we.id
-        WHERE we.exerciseId = :exerciseId AND se.setType != 'WARMUP' AND se.completedAt IS NOT NULL
+        WHERE we.exerciseId = :exerciseId AND se.completedAt IS NOT NULL
         """
     )
     suspend fun getHistoricalSets(exerciseId: Long): List<SetEntryEntity>
