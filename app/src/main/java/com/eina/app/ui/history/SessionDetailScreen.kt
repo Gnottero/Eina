@@ -318,12 +318,16 @@ private fun SummaryHeader(
                     label = stringResource(R.string.stat_volume),
                     value = formatVolume(volumeKg),
                     unit = stringResource(R.string.unit_kg),
+                    tint = MetricColors.Volume,
+                    centered = true,
                     modifier = Modifier.weight(1f)
                 )
                 MetricTile(
                     icon = Icons.Outlined.Repeat,
                     label = stringResource(R.string.stat_sets),
                     value = setCount.toString(),
+                    tint = MetricColors.Sets,
+                    centered = true,
                     modifier = Modifier.weight(1f)
                 )
             }

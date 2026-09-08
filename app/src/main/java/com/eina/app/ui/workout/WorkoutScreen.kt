@@ -245,9 +245,6 @@ private fun OpenSessionBanner(
                 unit = stringResource(R.string.unit_kg),
                 tint = MetricColors.Volume,
                 centered = true,
-                // On the ramp island the three numbers sit straight on the white: a sunken tile
-                // each read as three grey boxes hung under a coloured band.
-                showBackground = false,
                 modifier = Modifier.weight(1f)
             )
             MetricTile(
@@ -256,7 +253,6 @@ private fun OpenSessionBanner(
                 value = (summary?.setCount ?: 0).toString(),
                 tint = MetricColors.Sets,
                 centered = true,
-                showBackground = false,
                 modifier = Modifier.weight(1f)
             )
             MetricTile(
@@ -265,7 +261,6 @@ private fun OpenSessionBanner(
                 value = (summary?.prCount ?: 0).toString(),
                 tint = MetricColors.Records,
                 centered = true,
-                showBackground = false,
                 modifier = Modifier.weight(1f)
             )
         }

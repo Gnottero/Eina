@@ -586,7 +586,6 @@ private fun SessionIsland(
                 unit = stringResource(R.string.unit_kg),
                 tint = MetricColors.Volume,
                 centered = true,
-                showBackground = false,
                 modifier = Modifier.weight(1f)
             )
             MetricTile(
@@ -595,7 +594,6 @@ private fun SessionIsland(
                 value = setCount.toString(),
                 tint = MetricColors.Sets,
                 centered = true,
-                showBackground = false,
                 modifier = Modifier.weight(1f)
             )
             MetricTile(
@@ -604,7 +602,6 @@ private fun SessionIsland(
                 value = prCount.toString(),
                 tint = MetricColors.Records,
                 centered = true,
-                showBackground = false,
                 modifier = Modifier.weight(1f)
             )
         }

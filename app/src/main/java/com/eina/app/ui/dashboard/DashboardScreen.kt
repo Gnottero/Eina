@@ -163,7 +163,6 @@ fun DashboardScreen(
                     unit = stringResource(R.string.unit_kg),
                     tint = MetricColors.Volume,
                     centered = true,
-                    showBackground = false,
                     modifier = Modifier.weight(1f)
                 )
                 MetricTile(
@@ -172,7 +171,6 @@ fun DashboardScreen(
                     value = state.weekPrCount.toString(),
                     tint = MetricColors.Records,
                     centered = true,
-                    showBackground = false,
                     modifier = Modifier.weight(1f)
                 )
             }

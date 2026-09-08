@@ -1,6 +1,5 @@
 package com.eina.app.ui.components
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,7 +14,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
@@ -23,10 +21,12 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.eina.app.ui.theme.EinaTheme
 import com.eina.app.ui.theme.Spacing
-import com.eina.app.ui.theme.TileShape
 
 /**
- * Headline metric inside an island: sunken tile, tiny icon and label, large number.
+ * Headline metric inside an island: tiny icon and label over a large number.
+ *
+ * No sunken fill under it: a grey box behind every figure was the darkest thing on a white card and
+ * read as a table dropped into the page. The numbers sit straight on the surface that holds them.
  *
  * Shared by the workout header and the summary, which is the same screen with the recording taken
  * away: the two must not drift apart.
@@ -44,33 +44,14 @@ fun MetricTile(
      * Centred content. Three tiles side by side on a 360dp phone are narrower than their label, and
      * left-aligned they read as three ragged columns instead of one row of measurements.
      */
-    centered: Boolean = false,
-    /** Dashboard metrics already sit in a containing island and can be rendered without a tile. */
-    showBackground: Boolean = true
+    centered: Boolean = false
 ) {
     val island = EinaTheme.island
-    val alignment = if (centered) Alignment.CenterHorizontally else Alignment.Start
-    Column(
-        modifier = modifier
-            .then(
-                if (showBackground) Modifier.clip(TileShape).background(island.sunken)
-                else Modifier
-            )
-            .padding(
-                horizontal = if (showBackground) Spacing.md else 0.dp,
-                vertical = Spacing.md
-            ),
-        verticalArrangement = Arrangement.spacedBy(Spacing.xs),
-        horizontalAlignment = alignment
-    ) {
-        // Icon and label are one unit: a trailing spacer used to centre the label alone on the
-        // tile, which left the icon hanging off to one side, away from the words it belongs to.
-        // The group is centred as a whole, so it sits on the same axis as the number below.
-        Row(
-            modifier = if (centered) Modifier.fillMaxWidth() else Modifier,
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = if (centered) Arrangement.Center else Arrangement.Start
-        ) {
+    // Icon and label are one unit: a trailing spacer used to centre the label alone on the tile,
+    // which left the icon hanging off to one side, away from the words it belongs to. The group is
+    // centred as a whole, so it sits on the same axis as the number below.
+    val labelRow: @Composable () -> Unit = {
+        Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
                 icon,
                 contentDescription = null,
@@ -79,8 +60,7 @@ fun MetricTile(
             )
             Spacer(modifier = Modifier.width(Spacing.xs))
             // Ellipsis and not the default clip: a label too long for the tile used to be cut
-            // mid-word without a sign, and a centred text kept the space of the part no longer
-            // drawn, pushing the visible half away from its icon.
+            // mid-word without a sign.
             Text(
                 text = label.uppercase(),
                 style = MaterialTheme.typography.labelSmall,
@@ -90,24 +70,46 @@ fun MetricTile(
                 overflow = TextOverflow.Ellipsis
             )
         }
-        Row(
-            modifier = if (centered) Modifier.fillMaxWidth() else Modifier,
-            verticalAlignment = Alignment.Bottom,
-            horizontalArrangement = if (centered) Arrangement.Center else Arrangement.Start
-        ) {
+    }
+    val valueText: @Composable () -> Unit = {
+        Text(
+            text = value,
+            style = MaterialTheme.typography.headlineSmall,
+            maxLines = 1,
+            overflow = TextOverflow.Clip
+        )
+    }
+    val unitText: (@Composable () -> Unit)? = unit?.let {
+        {
             Text(
-                text = value,
-                style = MaterialTheme.typography.headlineSmall,
-                maxLines = 1,
-                overflow = TextOverflow.Clip
+                text = " $it",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurface
             )
-            if (unit != null) {
-                Text(
-                    text = " $unit",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.padding(bottom = 3.dp)
-                )
+        }
+    }
+
+    if (centered) {
+        // The label rides on the number's centre, not on the centre of number plus unit.
+        MetricColumn(
+            modifier = modifier.padding(vertical = Spacing.md),
+            gap = Spacing.xs,
+            label = labelRow,
+            value = valueText,
+            unit = unitText
+        )
+    } else {
+        Column(
+            modifier = modifier.padding(vertical = Spacing.md),
+            verticalArrangement = Arrangement.spacedBy(Spacing.xs),
+            horizontalAlignment = Alignment.Start
+        ) {
+            labelRow()
+            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
+                valueText()
+                if (unitText != null) {
+                    Column(modifier = Modifier.padding(bottom = 3.dp)) { unitText() }
+                }
             }
         }
     }
