@@ -135,17 +135,52 @@ fun HourMinuteWheelPicker(
                 values = hourValues,
                 selected = hours,
                 onSelected = { hours = it; onSecondsChange(it * 3600 + minutes * 60) },
-                modifier = Modifier.width(84.dp)
+                modifier = Modifier.width(84.dp),
+                visibleItems = 1
             )
             WheelLabel(stringResource(R.string.wheel_hour))
             WheelColumn(
                 values = minuteValues,
                 selected = minutes,
                 onSelected = { minutes = it; onSecondsChange(hours * 3600 + it * 60) },
-                modifier = Modifier.width(84.dp)
+                modifier = Modifier.width(84.dp),
+                visibleItems = 1
             )
             WheelLabel(stringResource(R.string.wheel_min))
         }
+    }
+}
+
+/** Numeric wheel used for small bounded integer settings, such as workouts per week. */
+@Composable
+fun IntegerWheelPicker(
+    value: Int,
+    values: IntRange,
+    onValueChange: (Int) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val island = EinaTheme.island
+    val items = remember(values) { values.toList() }
+
+    Box(
+        modifier = modifier.fillMaxWidth(),
+        contentAlignment = Alignment.Center
+    ) {
+        Box(
+            modifier = Modifier
+                .width(120.dp)
+                .height(ITEM_HEIGHT)
+                .clip(TileShape)
+                .background(island.sunken)
+        )
+        WheelColumn(
+            values = items,
+            selected = value.coerceIn(values),
+            onSelected = onValueChange,
+            modifier = Modifier.width(120.dp),
+            visibleItems = 3,
+            formatValue = Int::toString
+        )
     }
 }
 
@@ -216,13 +251,15 @@ private fun WheelColumn(
     values: List<Int>,
     selected: Int,
     onSelected: (Int) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    visibleItems: Int = VISIBLE_ITEMS,
+    formatValue: (Int) -> String = { "%02d".format(it) }
 ) {
     val island = EinaTheme.island
     val hapticTap = LocalHapticTap.current
     val initialIndex = remember { values.indexOf(selected).coerceAtLeast(0) }
     val listState = rememberLazyListState(initialFirstVisibleItemIndex = initialIndex)
-    val edgeItems = VISIBLE_ITEMS / 2
+    val edgeItems = visibleItems / 2
     // Read directly, firstVisibleItemIndex would recompose every row on each scroll frame; this
     // way rows recompose only when the framed value changes.
     val selectedIndex by remember { derivedStateOf { listState.firstVisibleItemIndex } }
@@ -243,7 +280,7 @@ private fun WheelColumn(
         state = listState,
         flingBehavior = rememberSnapFlingBehavior(listState),
         contentPadding = PaddingValues(vertical = ITEM_HEIGHT * edgeItems),
-        modifier = modifier.height(ITEM_HEIGHT * VISIBLE_ITEMS)
+        modifier = modifier.height(ITEM_HEIGHT * visibleItems)
     ) {
         itemsIndexed(values) { index, value ->
             val isSelected = index == selectedIndex
@@ -254,7 +291,7 @@ private fun WheelColumn(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "%02d".format(value),
+                    text = formatValue(value),
                     style = if (isSelected) {
                         MaterialTheme.typography.headlineSmall
                     } else {
