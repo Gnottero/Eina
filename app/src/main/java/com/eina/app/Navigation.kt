@@ -14,6 +14,7 @@ import androidx.compose.material.icons.outlined.BarChart
 import androidx.compose.material.icons.outlined.FitnessCenter
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -28,6 +29,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.eina.app.R
 import com.eina.app.ui.components.IslandNavBar
+import com.eina.app.ui.components.LocalIslandNavBar
 import com.eina.app.ui.components.IslandNavItem
 import com.eina.app.ui.dashboard.DashboardScreen
 import com.eina.app.ui.history.HistoryScreen
@@ -69,6 +71,9 @@ fun EinaNavHost() {
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
+        // Screens read it to decide how much trailing space to leave: without the bar there is
+        // nothing to clear, and the reserved height read as a page that ends too early.
+        CompositionLocalProvider(LocalIslandNavBar provides showNavBar) {
         NavHost(
             navController = navController,
             startDestination = EinaDestination.Dashboard.route
@@ -270,6 +275,7 @@ fun EinaNavHost() {
                     )
                 }
             )
+        }
         }
     }
 }
