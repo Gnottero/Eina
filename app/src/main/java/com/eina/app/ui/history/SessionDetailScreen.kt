@@ -524,7 +524,7 @@ private fun ExerciseSummaryCard(
                 else Modifier.border(2.dp, supersetTint, IslandShape)
             ),
         shape = IslandShape,
-        contentPadding = PaddingValues(horizontal = Spacing.md, vertical = Spacing.xl),
+        contentPadding = PaddingValues(horizontal = Spacing.lg, vertical = Spacing.xl),
         verticalArrangement = Arrangement.spacedBy(Spacing.lg)
     ) {
         if (supersetLetter != null) {
@@ -787,4 +787,3 @@ private fun Context.saveOverlay(bitmap: Bitmap, fileName: String, openInstagram:
 private fun Context.toast(@StringRes message: Int) {
     Toast.makeText(this, message, Toast.LENGTH_LONG).show()
 }
-

@@ -315,7 +315,7 @@ private fun RoutineExerciseCard(
                 else Modifier.border(2.dp, supersetTint, IslandShape)
             ),
         shape = IslandShape,
-        contentPadding = PaddingValues(horizontal = Spacing.md, vertical = Spacing.xl),
+        contentPadding = PaddingValues(horizontal = Spacing.lg, vertical = Spacing.xl),
         verticalArrangement = Arrangement.spacedBy(Spacing.lg),
         onLongClick = { actionsOpen = true }
     ) {

@@ -103,6 +103,7 @@ class WorkoutRepository(
                         workoutExerciseId = workoutExerciseId,
                         setIndex = setIndex,
                         targetReps = routineSet.targetReps,
+                        targetWeight = routineSet.targetWeight,
                         restSecondsPlanned = routineExercise.restSeconds,
                         setType = routineSet.setType
                     )
@@ -290,7 +291,7 @@ class WorkoutRepository(
                         setIndex = setIndex,
                         // An unfinished set must not wipe the target it had.
                         targetReps = set.actualReps ?: set.targetReps,
-                        targetWeight = set.weight,
+                        targetWeight = set.weight ?: set.targetWeight,
                         setType = set.setType
                     )
                 )

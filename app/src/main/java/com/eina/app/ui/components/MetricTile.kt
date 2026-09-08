@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
@@ -40,21 +41,26 @@ fun MetricTile(
      * Centred content. Three tiles side by side on a 360dp phone are narrower than their label, and
      * left-aligned they read as three ragged columns instead of one row of measurements.
      */
-    centered: Boolean = false
+    centered: Boolean = false,
+    /** Dashboard metrics already sit in a containing island and can be rendered without a tile. */
+    showBackground: Boolean = true
 ) {
     val island = EinaTheme.island
     val alignment = if (centered) Alignment.CenterHorizontally else Alignment.Start
     Column(
         modifier = modifier
-            .clip(TileShape)
-            .background(island.sunken)
+            .then(
+                if (showBackground) Modifier.clip(TileShape).background(island.sunken)
+                else Modifier
+            )
             .padding(horizontal = Spacing.md, vertical = Spacing.md),
         verticalArrangement = Arrangement.spacedBy(Spacing.xs),
         horizontalAlignment = alignment
     ) {
         Row(
+            modifier = if (centered) Modifier.fillMaxWidth() else Modifier,
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(Spacing.xs)
+            horizontalArrangement = if (centered) Arrangement.Center else Arrangement.spacedBy(Spacing.xs)
         ) {
             Icon(
                 icon,
@@ -69,7 +75,11 @@ fun MetricTile(
                 maxLines = 1
             )
         }
-        Row(verticalAlignment = Alignment.Bottom) {
+        Row(
+            modifier = if (centered) Modifier.fillMaxWidth() else Modifier,
+            verticalAlignment = Alignment.Bottom,
+            horizontalArrangement = if (centered) Arrangement.Center else Arrangement.Start
+        ) {
             Text(
                 text = value,
                 style = MaterialTheme.typography.headlineSmall,
