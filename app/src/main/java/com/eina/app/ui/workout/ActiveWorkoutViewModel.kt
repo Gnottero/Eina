@@ -192,7 +192,7 @@ class ActiveWorkoutViewModel(
     private fun recomputeVolume() {
         _uiState.update { state ->
             val volume = state.exercises.sumOf { ex ->
-                ex.sets.filter { it.completedAt != null && it.setType.countsAsWorking }
+                ex.sets.filter { it.completedAt != null }
                     .sumOf { volumeForSet(ex.weightType, it.toEntity(ex.workoutExerciseId), ex.bodyweightFactor) }
             }
             state.copy(volumeKg = volume)
@@ -443,14 +443,13 @@ class ActiveWorkoutViewModel(
     }
 
     /**
-     * Set type (warmup, normal, failure, drop). Changing it on a completed set moves it in or out
-     * of the volume, so the total is recomputed at once; an assigned PR survives, except when the
-     * set becomes a warmup, which cannot hold a record.
+     * Set type (warmup, normal, failure, drop). It only changes how the row reads: volume and
+     * records look at the kilograms, not at the label, so nothing is recomputed on the flags here.
      */
     fun setSetType(workoutExerciseId: Long, setId: Long, type: SetType) {
         val exercise = _uiState.value.exercises.find { it.workoutExerciseId == workoutExerciseId } ?: return
         val set = exercise.sets.find { it.id == setId } ?: return
-        val updated = set.copy(setType = type, isPR = set.isPR && type.countsAsWorking)
+        val updated = set.copy(setType = type)
         _uiState.update { state ->
             state.copy(
                 exercises = state.exercises.map { ex ->
@@ -472,7 +471,6 @@ class ActiveWorkoutViewModel(
         recomputeVolume()
         viewModelScope.launch {
             repository.updateSet(updated.toEntity(workoutExerciseId))
-            // A warmup cannot hold a record, so the one it held goes back to the best set left.
             if (set.completedAt != null) {
                 repository.recomputePrs(listOf(exercise.exerciseId))
                 touchedExerciseIds += exercise.exerciseId

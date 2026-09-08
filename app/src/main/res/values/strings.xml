@@ -160,7 +160,7 @@
     <string name="set_type_title">Set type</string>
     <string name="set_type_cd">Change set type</string>
     <string name="set_type_warmup">Warm-up</string>
-    <string name="set_type_warmup_description">Out of volume and PRs, rest timer still runs.</string>
+    <string name="set_type_warmup_description">Not numbered with the work sets; volume and PRs count it.</string>
     <string name="set_type_normal">Normal</string>
     <string name="set_type_normal_description">A working set, numbered.</string>
     <string name="set_type_failure">To failure</string>
@@ -432,7 +432,7 @@
     <string name="routine_sync_rest">%1$s: rest from %2$s to %3$s</string>
     <string name="routine_sync_reordered">Exercise order changed</string>
     <string name="routine_sync_targets_note">Target weight and reps also become the ones you logged.</string>
-    <string name="routine_sync_apply">Update the routine</string>
+    <string name="routine_sync_apply">Update</string>
     <string name="routine_sync_keep">Leave it as it is</string>
     <string name="edit_exercise_title">Edit exercise</string>
     <string name="edit_exercise_subtitle">Only your own exercises can be edited</string>

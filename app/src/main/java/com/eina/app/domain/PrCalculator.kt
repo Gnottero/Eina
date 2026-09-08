@@ -2,14 +2,18 @@ package com.eina.app.domain
 
 import com.eina.app.data.db.SetEntryEntity
 import com.eina.app.data.db.WeightType
-import com.eina.app.data.db.countsAsWorking
 
+/**
+ * Whether the set beats everything recorded before it for the same exercise.
+ *
+ * The set type does not matter: a heavier bar is a heavier bar, and calling it a warmup does not
+ * make it lighter. Marking a set as a warmup after lifting a record used to erase the record.
+ */
 fun isNewPR(
     weightType: WeightType,
     newSet: SetEntryEntity,
-    historicalSets: List<SetEntryEntity> // every completed non-warmup set of the same exerciseId
+    historicalSets: List<SetEntryEntity> // every completed set of the same exerciseId
 ): Boolean {
-    if (!newSet.setType.countsAsWorking) return false
     return when (weightType) {
         WeightType.FREE_WEIGHT, WeightType.MACHINE_STACK, WeightType.ASSISTED ->
             (newSet.weight ?: 0.0) > (historicalSets.maxOfOrNull { it.weight ?: 0.0 } ?: 0.0)

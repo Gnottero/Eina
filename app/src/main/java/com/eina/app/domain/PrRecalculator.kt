@@ -2,7 +2,6 @@ package com.eina.app.domain
 
 import com.eina.app.data.db.SetEntryEntity
 import com.eina.app.data.db.WeightType
-import com.eina.app.data.db.countsAsWorking
 
 /**
  * Recomputes the `isPR` flag of every set of an exercise.
@@ -13,8 +12,8 @@ import com.eina.app.data.db.countsAsWorking
  * month would leave its record standing, and raising it would not create one.
  *
  * So the flags are rebuilt from scratch: sets are walked in completion order and each is a record
- * if it beats everything before it, exactly as [isNewPR] does live. Warmups never hold a record and
- * stay out of the comparison.
+ * if it beats everything before it, exactly as [isNewPR] does live. Every completed set counts,
+ * warmups included: the type describes how the set was performed, not how much it lifted.
  *
  * [sets] must be complete (every completed set of that exercise, in any session); the order does
  * not matter, the function sorts them. Only the rows whose flag changes are returned, so the caller
@@ -30,7 +29,7 @@ fun recomputePrFlags(weightType: WeightType, sets: List<SetEntryEntity>): List<S
     ordered.forEach { set ->
         val isPR = set.completedAt != null && isNewPR(weightType, set, history)
         if (isPR != set.isPR) changed += set.copy(isPR = isPR)
-        if (set.completedAt != null && set.setType.countsAsWorking) history += set
+        if (set.completedAt != null) history += set
     }
     return changed
 }

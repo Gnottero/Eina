@@ -22,4 +22,8 @@ interface WorkoutExerciseDao {
 
     @Query("SELECT * FROM workout_exercises WHERE sessionId = :sessionId ORDER BY `order` ASC")
     suspend fun getForSessionOnce(sessionId: Long): List<WorkoutExerciseEntity>
+
+    /** Every exercise the history has ever touched, for a full PR rebuild. */
+    @Query("SELECT DISTINCT exerciseId FROM workout_exercises")
+    suspend fun getAllExerciseIds(): List<Long>
 }

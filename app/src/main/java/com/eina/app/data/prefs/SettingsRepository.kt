@@ -55,6 +55,16 @@ class SettingsRepository(private val context: Context) {
         _weeklyGoalDays.value = clamped
     }
 
+    /**
+     * Whether the one-off PR rebuild still has to run, and marks it done. Warmups now hold records,
+     * so the flags written by earlier versions have to be recomputed once over the whole history.
+     */
+    fun consumePrBackfill(): Boolean {
+        if (prefs.getBoolean(KEY_PR_BACKFILL, false)) return false
+        prefs.edit().putBoolean(KEY_PR_BACKFILL, true).apply()
+        return true
+    }
+
     fun setHapticsEnabled(enabled: Boolean) = update(KEY_HAPTICS, enabled, _hapticsEnabled)
 
     fun setTimerSoundEnabled(enabled: Boolean) = update(KEY_TIMER_SOUND, enabled, _timerSoundEnabled)
@@ -75,6 +85,7 @@ class SettingsRepository(private val context: Context) {
         const val KEY_TIMER_VIBRATION = "timer_vibration_enabled"
         const val KEY_HEALTH_SYNC = "health_sync_enabled"
         const val KEY_WEEKLY_GOAL = "weekly_goal_days"
+        const val KEY_PR_BACKFILL = "pr_backfill_done"
         const val DEFAULT_WEEKLY_GOAL = 4
     }
 }

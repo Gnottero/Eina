@@ -182,6 +182,13 @@ class WorkoutRepository(
         }
     }
 
+    /**
+     * Rebuilds the PR flags of the whole history. Needed once, after warmups started counting for
+     * records: flags written under the old rule miss every record lifted on a warmup, and may keep
+     * one that a heavier warmup before it now voids.
+     */
+    suspend fun recomputeAllPrs() = recomputePrs(workoutExerciseDao.getAllExerciseIds())
+
     /** Exercises touched by a session; the list to pass to [recomputePrs] after editing it. */
     suspend fun exerciseIdsOfSession(sessionId: Long): List<Long> =
         workoutExerciseDao.getForSessionOnce(sessionId).map { it.exerciseId }

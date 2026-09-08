@@ -2,7 +2,6 @@ package com.eina.app.domain
 
 import com.eina.app.data.db.CompletedSetRow
 import com.eina.app.data.db.WeightType
-import com.eina.app.data.db.countsAsWorking
 
 /**
  * One progression point: the best set of a workout, dated on that day. `weight` holds kilograms (or
@@ -21,11 +20,11 @@ data class ProgressPoint(
  * DECISIONE: the point is the best set of the session, not the average. An average drops as soon as
  * a light set is appended, showing a decline where more work was actually done. "Best" is the
  * highest load where a load exists (assisted exercises read as they do for PRs, highest number
- * wins) and the highest reps where no load is typed.
+ * wins) and the highest reps where no load is typed. Warmups take part: a set that turned out to be
+ * the best of the day is the best of the day whatever it was called.
  */
 fun exerciseProgress(rows: List<CompletedSetRow>): List<ProgressPoint> =
-    rows.filter { it.setType.countsAsWorking }
-        .groupBy { it.sessionId }
+    rows.groupBy { it.sessionId }
         .mapNotNull { (_, sessionRows) ->
             val best = bestSet(sessionRows) ?: return@mapNotNull null
             ProgressPoint(

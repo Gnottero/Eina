@@ -150,7 +150,7 @@
     <string name="set_type_title">Type de série</string>
     <string name="set_type_cd">Changer le type de série</string>
     <string name="set_type_warmup">Échauffement</string>
-    <string name="set_type_warmup_description">Hors volume et records, la récupération démarre quand même.</string>
+    <string name="set_type_warmup_description">Pas numérotée avec les séries de travail ; volume et records la comptent.</string>
     <string name="set_type_normal">Normale</string>
     <string name="set_type_normal_description">Une série de travail, numérotée.</string>
     <string name="set_type_failure">Jusqu\'à l\'échec</string>
@@ -415,7 +415,7 @@
     <string name="routine_sync_rest">%1$s : r\u00E9cup\u00E9ration de %2$s \u00E0 %3$s</string>
     <string name="routine_sync_reordered">Ordre des exercices modifi\u00E9</string>
     <string name="routine_sync_targets_note">Le poids et les r\u00E9p\u00E9titions cibles deviennent aussi ceux enregistr\u00E9s.</string>
-    <string name="routine_sync_apply">Mettre \u00E0 jour la s\u00E9ance</string>
+    <string name="routine_sync_apply">Mettre \u00E0 jour</string>
     <string name="routine_sync_keep">Laisser telle quelle</string>
     <string name="edit_exercise_title">Modifier \'exercice</string>
     <string name="edit_exercise_subtitle">Seuls tes propres exercices sont modifiables</string>

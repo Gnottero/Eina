@@ -37,12 +37,17 @@ val WeightType.usesDecimalField: Boolean
     get() = usesWeight || usesDistance
 
 /**
- * Nature of a single set. Warmups stay out of volume and PRs, but start rest like every other set;
- * failure and drop sets are work sets in every respect.
+ * Nature of a single set. Every type is lifted weight: volume, records and rest count a warmup like
+ * any other set, because the kilograms are on the bar either way. The type only changes how the row
+ * reads — a warmup carries its letter instead of a number in the working sequence.
  */
 enum class SetType { WARMUP, NORMAL, FAILURE, DROP }
 
-/** A warmup is not work for volume, records and numbering; this does not govern rest. */
+/**
+ * Whether the set takes a number in the working sequence. A warmup does not, so a warmup in the
+ * middle does not steal the number from the set after it. This says nothing about volume, records
+ * or rest, which count every set.
+ */
 val SetType.countsAsWorking: Boolean
     get() = this != SetType.WARMUP
 

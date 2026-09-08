@@ -150,7 +150,7 @@
     <string name="set_type_title">Tipo di serie</string>
     <string name="set_type_cd">Cambia tipo di serie</string>
     <string name="set_type_warmup">Riscaldamento</string>
-    <string name="set_type_warmup_description">Fuori da volume e record, il recupero parte lo stesso.</string>
+    <string name="set_type_warmup_description">Non prende numero fra le serie di lavoro; volume e record la contano.</string>
     <string name="set_type_normal">Normale</string>
     <string name="set_type_normal_description">Serie di lavoro, con il suo numero.</string>
     <string name="set_type_failure">A cedimento</string>
@@ -415,7 +415,7 @@
     <string name="routine_sync_rest">%1$s: recupero da %2$s a %3$s</string>
     <string name="routine_sync_reordered">Ordine degli esercizi cambiato</string>
     <string name="routine_sync_targets_note">Anche peso e ripetizioni target diventano quelli registrati.</string>
-    <string name="routine_sync_apply">Aggiorna la scheda</string>
+    <string name="routine_sync_apply">Aggiorna</string>
     <string name="routine_sync_keep">Lascia com\u2019\u00E8</string>
     <string name="edit_exercise_title">Modifica esercizio</string>
     <string name="edit_exercise_subtitle">Si possono modificare solo gli esercizi tuoi</string>
