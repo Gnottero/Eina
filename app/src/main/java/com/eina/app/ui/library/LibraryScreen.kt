@@ -104,21 +104,24 @@ fun LibraryScreen(
             )
         }
     ) {
-        // Search, filters and the 197 movements live in a single island that runs off the bottom
-        // edge. As one card per exercise the page was a column of shadows, and the search bar was
-        // a floating object of its own above them.
+        // Search, filters and the 197 movements live in a single island. As one card per exercise
+        // the page was a column of shadows, and the search bar was a floating object of its own
+        // above them. The island stops above the floating nav bar rather than running off the
+        // bottom edge: cut by the screen it read as a page missing its end, not as a list that
+        // scrolls.
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
                 .padding(horizontal = Spacing.gutter)
+                .padding(bottom = islandBottomSpace(extra = Spacing.md))
                 .islandShadow(8.dp, IslandShape)
                 .clip(IslandShape)
                 .background(MaterialTheme.colorScheme.surface)
         ) {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(bottom = islandBottomSpace())
+                contentPadding = PaddingValues(bottom = Spacing.md)
             ) {
                 item {
                     IslandTextField(

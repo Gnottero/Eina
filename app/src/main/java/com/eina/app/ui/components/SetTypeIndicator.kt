@@ -76,8 +76,8 @@ fun setTypeDescription(type: SetType): String = stringResource(
  * Set marker at the head of the row: type letter or number, and "PR" when the set is a record.
  *
  * A record always shows the letters PR: on a failure or drop set the pill used to keep the type
- * letter and only change colour, which said "record" to nobody. The type is not lost — its letter
- * moves under the pill, in its own colour.
+ * letter and only change colour, which said "record" to nobody. The pill replaces the letter the
+ * way it replaces the number; the type stays a tap away in the sheet.
  */
 @Composable
 fun SetTypeIndicator(
@@ -104,26 +104,18 @@ fun SetTypeIndicator(
         contentAlignment = Alignment.Center
     ) {
         when {
-            isPR -> Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(1.dp)
-            ) {
-                Text(
-                    text = stringResource(R.string.badge_pr),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = Color.White,
-                    modifier = Modifier
-                        .background(MaterialTheme.colorScheme.primary, PillShape)
-                        .padding(horizontal = 7.dp, vertical = 3.dp)
-                )
-                type.glyph?.let { glyph ->
-                    Text(
-                        text = glyph,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = accent
-                    )
-                }
-            }
+            // The pill replaces the type letter the way it replaces the number: a record on a
+            // failure set made the row taller than its neighbours and told a record on a failure
+            // apart from a record on a normal set for no reason. The type stays one tap away in
+            // the sheet.
+            isPR -> Text(
+                text = stringResource(R.string.badge_pr),
+                style = MaterialTheme.typography.labelSmall,
+                color = Color.White,
+                modifier = Modifier
+                    .background(MaterialTheme.colorScheme.primary, PillShape)
+                    .padding(horizontal = 7.dp, vertical = 3.dp)
+            )
 
             type == SetType.NORMAL -> Text(
                 text = text,
