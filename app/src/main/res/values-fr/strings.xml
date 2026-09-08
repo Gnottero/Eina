@@ -312,7 +312,6 @@
 
     <!-- Réglages -->
     <string name="settings_title">Réglages</string>
-    <string name="settings_subtitle">Aucun compte, aucun serveur</string>
     <string name="settings_section_language">App</string>
     <string name="settings_language_title">Langue de l\'app</string>
     <string name="settings_language_description">Interface et descriptions des exercices</string>

@@ -312,7 +312,6 @@
 
     <!-- Impostazioni -->
     <string name="settings_title">Impostazioni</string>
-    <string name="settings_subtitle">Nessun account, nessun server</string>
     <string name="settings_section_language">App</string>
     <string name="settings_language_title">Lingua dell\'app</string>
     <string name="settings_language_description">Interfaccia e descrizioni degli esercizi</string>

@@ -198,8 +198,7 @@ fun FinishWorkoutSheet(
             SectionHeader(title = stringResource(R.string.finish_duration))
             HourMinuteWheelPicker(
                 seconds = duration,
-                onSecondsChange = { duration = it },
-                modifier = Modifier.padding(vertical = Spacing.sm)
+                onSecondsChange = { duration = it }
             )
         }
 
