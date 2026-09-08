@@ -436,8 +436,6 @@
     </plurals>
     <string name="dashboard_goal_done">Semaine bouclée.</string>
     <string name="dashboard_goal_none">Rien d\'enregistré cette semaine pour l\'instant.</string>
-    <string name="dashboard_week_volume">Volume de la semaine</string>
-    <string name="dashboard_week_prs">Nouveaux records</string>
     <string name="workout_session_open">Séance ouverte</string>
     <string name="workout_eyebrow_open">%1$s · séance ouverte</string>
     <string name="workout_routines_hint">Appui long pour modifier, exporter ou supprimer</string>
@@ -448,8 +446,6 @@
     <string name="finish_step_one">Étape 1 sur 2 · %1$s</string>
     <string name="finish_step_two">Étape 2 sur 2 · par rapport à %1$s</string>
     <string name="finish_step_two_generic">Étape 2 sur 2</string>
-    <string name="active_finish_later">Continuer plus tard</string>
-    <string name="active_finish_later_description">La séance reste ouverte</string>
     <string name="progress_period_week">Semaine</string>
     <string name="progress_period_month">Mois</string>
     <string name="progress_period_year">Année</string>

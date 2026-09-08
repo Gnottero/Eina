@@ -63,48 +63,32 @@ fun MetricTile(
         verticalArrangement = Arrangement.spacedBy(Spacing.xs),
         horizontalAlignment = alignment
     ) {
-        if (centered) {
-            // The trailing spacer mirrors the icon and keeps the label itself on the exact centre
-            // of the tile. Unlike an overlaid icon, it cannot collide with a long label.
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
-            ) {
-                Icon(
-                    icon,
-                    contentDescription = null,
-                    tint = tint,
-                    modifier = Modifier.size(15.dp)
-                )
-                Spacer(modifier = Modifier.width(Spacing.xs))
-                Text(
-                    text = label.uppercase(),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = island.textSecondary,
-                    textAlign = TextAlign.Center,
-                    maxLines = 1
-                )
-                Spacer(modifier = Modifier.width(Spacing.xs + 15.dp))
-            }
-        } else {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(Spacing.xs)
-            ) {
-                Icon(
-                    icon,
-                    contentDescription = null,
-                    tint = tint,
-                    modifier = Modifier.size(15.dp)
-                )
-                Text(
-                    text = label.uppercase(),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = island.textSecondary,
-                    maxLines = 1
-                )
-            }
+        // Icon and label are one unit: a trailing spacer used to centre the label alone on the
+        // tile, which left the icon hanging off to one side, away from the words it belongs to.
+        // The group is centred as a whole, so it sits on the same axis as the number below.
+        Row(
+            modifier = if (centered) Modifier.fillMaxWidth() else Modifier,
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = if (centered) Arrangement.Center else Arrangement.Start
+        ) {
+            Icon(
+                icon,
+                contentDescription = null,
+                tint = tint,
+                modifier = Modifier.size(15.dp)
+            )
+            Spacer(modifier = Modifier.width(Spacing.xs))
+            // Ellipsis and not the default clip: a label too long for the tile used to be cut
+            // mid-word without a sign, and a centred text kept the space of the part no longer
+            // drawn, pushing the visible half away from its icon.
+            Text(
+                text = label.uppercase(),
+                style = MaterialTheme.typography.labelSmall,
+                color = island.textSecondary,
+                textAlign = if (centered) TextAlign.Center else TextAlign.Start,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
         }
         Row(
             modifier = if (centered) Modifier.fillMaxWidth() else Modifier,

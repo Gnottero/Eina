@@ -25,6 +25,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.Notes
 import androidx.compose.material.icons.outlined.AutoAwesome
+import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.FitnessCenter
 import androidx.compose.material.icons.outlined.Repeat
@@ -79,6 +80,7 @@ import com.eina.app.ui.components.IslandSurface
 import com.eina.app.ui.components.MetricTile
 import com.eina.app.ui.components.IslandTextField
 import com.eina.app.ui.components.IslandSecondaryButton
+import com.eina.app.ui.components.SetCheckSize
 import com.eina.app.ui.components.SetColumnGap
 import com.eina.app.ui.components.SetMarkerWidth
 import com.eina.app.ui.components.SetRowInset
@@ -109,6 +111,7 @@ import com.eina.app.ui.share.shareImage
 import com.eina.app.ui.theme.EinaTheme
 import com.eina.app.ui.theme.IslandShape
 import com.eina.app.ui.theme.MetricColors
+import com.eina.app.ui.theme.PillShape
 import com.eina.app.ui.theme.Spacing
 import com.eina.app.ui.theme.TileShape
 import kotlinx.coroutines.Dispatchers
@@ -550,10 +553,12 @@ private fun ExerciseSummaryCard(
         }
 
         Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+            // The trailing slot stays: without it the value columns stretched to the card edge and
+            // landed nowhere near where the same numbers sit while recording.
             SetTableHeader(
                 weightType = exercise.weightType,
                 showPrevious = false,
-                trailingSlot = false
+                trailingSlot = true
             )
             // As in the session: only working sets are numbered, warmups show W.
             var workingNumber = 0
@@ -565,13 +570,18 @@ private fun ExerciseSummaryCard(
     }
 }
 
-/** Set row of the summary: same columns as the recording table, read-only. */
+/**
+ * Set row of the summary: the recording row with the fields taken away. It keeps the tint of a
+ * completed set and its check disc — every set here is done — so the table reads as full as the one
+ * in the session instead of two small numbers floating in a white card.
+ */
 @Composable
 private fun SetRow(number: Int, set: CompletedSetRow) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clip(TileShape)
+            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.10f))
             .padding(vertical = Spacing.sm, horizontal = SetRowInset),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(SetColumnGap)
@@ -587,6 +597,21 @@ private fun SetRow(number: Int, set: CompletedSetRow) {
             SetValueText(text = decimalLabel(set), modifier = Modifier.weight(1f))
         }
         SetValueText(text = "${set.actualReps ?: 0}", modifier = Modifier.weight(1f))
+        // Same disc as the session, without the tap: it marks the set as done, it does not undo it.
+        Box(
+            modifier = Modifier
+                .size(SetCheckSize)
+                .clip(PillShape)
+                .background(MaterialTheme.colorScheme.primary),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                Icons.Outlined.Check,
+                contentDescription = null,
+                tint = Color.White,
+                modifier = Modifier.size(20.dp)
+            )
+        }
     }
 }
 

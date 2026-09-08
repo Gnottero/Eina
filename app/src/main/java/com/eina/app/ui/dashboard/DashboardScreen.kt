@@ -155,7 +155,10 @@ fun DashboardScreen(
             ) {
                 MetricTile(
                     icon = Icons.Outlined.FitnessCenter,
-                    label = stringResource(R.string.dashboard_week_volume),
+                    // The short label: "Volume settimana" did not fit on one line and was clipped in
+                    // silence, which left the icon stranded away from the word left standing. The
+                    // week is already said by the ring above.
+                    label = stringResource(R.string.stat_volume),
                     value = formatVolume(state.weekVolumeKg),
                     unit = stringResource(R.string.unit_kg),
                     tint = MetricColors.Volume,
@@ -165,7 +168,7 @@ fun DashboardScreen(
                 )
                 MetricTile(
                     icon = Icons.Outlined.EmojiEvents,
-                    label = stringResource(R.string.dashboard_week_prs),
+                    label = stringResource(R.string.stat_records),
                     value = state.weekPrCount.toString(),
                     tint = MetricColors.Records,
                     centered = true,
