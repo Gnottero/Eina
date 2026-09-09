@@ -8,41 +8,58 @@ import com.eina.app.data.db.WeightType
  *
  * The set type does not matter: a heavier bar is a heavier bar, and calling it a warmup does not
  * make it lighter. Marking a set as a warmup after lifting a record used to erase the record.
+ *
+ * A set with no repetitions is not a lift, though: loading 200 kg and racking the bar without
+ * moving it is not a record, so a set whose [SetEntryEntity.actualReps] is null or zero can never
+ * be a PR, and it is not part of the history the next set has to beat either.
  */
 fun isNewPR(
     weightType: WeightType,
     newSet: SetEntryEntity,
     historicalSets: List<SetEntryEntity> // every completed set of the same exerciseId
 ): Boolean {
+    if (!isPerformed(weightType, newSet)) return false
+    val history = historicalSets.filter { isPerformed(weightType, it) }
+
     return when (weightType) {
         WeightType.FREE_WEIGHT, WeightType.MACHINE_STACK, WeightType.ASSISTED ->
-            (newSet.weight ?: 0.0) > (historicalSets.maxOfOrNull { it.weight ?: 0.0 } ?: 0.0)
+            (newSet.weight ?: 0.0) > (history.maxOfOrNull { it.weight ?: 0.0 } ?: 0.0)
 
         WeightType.BODYWEIGHT ->
-            (newSet.actualReps ?: 0) > (historicalSets.maxOfOrNull { it.actualReps ?: 0 } ?: 0)
+            (newSet.actualReps ?: 0) > (history.maxOfOrNull { it.actualReps ?: 0 } ?: 0)
 
         WeightType.BODYWEIGHT_PLUS_LOAD -> {
             val newLoad = (newSet.bodyweightSnapshotKg ?: 0.0) + (newSet.weight ?: 0.0)
-            val maxHistLoad = historicalSets.maxOfOrNull { (it.bodyweightSnapshotKg ?: 0.0) + (it.weight ?: 0.0) } ?: 0.0
+            val maxHistLoad = history.maxOfOrNull { (it.bodyweightSnapshotKg ?: 0.0) + (it.weight ?: 0.0) } ?: 0.0
             newLoad > maxHistLoad
         }
 
         WeightType.TIME_BASED ->
-            (newSet.actualReps ?: 0) > (historicalSets.maxOfOrNull { it.actualReps ?: 0 } ?: 0) // actualReps holds the duration
+            (newSet.actualReps ?: 0) > (history.maxOfOrNull { it.actualReps ?: 0 } ?: 0) // actualReps holds the duration
 
         // Distance and time together: running further is a record, and so is running the same
         // distance faster, so beating either the maximum distance or the maximum average speed
         // makes the set a PR.
         WeightType.DISTANCE_BASED -> {
             val newDistance = newSet.weight ?: 0.0
-            if (newDistance <= 0.0) false
-            else {
-                val bestDistance = historicalSets.maxOfOrNull { it.weight ?: 0.0 } ?: 0.0
-                val bestSpeed = historicalSets.maxOfOrNull { speedKmPerHour(it) } ?: 0.0
-                newDistance > bestDistance || speedKmPerHour(newSet) > bestSpeed
-            }
+            val bestDistance = history.maxOfOrNull { it.weight ?: 0.0 } ?: 0.0
+            val bestSpeed = history.maxOfOrNull { speedKmPerHour(it) } ?: 0.0
+            newDistance > bestDistance || speedKmPerHour(newSet) > bestSpeed
         }
     }
+}
+
+/**
+ * Whether the set records work actually done, and so can hold a record and cap the next one.
+ *
+ * What makes a set real depends on what it measures: repetitions for a load, seconds for a hold,
+ * kilometres for a machine that covers distance. Zero of that measure means the set was closed
+ * without being performed - a weight typed in and never lifted - and it must stay out of the
+ * records in both directions.
+ */
+private fun isPerformed(weightType: WeightType, set: SetEntryEntity): Boolean = when (weightType) {
+    WeightType.DISTANCE_BASED -> (set.weight ?: 0.0) > 0.0
+    else -> (set.actualReps ?: 0) > 0
 }
 
 /**
