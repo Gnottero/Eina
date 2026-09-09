@@ -80,6 +80,22 @@ class PrRecalculatorTest {
     }
 
     @Test
+    fun `una serie chiusa a zero ripetizioni perde il record e non alza l'asticella`() {
+        val sets = listOf(
+            set(1, 100.0, 1_000, isPR = true),
+            set(2, 200.0, 2_000, isPR = true, reps = 0),
+            set(3, 110.0, 3_000, isPR = false)
+        )
+
+        val changed = recomputePrFlags(WeightType.FREE_WEIGHT, sets).associateBy { it.id }
+
+        // The 200 kg was never lifted: it loses the flag and the 110 kg takes the record.
+        assertEquals(setOf(2L, 3L), changed.keys)
+        assertEquals(false, changed.getValue(2L).isPR)
+        assertEquals(true, changed.getValue(3L).isPR)
+    }
+
+    @Test
     fun `senza cambiamenti non si riscrive niente`() {
         val sets = listOf(
             set(1, 60.0, 1_000, isPR = true),
