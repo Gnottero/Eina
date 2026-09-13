@@ -44,6 +44,9 @@ class RestTimerController(
 
     private var job: Job? = null
 
+    /** Last whole second posted to the shade; the notification is rewritten only when it moves. */
+    private var notifiedSecond = -1
+
     fun start(totalSeconds: Int) {
         if (totalSeconds <= 0) return
         schedule(System.currentTimeMillis() + totalSeconds * 1000L, totalSeconds)
@@ -94,6 +97,7 @@ class RestTimerController(
     private fun stop() {
         job?.cancel()
         job = null
+        notifiedSecond = -1
         alarms.cancel()
         notifications.clear()
         _state.value = null
@@ -101,9 +105,11 @@ class RestTimerController(
 
     private fun schedule(endAtMs: Long, totalSeconds: Int) {
         job?.cancel()
-        _state.value = RestTimerState(totalSeconds, endAtMs, remainingSecondsAt(endAtMs))
+        val remaining = remainingSecondsAt(endAtMs)
+        _state.value = RestTimerState(totalSeconds, endAtMs, remaining)
         alarms.schedule(endAtMs)
-        notifications.showCountdown(endAtMs)
+        notifiedSecond = remaining
+        notifications.showCountdown(endAtMs, remaining)
         job = scope.launch {
             while (isActive) {
                 // Faster than one second: the remainder comes from the clock, and a 1s tick out of
@@ -114,6 +120,12 @@ class RestTimerController(
                 if (remaining <= 0) {
                     finish()
                     break
+                }
+                // The shade is rewritten once a second and not five times: the tick is fast so the
+                // ring moves smoothly, but the notification only ever shows whole seconds.
+                if (remaining != notifiedSecond) {
+                    notifiedSecond = remaining
+                    notifications.showCountdown(current.endAtMs, remaining)
                 }
                 _state.value = current.copy(remainingSeconds = remaining)
             }

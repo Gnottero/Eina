@@ -117,7 +117,7 @@
     <string name="playlist_none">No playlist</string>
 
     <!-- Running workout -->
-    <string name="active_title">Workout in progress</string>
+    <string name="active_title">Workout</string>
     <string name="active_empty_title">Empty session</string>
     <string name="active_empty_description">Add your first exercise to start logging sets.</string>
     <string name="active_play_playlist_cd">Play playlist</string>
@@ -487,7 +487,7 @@
     <string name="rest_channel_done">Rest over</string>
     <string name="rest_channel_done_description">Tells you the rest has run out.</string>
     <string name="rest_notification_title">Rest</string>
-    <string name="rest_notification_text">Back to the bar when it hits zero.</string>
+    <string name="rest_notification_remaining">%1$s left</string>
     <string name="rest_done_notification_title">Rest over</string>
     <string name="rest_done_notification_text">Next set is waiting.</string>
 </resources>

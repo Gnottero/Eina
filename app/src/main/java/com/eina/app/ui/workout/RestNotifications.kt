@@ -13,6 +13,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.eina.app.MainActivity
 import com.eina.app.R
+import java.util.Locale
 
 /**
  * The rest timer as seen from outside the app.
@@ -22,8 +23,8 @@ import com.eina.app.R
  * announced by a beep that the frozen process often never got round to playing.
  *
  * Two notifications, on two channels:
- * - the countdown, ongoing and silent, whose remaining time is drawn by the system clock and not
- *   by this process — so it keeps counting down correctly while the app is frozen or gone;
+ * - the countdown, ongoing and silent, carrying the time left both as text and as an instant for
+ *   the system to render as a chronometer;
  * - the end, which replaces it and is the thing that survives the app being nowhere near the
  *   foreground.
  *
@@ -80,26 +81,44 @@ class RestNotifications(private val context: Context) {
     }
 
     /**
-     * The running countdown. The remaining time is not written into the text but handed over as an
-     * instant: the system renders it as a chronometer running backwards, once a second, without
-     * this process being awake to update anything.
+     * The running countdown, said twice.
+     *
+     * `setWhen` plus the chronometer flags is the cheap way: the system draws the remaining time
+     * itself, once a second, with this process asleep. It is also the way an OEM is free to ignore
+     * — on the phone this was tested on, MagicOS renders the instant as a coarse relative stamp
+     * ("in 1 min") that never moves — so the time is written into the text as well, and the caller
+     * re-posts on every second that changes. Where the chronometer works, the two agree; where it
+     * does not, the text is the countdown.
+     *
+     * The text stops moving if the system freezes the process. That is the honest failure: the
+     * rest still ends on time, because ending it is the alarm's job and not this notification's.
      */
-    fun showCountdown(endAtMs: Long) {
+    fun showCountdown(endAtMs: Long, remainingSeconds: Int) {
         post(
             id = ID_RUNNING,
             notification = base(CHANNEL_RUNNING)
                 .setContentTitle(context.getString(R.string.rest_notification_title))
-                .setContentText(context.getString(R.string.rest_notification_text))
+                .setContentText(
+                    context.getString(R.string.rest_notification_remaining, format(remainingSeconds))
+                )
                 .setUsesChronometer(true)
                 .setChronometerCountDown(true)
                 .setWhen(endAtMs)
                 .setShowWhen(true)
                 .setOngoing(true)
                 .setSilent(true)
+                // Re-posted once a second: without this every repost would count as a fresh alert.
+                .setOnlyAlertOnce(true)
                 .setCategory(NotificationCompat.CATEGORY_STOPWATCH)
                 .setPriority(NotificationCompat.PRIORITY_LOW)
                 .build()
         )
+    }
+
+    /** "1:05" — the same shape the timer island shows, so the two never look like two clocks. */
+    private fun format(seconds: Int): String {
+        val safe = seconds.coerceAtLeast(0)
+        return String.format(Locale.getDefault(), "%d:%02d", safe / 60, safe % 60)
     }
 
     /** End of the rest: the countdown is replaced rather than joined by a second line. */

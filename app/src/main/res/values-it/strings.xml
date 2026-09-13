@@ -108,7 +108,7 @@
     <string name="playlist_none">Nessuna playlist</string>
 
     <!-- Allenamento in corso -->
-    <string name="active_title">Allenamento in corso</string>
+    <string name="active_title">Allenamento</string>
     <string name="active_empty_title">Sessione vuota</string>
     <string name="active_empty_description">Aggiungi il primo esercizio per iniziare a registrare le serie.</string>
     <string name="active_play_playlist_cd">Riproduci playlist</string>
@@ -470,7 +470,7 @@
     <string name="rest_channel_done">Recupero finito</string>
     <string name="rest_channel_done_description">Avvisa quando il recupero è scaduto.</string>
     <string name="rest_notification_title">Recupero</string>
-    <string name="rest_notification_text">Si torna sotto al bilanciere a zero.</string>
+    <string name="rest_notification_remaining">Mancano %1$s</string>
     <string name="rest_done_notification_title">Recupero finito</string>
     <string name="rest_done_notification_text">La prossima serie ti aspetta.</string>
 </resources>

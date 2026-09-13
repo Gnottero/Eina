@@ -214,7 +214,11 @@ fun ActiveWorkoutScreen(
                 // stopwatch meant stacking a second one on top of it. Music now launches from the
                 // header with no sheet at all, and the stopwatch opens its own directly.
                 trailing = {
-                    val playlistUri = state.playlistUri?.takeIf { it.isNotBlank() }
+                    // Neither belongs to a workout already over: there is no music to start for a
+                    // session recorded last week and no rest to time inside it, and the two round
+                    // buttons would only take width from a title that has to fit beside them.
+                    val playlistUri = state.playlistUri
+                        ?.takeIf { it.isNotBlank() && !editing }
                     val playlistType = state.playlistType
                     if (playlistUri != null && playlistType != null) {
                         IslandIconButton(
@@ -234,10 +238,12 @@ fun ActiveWorkoutScreen(
                         )
                     }
                     // Same stopwatch as the Dashboard: a count started earlier keeps running here.
-                    StopwatchIconButton(
-                        running = stopwatchState.running,
-                        onClick = { showStopwatch = true }
-                    )
+                    if (!editing) {
+                        StopwatchIconButton(
+                            running = stopwatchState.running,
+                            onClick = { showStopwatch = true }
+                        )
+                    }
                 }
             )
 
