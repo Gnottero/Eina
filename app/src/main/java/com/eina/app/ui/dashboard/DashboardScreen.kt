@@ -1,5 +1,6 @@
 package com.eina.app.ui.dashboard
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -132,21 +133,14 @@ fun DashboardScreen(
                         ),
                         style = MaterialTheme.typography.titleMedium
                     )
-                    // Only at the two ends: an empty week is worth saying, a full one worth
-                    // celebrating. In between the day count above already says it, and a line
-                    // counting what is missing would read as a reproach.
-                    val note = when (state.weekDaysTrained) {
-                        0 -> stringResource(R.string.dashboard_goal_none)
-                        DaysInWeek -> stringResource(R.string.dashboard_goal_done)
-                        else -> null
-                    }
-                    if (note != null) {
-                        Text(
-                            text = note,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = island.textSecondary
-                        )
-                    }
+                    // A line for the week actually had, not for the one that was missed. The
+                    // first screen of the app opens on a ring and a bare day count, and a number
+                    // on its own says nothing about whether it is a good number.
+                    Text(
+                        text = stringResource(motivationFor(state.weekDaysTrained)),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = island.textSecondary
+                    )
                 }
             }
 
@@ -214,3 +208,20 @@ fun DashboardScreen(
 
 /** The ring is drawn over the week itself; see the hero island above. */
 private const val DaysInWeek = 7
+
+/**
+ * The sentence beside the ring: one per number of days trained this week, from an empty week to a
+ * full one. They are written out rather than built from a plural, because what changes between
+ * three days and six is not the grammar.
+ */
+@StringRes
+private fun motivationFor(daysTrained: Int): Int = when (daysTrained.coerceIn(0, DaysInWeek)) {
+    0 -> R.string.dashboard_motivation_0
+    1 -> R.string.dashboard_motivation_1
+    2 -> R.string.dashboard_motivation_2
+    3 -> R.string.dashboard_motivation_3
+    4 -> R.string.dashboard_motivation_4
+    5 -> R.string.dashboard_motivation_5
+    6 -> R.string.dashboard_motivation_6
+    else -> R.string.dashboard_motivation_7
+}
