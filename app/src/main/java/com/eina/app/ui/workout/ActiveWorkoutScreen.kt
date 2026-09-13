@@ -1,6 +1,10 @@
 package com.eina.app.ui.workout
 
+import android.Manifest
+import android.os.Build
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -36,10 +40,13 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -54,7 +61,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.eina.app.R
 import androidx.compose.material.icons.outlined.EmojiEvents
-import androidx.compose.material.icons.outlined.MoreHoriz
 import androidx.compose.material.icons.outlined.Remove
 import androidx.compose.material.icons.outlined.SkipNext
 import com.eina.app.ui.components.ActivityRing
@@ -97,6 +103,7 @@ import com.eina.app.ui.components.SetTypeIndicator
 import com.eina.app.ui.components.SetTypeSheet
 import com.eina.app.ui.components.SheetActionRow
 import com.eina.app.ui.components.StopwatchController
+import com.eina.app.ui.components.StopwatchIconButton
 import com.eina.app.ui.components.StopwatchSheet
 import com.eina.app.ui.components.SupersetBadge
 import com.eina.app.ui.components.SupersetOption
@@ -115,6 +122,7 @@ import com.eina.app.ui.theme.PillShape
 import com.eina.app.ui.theme.Spacing
 import com.eina.app.ui.theme.TileShape
 import com.eina.app.ui.theme.label
+import kotlinx.coroutines.flow.StateFlow
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
 import org.koin.core.parameter.parametersOf
@@ -136,6 +144,11 @@ fun ActiveWorkoutScreen(
     viewModel: ActiveWorkoutViewModel = koinViewModel(parameters = { parametersOf(sessionId, editing) })
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    val stopwatch: StopwatchController = koinInject()
+    // Only start/pause/reset move this state, not the count itself, so reading it here does not
+    // put the screen on a ticker.
+    val stopwatchState by stopwatch.state.collectAsState()
     var showPicker by remember { mutableStateOf(false) }
     var restSheetFor by remember { mutableStateOf<Long?>(null) }
     var actionsSheetFor by remember { mutableStateOf<Long?>(null) }
@@ -150,7 +163,13 @@ fun ActiveWorkoutScreen(
     // them before the session is closed.
     var routineChanges by remember { mutableStateOf<List<RoutineChange>>(emptyList()) }
     var confirmCancel by remember { mutableStateOf(false) }
-    var sessionActionsOpen by remember { mutableStateOf(false) }
+    var showStopwatch by remember { mutableStateOf(false) }
+
+    // The rest countdown is posted to the notification shade, which from Android 13 needs asking.
+    // Asked here and not at first launch: a workout is the only thing this app has to say, and
+    // the question makes sense standing in front of the screen that will answer it. Editing a
+    // past workout runs no timer, so it asks nothing.
+    if (!editing) RequestRestNotifications()
 
     // Sheets are keyed by id and not by the exercise snapshot, so they keep showing fresh data
     // when a set changes while they are open.
@@ -186,15 +205,38 @@ fun ActiveWorkoutScreen(
                 // session no longer exists and there is no summary to go back to.
                 onBack = {
                     if (!editing) onExit()
-                    else viewModel.saveEdits(state.startTime, state.elapsedSeconds) { kept ->
+                    else viewModel.saveEdits(state.startTime, viewModel.elapsedSeconds.value) { kept ->
                         if (kept) onExit() else onCancelled()
                     }
                 },
+                // Both actions sit on the header, not behind a menu on it. They were one tap
+                // away from being two: opening the menu was itself a sheet, and reaching the
+                // stopwatch meant stacking a second one on top of it. Music now launches from the
+                // header with no sheet at all, and the stopwatch opens its own directly.
                 trailing = {
-                    IslandIconButton(
-                        icon = Icons.Outlined.MoreHoriz,
-                        contentDescription = stringResource(R.string.active_actions),
-                        onClick = { sessionActionsOpen = true }
+                    val playlistUri = state.playlistUri?.takeIf { it.isNotBlank() }
+                    val playlistType = state.playlistType
+                    if (playlistUri != null && playlistType != null) {
+                        IslandIconButton(
+                            icon = Icons.Outlined.MusicNote,
+                            contentDescription = stringResource(R.string.active_play_playlist_cd),
+                            onClick = {
+                                // Neither a music app nor a browser: say so instead of doing
+                                // nothing.
+                                if (!launchPlaylist(context, playlistUri, playlistType)) {
+                                    Toast.makeText(
+                                        context,
+                                        context.getString(R.string.active_playlist_error),
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+                            }
+                        )
+                    }
+                    // Same stopwatch as the Dashboard: a count started earlier keeps running here.
+                    StopwatchIconButton(
+                        running = stopwatchState.running,
+                        onClick = { showStopwatch = true }
                     )
                 }
             )
@@ -212,7 +254,7 @@ fun ActiveWorkoutScreen(
                 item {
                     SessionIsland(
                         routineName = state.routineName,
-                        elapsedSeconds = state.elapsedSeconds,
+                        elapsedSeconds = viewModel.elapsedSeconds,
                         exercisesDone = state.exercisesDone,
                         exerciseCount = state.exercises.size,
                         volumeKg = state.volumeKg,
@@ -276,16 +318,13 @@ fun ActiveWorkoutScreen(
                 .padding(horizontal = Spacing.gutter, vertical = Spacing.lg),
             verticalArrangement = Arrangement.spacedBy(Spacing.sm)
         ) {
-            state.timer?.let { timer ->
-                RestTimerIsland(
-                    remainingSeconds = timer.remainingSeconds,
-                    totalSeconds = timer.totalSeconds,
-                    nextSet = nextSetHint(state),
-                    onMinus15 = { viewModel.adjustTimer(-15) },
-                    onPlus15 = { viewModel.adjustTimer(15) },
-                    onSkip = { viewModel.skipTimer() }
-                )
-            }
+            RestTimerSlot(
+                timer = viewModel.timer,
+                state = state,
+                onMinus15 = { viewModel.adjustTimer(-15) },
+                onPlus15 = { viewModel.adjustTimer(15) },
+                onSkip = { viewModel.skipTimer() }
+            )
             IslandButton(
                 text = stringResource(if (editing) R.string.edit_session_save else R.string.active_finish),
                 icon = Icons.Outlined.Check,
@@ -295,12 +334,8 @@ fun ActiveWorkoutScreen(
         }
     }
 
-    if (sessionActionsOpen) {
-        SessionActionsSheet(
-            playlistUri = state.playlistUri,
-            playlistType = state.playlistType,
-            onDismiss = { sessionActionsOpen = false }
-        )
+    if (showStopwatch) {
+        StopwatchSheet(controller = stopwatch, onDismiss = { showStopwatch = false })
     }
 
     if (showPicker) {
@@ -454,7 +489,7 @@ fun ActiveWorkoutScreen(
         // the same sheet also adjusts date and duration before they reach the history.
         FinishWorkoutSheet(
             startTime = state.startTime,
-            elapsedSeconds = state.elapsedSeconds,
+            elapsedSeconds = viewModel.elapsedSeconds.value,
             // A session without completed sets is deleted rather than saved, even if it has
             // exercises.
             isEmpty = state.completedSets == 0 && !editing,
@@ -528,7 +563,11 @@ private data class SetRef(val workoutExerciseId: Long, val setId: Long)
 @Composable
 private fun SessionIsland(
     routineName: String?,
-    elapsedSeconds: Int,
+    /**
+     * The clock arrives as a flow and is read inside this island: collected by the screen it put
+     * every exercise card through a recomposition a second, for a number written here.
+     */
+    elapsedSeconds: StateFlow<Int>,
     exercisesDone: Int,
     exerciseCount: Int,
     volumeKg: Double,
@@ -566,8 +605,9 @@ private fun SessionIsland(
                     maxLines = 1
                 )
             }
+            val elapsed by elapsedSeconds.collectAsState()
             Text(
-                text = formatDuration(elapsedSeconds),
+                text = formatDuration(elapsed),
                 style = MaterialTheme.typography.displayMedium,
                 color = Color.White
             )
@@ -609,49 +649,51 @@ private fun SessionIsland(
 }
 
 /**
- * What the header used to carry beside the clock — the playlist and the stopwatch — now behind its
- * one round action. They are used once per workout, and as buttons they took the same room as the
- * clock they sat next to. Discarding the session is not here: it belongs to the sheet that closes
- * the workout, where the alternative to it is on the same line.
+ * Asks once per session for permission to post the rest countdown. Declining is a real answer:
+ * the timer still runs, beeps and vibrates, it just has nowhere to show itself outside the app,
+ * so nothing is asked a second time and no explanation is pushed in front of the workout.
  */
 @Composable
-private fun SessionActionsSheet(
-    playlistUri: String?,
-    playlistType: PlaylistType?,
-    onDismiss: () -> Unit
-) {
-    val context = LocalContext.current
-    val stopwatch: StopwatchController = koinInject()
-    var showStopwatch by remember { mutableStateOf(false) }
-
-    IslandBottomSheet(onDismiss = onDismiss, title = stringResource(R.string.active_actions)) {
-        if (playlistType != null && !playlistUri.isNullOrBlank()) {
-            SheetActionRow(
-                icon = Icons.Outlined.MusicNote,
-                label = stringResource(R.string.active_play_playlist_cd),
-                onClick = {
-                    onDismiss()
-                    // Neither a music app nor a browser: say so instead of doing nothing.
-                    if (!launchPlaylist(context, playlistUri, playlistType)) {
-                        Toast.makeText(
-                            context,
-                            context.getString(R.string.active_playlist_error),
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    }
-                }
-            )
+private fun RequestRestNotifications() {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return
+    val notifications: RestNotifications = koinInject()
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { }
+    var asked by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        if (!asked && !notifications.allowed) {
+            asked = true
+            launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
         }
-        // Same stopwatch as the Dashboard: a count started earlier keeps running here.
-        SheetActionRow(
-            icon = Icons.Outlined.Timer,
-            label = stringResource(R.string.stopwatch_title),
-            onClick = { showStopwatch = true }
-        )
     }
+}
 
-    if (showStopwatch) {
-        StopwatchSheet(controller = stopwatch, onDismiss = { showStopwatch = false })
+/**
+ * The rest timer, and nothing else, watching the countdown.
+ *
+ * It moves five times a second. Read from the screen, that rate reached the whole workout —
+ * header, every exercise card, every set row — for a ring and a number sitting alone at the
+ * bottom of it.
+ */
+@Composable
+private fun RestTimerSlot(
+    timer: StateFlow<TimerUi?>,
+    state: ActiveWorkoutUiState,
+    onMinus15: () -> Unit,
+    onPlus15: () -> Unit,
+    onSkip: () -> Unit
+) {
+    val current by timer.collectAsState()
+    current?.let {
+        RestTimerIsland(
+            remainingSeconds = it.remainingSeconds,
+            totalSeconds = it.totalSeconds,
+            nextSet = nextSetHint(state),
+            onMinus15 = onMinus15,
+            onPlus15 = onPlus15,
+            onSkip = onSkip
+        )
     }
 }
 
@@ -683,7 +725,9 @@ private fun RestTimerIsland(
             ActivityRing(
                 progress = if (totalSeconds > 0) remainingSeconds.toFloat() / totalSeconds else 0f,
                 diameter = 56.dp,
-                strokeWidth = 7.dp
+                strokeWidth = 7.dp,
+                // This ring is the clock: easing it would leave it behind the number inside it.
+                animate = false
             ) {
                 Text(
                     text = formatDuration(remainingSeconds),
