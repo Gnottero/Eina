@@ -429,12 +429,19 @@
         <item quantity="other">%d jours</item>
     </plurals>
     <string name="dashboard_ring_goal">sur %1$d</string>
-    <string name="dashboard_goal_done">Semaine bouclée.</string>
-    <string name="dashboard_goal_none">Rien d\'enregistré cette semaine pour l\'instant.</string>
+    <!-- One line per number of days trained this week; see DashboardScreen. -->
+    <string name="dashboard_motivation_0">Chaque semaine part de zéro. La tienne commence maintenant.</string>
+    <string name="dashboard_motivation_1">Un jour. Le plus dur est déjà passé.</string>
+    <string name="dashboard_motivation_2">Deux fois cette semaine. Ça commence à ressembler à une habitude.</string>
+    <string name="dashboard_motivation_3">Trois jours. Voilà à quoi ressemble la régularité.</string>
+    <string name="dashboard_motivation_4">Quatre jours. Toutes les semaines ne se valent pas.</string>
+    <string name="dashboard_motivation_5">Cinq jours. Tu ne t\'entraînes plus, tu te construis.</string>
+    <string name="dashboard_motivation_6">Six jours. N\'oublie pas que le repos fait partie de l\'entraînement.</string>
+    <string name="dashboard_motivation_7">Sept sur sept. Prends un jour, tu l\'as mérité.</string>
     <string name="workout_session_open">Séance ouverte</string>
     <string name="workout_eyebrow_open">%1$s · séance ouverte</string>
     <string name="workout_routines_hint">Appui long pour modifier, exporter ou supprimer</string>
-    <string name="active_progress">%1$d exercices sur %2$d</string>
+    <string name="active_progress_sets">%1$d séries sur %2$d</string>
     <string name="timer_next_set">Ensuite : série %1$d</string>
     <string name="timer_next_set_value">Ensuite : série %1$d · %2$s</string>
     <string name="finish_step_one">Étape 1 sur 2 · %1$s</string>

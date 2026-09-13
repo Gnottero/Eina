@@ -280,11 +280,14 @@ private fun SummaryHeader(
                         overflow = TextOverflow.Ellipsis
                     )
                     if (subtitle != null) {
+                        // Two lines: the routine name comes last in this line, so on one line it
+                        // was the part that got cut — "20:16 · 56min · B · Tra…" told you the
+                        // time and the duration and then gave up on which workout it was.
                         Text(
                             text = subtitle,
                             style = MaterialTheme.typography.labelSmall,
                             color = island.textSecondary,
-                            maxLines = 1,
+                            maxLines = 2,
                             overflow = TextOverflow.Ellipsis
                         )
                     }

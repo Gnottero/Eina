@@ -446,12 +446,19 @@
         <item quantity="other">%d days</item>
     </plurals>
     <string name="dashboard_ring_goal">of %1$d</string>
-    <string name="dashboard_goal_done">Week closed.</string>
-    <string name="dashboard_goal_none">Nothing recorded this week yet.</string>
+    <!-- One line per number of days trained this week; see DashboardScreen. -->
+    <string name="dashboard_motivation_0">Every week starts at zero. Yours starts now.</string>
+    <string name="dashboard_motivation_1">One day in. The hardest one is behind you.</string>
+    <string name="dashboard_motivation_2">Twice this week. It is starting to look like a habit.</string>
+    <string name="dashboard_motivation_3">Three days. This is what consistency looks like.</string>
+    <string name="dashboard_motivation_4">Four days. Most weeks do not look like this one.</string>
+    <string name="dashboard_motivation_5">Five days. You are not training any more, you are building.</string>
+    <string name="dashboard_motivation_6">Six days. Remember that resting is training too.</string>
+    <string name="dashboard_motivation_7">Seven out of seven. Take a day, you have earned it.</string>
     <string name="workout_session_open">Session open</string>
     <string name="workout_eyebrow_open">%1$s · session open</string>
     <string name="workout_routines_hint">Long-press to edit, export or delete</string>
-    <string name="active_progress">%1$d of %2$d exercises</string>
+    <string name="active_progress_sets">%1$d of %2$d sets</string>
     <string name="timer_next_set">Next: set %1$d</string>
     <string name="timer_next_set_value">Next: set %1$d · %2$s</string>
     <string name="finish_step_one">Step 1 of 2 · %1$s</string>

@@ -5,6 +5,9 @@ import android.os.Build
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -15,24 +18,30 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Notes
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.EmojiEvents
 import androidx.compose.material.icons.outlined.FitnessCenter
 import androidx.compose.material.icons.outlined.MusicNote
+import androidx.compose.material.icons.outlined.Remove
 import androidx.compose.material.icons.outlined.Repeat
+import androidx.compose.material.icons.outlined.SkipNext
 import androidx.compose.material.icons.outlined.SwapHoriz
 import androidx.compose.material.icons.outlined.SwapVert
 import androidx.compose.material.icons.outlined.Timer
@@ -41,7 +50,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
@@ -60,13 +71,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.eina.app.R
-import androidx.compose.material.icons.outlined.EmojiEvents
-import androidx.compose.material.icons.outlined.Remove
-import androidx.compose.material.icons.outlined.SkipNext
-import com.eina.app.ui.components.ActivityRing
-import com.eina.app.ui.components.RampBand
-import com.eina.app.ui.components.ScreenHeader
-import com.eina.app.ui.theme.MetricColors
 import com.eina.app.data.db.PlaylistType
 import com.eina.app.data.db.WeightType
 import com.eina.app.data.db.countsAsWorking
@@ -74,33 +78,34 @@ import com.eina.app.data.db.exerciseName
 import com.eina.app.data.db.usesDecimalField
 import com.eina.app.data.db.usesDistance
 import com.eina.app.data.db.usesWeight
-import com.eina.app.ui.components.IslandBottomSheet
+import com.eina.app.domain.RoutineChange
+import com.eina.app.domain.Superset
+import com.eina.app.ui.components.ActivityRing
+import com.eina.app.ui.components.ExercisePickerSheet
 import com.eina.app.ui.components.IslandAlertDialog
+import com.eina.app.ui.components.IslandBottomSheet
 import com.eina.app.ui.components.IslandButton
 import com.eina.app.ui.components.IslandCard
-import com.eina.app.ui.components.ExercisePickerSheet
+import com.eina.app.ui.components.IslandEmptyState
+import com.eina.app.ui.components.IslandIconButton
+import com.eina.app.ui.components.IslandSecondaryButton
+import com.eina.app.ui.components.IslandSurface
+import com.eina.app.ui.components.IslandTextField
+import com.eina.app.ui.components.MetricTile
 import com.eina.app.ui.components.PreviousValueText
+import com.eina.app.ui.components.RampBand
+import com.eina.app.ui.components.ReorderRow
+import com.eina.app.ui.components.ReorderSheet
+import com.eina.app.ui.components.RestTimeSheet
+import com.eina.app.ui.components.ScreenHeader
 import com.eina.app.ui.components.SetCheckSize
 import com.eina.app.ui.components.SetColumnGap
 import com.eina.app.ui.components.SetMarkerWidth
 import com.eina.app.ui.components.SetRowInset
 import com.eina.app.ui.components.SetTableHeader
-import com.eina.app.ui.components.SetValueField
-import com.eina.app.ui.components.SwipeToDeleteSetRow
-import com.eina.app.ui.components.formatDecimal
-import com.eina.app.ui.components.formatFullDate
-import com.eina.app.ui.components.previousColumnWeight
-import com.eina.app.ui.components.IslandEmptyState
-import com.eina.app.ui.components.IslandIconButton
-import com.eina.app.ui.components.IslandSecondaryButton
-import com.eina.app.ui.components.MetricTile
-import com.eina.app.ui.components.ReorderRow
-import com.eina.app.ui.components.ReorderSheet
-import com.eina.app.ui.components.IslandSurface
-import com.eina.app.ui.components.IslandTextField
-import com.eina.app.ui.components.RestTimeSheet
 import com.eina.app.ui.components.SetTypeIndicator
 import com.eina.app.ui.components.SetTypeSheet
+import com.eina.app.ui.components.SetValueField
 import com.eina.app.ui.components.SheetActionRow
 import com.eina.app.ui.components.StopwatchController
 import com.eina.app.ui.components.StopwatchIconButton
@@ -108,16 +113,19 @@ import com.eina.app.ui.components.StopwatchSheet
 import com.eina.app.ui.components.SupersetBadge
 import com.eina.app.ui.components.SupersetOption
 import com.eina.app.ui.components.SupersetSheet
-import com.eina.app.ui.components.supersetColor
+import com.eina.app.ui.components.SwipeToDeleteSetRow
+import com.eina.app.ui.components.formatDecimal
+import com.eina.app.ui.components.formatFullDate
+import com.eina.app.ui.components.previousColumnWeight
 import com.eina.app.ui.components.sanitizeWeightInput
-import com.eina.app.domain.RoutineChange
-import com.eina.app.domain.Superset
+import com.eina.app.ui.components.supersetColor
 import com.eina.app.ui.feedback.LocalHapticTap
 import com.eina.app.ui.library.currentLocale
 import com.eina.app.ui.library.localized
 import com.eina.app.ui.routine.launchPlaylist
 import com.eina.app.ui.theme.EinaTheme
 import com.eina.app.ui.theme.IslandShape
+import com.eina.app.ui.theme.MetricColors
 import com.eina.app.ui.theme.PillShape
 import com.eina.app.ui.theme.Spacing
 import com.eina.app.ui.theme.TileShape
@@ -164,6 +172,14 @@ fun ActiveWorkoutScreen(
     var routineChanges by remember { mutableStateOf<List<RoutineChange>>(emptyList()) }
     var confirmCancel by remember { mutableStateOf(false) }
     var showStopwatch by remember { mutableStateOf(false) }
+
+    val listState = rememberLazyListState()
+    // Whether the session island has been scrolled past. Kept in a derived state and read inside
+    // the island itself: read here it would recompose the screen on every scrolled pixel, while
+    // this only ever reports the two moments the answer flips.
+    val collapsed = remember(listState) {
+        derivedStateOf { listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 0 }
+    }
 
     // The rest countdown is posted to the notification shade, which from Android 13 needs asking.
     // Asked here and not at first launch: a workout is the only thing this app has to say, and
@@ -247,28 +263,28 @@ fun ActiveWorkoutScreen(
                 }
             )
 
+            SessionIsland(
+                routineName = state.routineName,
+                elapsedSeconds = viewModel.elapsedSeconds,
+                completedSets = state.completedSets,
+                totalSets = state.totalSets,
+                volumeKg = state.volumeKg,
+                prCount = state.prCount,
+                collapsed = collapsed,
+                modifier = Modifier.padding(horizontal = Spacing.gutter)
+            )
+
             LazyColumn(
+                state = listState,
                 modifier = Modifier.fillMaxWidth(),
                 contentPadding = PaddingValues(
                     start = Spacing.gutter,
                     end = Spacing.gutter,
-                    top = Spacing.sm,
+                    top = Spacing.md,
                     bottom = 240.dp
                 ),
                 verticalArrangement = Arrangement.spacedBy(Spacing.md)
             ) {
-                item {
-                    SessionIsland(
-                        routineName = state.routineName,
-                        elapsedSeconds = viewModel.elapsedSeconds,
-                        exercisesDone = state.exercisesDone,
-                        exerciseCount = state.exercises.size,
-                        volumeKg = state.volumeKg,
-                        setCount = state.completedSets,
-                        prCount = state.prCount
-                    )
-                }
-
                 if (state.exercises.isEmpty()) {
                     item {
                         IslandEmptyState(
@@ -559,12 +575,19 @@ fun ActiveWorkoutScreen(
 private data class SetRef(val workoutExerciseId: Long, val setId: Long)
 
 /**
- * The session, as the head of the list: a coloured band with the routine, how far along it is and
- * the running clock, over the three numbers being recorded.
+ * The session: the routine, the running clock, how far through it you are, and the three numbers
+ * being recorded.
  *
- * It scrolls with the exercises instead of sitting fixed above them. A workout is read from the
- * top once and then worked through set by set: keeping the clock pinned cost a fifth of the screen
- * for a number nobody watches while lifting.
+ * It sits above the list rather than at the head of it. Scrolling it away took the clock with it,
+ * and the clock is the one thing on this screen that is worth a glance at any moment — what the
+ * ninth set wants to know is how long this has been going on. Pinning the whole island cost a
+ * fifth of the screen, which is why it was cut loose in the first place, so it gives most of that
+ * back on the first scrolled pixel: the metrics fold away and the clock shrinks to a line, leaving
+ * the band, the name and the bar.
+ *
+ * The bar measures sets and not exercises. Exercises are few and coarse — on a six-exercise
+ * session the bar would move in sixths, and stand still through the four sets that are the actual
+ * work.
  */
 @Composable
 private fun SessionIsland(
@@ -574,85 +597,170 @@ private fun SessionIsland(
      * every exercise card through a recomposition a second, for a number written here.
      */
     elapsedSeconds: StateFlow<Int>,
-    exercisesDone: Int,
-    exerciseCount: Int,
+    completedSets: Int,
+    totalSets: Int,
     volumeKg: Double,
-    setCount: Int,
-    prCount: Int
+    prCount: Int,
+    /** Whether the list has been scrolled past this island; see the caller for why it is a State. */
+    collapsed: State<Boolean>,
+    modifier: Modifier = Modifier
 ) {
+    val isCollapsed by collapsed
     IslandCard(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            // The fold is a size change and is animated as one, so the list below slides up with
+            // it instead of jumping a hundred pixels on the first flick.
+            .animateContentSize(),
         shape = IslandShape,
         contentPadding = PaddingValues(0.dp),
         verticalArrangement = Arrangement.spacedBy(0.dp)
     ) {
         RampBand(
-            contentPadding = PaddingValues(horizontal = Spacing.lg + Spacing.xs, vertical = Spacing.lg),
-            verticalArrangement = Arrangement.spacedBy(Spacing.xs)
+            contentPadding = PaddingValues(
+                horizontal = Spacing.lg,
+                vertical = if (isCollapsed) Spacing.md else Spacing.lg
+            ),
+            verticalArrangement = Arrangement.spacedBy(Spacing.sm)
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
-            ) {
+            val elapsed by elapsedSeconds.collectAsState()
+            val name = routineName?.takeIf { it.isNotBlank() }
+                ?: stringResource(R.string.workout_free_name)
+
+            if (isCollapsed) {
+                // Folded: name and clock share the line, and the name yields, because a clipped
+                // routine name is still a routine name while a clipped clock is a wrong number.
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.md)
+                ) {
+                    Text(
+                        text = name,
+                        style = MaterialTheme.typography.titleSmall,
+                        color = Color.White,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Text(
+                        text = formatDuration(elapsed),
+                        style = MaterialTheme.typography.titleLarge,
+                        color = Color.White,
+                        maxLines = 1
+                    )
+                }
+            } else {
+                // Open: the name has the whole width and two lines of it. Sharing the line with a
+                // counter, "A · Spinta a corpo libero" was cut to "A · Spinta a corpo li…" on a
+                // phone narrow enough, which is every phone once the routine is named after
+                // anything but a letter.
                 Text(
-                    text = routineName?.takeIf { it.isNotBlank() }
-                        ?: stringResource(R.string.workout_free_name),
+                    text = name,
                     style = MaterialTheme.typography.titleMedium,
                     color = Color.White,
-                    maxLines = 1,
+                    maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.fillMaxWidth()
                 )
-                Text(
-                    text = stringResource(R.string.active_progress, exercisesDone, exerciseCount),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = Color.White,
-                    maxLines = 1
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.Bottom,
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.md)
+                ) {
+                    Text(
+                        text = formatDuration(elapsed),
+                        style = MaterialTheme.typography.displayMedium,
+                        color = Color.White,
+                        maxLines = 1,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Text(
+                        text = stringResource(R.string.active_progress_sets, completedSets, totalSets),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = Color.White,
+                        maxLines = 1,
+                        // Sits on the clock's baseline rather than its box, which a display face
+                        // leaves a lot of air under.
+                        modifier = Modifier.padding(bottom = Spacing.sm)
+                    )
+                }
             }
-            val elapsed by elapsedSeconds.collectAsState()
-            Text(
-                text = formatDuration(elapsed),
-                style = MaterialTheme.typography.displayMedium,
-                color = Color.White
+
+            SessionProgressBar(
+                progress = if (totalSets == 0) 0f else completedSets.toFloat() / totalSets
             )
         }
 
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = Spacing.md, vertical = Spacing.md),
-            horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
-        ) {
-            MetricTile(
-                icon = Icons.Outlined.FitnessCenter,
-                label = stringResource(R.string.stat_volume),
-                value = formatVolumeValue(volumeKg),
-                unit = stringResource(R.string.unit_kg),
-                tint = MetricColors.Volume,
-                centered = true,
-                modifier = Modifier.weight(1f)
-            )
-            MetricTile(
-                icon = Icons.Outlined.Repeat,
-                label = stringResource(R.string.stat_sets),
-                value = setCount.toString(),
-                tint = MetricColors.Sets,
-                centered = true,
-                modifier = Modifier.weight(1f)
-            )
-            MetricTile(
-                icon = Icons.Outlined.EmojiEvents,
-                label = stringResource(R.string.stat_records),
-                value = prCount.toString(),
-                tint = MetricColors.Records,
-                centered = true,
-                modifier = Modifier.weight(1f)
-            )
+        if (!isCollapsed) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = Spacing.md, vertical = Spacing.md),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
+            ) {
+                MetricTile(
+                    icon = Icons.Outlined.FitnessCenter,
+                    label = stringResource(R.string.stat_volume),
+                    value = formatVolumeValue(volumeKg),
+                    unit = stringResource(R.string.unit_kg),
+                    tint = MetricColors.Volume,
+                    centered = true,
+                    modifier = Modifier.weight(1f)
+                )
+                MetricTile(
+                    icon = Icons.Outlined.Repeat,
+                    label = stringResource(R.string.stat_sets),
+                    value = completedSets.toString(),
+                    tint = MetricColors.Sets,
+                    centered = true,
+                    modifier = Modifier.weight(1f)
+                )
+                MetricTile(
+                    icon = Icons.Outlined.EmojiEvents,
+                    label = stringResource(R.string.stat_records),
+                    value = prCount.toString(),
+                    tint = MetricColors.Records,
+                    centered = true,
+                    modifier = Modifier.weight(1f)
+                )
+            }
         }
     }
 }
+
+/**
+ * How much of the session is done, on the ramp band.
+ *
+ * White on a translucent white track: the band is already the warm thing on the page, and a bar in
+ * the accent colour over the accent ramp would read as a smudge rather than as a measurement.
+ */
+@Composable
+private fun SessionProgressBar(progress: Float) {
+    val target = progress.coerceIn(0f, 1f)
+    val animated by animateFloatAsState(
+        targetValue = target,
+        animationSpec = tween(durationMillis = 420),
+        label = "sessionProgress"
+    )
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(ProgressBarHeight)
+            .clip(PillShape)
+            .background(Color.White.copy(alpha = 0.28f))
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxHeight()
+                .fillMaxWidth(animated)
+                .clip(PillShape)
+                .background(Color.White)
+        )
+    }
+}
+
+private val ProgressBarHeight = 6.dp
 
 /**
  * Asks once per session for permission to post the rest countdown. Declining is a real answer:
