@@ -21,10 +21,13 @@ import com.eina.app.ui.feedback.WorkoutFeedback
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -46,6 +49,21 @@ class ActiveWorkoutViewModel(
     private val _uiState = MutableStateFlow(ActiveWorkoutUiState(sessionId = sessionId, isPast = isPast))
     val uiState: StateFlow<ActiveWorkoutUiState> = _uiState.asStateFlow()
 
+    /**
+     * The two moving numbers, kept off [uiState] on purpose.
+     *
+     * Both change on a clock — one every second, the other five times a second — and folded into
+     * the screen state they dragged the whole workout through a recomposition at that rate. On
+     * their own flows only what draws them redraws.
+     */
+    private val _elapsedSeconds = MutableStateFlow(0)
+    val elapsedSeconds: StateFlow<Int> = _elapsedSeconds.asStateFlow()
+
+    /** Rest countdown, mirrored from the shared controller so re-entering finds it still running. */
+    val timer: StateFlow<TimerUi?> = restTimer.state
+        .map { it?.let { t -> TimerUi(t.totalSeconds, t.remainingSeconds) } }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
     /** Targets of the source routine, by exerciseId; they feed the field placeholders. */
     private var routineTargets: Map<Long, RoutineTarget> = emptyMap()
 
@@ -65,15 +83,6 @@ class ActiveWorkoutViewModel(
         repository.observeExercises()
             .onEach { list -> _uiState.update { it.copy(availableExercises = list) } }
             .launchIn(viewModelScope)
-        // The rest countdown lives in the shared controller and is only mirrored here, so
-        // re-entering the screen finds it still running.
-        restTimer.state
-            .onEach { timer ->
-                _uiState.update {
-                    it.copy(timer = timer?.let { t -> TimerUi(t.totalSeconds, t.remainingSeconds) })
-                }
-            }
-            .launchIn(viewModelScope)
         loadSession()
         if (!isPast) startElapsedTicker()
     }
@@ -82,15 +91,12 @@ class ActiveWorkoutViewModel(
         viewModelScope.launch {
             val session = repository.getSession(sessionId)
             if (session != null) {
-                _uiState.update {
-                    it.copy(
-                        startTime = session.startTime,
-                        // For a past workout the duration is the recorded one, not the time since
-                        // then: the ticker does not run, so it is written here.
-                        elapsedSeconds = if (!isPast) it.elapsedSeconds else {
-                            (((session.endTime ?: session.startTime) - session.startTime) / 1000).toInt()
-                        }
-                    )
+                _uiState.update { it.copy(startTime = session.startTime) }
+                // For a past workout the duration is the recorded one, not the time since then:
+                // the ticker does not run, so it is written here.
+                if (isPast) {
+                    _elapsedSeconds.value =
+                        (((session.endTime ?: session.startTime) - session.startTime) / 1000).toInt()
                 }
                 session.routineId?.let { routineId ->
                     routineTargets = repository.getRoutineTargets(routineId)
@@ -119,8 +125,8 @@ class ActiveWorkoutViewModel(
         viewModelScope.launch {
             while (isActive) {
                 val start = _uiState.value.startTime
-                val elapsed = ((System.currentTimeMillis() - start) / 1000).toInt().coerceAtLeast(0)
-                _uiState.update { it.copy(elapsedSeconds = elapsed) }
+                _elapsedSeconds.value =
+                    ((System.currentTimeMillis() - start) / 1000).toInt().coerceAtLeast(0)
                 delay(1000)
             }
         }
@@ -586,7 +592,7 @@ class ActiveWorkoutViewModel(
         val position = state.exercises.indexOfFirst { it.workoutExerciseId == exercise.workoutExerciseId }
             .coerceAtLeast(0)
         val offset = (position * MAX_SETS_PER_EXERCISE + set.setIndex) * 60_000L
-        val end = state.startTime + state.elapsedSeconds * 1000L
+        val end = state.startTime + _elapsedSeconds.value * 1000L
         return (state.startTime + offset).coerceAtMost(end.coerceAtLeast(state.startTime))
     }
 
@@ -699,9 +705,8 @@ class ActiveWorkoutViewModel(
             // never draws (see [WorkoutRepository.purgeEmptySessions]), so it is deleted.
             val kept = repository.hasCompletedSets(sessionId)
             if (!kept) repository.purgeEmptySessions()
-            _uiState.update {
-                it.copy(startTime = startTime, elapsedSeconds = durationSeconds.coerceAtLeast(0))
-            }
+            _uiState.update { it.copy(startTime = startTime) }
+            _elapsedSeconds.value = durationSeconds.coerceAtLeast(0)
             onDone(kept)
         }
     }
