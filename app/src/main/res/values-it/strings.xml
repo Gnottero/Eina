@@ -108,7 +108,7 @@
     <string name="playlist_none">Nessuna playlist</string>
 
     <!-- Allenamento in corso -->
-    <string name="active_title">Allenamento in corso</string>
+    <string name="active_title">Allenamento</string>
     <string name="active_empty_title">Sessione vuota</string>
     <string name="active_empty_description">Aggiungi il primo esercizio per iniziare a registrare le serie.</string>
     <string name="active_play_playlist_cd">Riproduci playlist</string>
@@ -429,17 +429,19 @@
         <item quantity="other">%d giorni</item>
     </plurals>
     <string name="dashboard_ring_goal">di %1$d</string>
-    <plurals name="dashboard_goal_left">
-        <item quantity="one">%d ancora per chiudere la settimana.</item>
-        <item quantity="other">%d ancora per chiudere la settimana.</item>
-    </plurals>
-    <string name="dashboard_goal_done">Settimana chiusa.</string>
-    <string name="dashboard_goal_none">Questa settimana non hai ancora registrato niente.</string>
+    <!-- One line per number of days trained this week; see DashboardScreen. -->
+    <string name="dashboard_motivation_0">Ogni settimana parte da zero. La tua parte adesso.</string>
+    <string name="dashboard_motivation_1">Un giorno. Il più difficile è già alle spalle.</string>
+    <string name="dashboard_motivation_2">Due volte questa settimana. Comincia a somigliare a un\'abitudine.</string>
+    <string name="dashboard_motivation_3">Tre giorni. Ecco com\'è fatta la costanza.</string>
+    <string name="dashboard_motivation_4">Quattro giorni. Non tutte le settimane vanno così.</string>
+    <string name="dashboard_motivation_5">Cinque giorni. Non ti stai più allenando, ti stai costruendo.</string>
+    <string name="dashboard_motivation_6">Sei giorni. Ricordati che riposare è allenarsi.</string>
+    <string name="dashboard_motivation_7">Sette su sette. Prenditi un giorno, te lo sei guadagnato.</string>
     <string name="workout_session_open">Sessione aperta</string>
     <string name="workout_eyebrow_open">%1$s · sessione aperta</string>
     <string name="workout_routines_hint">Tieni premuto per modificare, esportare o eliminare</string>
-    <string name="active_progress">%1$d di %2$d esercizi</string>
-    <string name="active_actions">Azioni</string>
+    <string name="active_progress_sets">%1$d di %2$d serie</string>
     <string name="timer_next_set">Poi: serie %1$d</string>
     <string name="timer_next_set_value">Poi: serie %1$d · %2$s</string>
     <string name="finish_step_one">Passo 1 di 2 · %1$s</string>
@@ -460,9 +462,6 @@
     <string name="progress_per_month">Per mese</string>
     <string name="progress_days_trained">Giorni allenati</string>
     <string name="progress_bodyweight">Peso corporeo</string>
-    <string name="settings_goal_title">Obiettivo settimanale</string>
-    <string name="settings_goal_description">Riempie l\'anello della Dashboard</string>
-    <string name="settings_goal_sheet_title">Giorni a settimana</string>
     <string name="settings_language_value">Lingua</string>
     <string name="settings_donate_headline">Eina è gratis e resta gratis</string>
     <string name="settings_donate_body">Nessun abbonamento, nessuna pubblicità, nessun dato che esce dal telefono.</string>
@@ -471,4 +470,14 @@
         <item quantity="other">%d schede</item>
     </plurals>
     <string name="progress_bodyweight_empty">Registra il peso per vedere l\'andamento.</string>
+
+    <!-- Rest timer in the notification shade; see ui/workout/RestNotifications.kt. -->
+    <string name="rest_channel_running">Timer di recupero</string>
+    <string name="rest_channel_running_description">Il conto alla rovescia fra una serie e l\'altra.</string>
+    <string name="rest_channel_done">Recupero finito</string>
+    <string name="rest_channel_done_description">Avvisa quando il recupero è scaduto.</string>
+    <string name="rest_notification_title">Recupero</string>
+    <string name="rest_notification_remaining">Mancano %1$s</string>
+    <string name="rest_done_notification_title">Recupero finito</string>
+    <string name="rest_done_notification_text">La prossima serie ti aspetta.</string>
 </resources>

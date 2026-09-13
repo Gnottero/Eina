@@ -7,6 +7,8 @@ import com.eina.app.data.prefs.SettingsRepository
 import com.eina.app.data.repository.WorkoutRepository
 import com.eina.app.data.seed.ExerciseSeeder
 import com.eina.app.di.appModule
+import com.eina.app.ui.AppForeground
+import com.eina.app.ui.workout.RestNotifications
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -30,6 +32,12 @@ class EinaApplication : Application() {
             androidContext(this@EinaApplication)
             modules(appModule)
         }
+
+        // The rest timer announces itself in the shade; see RestNotifications. The channels are
+        // created here so they exist before the first rest, and AppForeground decides whether the
+        // end of one is worth a banner.
+        AppForeground.track(this)
+        runCatching { get<RestNotifications>().ensureChannels() }
 
         applicationScope.launch {
             // The seed runs off the main thread on first launch: if the asset is missing or

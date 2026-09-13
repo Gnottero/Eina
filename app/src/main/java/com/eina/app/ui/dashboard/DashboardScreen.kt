@@ -1,5 +1,6 @@
 package com.eina.app.ui.dashboard
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -101,11 +102,10 @@ fun DashboardScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 ActivityRing(
-                    // Against the goal and no longer against seven: a ring that cannot be closed
-                    // is a progress bar that always looks late.
-                    progress = if (state.weekGoalDays == 0) 0f else {
-                        state.weekDaysTrained.toFloat() / state.weekGoalDays
-                    },
+                    // The week, not a target: the ring is the seven days of it, and closing it is
+                    // not the point. A goal that had to be picked in the settings turned the first
+                    // thing on the first screen into a score against a number nobody asked for.
+                    progress = state.weekDaysTrained.toFloat() / DaysInWeek,
                     diameter = 112.dp
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -114,7 +114,7 @@ fun DashboardScreen(
                             style = MaterialTheme.typography.displaySmall
                         )
                         Text(
-                            text = stringResource(R.string.dashboard_ring_goal, state.weekGoalDays)
+                            text = stringResource(R.string.dashboard_ring_goal, DaysInWeek)
                                 .uppercase(),
                             style = MaterialTheme.typography.labelSmall,
                             color = island.textSecondary
@@ -133,16 +133,11 @@ fun DashboardScreen(
                         ),
                         style = MaterialTheme.typography.titleMedium
                     )
+                    // A line for the week actually had, not for the one that was missed. The
+                    // first screen of the app opens on a ring and a bare day count, and a number
+                    // on its own says nothing about whether it is a good number.
                     Text(
-                        text = when {
-                            state.weekDaysTrained == 0 -> stringResource(R.string.dashboard_goal_none)
-                            state.goalDaysLeft == 0 -> stringResource(R.string.dashboard_goal_done)
-                            else -> pluralStringResource(
-                                R.plurals.dashboard_goal_left,
-                                state.goalDaysLeft,
-                                state.goalDaysLeft
-                            )
-                        },
+                        text = stringResource(motivationFor(state.weekDaysTrained)),
                         style = MaterialTheme.typography.bodyMedium,
                         color = island.textSecondary
                     )
@@ -209,4 +204,24 @@ fun DashboardScreen(
     if (showStopwatch) {
         StopwatchSheet(controller = stopwatch, onDismiss = { showStopwatch = false })
     }
+}
+
+/** The ring is drawn over the week itself; see the hero island above. */
+private const val DaysInWeek = 7
+
+/**
+ * The sentence beside the ring: one per number of days trained this week, from an empty week to a
+ * full one. They are written out rather than built from a plural, because what changes between
+ * three days and six is not the grammar.
+ */
+@StringRes
+private fun motivationFor(daysTrained: Int): Int = when (daysTrained.coerceIn(0, DaysInWeek)) {
+    0 -> R.string.dashboard_motivation_0
+    1 -> R.string.dashboard_motivation_1
+    2 -> R.string.dashboard_motivation_2
+    3 -> R.string.dashboard_motivation_3
+    4 -> R.string.dashboard_motivation_4
+    5 -> R.string.dashboard_motivation_5
+    6 -> R.string.dashboard_motivation_6
+    else -> R.string.dashboard_motivation_7
 }

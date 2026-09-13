@@ -25,6 +25,7 @@ import com.eina.app.ui.routine.RoutineListViewModel
 import com.eina.app.ui.settings.SettingsViewModel
 import com.eina.app.ui.workout.ActiveWorkoutViewModel
 import com.eina.app.ui.workout.RestAlarmScheduler
+import com.eina.app.ui.workout.RestNotifications
 import com.eina.app.ui.workout.RestTimerController
 import com.eina.app.ui.workout.WorkoutViewModel
 import org.koin.android.ext.koin.androidContext
@@ -103,7 +104,8 @@ val appModule = module {
     // Shared rest timer: it survives leaving the workout screen, and the system alarm makes it
     // sound even with the app off screen.
     single { RestAlarmScheduler(androidContext()) }
-    single { RestTimerController(get(), get()) }
+    single { RestNotifications(androidContext()) }
+    single { RestTimerController(get(), get(), get()) }
 
     viewModel { WorkoutViewModel(get(), get()) }
     viewModel { (sessionId: Long, isPast: Boolean) ->
@@ -114,7 +116,7 @@ val appModule = module {
     viewModel { CreateExerciseViewModel(get(), androidContext()) }
     viewModel { RoutineListViewModel(get(), get()) }
     viewModel { (routineId: Long) -> RoutineEditorViewModel(get(), androidContext(), routineId) }
-    viewModel { DashboardViewModel(get(), get()) }
+    viewModel { DashboardViewModel(get()) }
     viewModel { ProgressViewModel(get()) }
     viewModel { BodyWeightViewModel(get()) }
     viewModel { HistoryViewModel(get(), get()) }

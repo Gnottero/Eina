@@ -1,5 +1,6 @@
 package com.eina.app.ui.workout
 
+import androidx.compose.runtime.Immutable
 import com.eina.app.data.db.ExerciseEntity
 import com.eina.app.data.db.ExerciseName
 import com.eina.app.data.db.PlaylistType
@@ -7,6 +8,7 @@ import com.eina.app.data.db.SetEntryEntity
 import com.eina.app.data.db.SetType
 import com.eina.app.data.db.WeightType
 
+@Immutable
 data class SessionSetUi(
     val id: Long,
     val setIndex: Int,
@@ -30,6 +32,7 @@ data class SessionSetUi(
     val suggestedReps: Int? = null
 )
 
+@Immutable
 data class SessionExerciseUi(
     val workoutExerciseId: Long,
     val exerciseId: Long,
@@ -52,20 +55,27 @@ data class SessionExerciseUi(
     val completedSets: Int get() = sets.count { it.completedAt != null }
 }
 
+@Immutable
 data class TimerUi(
     val totalSeconds: Int,
     val remainingSeconds: Int
 )
 
+/**
+ * Everything on the workout screen except the two things that move on their own: the elapsed
+ * clock and the rest countdown live on flows of their own (see [ActiveWorkoutViewModel]). Held
+ * here, they rewrote this object five times a second, and since a list makes a class unstable to
+ * Compose, every exercise card on screen was recomposed at the same rate for a number written in
+ * one line of one of them.
+ */
+@Immutable
 data class ActiveWorkoutUiState(
     val sessionId: Long,
     /** Recorded workout opened from the history for correction. */
     val isPast: Boolean = false,
     val startTime: Long = System.currentTimeMillis(),
-    val elapsedSeconds: Int = 0,
     val exercises: List<SessionExerciseUi> = emptyList(),
     val availableExercises: List<ExerciseEntity> = emptyList(),
-    val timer: TimerUi? = null,
     val isFinished: Boolean = false,
     /** Source routine, if any; needed to offer updating it at the end. */
     val routineId: Long? = null,

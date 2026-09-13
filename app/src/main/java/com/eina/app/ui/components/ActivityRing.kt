@@ -32,15 +32,28 @@ fun ActivityRing(
     modifier: Modifier = Modifier,
     diameter: Dp = 116.dp,
     strokeWidth: Dp = 13.dp,
+    /**
+     * Whether a change of [progress] is eased into. Off for a ring that is itself a clock: the
+     * rest countdown moves five times a second, and each move restarted a 700ms tween the next one
+     * interrupted, so the ring trailed behind the number written inside it.
+     */
+    animate: Boolean = true,
     content: @Composable BoxScope.() -> Unit = {}
 ) {
     val island = EinaTheme.island
     val target = progress.coerceIn(0f, 1f)
-    val animated by animateFloatAsState(
-        targetValue = target,
-        animationSpec = tween(durationMillis = 700),
-        label = "ringProgress"
-    )
+    // The animation is not merely ignored when off: left running it would keep easing towards a
+    // target that moves again before it arrives, recomposing the ring on every frame of a workout.
+    val animated = if (animate) {
+        val eased by animateFloatAsState(
+            targetValue = target,
+            animationSpec = tween(durationMillis = 700),
+            label = "ringProgress"
+        )
+        eased
+    } else {
+        target
+    }
 
     Box(modifier = modifier.size(diameter), contentAlignment = Alignment.Center) {
         Canvas(Modifier.size(diameter)) {
@@ -63,13 +76,20 @@ fun ActivityRing(
                     // The ramp spreads over the drawn arc, not the whole circle: with uniform
                     // sweepGradient stops a third of a ring would show amber only, and the seam
                     // between last and first colour would surface at twelve o'clock.
+                    //
+                    // A stretch is always kept back for the return to the first colour, even when
+                    // the arc is full: laid over the whole lap the ramp ended on magenta exactly
+                    // where it started on amber, and a closed ring had a hard edge at twelve
+                    // o'clock. Below that share nothing changes, so a partial ring still ends on
+                    // magenta at its head.
+                    val rampEnd = minOf(animated, 1f - ReturnShare)
                     val stops = island.accentRamp.mapIndexed { index, color ->
                         val position = index.toFloat() / (island.accentRamp.size - 1)
-                        (position * animated) to color
+                        (position * rampEnd) to color
                     } + (1f to island.accentRamp.first())
-                    // The last stop returns to the first colour for the empty stretch: nothing is
-                    // drawn there except the round start cap, which bleeds back past zero and
-                    // would otherwise pick up the magenta at the end of the ramp.
+                    // The last stop returns to the first colour: over the empty stretch of a
+                    // partial ring, where nothing is drawn except the round start cap that bleeds
+                    // back past zero, and over the kept-back share of a full one.
                     drawArc(
                         brush = Brush.sweepGradient(*stops.toTypedArray()),
                         startAngle = 0f,
@@ -85,3 +105,10 @@ fun ActivityRing(
         content()
     }
 }
+
+/**
+ * Share of the lap the ramp leaves to fade back to its first colour. Small enough that a ring
+ * below 82% is drawn exactly as before, wide enough that a closed one comes back round to amber
+ * instead of butting magenta against it.
+ */
+private const val ReturnShare = 0.18f

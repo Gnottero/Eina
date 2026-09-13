@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Status bar mark. The system paints a notification icon flat white on transparent and ignores
+  every colour in it, so the tile and the ramp of ic_eina_logo would come out as a solid white
+  square: only the monoline "E" survives, scaled up to fill the frame the tile used to occupy.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:strokeWidth="13"
+        android:strokeColor="#FFFFFF"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M89.6,23.2 L33.3,23.2 L25.5,78.2 L83,78.2 M29.1,50.7 L71.6,50.7" />
+</vector>

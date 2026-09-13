@@ -27,12 +27,17 @@ import kotlinx.coroutines.withContext
  */
 class HealthConnectSource(private val context: Context) {
 
-    /** Heart rate plus both calorie records: not every provider writes the active ones. */
-    val permissions: Set<String> = setOf(
-        HealthPermission.getReadPermission(HeartRateRecord::class),
+    /** Heart rate on its own: it is the one reading that is worth showing without the others. */
+    private val heartPermission = HealthPermission.getReadPermission(HeartRateRecord::class)
+
+    /** Both calorie records: not every provider writes the active ones. */
+    private val energyPermissions = setOf(
         HealthPermission.getReadPermission(ActiveCaloriesBurnedRecord::class),
         HealthPermission.getReadPermission(TotalCaloriesBurnedRecord::class)
     )
+
+    /** Everything the app asks for; the consent sheet shows them together. */
+    val permissions: Set<String> = energyPermissions + heartPermission
 
     val isAvailable: Boolean
         get() = HealthConnectClient.getSdkStatus(context) == HealthConnectClient.SDK_AVAILABLE
@@ -40,21 +45,25 @@ class HealthConnectSource(private val context: Context) {
     private val client: HealthConnectClient?
         get() = if (isAvailable) runCatching { HealthConnectClient.getOrCreate(context) }.getOrNull() else null
 
-    /** True only with all three permissions: a partial grant yields incomplete readings. */
+    /**
+     * True with anything granted at all.
+     *
+     * It used to demand all three, and a partial grant — which the Health Connect sheet lets the
+     * user leave, and which some providers hand back on their own — turned every read into null:
+     * the heart rate was there, allowed, and never shown because the calories were not. Each read
+     * now asks only for what it is about.
+     */
     suspend fun hasPermissions(): Boolean = withContext(Dispatchers.IO) {
-        hasPermissions(client)
+        granted(client).isNotEmpty()
     }
 
     /**
-     * Same check with the client already at hand: the [client] getter re-checks the SDK status and
-     * calls `getOrCreate` on every access.
+     * Granted permissions with the client already at hand: the [client] getter re-checks the SDK
+     * status and calls `getOrCreate` on every access.
      */
-    private suspend fun hasPermissions(healthClient: HealthConnectClient?): Boolean {
-        val granted = runCatching {
-            healthClient?.permissionController?.getGrantedPermissions()
-        }.getOrNull().orEmpty()
-        return permissions.all { it in granted }
-    }
+    private suspend fun granted(healthClient: HealthConnectClient?): Set<String> = runCatching {
+        healthClient?.permissionController?.getGrantedPermissions()
+    }.getOrNull().orEmpty().toSet()
 
     /**
      * Heart rate and calories between [start] and [end]. Returns null when there is nothing to
@@ -63,13 +72,18 @@ class HealthConnectSource(private val context: Context) {
     suspend fun readWorkoutVitals(start: Long, end: Long): WorkoutVitals? = withContext(Dispatchers.IO) {
         if (end <= start) return@withContext null
         val healthClient = client ?: return@withContext null
-        if (!hasPermissions(healthClient)) return@withContext null
+        // Read only what is allowed, instead of giving up unless everything is. A heart rate the
+        // user granted is shown even when the calories were refused, and the other way round.
+        val grantedPermissions = granted(healthClient)
+        val canReadHeart = heartPermission in grantedPermissions
+        val canReadEnergy = grantedPermissions.any { it in energyPermissions }
+        if (!canReadHeart && !canReadEnergy) return@withContext null
 
         // Some companion apps timestamp their records wrong: Mi Fitness writes them 90 minutes
         // ahead (a 08:00 workout showed up at 09:30 with identical values), so the exact window
         // finds nothing. [detectOffset] measures the shift; when data sits where it should, the
         // offset is zero and nothing changes.
-        val (offset, coverage) = detectOffset(healthClient, start, end)
+        val (offset, coverage) = detectOffset(healthClient, start, end, canReadEnergy, canReadHeart)
         val shiftedStart = start + offset
         val shiftedEnd = end + offset
 
@@ -103,13 +117,17 @@ class HealthConnectSource(private val context: Context) {
 
         // Exact window first; padding only if it is empty, and then the chart samples use it too,
         // so numbers and graph always describe the same interval.
-        val exactHeart = aggregateHeart(exactWindow)
+        val exactHeart = if (canReadHeart) aggregateHeart(exactWindow) else null
         val usesPadding = exactHeart?.get(HeartRateRecord.BPM_AVG) == null
-        val heartAggregate = if (usesPadding) aggregateHeart(paddedWindow) else exactHeart
+        val heartAggregate = when {
+            !canReadHeart -> null
+            usesPadding -> aggregateHeart(paddedWindow)
+            else -> exactHeart
+        }
         val heartWindow = if (usesPadding) paddedWindow else exactWindow
         val heartFrom = if (usesPadding) shiftedStart - WINDOW_PADDING_MS else shiftedStart
         val heartTo = if (usesPadding) shiftedEnd + WINDOW_PADDING_MS else shiftedEnd
-        val energyAggregate = runCatching {
+        val energyAggregate = if (!canReadEnergy) null else runCatching {
             healthClient.aggregate(
                 AggregateRequest(
                     metrics = setOf(
@@ -137,7 +155,7 @@ class HealthConnectSource(private val context: Context) {
 
         // The chart needs single samples, which aggregation does not provide. Only one source is
         // kept — the densest one, i.e. the watch — otherwise two providers draw overlapping lines.
-        val byOrigin = runCatching {
+        val byOrigin = if (!canReadHeart) emptyMap() else runCatching {
             healthClient.readRecords(ReadRecordsRequest(HeartRateRecord::class, timeRangeFilter = heartWindow))
                 .records
                 .groupBy { it.metadata.dataOrigin.packageName }
@@ -158,14 +176,18 @@ class HealthConnectSource(private val context: Context) {
         val samples = inWindow.values.maxByOrNull { it.size }.orEmpty()
             .map { if (offset == 0L) it else it.copy(timeMillis = it.timeMillis - offset) }
 
-        // A couple of samples do not make an average: on a watch sampling once a minute that is
-        // two minutes of workout.
-        val hasHeartRate = samples.size >= MIN_HR_SAMPLES
+        // Average and maximum stand on the aggregate alone, which returns a figure only when
+        // Health Connect actually held records for the window. They used to be thrown away unless
+        // the raw read had also produced three samples of a single source, so a measured workout
+        // showed no heart rate whenever that read came back thin — a sparse band, a provider
+        // exposing blocks rather than samples, one refused read. The sample count still gates the
+        // chart, which needs points to draw: a couple of them are a line through nothing.
+        val hasHeartRate = avgBpm != null
         if (!hasHeartRate && kcal == null) return@withContext null
         WorkoutVitals(
-            samples = if (hasHeartRate) samples else emptyList(),
-            avgBpm = avgBpm?.takeIf { hasHeartRate },
-            maxBpm = maxBpm?.takeIf { hasHeartRate },
+            samples = if (samples.size >= MIN_HR_SAMPLES) samples else emptyList(),
+            avgBpm = avgBpm,
+            maxBpm = maxBpm,
             kcal = kcal?.takeIf { it > 0.0 }
         )
     }
@@ -183,11 +205,19 @@ class HealthConnectSource(private val context: Context) {
      * Also returns the coverage reached with the chosen offset, the same figure that decides
      * whether the calories are worth showing.
      */
-    private suspend fun detectOffset(client: HealthConnectClient, start: Long, end: Long): DataOffset {
+    private suspend fun detectOffset(
+        client: HealthConnectClient,
+        start: Long,
+        end: Long,
+        canReadEnergy: Boolean,
+        canReadHeart: Boolean
+    ): DataOffset {
+        suspend fun intervalsOver(range: TimeRangeFilter) =
+            readMeasuredIntervals(client, range, canReadEnergy, canReadHeart)
+
         val exact = runCatching {
             coveredShare(
-                readEnergyIntervals(
-                    client,
+                intervalsOver(
                     TimeRangeFilter.between(Instant.ofEpochMilli(start), Instant.ofEpochMilli(end))
                 ),
                 start,
@@ -200,7 +230,7 @@ class HealthConnectSource(private val context: Context) {
             Instant.ofEpochMilli(start - MAX_OFFSET_MS),
             Instant.ofEpochMilli(end + MAX_OFFSET_MS)
         )
-        val intervals = runCatching { readEnergyIntervals(client, search) }.getOrDefault(emptyList())
+        val intervals = runCatching { intervalsOver(search) }.getOrDefault(emptyList())
         if (intervals.isEmpty()) return DataOffset(0L, exact)
 
         var best = 0L
@@ -222,20 +252,41 @@ class HealthConnectSource(private val context: Context) {
     }
 
     /**
-     * Intervals the watch wrote calories over: they trace when it was measuring, and serve both to
-     * compute coverage and to locate data stamped elsewhere. Total calories are the fallback for
-     * providers that do not write active ones.
+     * Intervals the watch was measuring over: they serve both to compute coverage and to locate
+     * data stamped elsewhere.
+     *
+     * Calories first, since their records span the measured stretch by construction, with total
+     * ones as the fallback for providers that do not write active ones. Heart rate closes the
+     * chain: a watch that records beats and no calories at all used to leave this list empty, and
+     * with nothing to measure against, a shifted reading was never found and the coverage stayed
+     * at zero.
      */
-    private suspend fun readEnergyIntervals(
+    private suspend fun readMeasuredIntervals(
         client: HealthConnectClient,
-        range: TimeRangeFilter
+        range: TimeRangeFilter,
+        canReadEnergy: Boolean,
+        canReadHeart: Boolean
     ): List<Pair<Long, Long>> {
-        val active = client
-            .readRecords(ReadRecordsRequest(ActiveCaloriesBurnedRecord::class, timeRangeFilter = range))
-            .records.map { it.startTime.toEpochMilli() to it.endTime.toEpochMilli() }
-        return active.ifEmpty {
+        suspend fun read(block: suspend () -> List<Pair<Long, Long>>) =
+            runCatching { block() }.getOrDefault(emptyList())
+
+        val active = if (!canReadEnergy) emptyList() else read {
+            client
+                .readRecords(ReadRecordsRequest(ActiveCaloriesBurnedRecord::class, timeRangeFilter = range))
+                .records.map { it.startTime.toEpochMilli() to it.endTime.toEpochMilli() }
+        }
+        if (active.isNotEmpty()) return active
+
+        val total = if (!canReadEnergy) emptyList() else read {
             client
                 .readRecords(ReadRecordsRequest(TotalCaloriesBurnedRecord::class, timeRangeFilter = range))
+                .records.map { it.startTime.toEpochMilli() to it.endTime.toEpochMilli() }
+        }
+        if (total.isNotEmpty()) return total
+
+        return if (!canReadHeart) emptyList() else read {
+            client
+                .readRecords(ReadRecordsRequest(HeartRateRecord::class, timeRangeFilter = range))
                 .records.map { it.startTime.toEpochMilli() to it.endTime.toEpochMilli() }
         }
     }

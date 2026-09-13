@@ -318,6 +318,10 @@ fun ScreenHeader(
  * summary of a workout just finished) was broken mid-word and left a single letter on the second
  * line. It is drawn only once the size is settled: measuring at full size first would otherwise
  * show one frame of the oversized title.
+ *
+ * Shrinking stops at [MinHeaderTitleSize], and a title still too long at that size is ellipsised
+ * rather than cut: without this the last letter was sliced down the middle and slid under the
+ * round action beside it, which reads as a broken layout and not as a title that does not fit.
  */
 @Composable
 private fun HeaderTitle(title: String) {
@@ -329,6 +333,7 @@ private fun HeaderTitle(title: String) {
         style = style,
         maxLines = 1,
         softWrap = false,
+        overflow = TextOverflow.Ellipsis,
         modifier = Modifier.drawWithContent { if (settled) drawContent() },
         onTextLayout = { layout ->
             if (layout.didOverflowWidth && style.fontSize > MinHeaderTitleSize) {
