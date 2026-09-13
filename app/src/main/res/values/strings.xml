@@ -446,17 +446,12 @@
         <item quantity="other">%d days</item>
     </plurals>
     <string name="dashboard_ring_goal">of %1$d</string>
-    <plurals name="dashboard_goal_left">
-        <item quantity="one">%d more to close the week.</item>
-        <item quantity="other">%d more to close the week.</item>
-    </plurals>
     <string name="dashboard_goal_done">Week closed.</string>
     <string name="dashboard_goal_none">Nothing recorded this week yet.</string>
     <string name="workout_session_open">Session open</string>
     <string name="workout_eyebrow_open">%1$s · session open</string>
     <string name="workout_routines_hint">Long-press to edit, export or delete</string>
     <string name="active_progress">%1$d of %2$d exercises</string>
-    <string name="active_actions">Actions</string>
     <string name="timer_next_set">Next: set %1$d</string>
     <string name="timer_next_set_value">Next: set %1$d · %2$s</string>
     <string name="finish_step_one">Step 1 of 2 · %1$s</string>
@@ -477,9 +472,6 @@
     <string name="progress_per_month">Per month</string>
     <string name="progress_days_trained">Days trained</string>
     <string name="progress_bodyweight">Body weight</string>
-    <string name="settings_goal_title">Weekly goal</string>
-    <string name="settings_goal_description">Fills the ring on the Dashboard</string>
-    <string name="settings_goal_sheet_title">Days per week</string>
     <string name="settings_language_value">Language</string>
     <string name="settings_donate_headline">Eina is free and stays free</string>
     <string name="settings_donate_body">No subscription, no ads, no data leaving your phone.</string>
@@ -488,4 +480,14 @@
         <item quantity="other">%d routines</item>
     </plurals>
     <string name="progress_bodyweight_empty">Record your weight to see the trend.</string>
+
+    <!-- Rest timer in the notification shade; see ui/workout/RestNotifications.kt. -->
+    <string name="rest_channel_running">Rest timer</string>
+    <string name="rest_channel_running_description">The countdown between one set and the next.</string>
+    <string name="rest_channel_done">Rest over</string>
+    <string name="rest_channel_done_description">Tells you the rest has run out.</string>
+    <string name="rest_notification_title">Rest</string>
+    <string name="rest_notification_text">Back to the bar when it hits zero.</string>
+    <string name="rest_done_notification_title">Rest over</string>
+    <string name="rest_done_notification_text">Next set is waiting.</string>
 </resources>

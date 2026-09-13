@@ -1,5 +1,6 @@
 package com.eina.app.ui.workout
 
+import com.eina.app.ui.AppForeground
 import com.eina.app.ui.feedback.WorkoutFeedback
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -26,10 +27,15 @@ import kotlin.math.ceil
  * The tick alone cannot sound the end: with the app off screen the process is frozen and the
  * `delay` calls stall. Every rest therefore also schedules a system alarm ([RestAlarmScheduler]);
  * whichever fires first calls [finish], which acts only once.
+ *
+ * A rest also shows in the notification shade while it runs ([RestNotifications]): that is where
+ * the remaining time can be read without coming back to the app, and where the end of it is
+ * announced when the app is not the thing on screen.
  */
 class RestTimerController(
     private val feedback: WorkoutFeedback,
-    private val alarms: RestAlarmScheduler
+    private val alarms: RestAlarmScheduler,
+    private val notifications: RestNotifications
 ) {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
@@ -57,14 +63,31 @@ class RestTimerController(
     }
 
     /**
-     * End of rest: sound and vibration, once. Called by both the in-app tick and the system alarm,
-     * which can arrive milliseconds apart — whichever finds the state already cleared does nothing.
+     * End of rest: sound, vibration and — when the app is not on screen — a notification, once.
+     *
+     * Called by both the in-app tick and the system alarm, which can arrive milliseconds apart.
+     * The first one through clears the state and the written-down instant, so the second finds
+     * nothing to end.
+     *
+     * The written-down instant is what makes this work from a process that was created for the
+     * alarm and holds no rest of its own: without it, the end of a rest taken with the app closed
+     * was a controller with a null state quietly returning.
      */
     fun finish() {
-        synchronized(this) {
-            if (_state.value == null) return
-            stop()
+        val fires = synchronized(this) {
+            if (_state.value != null) {
+                stop()
+                true
+            } else {
+                // Nothing running here: only the written-down instant can say whether this
+                // process was created to end a rest or is answering a stale alarm.
+                alarms.consumeDue()
+            }
         }
+        if (!fires) return
+        // On screen the countdown itself has just reached zero and says so; a banner over it would
+        // be announcing something the user is already looking at.
+        if (AppForeground.isForeground) notifications.clear() else notifications.showFinished()
         feedback.restTimerFinished()
     }
 
@@ -72,6 +95,7 @@ class RestTimerController(
         job?.cancel()
         job = null
         alarms.cancel()
+        notifications.clear()
         _state.value = null
     }
 
@@ -79,6 +103,7 @@ class RestTimerController(
         job?.cancel()
         _state.value = RestTimerState(totalSeconds, endAtMs, remainingSecondsAt(endAtMs))
         alarms.schedule(endAtMs)
+        notifications.showCountdown(endAtMs)
         job = scope.launch {
             while (isActive) {
                 // Faster than one second: the remainder comes from the clock, and a 1s tick out of

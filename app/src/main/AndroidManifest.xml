@@ -2,6 +2,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.VIBRATE" />
+    <!-- The rest countdown in the notification shade, and the banner that ends it. See
+         ui/workout/RestNotifications.kt. Asked for on the workout screen, not at first launch:
+         it is the one place the app has anything to post. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- Punctual end of rest even with the app off screen: without an exact alarm the process
          stays frozen and sound and vibration would only arrive on return. USE_EXACT_ALARM covers
          Android 13+, where it is granted to apps whose job is a timer. -->
