@@ -101,11 +101,10 @@ fun DashboardScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 ActivityRing(
-                    // Against the goal and no longer against seven: a ring that cannot be closed
-                    // is a progress bar that always looks late.
-                    progress = if (state.weekGoalDays == 0) 0f else {
-                        state.weekDaysTrained.toFloat() / state.weekGoalDays
-                    },
+                    // The week, not a target: the ring is the seven days of it, and closing it is
+                    // not the point. A goal that had to be picked in the settings turned the first
+                    // thing on the first screen into a score against a number nobody asked for.
+                    progress = state.weekDaysTrained.toFloat() / DaysInWeek,
                     diameter = 112.dp
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -114,7 +113,7 @@ fun DashboardScreen(
                             style = MaterialTheme.typography.displaySmall
                         )
                         Text(
-                            text = stringResource(R.string.dashboard_ring_goal, state.weekGoalDays)
+                            text = stringResource(R.string.dashboard_ring_goal, DaysInWeek)
                                 .uppercase(),
                             style = MaterialTheme.typography.labelSmall,
                             color = island.textSecondary
@@ -133,19 +132,21 @@ fun DashboardScreen(
                         ),
                         style = MaterialTheme.typography.titleMedium
                     )
-                    Text(
-                        text = when {
-                            state.weekDaysTrained == 0 -> stringResource(R.string.dashboard_goal_none)
-                            state.goalDaysLeft == 0 -> stringResource(R.string.dashboard_goal_done)
-                            else -> pluralStringResource(
-                                R.plurals.dashboard_goal_left,
-                                state.goalDaysLeft,
-                                state.goalDaysLeft
-                            )
-                        },
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = island.textSecondary
-                    )
+                    // Only at the two ends: an empty week is worth saying, a full one worth
+                    // celebrating. In between the day count above already says it, and a line
+                    // counting what is missing would read as a reproach.
+                    val note = when (state.weekDaysTrained) {
+                        0 -> stringResource(R.string.dashboard_goal_none)
+                        DaysInWeek -> stringResource(R.string.dashboard_goal_done)
+                        else -> null
+                    }
+                    if (note != null) {
+                        Text(
+                            text = note,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = island.textSecondary
+                        )
+                    }
                 }
             }
 
@@ -210,3 +211,6 @@ fun DashboardScreen(
         StopwatchSheet(controller = stopwatch, onDismiss = { showStopwatch = false })
     }
 }
+
+/** The ring is drawn over the week itself; see the hero island above. */
+private const val DaysInWeek = 7

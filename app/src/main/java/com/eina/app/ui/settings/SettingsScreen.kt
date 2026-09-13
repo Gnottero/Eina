@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Coffee
 import androidx.compose.material.icons.outlined.DeleteSweep
-import androidx.compose.material.icons.outlined.Flag
 import androidx.compose.material.icons.outlined.Language
 import androidx.compose.material.icons.outlined.MonitorHeart
 import androidx.compose.material.icons.outlined.NotificationsActive
@@ -31,7 +30,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -40,9 +38,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.health.connect.client.PermissionController
@@ -50,10 +46,7 @@ import com.eina.app.BuildConfig
 import com.eina.app.R
 import com.eina.app.ui.components.DestructiveRed
 import com.eina.app.ui.components.IslandAlertDialog
-import com.eina.app.ui.components.IslandBottomSheet
-import com.eina.app.ui.components.IslandButton
 import com.eina.app.ui.components.IslandCard
-import com.eina.app.ui.components.IntegerWheelPicker
 import com.eina.app.ui.components.IslandScreen
 import com.eina.app.ui.components.RampBand
 import com.eina.app.ui.components.ScreenHeader
@@ -72,9 +65,7 @@ fun SettingsScreen(
     val context = LocalContext.current
     var confirmClear by remember { mutableStateOf(false) }
     var showLanguagePicker by remember { mutableStateOf(false) }
-    var showGoalPicker by remember { mutableStateOf(false) }
     val language by viewModel.language.collectAsState()
-    val goalDays by viewModel.weeklyGoalDays.collectAsState()
     val haptics by viewModel.hapticsEnabled.collectAsState()
     val sound by viewModel.timerSoundEnabled.collectAsState()
     val vibration by viewModel.timerVibrationEnabled.collectAsState()
@@ -112,13 +103,6 @@ fun SettingsScreen(
                 hint = stringResource(R.string.settings_language_description),
                 value = stringResource(language.labelRes),
                 onClick = { showLanguagePicker = true }
-            )
-            SettingRow(
-                icon = Icons.Outlined.Flag,
-                label = stringResource(R.string.settings_goal_title),
-                hint = stringResource(R.string.settings_goal_description),
-                value = pluralStringResource(R.plurals.day_count, goalDays, goalDays),
-                onClick = { showGoalPicker = true }
             )
 
             SettingsGroup(stringResource(R.string.settings_section_timer))
@@ -202,14 +186,6 @@ fun SettingsScreen(
                 }
             },
             onDismiss = { showLanguagePicker = false }
-        )
-    }
-
-    if (showGoalPicker) {
-        WeeklyGoalSheet(
-            current = goalDays,
-            onSelect = { viewModel.setWeeklyGoalDays(it); showGoalPicker = false },
-            onDismiss = { showGoalPicker = false }
         )
     }
 
@@ -377,35 +353,3 @@ private fun DonationBlock(onDonate: () -> Unit) {
     }
 }
 
-/** Weekly goal expressed as a bounded integer, using the same wheel pattern as duration fields. */
-@Composable
-private fun WeeklyGoalSheet(current: Int, onSelect: (Int) -> Unit, onDismiss: () -> Unit) {
-    val island = EinaTheme.island
-    var pending by remember(current) { mutableIntStateOf(current) }
-    IslandBottomSheet(onDismiss = onDismiss, title = stringResource(R.string.settings_goal_sheet_title)) {
-        Text(
-            text = stringResource(R.string.settings_goal_description),
-            style = MaterialTheme.typography.bodyMedium,
-            color = island.textSecondary
-        )
-        IntegerWheelPicker(
-            value = pending,
-            values = 1..7,
-            onValueChange = { pending = it }
-        )
-        Text(
-            text = pluralStringResource(R.plurals.day_count, pending, pending),
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = Spacing.xs),
-            textAlign = TextAlign.Center
-        )
-        IslandButton(
-            text = stringResource(R.string.action_done),
-            onClick = { onSelect(pending); onDismiss() },
-            modifier = Modifier.fillMaxWidth()
-        )
-    }
-}

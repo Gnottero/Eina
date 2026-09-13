@@ -2,7 +2,6 @@ package com.eina.app.ui.dashboard
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.eina.app.data.prefs.SettingsRepository
 import com.eina.app.data.repository.StatsRepository
 import com.eina.app.domain.SessionSummary
 import com.eina.app.domain.epochMillisToLocalDate
@@ -10,9 +9,9 @@ import com.eina.app.domain.summarizeSessions
 import com.eina.app.domain.volumeByDay
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import java.time.LocalDate
 
@@ -24,23 +23,15 @@ data class DashboardUiState(
     val weekVolumeByDay: List<Float> = List(7) { 0f },
     /** Records set this week: the second number of the hero, next to the volume. */
     val weekPrCount: Int = 0,
-    /** Days per week the ring is drawn against; see SettingsRepository.weeklyGoalDays. */
-    val weekGoalDays: Int = 4,
     val recentSessions: List<SessionSummary> = emptyList()
-) {
-    /** How many more days would close the ring; zero once the goal is met. */
-    val goalDaysLeft: Int get() = (weekGoalDays - weekDaysTrained).coerceAtLeast(0)
-}
+)
 
 class DashboardViewModel(
-    repository: StatsRepository,
-    settings: SettingsRepository
+    repository: StatsRepository
 ) : ViewModel() {
 
-    val uiState: StateFlow<DashboardUiState> = combine(
-        repository.observeCompletedSets(),
-        settings.weeklyGoalDays
-    ) { rows, goalDays ->
+    val uiState: StateFlow<DashboardUiState> = repository.observeCompletedSets()
+        .map { rows ->
             val today = LocalDate.now()
             val startOfWeek = today.minusDays((today.dayOfWeek.value - 1).toLong())
             val sessions = summarizeSessions(rows)
@@ -59,7 +50,6 @@ class DashboardViewModel(
                     .size,
                 weekVolumeKg = weekSessions.sumOf { it.volumeKg },
                 weekPrCount = weekSessions.sumOf { it.prCount },
-                weekGoalDays = goalDays,
                 weekVolumeByDay = (0..6).map { offset ->
                     (volumePerDay[startOfWeek.plusDays(offset.toLong())] ?: 0.0).toFloat()
                 },

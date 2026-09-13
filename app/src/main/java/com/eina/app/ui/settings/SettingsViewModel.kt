@@ -22,7 +22,6 @@ class SettingsViewModel(
     val timerSoundEnabled: StateFlow<Boolean> = settings.timerSoundEnabled
     val timerVibrationEnabled: StateFlow<Boolean> = settings.timerVibrationEnabled
     val healthSyncEnabled: StateFlow<Boolean> = settings.healthSyncEnabled
-    val weeklyGoalDays: StateFlow<Int> = settings.weeklyGoalDays
 
     /**
      * Whether Health Connect is installed; without it the section has nothing to offer. The value
@@ -53,7 +52,6 @@ class SettingsViewModel(
 
     fun setLanguage(language: AppLanguage) = settings.setLanguage(language)
     fun setHaptics(enabled: Boolean) = settings.setHapticsEnabled(enabled)
-    fun setWeeklyGoalDays(days: Int) = settings.setWeeklyGoalDays(days)
     fun setTimerSound(enabled: Boolean) = settings.setTimerSoundEnabled(enabled)
     fun setHealthSync(enabled: Boolean) = settings.setHealthSyncEnabled(enabled)
     fun setTimerVibration(enabled: Boolean) = settings.setTimerVibrationEnabled(enabled)
