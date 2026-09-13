@@ -56,8 +56,10 @@ class SettingsRepository(private val context: Context) {
     }
 
     /**
-     * Whether the one-off PR rebuild still has to run, and marks it done. Warmups now hold records,
-     * so the flags written by earlier versions have to be recomputed once over the whole history.
+     * Whether the one-off PR rebuild still has to run, and marks it done. The flags written by
+     * earlier versions are wrong twice over - warmups did not hold records, and a set closed with
+     * zero repetitions did - so they have to be recomputed once over the whole history. The key
+     * carries a version: a new rule about what counts as a record means running the rebuild again.
      */
     fun consumePrBackfill(): Boolean {
         if (prefs.getBoolean(KEY_PR_BACKFILL, false)) return false
@@ -85,7 +87,7 @@ class SettingsRepository(private val context: Context) {
         const val KEY_TIMER_VIBRATION = "timer_vibration_enabled"
         const val KEY_HEALTH_SYNC = "health_sync_enabled"
         const val KEY_WEEKLY_GOAL = "weekly_goal_days"
-        const val KEY_PR_BACKFILL = "pr_backfill_done"
+        const val KEY_PR_BACKFILL = "pr_backfill_done_v2"
         const val DEFAULT_WEEKLY_GOAL = 4
     }
 }

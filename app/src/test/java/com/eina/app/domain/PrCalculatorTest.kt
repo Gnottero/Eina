@@ -27,23 +27,23 @@ class PrCalculatorTest {
 
     @Test
     fun `a warmup holds a record like any other set`() {
-        val newSet = set(weight = 100.0, setType = SetType.WARMUP)
+        val newSet = set(weight = 100.0, actualReps = 5, setType = SetType.WARMUP)
         assertTrue(isNewPR(WeightType.FREE_WEIGHT, newSet, emptyList()))
-        assertFalse(isNewPR(WeightType.FREE_WEIGHT, newSet, listOf(set(weight = 120.0))))
+        assertFalse(isNewPR(WeightType.FREE_WEIGHT, newSet, listOf(set(weight = 120.0, actualReps = 1))))
     }
 
     @Test
     fun `free weight PR beats max historical weight`() {
-        val history = listOf(set(weight = 80.0), set(weight = 90.0))
-        assertTrue(isNewPR(WeightType.FREE_WEIGHT, set(weight = 95.0), history))
-        assertFalse(isNewPR(WeightType.FREE_WEIGHT, set(weight = 90.0), history))
+        val history = listOf(set(weight = 80.0, actualReps = 5), set(weight = 90.0, actualReps = 3))
+        assertTrue(isNewPR(WeightType.FREE_WEIGHT, set(weight = 95.0, actualReps = 1), history))
+        assertFalse(isNewPR(WeightType.FREE_WEIGHT, set(weight = 90.0, actualReps = 5), history))
     }
 
     @Test
     fun `machine stack and assisted use weight like free weight`() {
-        val history = listOf(set(weight = 50.0))
-        assertTrue(isNewPR(WeightType.MACHINE_STACK, set(weight = 55.0), history))
-        assertTrue(isNewPR(WeightType.ASSISTED, set(weight = 55.0), history))
+        val history = listOf(set(weight = 50.0, actualReps = 8))
+        assertTrue(isNewPR(WeightType.MACHINE_STACK, set(weight = 55.0, actualReps = 8), history))
+        assertTrue(isNewPR(WeightType.ASSISTED, set(weight = 55.0, actualReps = 8), history))
     }
 
     @Test
@@ -55,10 +55,16 @@ class PrCalculatorTest {
 
     @Test
     fun `bodyweight plus load PR compares combined load`() {
-        val history = listOf(set(bodyweightSnapshotKg = 80.0, weight = 10.0)) // 90
-        val newSet = set(bodyweightSnapshotKg = 82.0, weight = 10.0) // 92
+        val history = listOf(set(bodyweightSnapshotKg = 80.0, weight = 10.0, actualReps = 5)) // 90
+        val newSet = set(bodyweightSnapshotKg = 82.0, weight = 10.0, actualReps = 5) // 92
         assertTrue(isNewPR(WeightType.BODYWEIGHT_PLUS_LOAD, newSet, history))
-        assertFalse(isNewPR(WeightType.BODYWEIGHT_PLUS_LOAD, set(bodyweightSnapshotKg = 80.0, weight = 10.0), history))
+        assertFalse(
+            isNewPR(
+                WeightType.BODYWEIGHT_PLUS_LOAD,
+                set(bodyweightSnapshotKg = 80.0, weight = 10.0, actualReps = 5),
+                history
+            )
+        )
     }
 
     @Test
@@ -133,5 +139,33 @@ class PrCalculatorTest {
     @Test
     fun `distance volume stays out of the kg total`() {
         assertEquals(0.0, volumeForSet(WeightType.DISTANCE_BASED, set(weight = 5.0, actualReps = 30)), 0.0)
+    }
+
+    @Test
+    fun `a weight closed with zero reps is never a PR`() {
+        val history = listOf(set(weight = 100.0, actualReps = 5))
+        assertFalse(isNewPR(WeightType.FREE_WEIGHT, set(weight = 200.0, actualReps = 0), history))
+        assertFalse(isNewPR(WeightType.FREE_WEIGHT, set(weight = 200.0, actualReps = null), history))
+        assertFalse(isNewPR(WeightType.MACHINE_STACK, set(weight = 200.0, actualReps = 0), history))
+        assertFalse(isNewPR(WeightType.ASSISTED, set(weight = 200.0, actualReps = 0), history))
+        assertFalse(
+            isNewPR(
+                WeightType.BODYWEIGHT_PLUS_LOAD,
+                set(bodyweightSnapshotKg = 80.0, weight = 100.0, actualReps = 0),
+                listOf(set(bodyweightSnapshotKg = 80.0, weight = 10.0, actualReps = 5))
+            )
+        )
+    }
+
+    @Test
+    fun `a weight closed with zero reps does not raise the bar for the next set`() {
+        // The 200 kg was typed in and never lifted: the next real set only has to beat the 100 kg.
+        val history = listOf(set(weight = 100.0, actualReps = 5), set(weight = 200.0, actualReps = 0))
+        assertTrue(isNewPR(WeightType.FREE_WEIGHT, set(weight = 110.0, actualReps = 3), history))
+    }
+
+    @Test
+    fun `a hold closed with zero seconds is never a PR`() {
+        assertFalse(isNewPR(WeightType.TIME_BASED, set(actualReps = 0), emptyList()))
     }
 }

@@ -12,8 +12,9 @@ import com.eina.app.data.db.WeightType
  * month would leave its record standing, and raising it would not create one.
  *
  * So the flags are rebuilt from scratch: sets are walked in completion order and each is a record
- * if it beats everything before it, exactly as [isNewPR] does live. Every completed set counts,
- * warmups included: the type describes how the set was performed, not how much it lifted.
+ * if it beats everything before it, exactly as [isNewPR] does live. Every completed set with work
+ * recorded counts, warmups included: the type describes how the set was performed, not how much it
+ * lifted, while a set closed with zero repetitions lifted nothing at all.
  *
  * [sets] must be complete (every completed set of that exercise, in any session); the order does
  * not matter, the function sorts them. Only the rows whose flag changes are returned, so the caller
